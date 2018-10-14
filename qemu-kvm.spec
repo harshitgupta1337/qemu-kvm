@@ -1,0 +1,1651 @@
+%global SLOF_gittagdate 20170724
+%global SLOF_gittagcommit 89f519f
+
+%global have_usbredir 1
+%global have_spice    1
+%global have_opengl   1
+%global have_fdt      0
+%global have_gluster  0
+%global have_kvm_setup 0
+%global have_seccomp 1
+%global have_memlock_limits 0
+%global have_vxhs     0
+%global have_vhost_user 1
+%global have_tcmalloc 0
+
+%ifnarch %{ix86} x86_64
+    %global have_usbredir 0
+%endif
+
+%ifnarch s390x
+    %global have_librdma 1
+%else
+    %global have_librdma 0
+%endif
+
+%ifarch %{ix86}
+    %global kvm_target    i386
+%endif
+%ifarch x86_64
+    %global kvm_target    x86_64
+    %global have_vxhs    1
+%else
+    %global have_spice   0
+    %global have_opengl  0
+    %global have_gluster 0
+%endif
+%ifarch %{power64}
+    %global kvm_target    ppc64
+    %global have_fdt     1
+    %global have_kvm_setup 1
+    %global have_memlock_limits 1
+%endif
+%ifarch s390x
+    %global kvm_target    s390x
+%endif
+%ifarch ppc
+    %global kvm_target    ppc
+    %global have_fdt     1
+%endif
+%ifarch aarch64
+    %global kvm_target    aarch64
+    %global have_fdt     1
+%endif
+
+#Versions of various parts:
+
+%global requires_all_modules                                     \
+Requires: %{name}-block-curl = %{epoch}:%{version}-%{release}    \
+Requires: %{name}-block-iscsi = %{epoch}:%{version}-%{release}   \
+Requires: %{name}-block-rbd = %{epoch}:%{version}-%{release}     \
+Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
+
+# Macro to properly setup RHEL/RHEV conflict handling
+%define rhel_rhev_conflicts()                                          \
+Conflicts: %1-ma                                                       \
+Conflicts: %1-rhev                                                     \
+Provides: %1-rhel = %{epoch}:%{version}-%{release}
+
+Summary: QEMU is a machine emulator and virtualizer
+Name: qemu-kvm
+Version: 3.0.0
+Release: 1%{?dist}
+# Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
+Epoch: 15
+License: GPLv2 and GPLv2+ and CC-BY
+Group: Development/Tools
+URL: http://www.qemu.org/
+ExclusiveArch: x86_64 %{power64} aarch64 s390x
+
+
+# OOM killer breaks builds with parallel make on s390x
+%ifarch s390x
+    %define _smp_mflags %{nil}
+%endif
+
+Source0: http://wiki.qemu.org/download/qemu-3.0.0.tar.xz
+
+# KSM control scripts
+Source4: ksm.service
+Source5: ksm.sysconfig
+Source6: ksmctl.c
+Source7: ksmtuned.service
+Source8: ksmtuned
+Source9: ksmtuned.conf
+Source10: qemu-guest-agent.service
+Source11: 99-qemu-guest-agent.rules
+Source12: bridge.conf
+Source13: qemu-ga.sysconfig
+Source21: kvm-setup
+Source22: kvm-setup.service
+Source23: 85-kvm.preset
+Source26: vhost.conf
+Source27: kvm.conf
+Source28: 95-kvm-memlock.conf
+Source30: kvm-s390x.conf
+Source31: kvm-x86.conf
+Source32: qemu-pr-helper.service
+Source33: qemu-pr-helper.socket
+
+
+
+Patch0001: 0001-Initial-redhat-build.patch
+Patch0002: 0002-Enable-disable-devices-for-RHEL-7.patch
+Patch0003: 0003-Add-RHEL-machine-types.patch
+Patch0004: 0004-Use-kvm-by-default.patch
+Patch0005: 0005-vfio-cap-number-of-devices-that-can-be-assigned.patch
+Patch0006: 0006-Add-support-statement-to-help-output.patch
+Patch0007: 0007-globally-limit-the-maximum-number-of-CPUs.patch
+Patch0008: 0008-Add-support-for-simpletrace.patch
+Patch0009: 0009-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
+Patch0010: 0010-usb-xhci-Fix-PCI-capability-order.patch
+Patch0011: 0011-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
+Patch0012: 0012-linux-headers-asm-s390-kvm.h-header-sync.patch
+Patch0013: 0013-s390x-Enable-KVM-huge-page-backing-support.patch
+Patch0014: 0014-s390x-kvm-add-etoken-facility.patch
+Patch0015: 0015-s390x-cpumodel-default-enable-bpb-and-ppa15-for-z196.patch
+Patch0016: 0016-i386-Fix-arch_query_cpu_model_expansion-leak.patch
+Patch0017: 0017-i386-Disable-TOPOEXT-by-default-on-cpu-host.patch
+Patch0018: 0018-curl-Make-sslverify-off-disable-host-as-well-as-peer.patch
+Patch0019: 0019-migration-postcopy-Clear-have_listen_thread.patch
+Patch0020: 0020-migration-cleanup-in-error-paths-in-loadvm.patch
+Patch0021: 0021-jobs-change-start-callback-to-run-callback.patch
+Patch0022: 0022-jobs-canonize-Error-object.patch
+Patch0023: 0023-jobs-add-exit-shim.patch
+Patch0024: 0024-block-commit-utilize-job_exit-shim.patch
+Patch0025: 0025-block-mirror-utilize-job_exit-shim.patch
+Patch0026: 0026-jobs-utilize-job_exit-shim.patch
+Patch0027: 0027-block-backup-make-function-variables-consistently-na.patch
+Patch0028: 0028-jobs-remove-ret-argument-to-job_completed-privatize-.patch
+Patch0029: 0029-jobs-remove-job_defer_to_main_loop.patch
+Patch0030: 0030-block-commit-add-block-job-creation-flags.patch
+Patch0031: 0031-block-mirror-add-block-job-creation-flags.patch
+Patch0032: 0032-block-stream-add-block-job-creation-flags.patch
+Patch0033: 0033-block-commit-refactor-commit-to-use-job-callbacks.patch
+Patch0034: 0034-block-mirror-don-t-install-backing-chain-on-abort.patch
+Patch0035: 0035-block-mirror-conservative-mirror_exit-refactor.patch
+Patch0036: 0036-block-stream-refactor-stream-to-use-job-callbacks.patch
+Patch0037: 0037-tests-blockjob-replace-Blockjob-with-Job.patch
+Patch0038: 0038-tests-test-blockjob-remove-exit-callback.patch
+Patch0039: 0039-tests-test-blockjob-txn-move-.exit-to-.clean.patch
+Patch0040: 0040-jobs-remove-.exit-callback.patch
+Patch0041: 0041-qapi-block-commit-expose-new-job-properties.patch
+Patch0042: 0042-qapi-block-mirror-expose-new-job-properties.patch
+Patch0043: 0043-qapi-block-stream-expose-new-job-properties.patch
+Patch0044: 0044-block-backup-qapi-documentation-fixup.patch
+Patch0045: 0045-blockdev-document-transactional-shortcomings.patch
+
+BuildRequires: zlib-devel
+BuildRequires: glib2-devel
+BuildRequires: which
+BuildRequires: gnutls-devel
+BuildRequires: cyrus-sasl-devel
+BuildRequires: libtool
+BuildRequires: libaio-devel
+BuildRequires: rsync
+BuildRequires: python3-devel
+BuildRequires: pciutils-devel
+BuildRequires: libiscsi-devel
+BuildRequires: ncurses-devel
+BuildRequires: libattr-devel
+BuildRequires: libusbx-devel >= 1.0.19
+%if %{have_usbredir}
+BuildRequires: usbredir-devel >= 0.7.1
+%endif
+BuildRequires: texinfo
+%if %{have_spice}
+BuildRequires: spice-protocol >= 0.12.12
+BuildRequires: spice-server-devel >= 0.12.8
+BuildRequires: libcacard-devel
+# For smartcard NSS support
+BuildRequires: nss-devel
+%endif
+%if %{have_seccomp}
+BuildRequires: libseccomp-devel >= 2.3.0
+%endif
+# For network block driver
+BuildRequires: libcurl-devel
+BuildRequires: libssh2-devel
+BuildRequires: librados-devel
+BuildRequires: librbd-devel
+%if %{have_gluster}
+# For gluster block driver
+BuildRequires: glusterfs-api-devel >= 3.6.0
+BuildRequires: glusterfs-devel
+%endif
+# We need both because the 'stap' binary is probed for by configure
+BuildRequires: systemtap
+BuildRequires: systemtap-sdt-devel
+# For VNC PNG support
+BuildRequires: libpng-devel
+# For uuid generation
+BuildRequires: libuuid-devel
+# For BlueZ device support
+BuildRequires: bluez-libs-devel
+# For Braille device support
+BuildRequires: brlapi-devel
+# For test suite
+BuildRequires: check-devel
+# For virtfs
+BuildRequires: libcap-devel
+# Hard requirement for version >= 1.3
+BuildRequires: pixman-devel
+# Documentation requirement
+BuildRequires: perl-podlators
+BuildRequires: texinfo
+# For rdma
+%if 0%{?have_librdma}
+BuildRequires: rdma-core-devel
+%endif
+%if %{have_fdt}
+BuildRequires: libfdt-devel >= 1.4.3
+%endif
+# iasl and cpp for acpi generation (not a hard requirement as we can use
+# pre-compiled files, but it's better to use this)
+%ifarch %{ix86} x86_64
+BuildRequires: iasl
+BuildRequires: cpp
+%endif
+# For compressed guest memory dumps
+BuildRequires: lzo-devel snappy-devel
+# For NUMA memory binding
+%ifnarch s390x
+BuildRequires: numactl-devel
+%endif
+BuildRequires: libgcrypt-devel
+# qemu-pr-helper multipath support (requires libudev too)
+BuildRequires: device-mapper-multipath-devel
+BuildRequires: systemd-devel
+# used by qemu-bridge-helper and qemu-pr-helper
+BuildRequires: libcap-ng-devel
+
+BuildRequires: diffutils
+
+# qemu-keymap
+BuildRequires: pkgconfig(xkbcommon)
+
+# For s390-pgste flag
+%ifarch s390x
+BuildRequires: binutils >= 2.27-16
+%endif
+
+%if %{have_opengl}
+BuildRequires: pkgconfig(epoxy)
+BuildRequires: pkgconfig(libdrm)
+BuildRequires: pkgconfig(gbm)
+Requires:      mesa-libGL
+Requires:      mesa-libEGL
+Requires:      mesa-dri-drivers
+%endif
+
+Requires: qemu-kvm-core = %{epoch}:%{version}-%{release}
+Conflicts: qemu-kvm-ma
+Conflicts: qemu-kvm-rhev
+
+%{requires_all_modules}
+
+%define qemudocdir %{_docdir}/%{name}
+
+%description
+qemu-kvm is an open source virtualizer that provides hardware
+emulation for the KVM hypervisor. qemu-kvm acts as a virtual
+machine monitor together with the KVM kernel modules, and emulates the
+hardware for a full system such as a PC and its associated peripherals.
+
+
+%package -n qemu-kvm-core
+Summary: qemu-kvm core components
+Requires: qemu-img = %{epoch}:%{version}-%{release}
+%ifarch %{ix86} x86_64
+Requires: seabios-bin >= 1.10.2-1
+Requires: sgabios-bin
+%endif
+%ifnarch aarch64 s390x
+Requires: seavgabios-bin >= 1.10.2-1
+Requires: ipxe-roms-qemu >= 20170123-1
+%endif
+%ifarch %{power64}
+Requires: SLOF >= %{SLOF_gittagdate}-1.git%{SLOF_gittagcommit}
+%endif
+Requires: %{name}-common = %{epoch}:%{version}-%{release}
+%if %{have_seccomp}
+Requires: libseccomp >= 2.3.0
+%endif
+# For compressed guest memory dumps
+Requires: lzo snappy
+%if %{have_gluster}
+Requires: glusterfs-api >= 3.6.0
+%endif
+%if %{have_kvm_setup}
+Requires(post): systemd-units
+    %ifarch %{power64}
+Requires: powerpc-utils
+    %endif
+%endif
+Requires: libusbx >= 1.0.19
+%if %{have_usbredir}
+Requires: usbredir >= 0.7.1
+%endif
+
+%rhel_rhev_conflicts qemu-kvm
+
+%description -n qemu-kvm-core
+qemu-kvm is an open source virtualizer that provides hardware
+emulation for the KVM hypervisor. qemu-kvm acts as a virtual
+machine monitor together with the KVM kernel modules, and emulates the
+hardware for a full system such as a PC and its associated peripherals.
+
+
+%package -n qemu-img
+Summary: QEMU command line tool for manipulating disk images
+Group: Development/Tools
+
+%rhel_rhev_conflicts qemu-img
+
+%description -n qemu-img
+This package provides a command line tool for manipulating disk images.
+
+%package -n qemu-kvm-common
+Summary: QEMU common files needed by all QEMU targets
+Group: Development/Tools
+Requires(post): /usr/bin/getent
+Requires(post): /usr/sbin/groupadd
+Requires(post): /usr/sbin/useradd
+Requires(post): systemd-units
+Requires(preun): systemd-units
+Requires(postun): systemd-units
+
+%rhel_rhev_conflicts qemu-kvm-common
+
+%description -n qemu-kvm-common
+qemu-kvm is an open source virtualizer that provides hardware emulation for
+the KVM hypervisor.
+
+This package provides documentation and auxiliary programs used with qemu-kvm.
+
+
+%package -n qemu-guest-agent
+Summary: QEMU guest agent
+Requires(post): systemd-units
+Requires(preun): systemd-units
+Requires(postun): systemd-units
+
+# OOM killer breaks builds with parallel make on s390x
+%ifarch s390x
+    %define _smp_mflags %{nil}
+%endif
+
+%description -n qemu-guest-agent
+qemu-kvm is an open source virtualizer that provides hardware emulation for
+the KVM hypervisor.
+
+This package provides an agent to run inside guests, which communicates
+with the host over a virtio-serial channel named "org.qemu.guest_agent.0"
+
+This package does not need to be installed on the host OS.
+
+
+%package  block-curl
+Summary: QEMU CURL block driver
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+
+%description block-curl
+This package provides the additional CURL block driver for QEMU.
+
+Install this package if you want to access remote disks over
+http, https, ftp and other transports provided by the CURL library.
+
+
+%package  block-iscsi
+Summary: QEMU iSCSI block driver
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+
+%description block-iscsi
+This package provides the additional iSCSI block driver for QEMU.
+
+Install this package if you want to access iSCSI volumes.
+
+
+%package  block-rbd
+Summary: QEMU Ceph/RBD block driver
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+
+%description block-rbd
+This package provides the additional Ceph/RBD block driver for QEMU.
+
+Install this package if you want to access remote Ceph volumes
+using the rbd protocol.
+
+
+%package  block-ssh
+Summary: QEMU SSH block driver
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+
+%description block-ssh
+This package provides the additional SSH block driver for QEMU.
+
+Install this package if you want to access remote disks using
+the Secure Shell (SSH) protocol.
+
+
+%prep
+%setup -q -n qemu-%{version}
+
+%patch0001 -p1
+%patch0002 -p1
+%patch0003 -p1
+%patch0004 -p1
+%patch0005 -p1
+%patch0006 -p1
+%patch0007 -p1
+%patch0008 -p1
+%patch0009 -p1
+%patch0010 -p1
+%patch0011 -p1
+%patch0012 -p1
+%patch0013 -p1
+%patch0014 -p1
+%patch0015 -p1
+%patch0016 -p1
+%patch0017 -p1
+%patch0018 -p1
+%patch0019 -p1
+%patch0020 -p1
+%patch0021 -p1
+%patch0022 -p1
+%patch0023 -p1
+%patch0024 -p1
+%patch0025 -p1
+%patch0026 -p1
+%patch0027 -p1
+%patch0028 -p1
+%patch0029 -p1
+%patch0030 -p1
+%patch0031 -p1
+%patch0032 -p1
+%patch0033 -p1
+%patch0034 -p1
+%patch0035 -p1
+%patch0036 -p1
+%patch0037 -p1
+%patch0038 -p1
+%patch0039 -p1
+%patch0040 -p1
+%patch0041 -p1
+%patch0042 -p1
+%patch0043 -p1
+%patch0044 -p1
+%patch0045 -p1
+
+%build
+%global buildarch %{kvm_target}-softmmu
+
+# --build-id option is used for giving info to the debug packages.
+buildldflags="VL_LDFLAGS=-Wl,--build-id"
+
+%global block_drivers_list qcow2,raw,file,host_device,nbd,iscsi,rbd,blkdebug,luks,null-co,nvme,copy-on-read,throttle
+
+%if 0%{have_vxhs}
+    %global block_drivers_list %{block_drivers_list},vxhs
+%endif
+%if 0%{have_gluster}
+    %global block_drivers_list %{block_drivers_list},gluster
+%endif
+
+./configure  \
+ --prefix="%{_prefix}" \
+ --libdir="%{_libdir}" \
+ --sysconfdir="%{_sysconfdir}" \
+ --interp-prefix=%{_prefix}/qemu-%M \
+ --localstatedir="%{_localstatedir}" \
+ --docdir="%{qemudocdir}" \
+ --libexecdir="%{_libexecdir}" \
+ --extra-ldflags="-Wl,--build-id -Wl,-z,relro -Wl,-z,now" \
+ --extra-cflags="%{optflags}" \
+ --with-pkgversion="%{name}-%{version}-%{release}" \
+ --with-confsuffix=/"%{name}" \
+ --firmwarepath=%{_prefix}/share/qemu-firmware \
+%if 0%{have_fdt}
+  --enable-fdt \
+%else
+  --disable-fdt \
+ %endif
+%if 0%{have_gluster}
+  --enable-glusterfs \
+%else
+  --disable-glusterfs \
+%endif
+  --enable-guest-agent \
+%ifnarch s390x
+  --enable-numa \
+%else
+  --disable-numa \
+%endif
+  --enable-rbd \
+%if 0%{have_librdma}
+  --enable-rdma \
+%else
+  --disable-rdma \
+%endif
+%if 0%{have_seccomp}
+  --enable-seccomp \
+%else
+  --disable-seccomp \
+%endif
+%if 0%{have_spice}
+  --enable-spice \
+  --enable-smartcard \
+%else
+  --disable-spice \
+  --disable-smartcard \
+%endif
+%if 0%{have_opengl}
+  --enable-opengl \
+%else
+  --disable-opengl \
+%endif
+%if 0%{have_usbredir}
+  --enable-usb-redir \
+%else
+  --disable-usb-redir \
+%endif
+%if 0%{have_tcmalloc}
+  --enable-tcmalloc \
+%else
+  --disable-tcmalloc \
+%endif
+%if 0%{have_vxhs}
+  --enable-vxhs \
+%else
+  --disable-vxhs \
+%endif
+%if 0%{have_vhost_user}
+  --enable-vhost-user \
+%else
+  --disable-vhost-user \
+%endif
+  --python=%{__python3} \
+  --target-list="%{buildarch}" \
+  --block-drv-rw-whitelist=%{block_drivers_list} \
+  --audio-drv-list= \
+  --block-drv-ro-whitelist=vmdk,vhdx,vpc,https,ssh \
+  --with-coroutine=ucontext \
+  --tls-priority=NORMAL \
+  --disable-bluez \
+  --disable-brlapi \
+  --disable-cap-ng \
+  --enable-coroutine-pool \
+  --enable-curl \
+  --disable-curses \
+  --disable-debug-tcg \
+  --enable-docs \
+  --disable-gtk \
+  --enable-kvm \
+  --enable-libiscsi \
+  --disable-libnfs \
+  --enable-libssh2 \
+  --enable-libusb \
+  --disable-bzip2 \
+  --enable-linux-aio \
+  --disable-live-block-migration \
+  --enable-lzo \
+  --enable-pie \
+  --disable-qom-cast-debug \
+  --disable-sdl \
+  --enable-snappy \
+  --disable-sparse \
+  --disable-strip \
+  --disable-tpm \
+  --enable-trace-backend=dtrace \
+  --disable-vde \
+  --disable-vhost-scsi \
+  --disable-virtfs \
+  --disable-vnc-jpeg \
+  --disable-vte \
+  --enable-vnc-png \
+  --enable-vnc-sasl \
+  --enable-werror \
+  --disable-xen \
+  --disable-xfsctl \
+  --enable-gnutls \
+  --enable-gcrypt \
+  --disable-nettle \
+  --enable-attr \
+  --disable-bsd-user \
+  --disable-cocoa \
+  --enable-debug-info \
+  --disable-guest-agent-msi \
+  --disable-hax \
+  --disable-jemalloc \
+  --disable-linux-user \
+  --enable-modules \
+  --disable-netmap \
+  --disable-replication \
+  --enable-system \
+  --enable-tools \
+  --disable-user \
+  --enable-vhost-net \
+  --enable-vhost-vsock \
+  --enable-vnc \
+  --enable-mpath \
+  --disable-virglrenderer \
+  --disable-xen-pci-passthrough \
+  --enable-tcg \
+  --with-git=git \
+  --disable-sanitizers \
+  --disable-hvf \
+  --disable-whpx \
+  --enable-malloc-trim \
+  --disable-membarrier \
+  --disable-vhost-crypto \
+  --disable-libxml2 \
+  --enable-capstone \
+  --disable-git-update \
+  --disable-crypto-afalg \
+  --disable-debug-mutex
+
+
+echo "config-host.mak contents:"
+echo "==="
+cat config-host.mak
+echo "==="
+
+make V=1 %{?_smp_mflags} $buildldflags
+
+# Setup back compat qemu-kvm binary
+%{__python3} scripts/tracetool.py --backend dtrace --format stap --group=all \
+  --binary %{_libexecdir}/qemu-kvm --target-name %{kvm_target} \
+  --target-type system --probe-prefix \
+  qemu.kvm trace-events-all > qemu-kvm.stp
+
+%{__python3} scripts/tracetool.py --backend dtrace --format simpletrace-stap \
+  --group=all --binary %{_libexecdir}/qemu-kvm --target-name %{kvm_target} \
+  --target-type system --probe-prefix \
+  qemu.kvm trace-events-all > qemu-kvm-simpletrace.stp
+
+cp -a %{kvm_target}-softmmu/qemu-system-%{kvm_target} qemu-kvm
+
+gcc %{SOURCE6} $RPM_OPT_FLAGS $RPM_LD_FLAGS -o ksmctl
+
+%install
+%define _udevdir %(pkg-config --variable=udevdir udev)/rules.d
+
+install -D -p -m 0644 %{SOURCE4} $RPM_BUILD_ROOT%{_unitdir}/ksm.service
+install -D -p -m 0644 %{SOURCE5} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/ksm
+install -D -p -m 0755 ksmctl $RPM_BUILD_ROOT%{_libexecdir}/ksmctl
+
+install -D -p -m 0644 %{SOURCE7} $RPM_BUILD_ROOT%{_unitdir}/ksmtuned.service
+install -D -p -m 0755 %{SOURCE8} $RPM_BUILD_ROOT%{_sbindir}/ksmtuned
+install -D -p -m 0644 %{SOURCE9} $RPM_BUILD_ROOT%{_sysconfdir}/ksmtuned.conf
+install -D -p -m 0644 %{SOURCE26} $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/vhost.conf
+%ifarch s390x
+    install -D -p -m 0644 %{SOURCE30} $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/kvm.conf
+%else
+%ifarch %{ix86} x86_64
+    install -D -p -m 0644 %{SOURCE31} $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/kvm.conf
+%else
+    install -D -p -m 0644 %{SOURCE27} $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/kvm.conf
+%endif
+%endif
+
+mkdir -p $RPM_BUILD_ROOT%{_bindir}/
+mkdir -p $RPM_BUILD_ROOT%{_udevdir}
+
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}
+install -m 0644 scripts/dump-guest-memory.py \
+                $RPM_BUILD_ROOT%{_datadir}/%{name}
+
+make DESTDIR=$RPM_BUILD_ROOT \
+    sharedir="%{_datadir}/%{name}" \
+    datadir="%{_datadir}/%{name}" \
+    install
+
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset
+
+# Install qemu-guest-agent service and udev rules
+install -m 0644 %{_sourcedir}/qemu-guest-agent.service %{buildroot}%{_unitdir}
+install -m 0644 %{_sourcedir}/qemu-ga.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/qemu-ga
+install -m 0644 %{_sourcedir}/99-qemu-guest-agent.rules %{buildroot}%{_udevdir}
+
+# - the fsfreeze hook script:
+install -D --preserve-timestamps \
+            scripts/qemu-guest-agent/fsfreeze-hook \
+            $RPM_BUILD_ROOT%{_sysconfdir}/qemu-ga/fsfreeze-hook
+
+# - the directory for user scripts:
+mkdir $RPM_BUILD_ROOT%{_sysconfdir}/qemu-ga/fsfreeze-hook.d
+
+# - and the fsfreeze script samples:
+mkdir --parents $RPM_BUILD_ROOT%{_datadir}/%{name}/qemu-ga/fsfreeze-hook.d/
+install --preserve-timestamps --mode=0644 \
+             scripts/qemu-guest-agent/fsfreeze-hook.d/*.sample \
+             $RPM_BUILD_ROOT%{_datadir}/%{name}/qemu-ga/fsfreeze-hook.d/
+
+# - Install dedicated log directory:
+mkdir -p -v $RPM_BUILD_ROOT%{_localstatedir}/log/qemu-ga/
+
+mkdir -p $RPM_BUILD_ROOT%{_bindir}
+install -c -m 0755  qemu-ga ${RPM_BUILD_ROOT}%{_bindir}/qemu-ga
+
+mkdir -p $RPM_BUILD_ROOT%{_mandir}/man8
+install -m 0644  qemu-ga.8 ${RPM_BUILD_ROOT}%{_mandir}/man8/
+
+
+install -m 0755 qemu-kvm $RPM_BUILD_ROOT%{_libexecdir}/
+install -m 0644 qemu-kvm.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
+install -m 0644 qemu-kvm-simpletrace.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
+
+rm $RPM_BUILD_ROOT%{_bindir}/qemu-system-%{kvm_target}
+rm $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}.stp
+rm $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}-simpletrace.stp
+
+# Install simpletrace
+install -m 0755 scripts/simpletrace.py $RPM_BUILD_ROOT%{_datadir}/%{name}/simpletrace.py
+# Avoid ambiguous 'python' interpreter name
+sed -i -e '1 s/python/python3/' $RPM_BUILD_ROOT%{_datadir}/%{name}/simpletrace.py
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool
+install -m 0644 -t $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool scripts/tracetool/*.py
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/backend
+install -m 0644 -t $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/backend scripts/tracetool/backend/*.py
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/format
+install -m 0644 -t $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/format scripts/tracetool/format/*.py
+
+mkdir -p $RPM_BUILD_ROOT%{qemudocdir}
+install -p -m 0644 -t ${RPM_BUILD_ROOT}%{qemudocdir} Changelog README README.systemtap COPYING COPYING.LIB LICENSE docs/interop/qmp-spec.txt
+chmod -x ${RPM_BUILD_ROOT}%{_mandir}/man1/*
+chmod -x ${RPM_BUILD_ROOT}%{_mandir}/man8/*
+
+install -D -p -m 0644 qemu.sasl $RPM_BUILD_ROOT%{_sysconfdir}/sasl2/%{name}.conf
+
+# Provided by package openbios
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/openbios-ppc
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/openbios-sparc32
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/openbios-sparc64
+# Provided by package SLOF
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/slof.bin
+
+# Remove unpackaged files.
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/palcode-clipper
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/petalogix*.dtb
+rm -f ${RPM_BUILD_ROOT}%{_datadir}/%{name}/bamboo.dtb
+rm -f ${RPM_BUILD_ROOT}%{_datadir}/%{name}/ppc_rom.bin
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/s390-zipl.rom
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/u-boot.e500
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/qemu_vga.ndrv
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/skiboot.lid
+
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/s390-ccw.img
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/hppa-firmware.img
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/canyonlands.dtb
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/u-boot-sam460-20100605.bin
+
+%ifarch s390x
+    # Use the s390-ccw.img that we've just built, not the pre-built one
+    install -m 0644 pc-bios/s390-ccw/s390-ccw.img $RPM_BUILD_ROOT%{_datadir}/%{name}/
+%else
+    rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/s390-netboot.img
+%endif
+
+%ifnarch %{power64}
+    rm -f ${RPM_BUILD_ROOT}%{_datadir}/%{name}/spapr-rtas.bin
+%endif
+
+%ifnarch x86_64
+    rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/kvmvapic.bin
+    rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/linuxboot.bin
+    rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/multiboot.bin
+%endif
+
+# Remove sparc files
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/QEMU,tcx.bin
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/QEMU,cgthree.bin
+
+# Remove ivshmem example programs
+rm -rf ${RPM_BUILD_ROOT}%{_bindir}/ivshmem-client
+rm -rf ${RPM_BUILD_ROOT}%{_bindir}/ivshmem-server
+
+# Remove efi roms
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/efi*.rom
+
+# Provided by package ipxe
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/pxe*rom
+# Provided by package vgabios
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/vgabios*bin
+# Provided by package seabios
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/bios*.bin
+# Provided by package sgabios
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/sgabios.bin
+
+# the pxe gpxe images will be symlinks to the images on
+# /usr/share/ipxe, as QEMU doesn't know how to look
+# for other paths, yet.
+pxe_link() {
+    ln -s ../ipxe.efi/$2.rom %{buildroot}%{_datadir}/%{name}/efi-$1.rom
+}
+
+%ifnarch aarch64 s390x
+pxe_link e1000 8086100e
+pxe_link ne2k_pci 10ec8029
+pxe_link pcnet 10222000
+pxe_link rtl8139 10ec8139
+pxe_link virtio 1af41000
+pxe_link e1000e 808610d3
+%endif
+
+rom_link() {
+    ln -s $1 %{buildroot}%{_datadir}/%{name}/$2
+}
+
+%ifnarch aarch64 s390x
+  rom_link ../seavgabios/vgabios-isavga.bin vgabios.bin
+  rom_link ../seavgabios/vgabios-cirrus.bin vgabios-cirrus.bin
+  rom_link ../seavgabios/vgabios-qxl.bin vgabios-qxl.bin
+  rom_link ../seavgabios/vgabios-stdvga.bin vgabios-stdvga.bin
+  rom_link ../seavgabios/vgabios-vmware.bin vgabios-vmware.bin
+  rom_link ../seavgabios/vgabios-virtio.bin vgabios-virtio.bin
+%endif
+%ifarch x86_64
+  rom_link ../seabios/bios.bin bios.bin
+  rom_link ../seabios/bios-256k.bin bios-256k.bin
+  rom_link ../sgabios/sgabios.bin sgabios.bin
+%endif
+
+%if 0%{have_kvm_setup}
+    install -D -p -m 755 %{SOURCE21} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/kvm-setup
+    install -D -p -m 644 %{SOURCE22} $RPM_BUILD_ROOT%{_unitdir}/kvm-setup.service
+    install -D -p -m 644 %{SOURCE23} $RPM_BUILD_ROOT%{_presetdir}/85-kvm.preset
+%endif
+
+%if 0%{have_memlock_limits}
+    install -D -p -m 644 %{SOURCE28} $RPM_BUILD_ROOT%{_sysconfdir}/security/limits.d/95-kvm-memlock.conf
+%endif
+
+# Install rules to use the bridge helper with libvirt's virbr0
+install -D -m 0644 %{SOURCE12} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/bridge.conf
+
+# Install qemu-pr-helper service
+install -m 0644 %{_sourcedir}/qemu-pr-helper.service %{buildroot}%{_unitdir}
+install -m 0644 %{_sourcedir}/qemu-pr-helper.socket %{buildroot}%{_unitdir}
+
+%if 0
+make %{?_smp_mflags} $buildldflags DESTDIR=$RPM_BUILD_ROOT install-libcacard
+
+find $RPM_BUILD_ROOT -name "libcacard.so*" -exec chmod +x \{\} \;
+%endif
+
+find $RPM_BUILD_ROOT -name '*.la' -or -name '*.a' | xargs rm -f
+
+# We need to make the block device modules executable else
+# RPM won't pick up their dependencies.
+chmod +x $RPM_BUILD_ROOT%{_libdir}/qemu-kvm/block-*.so
+
+%check
+export DIFF=diff; make check V=1
+
+%post -n qemu-kvm-core
+# load kvm modules now, so we can make sure no reboot is needed.
+# If there's already a kvm module installed, we don't mess with it
+%udev_rules_update
+sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
+    udevadm trigger --subsystem-match=misc --sysname-match=kvm --action=add || :
+%if %{have_kvm_setup}
+    systemctl daemon-reload # Make sure it sees the new presets and unitfile
+    %systemd_post kvm-setup.service
+    if systemctl is-enabled kvm-setup.service > /dev/null; then
+        systemctl start kvm-setup.service
+    fi
+%endif
+
+%post -n qemu-kvm-common
+%systemd_post ksm.service
+%systemd_post ksmtuned.service
+
+getent group kvm >/dev/null || groupadd -g 36 -r kvm
+getent group qemu >/dev/null || groupadd -g 107 -r qemu
+getent passwd qemu >/dev/null || \
+useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
+  -c "qemu user" qemu
+
+%preun -n qemu-kvm-common
+%systemd_preun ksm.service
+%systemd_preun ksmtuned.service
+
+%postun -n qemu-kvm-common
+%systemd_postun_with_restart ksm.service
+%systemd_postun_with_restart ksmtuned.service
+
+%global qemu_kvm_files \
+%{_libexecdir}/qemu-kvm \
+%{_datadir}/systemtap/tapset/qemu-kvm.stp \
+%{_datadir}/%{name}/trace-events-all \
+%{_datadir}/systemtap/tapset/qemu-kvm-simpletrace.stp \
+%{_datadir}/%{name}/systemtap/script.d/qemu_kvm.stp \
+%{_datadir}/%{name}/systemtap/conf.d/qemu_kvm.conf
+
+%files
+# Deliberately empty
+
+
+%files -n qemu-kvm-common
+%defattr(-,root,root)
+%dir %{qemudocdir}
+%doc %{qemudocdir}/Changelog
+%doc %{qemudocdir}/README
+%doc %{qemudocdir}/qemu-doc.html
+%doc %{qemudocdir}/COPYING
+%doc %{qemudocdir}/COPYING.LIB
+%doc %{qemudocdir}/LICENSE
+%doc %{qemudocdir}/README.systemtap
+%doc %{qemudocdir}/qmp-spec.txt
+%doc %{qemudocdir}/qemu-doc.txt
+%doc %{qemudocdir}/qemu-ga-ref.html
+%doc %{qemudocdir}/qemu-ga-ref.txt
+%doc %{qemudocdir}/qemu-qmp-ref.html
+%doc %{qemudocdir}/qemu-qmp-ref.txt
+%{_mandir}/man7/qemu-qmp-ref.7*
+%{_bindir}/qemu-keymap
+%{_bindir}/qemu-pr-helper
+%{_unitdir}/qemu-pr-helper.service
+%{_unitdir}/qemu-pr-helper.socket
+%{_mandir}/man7/qemu-ga-ref.7*
+
+%dir %{_datadir}/%{name}/
+%{_datadir}/%{name}/keymaps/
+%{_mandir}/man1/%{name}.1*
+%{_mandir}/man7/qemu-block-drivers.7*
+%attr(4755, -, -) %{_libexecdir}/qemu-bridge-helper
+%config(noreplace) %{_sysconfdir}/sasl2/%{name}.conf
+%{_unitdir}/ksm.service
+%{_libexecdir}/ksmctl
+%config(noreplace) %{_sysconfdir}/sysconfig/ksm
+%{_unitdir}/ksmtuned.service
+%{_sbindir}/ksmtuned
+%config(noreplace) %{_sysconfdir}/ksmtuned.conf
+%dir %{_sysconfdir}/%{name}
+%config(noreplace) %{_sysconfdir}/%{name}/bridge.conf
+%config(noreplace) %{_sysconfdir}/modprobe.d/vhost.conf
+%config(noreplace) %{_sysconfdir}/modprobe.d/kvm.conf
+%{_datadir}/%{name}/simpletrace.py*
+%{_datadir}/%{name}/tracetool/*.py*
+%{_datadir}/%{name}/tracetool/backend/*.py*
+%{_datadir}/%{name}/tracetool/format/*.py*
+
+%files -n qemu-kvm-core
+%defattr(-,root,root)
+%ifarch x86_64
+    %{_datadir}/%{name}/bios.bin
+    %{_datadir}/%{name}/bios-256k.bin
+    %{_datadir}/%{name}/linuxboot.bin
+    %{_datadir}/%{name}/multiboot.bin
+    %{_datadir}/%{name}/kvmvapic.bin
+    %{_datadir}/%{name}/sgabios.bin
+%endif
+%ifarch s390x
+    %{_datadir}/%{name}/s390-ccw.img
+    %{_datadir}/%{name}/s390-netboot.img
+%endif
+%ifnarch aarch64 s390x
+    %{_datadir}/%{name}/vgabios.bin
+    %{_datadir}/%{name}/vgabios-cirrus.bin
+    %{_datadir}/%{name}/vgabios-qxl.bin
+    %{_datadir}/%{name}/vgabios-stdvga.bin
+    %{_datadir}/%{name}/vgabios-vmware.bin
+    %{_datadir}/%{name}/vgabios-virtio.bin
+    %{_datadir}/%{name}/efi-e1000.rom
+    %{_datadir}/%{name}/efi-e1000e.rom
+    %{_datadir}/%{name}/efi-virtio.rom
+    %{_datadir}/%{name}/efi-pcnet.rom
+    %{_datadir}/%{name}/efi-rtl8139.rom
+    %{_datadir}/%{name}/efi-ne2k_pci.rom
+%endif
+%{_datadir}/%{name}/qemu-icon.bmp
+%{_datadir}/%{name}/qemu_logo_no_text.svg
+%{_datadir}/%{name}/linuxboot_dma.bin
+%{_datadir}/%{name}/dump-guest-memory.py*
+%ifarch %{power64}
+    %{_datadir}/%{name}/spapr-rtas.bin
+%endif
+%{?qemu_kvm_files:}
+%if 0%{have_kvm_setup}
+    %{_prefix}/lib/systemd/kvm-setup
+    %{_unitdir}/kvm-setup.service
+    %{_presetdir}/85-kvm.preset
+%endif
+%if 0%{have_memlock_limits}
+    %{_sysconfdir}/security/limits.d/95-kvm-memlock.conf
+%endif
+
+%files -n qemu-img
+%defattr(-,root,root)
+%{_bindir}/qemu-img
+%{_bindir}/qemu-io
+%{_bindir}/qemu-nbd
+%{_mandir}/man1/qemu-img.1*
+%{_mandir}/man8/qemu-nbd.8*
+
+%files -n qemu-guest-agent
+%defattr(-,root,root,-)
+%doc COPYING README
+%{_bindir}/qemu-ga
+%{_mandir}/man8/qemu-ga.8*
+%{_unitdir}/qemu-guest-agent.service
+%{_udevdir}/99-qemu-guest-agent.rules
+%config(noreplace) %{_sysconfdir}/sysconfig/qemu-ga
+%{_sysconfdir}/qemu-ga
+%{_datadir}/%{name}/qemu-ga
+%dir %{_localstatedir}/log/qemu-ga
+
+%files block-curl
+%{_libdir}/qemu-kvm/block-curl.so
+
+%files block-iscsi
+%{_libdir}/qemu-kvm/block-iscsi.so
+
+%files block-rbd
+%{_libdir}/qemu-kvm/block-rbd.so
+
+%files block-ssh
+%{_libdir}/qemu-kvm/block-ssh.so
+
+
+%changelog
+* Fri Oct 12 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.0.0-1.el8
+- Rebase on qemu-kvm 3.0.0
+
+* Fri Oct 05 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-33.el8
+- kvm-migration-postcopy-Clear-have_listen_thread.patch [bz#1608765]
+- kvm-migration-cleanup-in-error-paths-in-loadvm.patch [bz#1608765]
+- kvm-jobs-change-start-callback-to-run-callback.patch [bz#1632939]
+- kvm-jobs-canonize-Error-object.patch [bz#1632939]
+- kvm-jobs-add-exit-shim.patch [bz#1632939]
+- kvm-block-commit-utilize-job_exit-shim.patch [bz#1632939]
+- kvm-block-mirror-utilize-job_exit-shim.patch [bz#1632939]
+- kvm-jobs-utilize-job_exit-shim.patch [bz#1632939]
+- kvm-block-backup-make-function-variables-consistently-na.patch [bz#1632939]
+- kvm-jobs-remove-ret-argument-to-job_completed-privatize-.patch [bz#1632939]
+- kvm-jobs-remove-job_defer_to_main_loop.patch [bz#1632939]
+- kvm-block-commit-add-block-job-creation-flags.patch [bz#1632939]
+- kvm-block-mirror-add-block-job-creation-flags.patch [bz#1632939]
+- kvm-block-stream-add-block-job-creation-flags.patch [bz#1632939]
+- kvm-block-commit-refactor-commit-to-use-job-callbacks.patch [bz#1632939]
+- kvm-block-mirror-don-t-install-backing-chain-on-abort.patch [bz#1632939]
+- kvm-block-mirror-conservative-mirror_exit-refactor.patch [bz#1632939]
+- kvm-block-stream-refactor-stream-to-use-job-callbacks.patch [bz#1632939]
+- kvm-tests-blockjob-replace-Blockjob-with-Job.patch [bz#1632939]
+- kvm-tests-test-blockjob-remove-exit-callback.patch [bz#1632939]
+- kvm-tests-test-blockjob-txn-move-.exit-to-.clean.patch [bz#1632939]
+- kvm-jobs-remove-.exit-callback.patch [bz#1632939]
+- kvm-qapi-block-commit-expose-new-job-properties.patch [bz#1632939]
+- kvm-qapi-block-mirror-expose-new-job-properties.patch [bz#1632939]
+- kvm-qapi-block-stream-expose-new-job-properties.patch [bz#1632939]
+- kvm-block-backup-qapi-documentation-fixup.patch [bz#1632939]
+- kvm-blockdev-document-transactional-shortcomings.patch [bz#1632939]
+- Resolves: bz#1608765
+  (After postcopy migration,  do savevm and loadvm, guest hang and call trace)
+- Resolves: bz#1632939
+  (qemu blockjobs other than backup do not support job-finalize or job-dismiss)
+
+* Fri Sep 28 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-32.el8
+- kvm-Re-enable-disabled-Hyper-V-enlightenments.patch [bz#1625185]
+- kvm-Fix-annocheck-issues.patch [bz#1624164]
+- kvm-exec-check-that-alignment-is-a-power-of-two.patch [bz#1630746]
+- kvm-curl-Make-sslverify-off-disable-host-as-well-as-peer.patch [bz#1575925]
+- Resolves: bz#1575925
+  ("SSL: no alternative certificate subject name matches target host name" error even though sslverify = off)
+- Resolves: bz#1624164
+  (Review annocheck distro flag failures in qemu-kvm)
+- Resolves: bz#1625185
+  (Re-enable disabled Hyper-V enlightenments)
+- Resolves: bz#1630746
+  (qemu_ram_mmap: Assertion `is_power_of_2(align)' failed)
+
+* Tue Sep 11 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-31.el8
+- kvm-i386-Disable-TOPOEXT-by-default-on-cpu-host.patch [bz#1619804]
+- kvm-redhat-enable-opengl-add-build-and-runtime-deps.patch [bz#1618412]
+- Resolves: bz#1618412
+  (Enable opengl (for intel vgpu display))
+- Resolves: bz#1619804
+  (kernel panic in init_amd_cacheinfo)
+
+* Wed Sep 05 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-30.el8
+- kvm-redhat-Disable-vhost-crypto.patch [bz#1625668]
+- Resolves: bz#1625668
+  (Decide if we should disable 'vhost-crypto' or not)
+
+* Wed Sep 05 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-29.el8
+- kvm-target-i386-sev-fix-memory-leaks.patch [bz#1615717]
+- kvm-i386-Fix-arch_query_cpu_model_expansion-leak.patch [bz#1615717]
+- kvm-redhat-Update-build-configuration.patch [bz#1573156]
+- Resolves: bz#1573156
+  (Update build configure for QEMU 2.12.0)
+- Resolves: bz#1615717
+  (Memory leaks)
+
+* Wed Aug 29 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-27.el8
+- kvm-Fix-libusb-1.0.22-deprecated-libusb_set_debug-with-l.patch [bz#1622656]
+- Resolves: bz#1622656
+  (qemu-kvm fails to build due to libusb_set_debug being deprecated)
+
+* Fri Aug 17 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-26.el8
+- kvm-redhat-remove-extra-in-rhel_rhev_conflicts-macro.patch [bz#1618752]
+- Resolves: bz#1618752
+  (qemu-kvm can't be installed in RHEL-8 as it Conflicts with itself.)
+
+* Thu Aug 16 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-25.el8
+- kvm-Migration-TLS-Fix-crash-due-to-double-cleanup.patch [bz#1594384]
+- Resolves: bz#1594384
+  (2.12 migration fixes)
+
+* Tue Aug 14 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-24.el8
+- kvm-Add-qemu-keymap-to-qemu-kvm-common.patch [bz#1593117]
+- Resolves: bz#1593117
+  (add qemu-keymap utility)
+
+* Fri Aug 10 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-23.el8
+- Fixing an issue with some old command in the spec file
+
+* Fri Aug 10 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-22.el8
+- Fix an issue with the build_configure script.
+- Resolves: bz#1425820
+  (Improve QEMU packaging layout with modularization of the block layer)
+
+
+* Fri Aug 10 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-20.el8
+- kvm-migration-stop-compressing-page-in-migration-thread.patch [bz#1594384]
+- kvm-migration-stop-compression-to-allocate-and-free-memo.patch [bz#1594384]
+- kvm-migration-stop-decompression-to-allocate-and-free-me.patch [bz#1594384]
+- kvm-migration-detect-compression-and-decompression-error.patch [bz#1594384]
+- kvm-migration-introduce-control_save_page.patch [bz#1594384]
+- kvm-migration-move-some-code-to-ram_save_host_page.patch [bz#1594384]
+- kvm-migration-move-calling-control_save_page-to-the-comm.patch [bz#1594384]
+- kvm-migration-move-calling-save_zero_page-to-the-common-.patch [bz#1594384]
+- kvm-migration-introduce-save_normal_page.patch [bz#1594384]
+- kvm-migration-remove-ram_save_compressed_page.patch [bz#1594384]
+- kvm-migration-block-dirty-bitmap-fix-memory-leak-in-dirt.patch [bz#1594384]
+- kvm-migration-fix-saving-normal-page-even-if-it-s-been-c.patch [bz#1594384]
+- kvm-migration-update-index-field-when-delete-or-qsort-RD.patch [bz#1594384]
+- kvm-migration-introduce-decompress-error-check.patch [bz#1594384]
+- kvm-migration-Don-t-activate-block-devices-if-using-S.patch [bz#1594384]
+- kvm-migration-not-wait-RDMA_CM_EVENT_DISCONNECTED-event-.patch [bz#1594384]
+- kvm-migration-block-dirty-bitmap-fix-dirty_bitmap_load.patch [bz#1594384]
+- kvm-s390x-add-RHEL-7.6-machine-type-for-ccw.patch [bz#1595718]
+- kvm-s390x-cpumodel-default-enable-bpb-and-ppa15-for-z196.patch [bz#1595718]
+- kvm-linux-headers-asm-s390-kvm.h-header-sync.patch [bz#1612938]
+- kvm-s390x-kvm-add-etoken-facility.patch [bz#1612938]
+- Resolves: bz#1594384
+  (2.12 migration fixes)
+- Resolves: bz#1595718
+  (Add ppa15/bpb to the default cpu model for z196 and higher in the 7.6 s390-ccw-virtio machine)
+- Resolves: bz#1612938
+  (Add etoken support to qemu-kvm for s390x KVM guests)
+
+* Fri Aug 10 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-18.el8
+  Mass import from RHEL 7.6 qemu-kvm-rhev, including fixes to the following BZs:
+
+- kvm-AArch64-Add-virt-rhel7.6-machine-type.patch [bz#1558723]
+- kvm-cpus-Fix-event-order-on-resume-of-stopped-guest.patch [bz#1566153]
+- kvm-qemu-img-Check-post-truncation-size.patch [bz#1523065]
+- kvm-vga-catch-depth-0.patch [bz#1575541]
+- kvm-Fix-x-hv-max-vps-compat-value-for-7.4-machine-type.patch [bz#1583959]
+- kvm-ccid-card-passthru-fix-regression-in-realize.patch [bz#1584984]
+- kvm-Use-4-MB-vram-for-cirrus.patch [bz#1542080]
+- kvm-spapr_pci-Remove-unhelpful-pagesize-warning.patch [bz#1505664]
+- kvm-rpm-Add-nvme-VFIO-driver-to-rw-whitelist.patch [bz#1416180]
+- kvm-qobject-Use-qobject_to-instead-of-type-cast.patch [bz#1557995]
+- kvm-qobject-Ensure-base-is-at-offset-0.patch [bz#1557995]
+- kvm-qobject-use-a-QObjectBase_-struct.patch [bz#1557995]
+- kvm-qobject-Replace-qobject_incref-QINCREF-qobject_decre.patch [bz#1557995]
+- kvm-qobject-Modify-qobject_ref-to-return-obj.patch [bz#1557995]
+- kvm-rbd-Drop-deprecated-drive-parameter-filename.patch [bz#1557995]
+- kvm-iscsi-Drop-deprecated-drive-parameter-filename.patch [bz#1557995]
+- kvm-block-Add-block-specific-QDict-header.patch [bz#1557995]
+- kvm-qobject-Move-block-specific-qdict-code-to-block-qdic.patch [bz#1557995]
+- kvm-block-Fix-blockdev-for-certain-non-string-scalars.patch [bz#1557995]
+- kvm-block-Fix-drive-for-certain-non-string-scalars.patch [bz#1557995]
+- kvm-block-Clean-up-a-misuse-of-qobject_to-in-.bdrv_co_cr.patch [bz#1557995]
+- kvm-block-Factor-out-qobject_input_visitor_new_flat_conf.patch [bz#1557995]
+- kvm-block-Make-remaining-uses-of-qobject-input-visitor-m.patch [bz#1557995]
+- kvm-block-qdict-Simplify-qdict_flatten_qdict.patch [bz#1557995]
+- kvm-block-qdict-Tweak-qdict_flatten_qdict-qdict_flatten_.patch [bz#1557995]
+- kvm-block-qdict-Clean-up-qdict_crumple-a-bit.patch [bz#1557995]
+- kvm-block-qdict-Simplify-qdict_is_list-some.patch [bz#1557995]
+- kvm-check-block-qdict-Rename-qdict_flatten-s-variables-f.patch [bz#1557995]
+- kvm-check-block-qdict-Cover-flattening-of-empty-lists-an.patch [bz#1557995]
+- kvm-block-Fix-blockdev-blockdev-add-for-empty-objects-an.patch [bz#1557995]
+- kvm-rbd-New-parameter-auth-client-required.patch [bz#1557995]
+- kvm-rbd-New-parameter-key-secret.patch [bz#1557995]
+- kvm-block-mirror-honor-ratelimit-again.patch [bz#1572856]
+- kvm-block-mirror-Make-cancel-always-cancel-pre-READY.patch [bz#1572856]
+- kvm-iotests-Add-test-for-cancelling-a-mirror-job.patch [bz#1572856]
+- kvm-iotests-Split-214-off-of-122.patch [bz#1518738]
+- kvm-block-Add-COR-filter-driver.patch [bz#1518738]
+- kvm-block-BLK_PERM_WRITE-includes-._UNCHANGED.patch [bz#1518738]
+- kvm-block-Add-BDRV_REQ_WRITE_UNCHANGED-flag.patch [bz#1518738]
+- kvm-block-Set-BDRV_REQ_WRITE_UNCHANGED-for-COR-writes.patch [bz#1518738]
+- kvm-block-quorum-Support-BDRV_REQ_WRITE_UNCHANGED.patch [bz#1518738]
+- kvm-block-Support-BDRV_REQ_WRITE_UNCHANGED-in-filters.patch [bz#1518738]
+- kvm-iotests-Clean-up-wrap-image-in-197.patch [bz#1518738]
+- kvm-iotests-Copy-197-for-COR-filter-driver.patch [bz#1518738]
+- kvm-iotests-Add-test-for-COR-across-nodes.patch [bz#1518738]
+- kvm-qemu-io-Use-purely-string-blockdev-options.patch [bz#1576598]
+- kvm-qemu-img-Use-only-string-options-in-img_open_opts.patch [bz#1576598]
+- kvm-iotests-Add-test-for-U-force-share-conflicts.patch [bz#1576598]
+- kvm-qemu-io-Drop-command-functions-return-values.patch [bz#1519617]
+- kvm-qemu-io-Let-command-functions-return-error-code.patch [bz#1519617]
+- kvm-qemu-io-Exit-with-error-when-a-command-failed.patch [bz#1519617]
+- kvm-iotests.py-Add-qemu_io_silent.patch [bz#1519617]
+- kvm-iotests-Let-216-make-use-of-qemu-io-s-exit-code.patch [bz#1519617]
+- kvm-qcow2-Repair-OFLAG_COPIED-when-fixing-leaks.patch [bz#1527085]
+- kvm-iotests-Repairing-error-during-snapshot-deletion.patch [bz#1527085]
+- kvm-block-Make-bdrv_is_writable-public.patch [bz#1588039]
+- kvm-qcow2-Do-not-mark-inactive-images-corrupt.patch [bz#1588039]
+- kvm-iotests-Add-case-for-a-corrupted-inactive-image.patch [bz#1588039]
+- kvm-main-loop-drop-spin_counter.patch [bz#1168213]
+- kvm-target-ppc-Factor-out-the-parsing-in-kvmppc_get_cpu_.patch [bz#1560847]
+- kvm-target-ppc-Don-t-require-private-l1d-cache-on-POWER8.patch [bz#1560847]
+- kvm-ppc-spapr_caps-Don-t-disable-cap_cfpc-on-POWER8-by-d.patch [bz#1560847]
+- kvm-qxl-fix-local-renderer-crash.patch [bz#1567733]
+- kvm-qemu-img-Amendment-support-implies-create_opts.patch [bz#1537956]
+- kvm-block-Add-Error-parameter-to-bdrv_amend_options.patch [bz#1537956]
+- kvm-qemu-option-Pull-out-Supported-options-print.patch [bz#1537956]
+- kvm-qemu-img-Add-print_amend_option_help.patch [bz#1537956]
+- kvm-qemu-img-Recognize-no-creation-support-in-o-help.patch [bz#1537956]
+- kvm-iotests-Test-help-option-for-unsupporting-formats.patch [bz#1537956]
+- kvm-iotests-Rework-113.patch [bz#1537956]
+- kvm-qemu-img-Resolve-relative-backing-paths-in-rebase.patch [bz#1569835]
+- kvm-iotests-Add-test-for-rebasing-with-relative-paths.patch [bz#1569835]
+- kvm-qemu-img-Special-post-backing-convert-handling.patch [bz#1527898]
+- kvm-iotests-Test-post-backing-convert-target-behavior.patch [bz#1527898]
+- kvm-migration-calculate-expected_downtime-with-ram_bytes.patch [bz#1564576]
+- kvm-sheepdog-Fix-sd_co_create_opts-memory-leaks.patch [bz#1513543]
+- kvm-qemu-iotests-reduce-chance-of-races-in-185.patch [bz#1513543]
+- kvm-blockjob-do-not-cancel-timer-in-resume.patch [bz#1513543]
+- kvm-nfs-Fix-error-path-in-nfs_options_qdict_to_qapi.patch [bz#1513543]
+- kvm-nfs-Remove-processed-options-from-QDict.patch [bz#1513543]
+- kvm-blockjob-drop-block_job_pause-resume_all.patch [bz#1513543]
+- kvm-blockjob-expose-error-string-via-query.patch [bz#1513543]
+- kvm-blockjob-Fix-assertion-in-block_job_finalize.patch [bz#1513543]
+- kvm-blockjob-Wrappers-for-progress-counter-access.patch [bz#1513543]
+- kvm-blockjob-Move-RateLimit-to-BlockJob.patch [bz#1513543]
+- kvm-blockjob-Implement-block_job_set_speed-centrally.patch [bz#1513543]
+- kvm-blockjob-Introduce-block_job_ratelimit_get_delay.patch [bz#1513543]
+- kvm-blockjob-Add-block_job_driver.patch [bz#1513543]
+- kvm-blockjob-Update-block-job-pause-resume-documentation.patch [bz#1513543]
+- kvm-blockjob-Improve-BlockJobInfo.offset-len-documentati.patch [bz#1513543]
+- kvm-job-Create-Job-JobDriver-and-job_create.patch [bz#1513543]
+- kvm-job-Rename-BlockJobType-into-JobType.patch [bz#1513543]
+- kvm-job-Add-JobDriver.job_type.patch [bz#1513543]
+- kvm-job-Add-job_delete.patch [bz#1513543]
+- kvm-job-Maintain-a-list-of-all-jobs.patch [bz#1513543]
+- kvm-job-Move-state-transitions-to-Job.patch [bz#1513543]
+- kvm-job-Add-reference-counting.patch [bz#1513543]
+- kvm-job-Move-cancelled-to-Job.patch [bz#1513543]
+- kvm-job-Add-Job.aio_context.patch [bz#1513543]
+- kvm-job-Move-defer_to_main_loop-to-Job.patch [bz#1513543]
+- kvm-job-Move-coroutine-and-related-code-to-Job.patch [bz#1513543]
+- kvm-job-Add-job_sleep_ns.patch [bz#1513543]
+- kvm-job-Move-pause-resume-functions-to-Job.patch [bz#1513543]
+- kvm-job-Replace-BlockJob.completed-with-job_is_completed.patch [bz#1513543]
+- kvm-job-Move-BlockJobCreateFlags-to-Job.patch [bz#1513543]
+- kvm-blockjob-Split-block_job_event_pending.patch [bz#1513543]
+- kvm-job-Add-job_event_.patch [bz#1513543]
+- kvm-job-Move-single-job-finalisation-to-Job.patch [bz#1513543]
+- kvm-job-Convert-block_job_cancel_async-to-Job.patch [bz#1513543]
+- kvm-job-Add-job_drain.patch [bz#1513543]
+- kvm-job-Move-.complete-callback-to-Job.patch [bz#1513543]
+- kvm-job-Move-job_finish_sync-to-Job.patch [bz#1513543]
+- kvm-job-Switch-transactions-to-JobTxn.patch [bz#1513543]
+- kvm-job-Move-transactions-to-Job.patch [bz#1513543]
+- kvm-job-Move-completion-and-cancellation-to-Job.patch [bz#1513543]
+- kvm-block-Cancel-job-in-bdrv_close_all-callers.patch [bz#1513543]
+- kvm-job-Add-job_yield.patch [bz#1513543]
+- kvm-job-Add-job_dismiss.patch [bz#1513543]
+- kvm-job-Add-job_is_ready.patch [bz#1513543]
+- kvm-job-Add-job_transition_to_ready.patch [bz#1513543]
+- kvm-job-Move-progress-fields-to-Job.patch [bz#1513543]
+- kvm-job-Introduce-qapi-job.json.patch [bz#1513543]
+- kvm-job-Add-JOB_STATUS_CHANGE-QMP-event.patch [bz#1513543]
+- kvm-job-Add-lifecycle-QMP-commands.patch [bz#1513543]
+- kvm-job-Add-query-jobs-QMP-command.patch [bz#1513543]
+- kvm-blockjob-Remove-BlockJob.driver.patch [bz#1513543]
+- kvm-iotests-Move-qmp_to_opts-to-VM.patch [bz#1513543]
+- kvm-qemu-iotests-Test-job-with-block-jobs.patch [bz#1513543]
+- kvm-vdi-Fix-vdi_co_do_create-return-value.patch [bz#1513543]
+- kvm-vhdx-Fix-vhdx_co_create-return-value.patch [bz#1513543]
+- kvm-job-Add-error-message-for-failing-jobs.patch [bz#1513543]
+- kvm-block-create-Make-x-blockdev-create-a-job.patch [bz#1513543]
+- kvm-qemu-iotests-Add-VM.get_qmp_events_filtered.patch [bz#1513543]
+- kvm-qemu-iotests-Add-VM.qmp_log.patch [bz#1513543]
+- kvm-qemu-iotests-Add-iotests.img_info_log.patch [bz#1513543]
+- kvm-qemu-iotests-Add-VM.run_job.patch [bz#1513543]
+- kvm-qemu-iotests-iotests.py-helper-for-non-file-protocol.patch [bz#1513543]
+- kvm-qemu-iotests-Rewrite-206-for-blockdev-create-job.patch [bz#1513543]
+- kvm-qemu-iotests-Rewrite-207-for-blockdev-create-job.patch [bz#1513543]
+- kvm-qemu-iotests-Rewrite-210-for-blockdev-create-job.patch [bz#1513543]
+- kvm-qemu-iotests-Rewrite-211-for-blockdev-create-job.patch [bz#1513543]
+- kvm-qemu-iotests-Rewrite-212-for-blockdev-create-job.patch [bz#1513543]
+- kvm-qemu-iotests-Rewrite-213-for-blockdev-create-job.patch [bz#1513543]
+- kvm-block-create-Mark-blockdev-create-stable.patch [bz#1513543]
+- kvm-jobs-fix-stale-wording.patch [bz#1513543]
+- kvm-jobs-fix-verb-references-in-docs.patch [bz#1513543]
+- kvm-iotests-Fix-219-s-timing.patch [bz#1513543]
+- kvm-iotests-improve-pause_job.patch [bz#1513543]
+- kvm-rpm-Whitelist-copy-on-read-block-driver.patch [bz#1518738]
+- kvm-rpm-add-throttle-driver-to-rw-whitelist.patch [bz#1591076]
+- kvm-usb-host-skip-open-on-pending-postload-bh.patch [bz#1572851]
+- kvm-i386-Define-the-Virt-SSBD-MSR-and-handling-of-it-CVE.patch [bz#1574216]
+- kvm-i386-define-the-AMD-virt-ssbd-CPUID-feature-bit-CVE-.patch [bz#1574216]
+- kvm-block-file-posix-Pass-FD-to-locking-helpers.patch [bz#1519144]
+- kvm-block-file-posix-File-locking-during-creation.patch [bz#1519144]
+- kvm-iotests-Add-creation-test-to-153.patch [bz#1519144]
+- kvm-vhost-user-add-Net-prefix-to-internal-state-structur.patch [bz#1526645]
+- kvm-virtio-support-setting-memory-region-based-host-noti.patch [bz#1526645]
+- kvm-vhost-user-support-receiving-file-descriptors-in-sla.patch [bz#1526645]
+- kvm-osdep-add-wait.h-compat-macros.patch [bz#1526645]
+- kvm-vhost-user-bridge-support-host-notifier.patch [bz#1526645]
+- kvm-vhost-allow-backends-to-filter-memory-sections.patch [bz#1526645]
+- kvm-vhost-user-allow-slave-to-send-fds-via-slave-channel.patch [bz#1526645]
+- kvm-vhost-user-introduce-shared-vhost-user-state.patch [bz#1526645]
+- kvm-vhost-user-support-registering-external-host-notifie.patch [bz#1526645]
+- kvm-libvhost-user-support-host-notifier.patch [bz#1526645]
+- kvm-block-Introduce-API-for-copy-offloading.patch [bz#1482537]
+- kvm-raw-Check-byte-range-uniformly.patch [bz#1482537]
+- kvm-raw-Implement-copy-offloading.patch [bz#1482537]
+- kvm-qcow2-Implement-copy-offloading.patch [bz#1482537]
+- kvm-file-posix-Implement-bdrv_co_copy_range.patch [bz#1482537]
+- kvm-iscsi-Query-and-save-device-designator-when-opening.patch [bz#1482537]
+- kvm-iscsi-Create-and-use-iscsi_co_wait_for_task.patch [bz#1482537]
+- kvm-iscsi-Implement-copy-offloading.patch [bz#1482537]
+- kvm-block-backend-Add-blk_co_copy_range.patch [bz#1482537]
+- kvm-qemu-img-Convert-with-copy-offloading.patch [bz#1482537]
+- kvm-qcow2-Fix-src_offset-in-copy-offloading.patch [bz#1482537]
+- kvm-iscsi-Don-t-blindly-use-designator-length-in-respons.patch [bz#1482537]
+- kvm-file-posix-Fix-EINTR-handling.patch [bz#1482537]
+- kvm-usb-storage-Add-rerror-werror-properties.patch [bz#1595180]
+- kvm-numa-clarify-error-message-when-node-index-is-out-of.patch [bz#1578381]
+- kvm-qemu-iotests-Update-026.out.nocache-reference-output.patch [bz#1528541]
+- kvm-qcow2-Free-allocated-clusters-on-write-error.patch [bz#1528541]
+- kvm-qemu-iotests-Test-qcow2-not-leaking-clusters-on-writ.patch [bz#1528541]
+- kvm-qemu-options-Add-missing-newline-to-accel-help-text.patch [bz#1586313]
+- kvm-xhci-fix-guest-triggerable-assert.patch [bz#1594135]
+- kvm-virtio-gpu-tweak-scanout-disable.patch [bz#1589634]
+- kvm-virtio-gpu-update-old-resource-too.patch [bz#1589634]
+- kvm-virtio-gpu-disable-scanout-when-backing-resource-is-.patch [bz#1589634]
+- kvm-block-Don-t-silently-truncate-node-names.patch [bz#1549654]
+- kvm-pr-helper-fix-socket-path-default-in-help.patch [bz#1533158]
+- kvm-pr-helper-fix-assertion-failure-on-failed-multipath-.patch [bz#1533158]
+- kvm-pr-manager-helper-avoid-SIGSEGV-when-writing-to-the-.patch [bz#1533158]
+- kvm-pr-manager-put-stubs-in-.c-file.patch [bz#1533158]
+- kvm-pr-manager-add-query-pr-managers-QMP-command.patch [bz#1533158]
+- kvm-pr-manager-helper-report-event-on-connection-disconn.patch [bz#1533158]
+- kvm-pr-helper-avoid-error-on-PR-IN-command-with-zero-req.patch [bz#1533158]
+- kvm-pr-helper-Rework-socket-path-handling.patch [bz#1533158]
+- kvm-pr-manager-helper-fix-memory-leak-on-event.patch [bz#1533158]
+- kvm-object-fix-OBJ_PROP_LINK_UNREF_ON_RELEASE-ambivalenc.patch [bz#1556678]
+- kvm-usb-hcd-xhci-test-add-a-test-for-ccid-hotplug.patch [bz#1556678]
+- kvm-Revert-usb-release-the-created-buses.patch [bz#1556678]
+- kvm-file-posix-Fix-creation-locking.patch [bz#1599335]
+- kvm-file-posix-Unlock-FD-after-creation.patch [bz#1599335]
+- kvm-ahci-trim-signatures-on-raise-lower.patch [bz#1584914]
+- kvm-ahci-fix-PxCI-register-race.patch [bz#1584914]
+- kvm-ahci-don-t-schedule-unnecessary-BH.patch [bz#1584914]
+- kvm-qcow2-Fix-qcow2_truncate-error-return-value.patch [bz#1595173]
+- kvm-block-Convert-.bdrv_truncate-callback-to-coroutine_f.patch [bz#1595173]
+- kvm-qcow2-Remove-coroutine-trampoline-for-preallocate_co.patch [bz#1595173]
+- kvm-block-Move-bdrv_truncate-implementation-to-io.c.patch [bz#1595173]
+- kvm-block-Use-tracked-request-for-truncate.patch [bz#1595173]
+- kvm-file-posix-Make-.bdrv_co_truncate-asynchronous.patch [bz#1595173]
+- kvm-block-Fix-copy-on-read-crash-with-partial-final-clus.patch [bz#1590640]
+- kvm-block-fix-QEMU-crash-with-scsi-hd-and-drive_del.patch [bz#1599515]
+- kvm-virtio-rng-process-pending-requests-on-DRIVER_OK.patch [bz#1576743]
+- kvm-file-posix-specify-expected-filetypes.patch [bz#1525829]
+- kvm-iotests-add-test-226-for-file-driver-types.patch [bz#1525829]
+- kvm-block-dirty-bitmap-add-lock-to-bdrv_enable-disable_d.patch [bz#1207657]
+- kvm-qapi-add-x-block-dirty-bitmap-enable-disable.patch [bz#1207657]
+- kvm-qmp-transaction-support-for-x-block-dirty-bitmap-ena.patch [bz#1207657]
+- kvm-qapi-add-x-block-dirty-bitmap-merge.patch [bz#1207657]
+- kvm-qapi-add-disabled-parameter-to-block-dirty-bitmap-ad.patch [bz#1207657]
+- kvm-block-dirty-bitmap-add-bdrv_enable_dirty_bitmap_lock.patch [bz#1207657]
+- kvm-dirty-bitmap-fix-double-lock-on-bitmap-enabling.patch [bz#1207657]
+- kvm-block-qcow2-bitmap-fix-free_bitmap_clusters.patch [bz#1207657]
+- kvm-qcow2-add-overlap-check-for-bitmap-directory.patch [bz#1207657]
+- kvm-blockdev-enable-non-root-nodes-for-backup-source.patch [bz#1207657]
+- kvm-iotests-add-222-to-test-basic-fleecing.patch [bz#1207657]
+- kvm-qcow2-Remove-dead-check-on-ret.patch [bz#1207657]
+- kvm-block-Move-request-tracking-to-children-in-copy-offl.patch [bz#1207657]
+- kvm-block-Fix-parameter-checking-in-bdrv_co_copy_range_i.patch [bz#1207657]
+- kvm-block-Honour-BDRV_REQ_NO_SERIALISING-in-copy-range.patch [bz#1207657]
+- kvm-backup-Use-copy-offloading.patch [bz#1207657]
+- kvm-block-backup-disable-copy-offloading-for-backup.patch [bz#1207657]
+- kvm-iotests-222-Don-t-run-with-luks.patch [bz#1207657]
+- kvm-block-io-fix-copy_range.patch [bz#1207657]
+- kvm-block-split-flags-in-copy_range.patch [bz#1207657]
+- kvm-block-add-BDRV_REQ_SERIALISING-flag.patch [bz#1207657]
+- kvm-block-backup-fix-fleecing-scheme-use-serialized-writ.patch [bz#1207657]
+- kvm-nbd-server-Reject-0-length-block-status-request.patch [bz#1207657]
+- kvm-nbd-server-fix-trace.patch [bz#1207657]
+- kvm-nbd-server-refactor-NBDExportMetaContexts.patch [bz#1207657]
+- kvm-nbd-server-add-nbd_meta_empty_or_pattern-helper.patch [bz#1207657]
+- kvm-nbd-server-implement-dirty-bitmap-export.patch [bz#1207657]
+- kvm-qapi-new-qmp-command-nbd-server-add-bitmap.patch [bz#1207657]
+- kvm-docs-interop-add-nbd.txt.patch [bz#1207657]
+- kvm-nbd-server-introduce-NBD_CMD_CACHE.patch [bz#1207657]
+- kvm-nbd-server-Silence-gcc-false-positive.patch [bz#1207657]
+- kvm-nbd-server-Fix-dirty-bitmap-logic-regression.patch [bz#1207657]
+- kvm-nbd-server-fix-nbd_co_send_block_status.patch [bz#1207657]
+- kvm-nbd-client-Add-x-dirty-bitmap-to-query-bitmap-from-s.patch [bz#1207657]
+- kvm-iotests-New-test-223-for-exporting-dirty-bitmap-over.patch [bz#1207657]
+- kvm-hw-char-serial-Only-retry-if-qemu_chr_fe_write-retur.patch [bz#1592817]
+- kvm-hw-char-serial-retry-write-if-EAGAIN.patch [bz#1592817]
+- kvm-throttle-groups-fix-hang-when-group-member-leaves.patch [bz#1535914]
+- kvm-Disable-aarch64-devices-reappeared-after-2.12-rebase.patch [bz#1586357]
+- kvm-Disable-split-irq-device.patch [bz#1586357]
+- kvm-Disable-AT24Cx-i2c-eeprom.patch [bz#1586357]
+- kvm-Disable-CAN-bus-devices.patch [bz#1586357]
+- kvm-Disable-new-superio-devices.patch [bz#1586357]
+- kvm-Disable-new-pvrdma-device.patch [bz#1586357]
+- kvm-qdev-add-HotplugHandler-post_plug-callback.patch [bz#1607891]
+- kvm-virtio-scsi-fix-hotplug-reset-vs-event-race.patch [bz#1607891]
+- kvm-e1000-Fix-tso_props-compat-for-82540em.patch [bz#1608778]
+- kvm-slirp-correct-size-computation-while-concatenating-m.patch [bz#1586255]
+- kvm-s390x-sclp-fix-maxram-calculation.patch [bz#1595740]
+- kvm-redhat-Make-gitpublish-profile-the-default-one.patch [bz#1425820]
+- Resolves: bz#1168213
+  (main-loop: WARNING: I/O thread spun for 1000 iterations while doing stream block device.)
+- Resolves: bz#1207657
+  (RFE: QEMU Incremental live backup - push and pull modes)
+- Resolves: bz#1416180
+  (QEMU VFIO based block driver for NVMe devices)
+- Resolves: bz#1425820
+  (Improve QEMU packaging layout with modularization of the block layer)
+- Resolves: bz#1482537
+  ([RFE] qemu-img copy-offloading (convert command))
+- Resolves: bz#1505664
+  ("qemu-kvm: System page size 0x1000000 is not enabled in page_size_mask (0x11000). Performance may be slow" show up while using hugepage as guest's memory)
+- Resolves: bz#1513543
+  ([RFE] Add block job to create format on a storage device)
+- Resolves: bz#1518738
+  (Add 'copy-on-read' filter driver for use with blockdev-add)
+- Resolves: bz#1519144
+  (qemu-img: image locking doesn't cover image creation)
+- Resolves: bz#1519617
+  (The exit code should be non-zero when qemu-io reports an error)
+- Resolves: bz#1523065
+  ("qemu-img resize" should fail to decrease the size of logical partition/lvm/iSCSI image with raw format)
+- Resolves: bz#1525829
+  (can not boot up a scsi-block passthrough disk via -blockdev with error "cannot get SG_IO version number: Operation not supported.  Is this a SCSI device?")
+- Resolves: bz#1526645
+  ([Intel 7.6 FEAT] vHost Data Plane Acceleration (vDPA) - vhost user client - qemu-kvm-rhev)
+- Resolves: bz#1527085
+  (The copied flag should be updated during  '-r leaks')
+- Resolves: bz#1527898
+  ([RFE] qemu-img should leave cluster unallocated if it's read as zero throughout the backing chain)
+- Resolves: bz#1528541
+  (qemu-img check reports tons of leaked clusters after re-start nfs service to resume writing data in guest)
+- Resolves: bz#1533158
+  (QEMU support for libvirtd restarting qemu-pr-helper)
+- Resolves: bz#1535914
+  (Disable io throttling for one member disk of a group during io will induce the other one hang with io)
+- Resolves: bz#1537956
+  (RFE: qemu-img amend should list the true supported options)
+- Resolves: bz#1542080
+  (Qemu core dump at cirrus_invalidate_region)
+- Resolves: bz#1549654
+  (Reject node-names which would be truncated by the block layer commands)
+- Resolves: bz#1556678
+  (Hot plug usb-ccid for the 2nd time with the same ID as the 1st time failed)
+- Resolves: bz#1557995
+  (QAPI schema for RBD storage misses the 'password-secret' option)
+- Resolves: bz#1558723
+  (Create RHEL-7.6 QEMU machine type for AArch64)
+- Resolves: bz#1560847
+  ([Power8][FW b0320a_1812.861][rhel7.5rc2 3.10.0-861.el7.ppc64le][qemu-kvm-{ma,rhev}-2.10.0-21.el7_5.1.ppc64le] KVM guest does not default to ori type flush even with pseries-rhel7.5.0-sxxm)
+- Resolves: bz#1564576
+  (Pegas 1.1 - Require to backport qemu-kvm patch that fixes expected_downtime calculation during migration)
+- Resolves: bz#1566153
+  (IOERROR pause code lost after resuming a VM while I/O error is still present)
+- Resolves: bz#1567733
+  (qemu abort when migrate during guest reboot)
+- Resolves: bz#1569835
+  (qemu-img get wrong backing file path after rebasing image with relative path)
+- Resolves: bz#1572851
+  (Core dumped after migration when with usb-host)
+- Resolves: bz#1572856
+  ('block-job-cancel' can not cancel a "drive-mirror" job)
+- Resolves: bz#1574216
+  (CVE-2018-3639 qemu-kvm-rhev: hw: cpu: speculative store bypass [rhel-7.6])
+- Resolves: bz#1575541
+  (qemu core dump while installing win10 guest)
+- Resolves: bz#1576598
+  (Segfault in qemu-io and qemu-img with -U --image-opts force-share=off)
+- Resolves: bz#1576743
+  (virtio-rng hangs when running on recent (2.x) QEMU versions)
+- Resolves: bz#1578381
+  (Error message need update when specify numa distance with node index >=128)
+- Resolves: bz#1583959
+  (Incorrect vcpu count limit for 7.4 machine types for windows guests)
+- Resolves: bz#1584914
+  (SATA emulator lags and hangs)
+- Resolves: bz#1584984
+  (Vm starts failed with 'passthrough' smartcard)
+- Resolves: bz#1586255
+  (CVE-2018-11806 qemu-kvm-rhev: QEMU: slirp: heap buffer overflow while reassembling fragmented datagrams [rhel-7.6])
+- Resolves: bz#1586313
+  (-smp option is not easily found in the output of qemu help)
+- Resolves: bz#1586357
+  (Disable new devices in 2.12)
+- Resolves: bz#1588039
+  (Possible assertion failure in qemu when a corrupted image is used during an incoming migration)
+- Resolves: bz#1589634
+  (Migration failed when rebooting guest with multiple virtio videos)
+- Resolves: bz#1590640
+  (qemu-kvm: block/io.c:1098: bdrv_co_do_copy_on_readv: Assertion `skip_bytes < pnum' failed.)
+- Resolves: bz#1591076
+  (The driver of 'throttle' is not whitelisted)
+- Resolves: bz#1592817
+  (Retrying on serial_xmit if the pipe is broken may compromise the Guest)
+- Resolves: bz#1594135
+  (system_reset many times linux guests cause qemu process Aborted)
+- Resolves: bz#1595173
+  (blockdev-create is blocking)
+- Resolves: bz#1595180
+  (Can't set rerror/werror with usb-storage)
+- Resolves: bz#1595740
+  (RHEL-Alt-7.6 - qemu has error during migration of larger guests)
+- Resolves: bz#1599335
+  (Image creation locking is too tight and is not properly released)
+- Resolves: bz#1599515
+  (qemu core-dump with aio_read via hmp (util/qemu-thread-posix.c:64: qemu_mutex_lock_impl: Assertion `mutex->initialized' failed))
+- Resolves: bz#1607891
+  (Hotplug events are sometimes lost with virtio-scsi + iothread)
+- Resolves: bz#1608778
+  (qemu/migration: migrate failed from RHEL.7.6 to RHEL.7.5 with e1000-82540em)
+
+* Mon Aug 06 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-17.el8
+- kvm-linux-headers-Update-to-include-KVM_CAP_S390_HPAGE_1.patch [bz#1610906]
+- kvm-s390x-Enable-KVM-huge-page-backing-support.patch [bz#1610906]
+- kvm-redhat-s390x-add-hpage-1-to-kvm.conf.patch [bz#1610906]
+- Resolves: bz#1610906
+  ([IBM 8.0 FEAT] KVM: Huge Pages - libhugetlbfs Enablement - qemu-kvm part)
+
+* Tue Jul 31 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-16.el8
+- kvm-spapr-Correct-inverted-test-in-spapr_pc_dimm_node.patch [bz#1601671]
+- kvm-osdep-powerpc64-align-memory-to-allow-2MB-radix-THP-.patch [bz#1601317]
+- kvm-RHEL-8.0-Add-pseries-rhel7.6.0-sxxm-machine-type.patch [bz#1595501]
+- kvm-i386-Helpers-to-encode-cache-information-consistentl.patch [bz#1597739]
+- kvm-i386-Add-cache-information-in-X86CPUDefinition.patch [bz#1597739]
+- kvm-i386-Initialize-cache-information-for-EPYC-family-pr.patch [bz#1597739]
+- kvm-i386-Add-new-property-to-control-cache-info.patch [bz#1597739]
+- kvm-i386-Clean-up-cache-CPUID-code.patch [bz#1597739]
+- kvm-i386-Populate-AMD-Processor-Cache-Information-for-cp.patch [bz#1597739]
+- kvm-i386-Add-support-for-CPUID_8000_001E-for-AMD.patch [bz#1597739]
+- kvm-i386-Fix-up-the-Node-id-for-CPUID_8000_001E.patch [bz#1597739]
+- kvm-i386-Enable-TOPOEXT-feature-on-AMD-EPYC-CPU.patch [bz#1597739]
+- kvm-i386-Remove-generic-SMT-thread-check.patch [bz#1597739]
+- kvm-i386-Allow-TOPOEXT-to-be-enabled-on-older-kernels.patch [bz#1597739]
+- Resolves: bz#1595501
+  (Create pseries-rhel7.6.0-sxxm machine type)
+- Resolves: bz#1597739
+  (AMD EPYC/Zen SMT support for KVM / QEMU guest (qemu-kvm))
+- Resolves: bz#1601317
+  (RHEL8.0 - qemu patch to align memory to allow 2MB THP)
+- Resolves: bz#1601671
+  (After rebooting guest,all the hot plug memory will be assigned to the 1st numa node.)
+
+* Tue Jul 24 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-15.el8
+- kvm-spapr-Add-ibm-max-associativity-domains-property.patch [bz#1599593]
+- kvm-Revert-spapr-Don-t-allow-memory-hotplug-to-memory-le.patch [bz#1599593]
+- kvm-simpletrace-Convert-name-from-mapping-record-to-str.patch [bz#1594969]
+- kvm-tests-fix-TLS-handshake-failure-with-TLS-1.3.patch [bz#1602403]
+- Resolves: bz#1594969
+  (simpletrace.py fails when running with Python 3)
+- Resolves: bz#1599593
+  (User can't hotplug memory to less memory numa node on rhel8)
+- Resolves: bz#1602403
+  (test-crypto-tlssession unit test fails with assertions)
+
+* Mon Jul 09 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-14.el8
+- kvm-vfio-pci-Default-display-option-to-off.patch [bz#1590511]
+- kvm-python-futurize-f-libfuturize.fixes.fix_print_with_i.patch [bz#1571533]
+- kvm-python-futurize-f-lib2to3.fixes.fix_except.patch [bz#1571533]
+- kvm-Revert-Defining-a-shebang-for-python-scripts.patch [bz#1571533]
+- kvm-spec-Fix-ambiguous-python-interpreter-name.patch [bz#1571533]
+- kvm-qemu-ga-blacklisting-guest-exec-and-guest-exec-statu.patch [bz#1518132]
+- kvm-redhat-rewrap-build_configure.sh-cmdline-for-the-rh-.patch []
+- kvm-redhat-remove-the-VTD-LIVE_BLOCK_OPS-and-RHV-options.patch []
+- kvm-redhat-fix-the-rh-env-prep-target-s-dependency-on-th.patch []
+- kvm-redhat-remove-dead-code-related-to-s390-not-s390x.patch []
+- kvm-redhat-sync-compiler-flags-from-the-spec-file-to-rh-.patch []
+- kvm-redhat-sync-guest-agent-enablement-and-tcmalloc-usag.patch []
+- kvm-redhat-fix-up-Python-3-dependency-for-building-QEMU.patch []
+- kvm-redhat-fix-up-Python-dependency-for-SRPM-generation.patch []
+- kvm-redhat-disable-glusterfs-dependency-support-temporar.patch []
+- Resolves: bz#1518132
+  (Ensure file access RPCs are disabled by default)
+- Resolves: bz#1571533
+  (Convert qemu-kvm python scripts to python3)
+- Resolves: bz#1590511
+  (Fails to start guest with Intel vGPU device)
+
+* Thu Jun 21 2018 Danilo C. L. de Paula <ddepaula@redhat.com> - 2.12.0-13.el8
+- Resolves: bz#1508137
+  ([IBM 8.0 FEAT] KVM: Interactive Bootloader (qemu))
+- Resolves: bz#1513558
+  (Remove RHEL6 machine types)
+- Resolves: bz#1568600
+  (pc-i440fx-rhel7.6.0 and pc-q35-rhel7.6.0 machine types (x86))
+- Resolves: bz#1570029
+  ([IBM 8.0 FEAT] KVM: 3270 Connectivity - qemu part)
+- Resolves: bz#1578855
+  (Enable Native Ceph support on non x86_64 CPUs)
+- Resolves: bz#1585651
+  (RHEL 7.6 new pseries machine type (ppc64le))
+- Resolves: bz#1592337
+  ([IBM 8.0 FEAT] KVM: CPU Model z14 ZR1 (qemu-kvm))
+
+* Tue May 15 2018 Danilo C. L. de Paula <ddepaula@redhat.com> - 2.12.0-11.el8.1
+- Resolves: bz#1576468
+  (Enable vhost_user in qemu-kvm 2.12)
+
+* Wed May 09 2018 Danilo de Paula <ddepaula@redhat.com> - 2.12.0-11.el8
+- Resolves: bz#1574406
+  ([RHEL 8][qemu-kvm] Failed to find romfile "efi-virtio.rom")
+- Resolves: bz#1569675
+  (Backwards compatibility of pc-*-rhel7.5.0 and older machine-types)
+- Resolves: bz#1576045
+  (Fix build issue by using python3)
+- Resolves: bz#1571145
+  (qemu-kvm segfaults on RHEL 8 when run guestfsd under TCG)
+
+* Fri Apr 20 2018 Danilo de Paula <ddepaula@redhat.com> - 2.12.0-10.el
+- Fixing some issues with packaging.
+- Rebasing to 2.12.0-rc4
+
+* Fri Apr 13 2018 Danilo de Paula <ddepaula@redhat.com> - 2.11.0-7.el8
+- Bumping epoch for RHEL8 and dropping self-obsoleting
+
+* Thu Apr 12 2018 Danilo de Paula <ddepaula@redhat.com> - 2.11.0-6.el8
+- Rebuilding
+
+* Mon Mar 05 2018 Danilo de Paula <ddepaula@redhat.com> - 2.11.0-5.el8
+- Prepare building on RHEL-8.0
