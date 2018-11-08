@@ -1,0 +1,185 @@
+From da9c980b19783915f8675894b88da631f27dd34d Mon Sep 17 00:00:00 2001
+From: Igor Mammedov <imammedo@redhat.com>
+Date: Fri, 5 Oct 2018 12:59:47 +0100
+Subject: memory: cleanup side effects of memory_region_init_foo() on failure
+
+RH-Author: Igor Mammedov <imammedo@redhat.com>
+Message-id: <1538744387-84898-1-git-send-email-imammedo@redhat.com>
+Patchwork-id: 82391
+O-Subject: [RHEL-8 qemu-kvm PATCH] memory: cleanup side effects of memory_region_init_foo() on failure
+Bugzilla: 1600365
+RH-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Pankaj Gupta <pagupta@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1600365
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=18658506
+
+if MemoryRegion intialization fails it's left in semi-initialized state,
+where it's size is not 0 and attached as child to owner object.
+And this leds to crash in following use-case:
+    (monitor) object_add memory-backend-file,id=mem1,size=99999G,mem-path=/tmp/foo,discard-data=yes
+    memory.c:2083: memory_region_get_ram_ptr: Assertion `mr->ram_block' failed
+    Aborted (core dumped)
+it happens due to assumption that memory region is intialized when
+   memory_region_size() != 0
+and therefore it's ok to access it in
+   file_backend_unparent()
+      if (memory_region_size() != 0)
+          memory_region_get_ram_ptr()
+
+which happens when object_add fails and unparents failed backend making
+file_backend_unparent() access invalid memory region.
+
+Fix it by making sure that memory_region_init_foo() APIs cleanup externally
+visible side effects on failure (like set size to 0 and unparenting object)
+
+Signed-off-by: Igor Mammedov <imammedo@redhat.com>
+Message-Id: <1536064777-42312-1-git-send-email-imammedo@redhat.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+(cherry picked from commit 1cd3d492624da399d66c4c3e6a5eabb8f96bb0a2)
+Signed-off-by: Igor Mammedov <imammedo@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+
+Conflicts:
+	memory.c
+          due missing (cbfc01710 "memory, exec: switch file ram allocation functions to 'flags' parameters")
+          not related to the patch signature mismatch of
+           qemu_ram_alloc_from_file()/qemu_ram_alloc_from_fd()
+---
+ memory.c | 48 ++++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 42 insertions(+), 6 deletions(-)
+
+diff --git a/memory.c b/memory.c
+index e9cd446..88c75d8 100644
+--- a/memory.c
++++ b/memory.c
+@@ -1518,12 +1518,18 @@ void memory_region_init_ram_shared_nomigrate(MemoryRegion *mr,
+                                              bool share,
+                                              Error **errp)
+ {
++    Error *err = NULL;
+     memory_region_init(mr, owner, name, size);
+     mr->ram = true;
+     mr->terminates = true;
+     mr->destructor = memory_region_destructor_ram;
+-    mr->ram_block = qemu_ram_alloc(size, share, mr, errp);
++    mr->ram_block = qemu_ram_alloc(size, share, mr, &err);
+     mr->dirty_log_mask = tcg_enabled() ? (1 << DIRTY_MEMORY_CODE) : 0;
++    if (err) {
++        mr->size = int128_zero();
++        object_unparent(OBJECT(mr));
++        error_propagate(errp, err);
++    }
+ }
+ 
+ void memory_region_init_resizeable_ram(MemoryRegion *mr,
+@@ -1536,13 +1542,19 @@ void memory_region_init_resizeable_ram(MemoryRegion *mr,
+                                                        void *host),
+                                        Error **errp)
+ {
++    Error *err = NULL;
+     memory_region_init(mr, owner, name, size);
+     mr->ram = true;
+     mr->terminates = true;
+     mr->destructor = memory_region_destructor_ram;
+     mr->ram_block = qemu_ram_alloc_resizeable(size, max_size, resized,
+-                                              mr, errp);
++                                              mr, &err);
+     mr->dirty_log_mask = tcg_enabled() ? (1 << DIRTY_MEMORY_CODE) : 0;
++    if (err) {
++        mr->size = int128_zero();
++        object_unparent(OBJECT(mr));
++        error_propagate(errp, err);
++    }
+ }
+ 
+ #ifdef __linux__
+@@ -1555,13 +1567,19 @@ void memory_region_init_ram_from_file(MemoryRegion *mr,
+                                       const char *path,
+                                       Error **errp)
+ {
++    Error *err = NULL;
+     memory_region_init(mr, owner, name, size);
+     mr->ram = true;
+     mr->terminates = true;
+     mr->destructor = memory_region_destructor_ram;
+     mr->align = align;
+-    mr->ram_block = qemu_ram_alloc_from_file(size, mr, share, path, errp);
++    mr->ram_block = qemu_ram_alloc_from_file(size, mr, share, path, &err);
+     mr->dirty_log_mask = tcg_enabled() ? (1 << DIRTY_MEMORY_CODE) : 0;
++    if (err) {
++        mr->size = int128_zero();
++        object_unparent(OBJECT(mr));
++        error_propagate(errp, err);
++    }
+ }
+ 
+ void memory_region_init_ram_from_fd(MemoryRegion *mr,
+@@ -1572,12 +1590,18 @@ void memory_region_init_ram_from_fd(MemoryRegion *mr,
+                                     int fd,
+                                     Error **errp)
+ {
++    Error *err = NULL;
+     memory_region_init(mr, owner, name, size);
+     mr->ram = true;
+     mr->terminates = true;
+     mr->destructor = memory_region_destructor_ram;
+-    mr->ram_block = qemu_ram_alloc_from_fd(size, mr, share, fd, errp);
++    mr->ram_block = qemu_ram_alloc_from_fd(size, mr, share, fd, &err);
+     mr->dirty_log_mask = tcg_enabled() ? (1 << DIRTY_MEMORY_CODE) : 0;
++    if (err) {
++        mr->size = int128_zero();
++        object_unparent(OBJECT(mr));
++        error_propagate(errp, err);
++    }
+ }
+ #endif
+ 
+@@ -1628,13 +1652,19 @@ void memory_region_init_rom_nomigrate(MemoryRegion *mr,
+                                       uint64_t size,
+                                       Error **errp)
+ {
++    Error *err = NULL;
+     memory_region_init(mr, owner, name, size);
+     mr->ram = true;
+     mr->readonly = true;
+     mr->terminates = true;
+     mr->destructor = memory_region_destructor_ram;
+-    mr->ram_block = qemu_ram_alloc(size, false, mr, errp);
++    mr->ram_block = qemu_ram_alloc(size, false, mr, &err);
+     mr->dirty_log_mask = tcg_enabled() ? (1 << DIRTY_MEMORY_CODE) : 0;
++    if (err) {
++        mr->size = int128_zero();
++        object_unparent(OBJECT(mr));
++        error_propagate(errp, err);
++    }
+ }
+ 
+ void memory_region_init_rom_device_nomigrate(MemoryRegion *mr,
+@@ -1645,6 +1675,7 @@ void memory_region_init_rom_device_nomigrate(MemoryRegion *mr,
+                                              uint64_t size,
+                                              Error **errp)
+ {
++    Error *err = NULL;
+     assert(ops);
+     memory_region_init(mr, owner, name, size);
+     mr->ops = ops;
+@@ -1652,7 +1683,12 @@ void memory_region_init_rom_device_nomigrate(MemoryRegion *mr,
+     mr->terminates = true;
+     mr->rom_device = true;
+     mr->destructor = memory_region_destructor_ram;
+-    mr->ram_block = qemu_ram_alloc(size, false,  mr, errp);
++    mr->ram_block = qemu_ram_alloc(size, false,  mr, &err);
++    if (err) {
++        mr->size = int128_zero();
++        object_unparent(OBJECT(mr));
++        error_propagate(errp, err);
++    }
+ }
+ 
+ void memory_region_init_iommu(void *_iommu_mr,
+-- 
+1.8.3.1
+

@@ -1,0 +1,77 @@
+From 1ed2bb0d831983b68bcdecd057c2c5bfd419c304 Mon Sep 17 00:00:00 2001
+From: Jeffrey Cody <jcody@redhat.com>
+Date: Wed, 26 Sep 2018 04:08:14 +0100
+Subject: curl: Make sslverify=off disable host as well as peer verification.
+
+RH-Author: Jeffrey Cody <jcody@redhat.com>
+Message-id: <543d2f667af465dd809329fcba5175bc974d58d4.1537933576.git.jcody@redhat.com>
+Patchwork-id: 82293
+O-Subject: [RHEL8/rhel qemu-kvm PATCH 1/1] curl: Make sslverify=off disable host as well as peer verification.
+Bugzilla: 1575925
+RH-Acked-by: Richard Jones <rjones@redhat.com>
+RH-Acked-by: John Snow <jsnow@redhat.com>
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+
+From: "Richard W.M. Jones" <rjones@redhat.com>
+
+The sslverify setting is supposed to turn off all TLS certificate
+checks in libcurl.  However because of the way we use it, it only
+turns off peer certificate authenticity checks
+(CURLOPT_SSL_VERIFYPEER).  This patch makes it also turn off the check
+that the server name in the certificate is the same as the server
+you're connecting to (CURLOPT_SSL_VERIFYHOST).
+
+We can use Google's server at 8.8.8.8 which happens to have a bad TLS
+certificate to demonstrate this:
+
+$ ./qemu-img create -q -f qcow2 -b 'json: { "file.sslverify": "off", "file.driver": "https", "file.url": "https://8.8.8.8/foo" }' /var/tmp/file.qcow2
+qemu-img: /var/tmp/file.qcow2: CURL: Error opening file: SSL: no alternative certificate subject name matches target host name '8.8.8.8'
+Could not open backing image to determine size.
+
+With this patch applied, qemu-img connects to the server regardless of
+the bad certificate:
+
+$ ./qemu-img create -q -f qcow2 -b 'json: { "file.sslverify": "off", "file.driver": "https", "file.url": "https://8.8.8.8/foo" }' /var/tmp/file.qcow2
+qemu-img: /var/tmp/file.qcow2: CURL: Error opening file: The requested URL returned error: 404 Not Found
+
+(The 404 error is expected because 8.8.8.8 is not actually serving a
+file called "/foo".)
+
+Of course the default (without sslverify=off) remains to always check
+the certificate:
+
+$ ./qemu-img create -q -f qcow2 -b 'json: { "file.driver": "https", "file.url": "https://8.8.8.8/foo" }' /var/tmp/file.qcow2
+qemu-img: /var/tmp/file.qcow2: CURL: Error opening file: SSL: no alternative certificate subject name matches target host name '8.8.8.8'
+Could not open backing image to determine size.
+
+Further information about the two settings is available here:
+
+https://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYPEER.html
+https://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
+
+Signed-off-by: Richard W.M. Jones <rjones@redhat.com>
+Message-id: 20180914095622.19698-1-rjones@redhat.com
+Signed-off-by: Jeff Cody <jcody@redhat.com>
+(cherry picked from commit 637fa44ab80c6b317adf1d117494325a95daad60)
+Signed-off-by: Jeff Cody <jcody@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ block/curl.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/block/curl.c b/block/curl.c
+index 229bb84..fabb2b4 100644
+--- a/block/curl.c
++++ b/block/curl.c
+@@ -483,6 +483,8 @@ static int curl_init_state(BDRVCURLState *s, CURLState *state)
+         curl_easy_setopt(state->curl, CURLOPT_URL, s->url);
+         curl_easy_setopt(state->curl, CURLOPT_SSL_VERIFYPEER,
+                          (long) s->sslverify);
++        curl_easy_setopt(state->curl, CURLOPT_SSL_VERIFYHOST,
++                         s->sslverify ? 2L : 0L);
+         if (s->cookie) {
+             curl_easy_setopt(state->curl, CURLOPT_COOKIE, s->cookie);
+         }
+-- 
+1.8.3.1
+

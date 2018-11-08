@@ -1,0 +1,77 @@
+From ef8bae877ca544af956f8314cdd702d1c62a9b15 Mon Sep 17 00:00:00 2001
+From: Eduardo Otubo <otubo@redhat.com>
+Date: Fri, 28 Sep 2018 07:56:39 +0100
+Subject: seccomp: set the seccomp filter to all threads
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eduardo Otubo <otubo@redhat.com>
+Message-id: <20180928075639.16746-6-otubo@redhat.com>
+Patchwork-id: 82316
+O-Subject: [RHEL-8 qemu-kvm PATCH 5/5] seccomp: set the seccomp filter to all threads
+Bugzilla: 1618356
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+
+From: Marc-André Lureau <marcandre.lureau@redhat.com>
+
+commit 70dfabeaa79ba4d7a3b699abe1a047c8012db114
+Author: Marc-André Lureau <marcandre.lureau@redhat.com>
+Date:   Wed Aug 22 19:02:50 2018 +0200
+
+    seccomp: set the seccomp filter to all threads
+
+    When using "-seccomp on", the seccomp policy is only applied to the
+    main thread, the vcpu worker thread and other worker threads created
+    after seccomp policy is applied; the seccomp policy is not applied to
+    e.g. the RCU thread because it is created before the seccomp policy is
+    applied and SECCOMP_FILTER_FLAG_TSYNC isn't used.
+
+    This can be verified with
+    for task in /proc/`pidof qemu`/task/*; do cat $task/status | grep Secc ; done
+    Seccomp:        2
+    Seccomp:        0
+    Seccomp:        0
+    Seccomp:        2
+    Seccomp:        2
+    Seccomp:        2
+
+    Starting with libseccomp 2.2.0 and kernel >= 3.17, we can use
+    seccomp_attr_set(ctx, > SCMP_FLTATR_CTL_TSYNC, 1) to update the policy
+    on all threads.
+
+    libseccomp requirement was bumped to 2.2.0 in previous patch.
+    libseccomp should fail to set the filter if it can't honour
+    SCMP_FLTATR_CTL_TSYNC (untested), and thus -sandbox will now fail on
+    kernel < 3.17.
+
+    Signed-off-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+    Acked-by: Eduardo Otubo <otubo@redhat.com>
+
+Signed-off-by: Eduardo Otubo <otubo@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ qemu-seccomp.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/qemu-seccomp.c b/qemu-seccomp.c
+index f0c833f..4729eb1 100644
+--- a/qemu-seccomp.c
++++ b/qemu-seccomp.c
+@@ -149,6 +149,11 @@ static int seccomp_start(uint32_t seccomp_opts)
+         goto seccomp_return;
+     }
+ 
++    rc = seccomp_attr_set(ctx, SCMP_FLTATR_CTL_TSYNC, 1);
++    if (rc != 0) {
++        goto seccomp_return;
++    }
++
+     for (i = 0; i < ARRAY_SIZE(blacklist); i++) {
+         if (!(seccomp_opts & blacklist[i].set)) {
+             continue;
+-- 
+1.8.3.1
+

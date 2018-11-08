@@ -1,0 +1,114 @@
+From 3b4526245dcb2daad3a6393b6b129f85f9e2c7a2 Mon Sep 17 00:00:00 2001
+From: David Hildenbrand <david@redhat.com>
+Date: Mon, 6 Aug 2018 14:18:41 +0100
+Subject: s390x: Enable KVM huge page backing support
+
+RH-Author: David Hildenbrand <david@redhat.com>
+Message-id: <20180806141842.23963-3-david@redhat.com>
+Patchwork-id: 81645
+O-Subject: [RHEL-8.0 qemu-kvm PATCH v2 2/3] s390x: Enable KVM huge page backing support
+Bugzilla: 1610906
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
+
+BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1610906
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=17624600
+Upstream: N/A
+
+Kernel part is in kvm/next, scheduled for 4.19. Patch has been reviewed
+upstream but cannot get picked up yet due to the outstanding linux
+header sync. Conflict to upstream patch: We have no units.h, therefore
+we have to unfold "4*KiB" and "1*MiB".
+
+QEMU has had huge page support for a longer time already, but KVM
+memory management under s390x needed some changes to work with huge
+backings.
+
+Now that we have support, let's enable it if requested and
+available. Otherwise we now properly tell the user if there is no
+support and back out instead of failing to run the VM later on.
+
+Signed-off-by: Janosch Frank <frankja@linux.ibm.com>
+Reviewed-by: David Hildenbrand <david@redhat.com>
+Reviewed-by: Thomas Huth <thuth@redhat.com>
+Signed-off-by: David Hildenbrand <david@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ target/s390x/kvm.c | 34 ++++++++++++++++++++++++++++++++--
+ 1 file changed, 32 insertions(+), 2 deletions(-)
+
+diff --git a/target/s390x/kvm.c b/target/s390x/kvm.c
+index bbcbeed..c36ff36f 100644
+--- a/target/s390x/kvm.c
++++ b/target/s390x/kvm.c
+@@ -34,6 +34,7 @@
+ #include "qapi/error.h"
+ #include "qemu/error-report.h"
+ #include "qemu/timer.h"
++#include "qemu/mmap-alloc.h"
+ #include "sysemu/sysemu.h"
+ #include "sysemu/hw_accel.h"
+ #include "hw/hw.h"
+@@ -139,6 +140,7 @@ static int cap_mem_op;
+ static int cap_s390_irq;
+ static int cap_ri;
+ static int cap_gs;
++static int cap_hpage_1m;
+ 
+ static int active_cmma;
+ 
+@@ -220,9 +222,9 @@ static void kvm_s390_enable_cmma(void)
+         .attr = KVM_S390_VM_MEM_ENABLE_CMMA,
+     };
+ 
+-    if (mem_path) {
++    if (cap_hpage_1m) {
+         warn_report("CMM will not be enabled because it is not "
+-                    "compatible with hugetlbfs.");
++                    "compatible with huge memory backings.");
+         return;
+     }
+     rc = kvm_vm_ioctl(kvm_state, KVM_SET_DEVICE_ATTR, &attr);
+@@ -281,10 +283,38 @@ void kvm_s390_crypto_reset(void)
+     }
+ }
+ 
++static int kvm_s390_configure_mempath_backing(KVMState *s)
++{
++    size_t path_psize = qemu_mempath_getpagesize(mem_path);
++
++    if (path_psize == 4 * 1024) {
++        return 0;
++    }
++
++    if (path_psize != 1024 * 1024) {
++        error_report("Memory backing with 2G pages was specified, "
++                     "but KVM does not support this memory backing");
++        return -EINVAL;
++    }
++
++    if (kvm_vm_enable_cap(s, KVM_CAP_S390_HPAGE_1M, 0)) {
++        error_report("Memory backing with 1M pages was specified, "
++                     "but KVM does not support this memory backing");
++        return -EINVAL;
++    }
++
++    cap_hpage_1m = 1;
++    return 0;
++}
++
+ int kvm_arch_init(MachineState *ms, KVMState *s)
+ {
+     MachineClass *mc = MACHINE_GET_CLASS(ms);
+ 
++    if (mem_path && kvm_s390_configure_mempath_backing(s)) {
++        return -EINVAL;
++    }
++
+     mc->default_cpu_type = S390_CPU_TYPE_NAME("host");
+     cap_sync_regs = kvm_check_extension(s, KVM_CAP_SYNC_REGS);
+     cap_async_pf = kvm_check_extension(s, KVM_CAP_ASYNC_PF);
+-- 
+1.8.3.1
+
