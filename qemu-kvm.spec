@@ -71,8 +71,8 @@ Provides: %1-rhel = %{epoch}:%{version}-%{release}
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
-Version: 3.0.0
-Release: 2%{?dist}
+Version: 3.1.0
+Release: 0%{?dist}.next.candidate
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -86,7 +86,7 @@ ExclusiveArch: x86_64 %{power64} aarch64 s390x
     %define _smp_mflags %{nil}
 %endif
 
-Source0: http://wiki.qemu.org/download/qemu-3.0.0.tar.xz
+Source0: http://wiki.qemu.org/download/qemu-3.1.0.tar.xz
 
 # KSM control scripts
 Source4: ksm.service
@@ -114,107 +114,23 @@ Source35: udev-kvm-check.c
 
 
 
-Patch0004: 0004-Initial-redhat-build.patch
-Patch0005: 0005-Enable-disable-devices-for-RHEL-7.patch
-Patch0006: 0006-Machine-type-related-general-changes.patch
-Patch0007: 0007-Add-aarch64-machine-types.patch
-Patch0008: 0008-Add-ppc64-machine-types.patch
-Patch0009: 0009-Add-s390x-machine-types.patch
-Patch0010: 0010-Add-x86_64-machine-types.patch
-Patch0011: 0011-Enable-make-check.patch
-Patch0012: 0012-Use-kvm-by-default.patch
-Patch0013: 0013-vfio-cap-number-of-devices-that-can-be-assigned.patch
-Patch0014: 0014-Add-support-statement-to-help-output.patch
-Patch0015: 0015-globally-limit-the-maximum-number-of-CPUs.patch
-Patch0016: 0016-Add-support-for-simpletrace.patch
-Patch0017: 0017-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
-Patch0018: 0018-usb-xhci-Fix-PCI-capability-order.patch
-Patch0019: 0019-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
-Patch0020: 0020-linux-headers-asm-s390-kvm.h-header-sync.patch
-Patch0021: 0021-s390x-Enable-KVM-huge-page-backing-support.patch
-Patch0022: 0022-s390x-kvm-add-etoken-facility.patch
-Patch0023: 0023-s390x-cpumodel-default-enable-bpb-and-ppa15-for-z196.patch
-Patch0024: 0024-i386-Fix-arch_query_cpu_model_expansion-leak.patch
-Patch0025: 0025-i386-Disable-TOPOEXT-by-default-on-cpu-host.patch
-Patch0026: 0026-curl-Make-sslverify-off-disable-host-as-well-as-peer.patch
-Patch0027: 0027-migration-postcopy-Clear-have_listen_thread.patch
-Patch0028: 0028-migration-cleanup-in-error-paths-in-loadvm.patch
-Patch0029: 0029-jobs-change-start-callback-to-run-callback.patch
-Patch0030: 0030-jobs-canonize-Error-object.patch
-Patch0031: 0031-jobs-add-exit-shim.patch
-Patch0032: 0032-block-commit-utilize-job_exit-shim.patch
-Patch0033: 0033-block-mirror-utilize-job_exit-shim.patch
-Patch0034: 0034-jobs-utilize-job_exit-shim.patch
-Patch0035: 0035-block-backup-make-function-variables-consistently-na.patch
-Patch0036: 0036-jobs-remove-ret-argument-to-job_completed-privatize-.patch
-Patch0037: 0037-jobs-remove-job_defer_to_main_loop.patch
-Patch0038: 0038-block-commit-add-block-job-creation-flags.patch
-Patch0039: 0039-block-mirror-add-block-job-creation-flags.patch
-Patch0040: 0040-block-stream-add-block-job-creation-flags.patch
-Patch0041: 0041-block-commit-refactor-commit-to-use-job-callbacks.patch
-Patch0042: 0042-block-mirror-don-t-install-backing-chain-on-abort.patch
-Patch0043: 0043-block-mirror-conservative-mirror_exit-refactor.patch
-Patch0044: 0044-block-stream-refactor-stream-to-use-job-callbacks.patch
-Patch0045: 0045-tests-blockjob-replace-Blockjob-with-Job.patch
-Patch0046: 0046-tests-test-blockjob-remove-exit-callback.patch
-Patch0047: 0047-tests-test-blockjob-txn-move-.exit-to-.clean.patch
-Patch0048: 0048-jobs-remove-.exit-callback.patch
-Patch0049: 0049-qapi-block-commit-expose-new-job-properties.patch
-Patch0050: 0050-qapi-block-mirror-expose-new-job-properties.patch
-Patch0051: 0051-qapi-block-stream-expose-new-job-properties.patch
-Patch0052: 0052-block-backup-qapi-documentation-fixup.patch
-Patch0053: 0053-blockdev-document-transactional-shortcomings.patch
-Patch0054: 0054-seccomp-use-SIGSYS-signal-instead-of-killing-the-thr.patch
-Patch0055: 0055-seccomp-prefer-SCMP_ACT_KILL_PROCESS-if-available.patch
-Patch0056: 0056-seccomp-set-the-seccomp-filter-to-all-threads.patch
-Patch0057: 0057-memory-cleanup-side-effects-of-memory_region_init_fo.patch
-Patch0058: 0058-mirror-Fail-gracefully-for-source-target.patch
-Patch0059: 0059-commit-Add-top-node-base-node-options.patch
-Patch0060: 0060-qemu-iotests-Test-commit-with-top-node-base-node.patch
-Patch0061: 0061-block-for-jobs-do-not-clear-user_paused-until-after-.patch
-Patch0062: 0062-block-iotest-to-catch-abort-on-forced-blockjob-cance.patch
-Patch0063: 0063-Revert-hw-acpi-build-build-SRAT-memory-affinity-stru.patch
-Patch0064: 0064-aio-posix-Don-t-count-ctx-notifier-as-progress-when-.patch
-Patch0065: 0065-aio-Do-aio_notify_accept-only-during-blocking-aio_po.patch
-Patch0066: 0066-aio-posix-fix-concurrent-access-to-poll_disable_cnt.patch
-Patch0067: 0067-aio-posix-compute-timeout-before-polling.patch
-Patch0068: 0068-aio-posix-do-skip-system-call-if-ctx-notifier-pollin.patch
-Patch0069: 0069-linux-headers-update.patch
-Patch0070: 0070-s390x-cpumodel-Set-up-CPU-model-for-AP-device-suppor.patch
-Patch0071: 0071-s390x-kvm-enable-AP-instruction-interpretation-for-g.patch
-Patch0072: 0072-s390x-ap-base-Adjunct-Processor-AP-object-model.patch
-Patch0073: 0073-s390x-vfio-ap-Introduce-VFIO-AP-device.patch
-Patch0074: 0074-s390-doc-detailed-specifications-for-AP-virtualizati.patch
-Patch0075: 0075-vnc-call-sasl_server_init-only-when-required.patch
-Patch0076: 0076-nbd-server-fix-NBD_CMD_CACHE.patch
-Patch0077: 0077-nbd-fix-NBD_FLAG_SEND_CACHE-value.patch
-Patch0078: 0078-block-linux-aio-acquire-AioContext-before-qemu_laio_.patch
-Patch0079: 0079-util-async-use-qemu_aio_coroutine_enter-in-co_schedu.patch
-Patch0080: 0080-job-Fix-nested-aio_poll-hanging-in-job_txn_apply.patch
-Patch0081: 0081-job-Fix-missing-locking-due-to-mismerge.patch
-Patch0082: 0082-blockjob-Wake-up-BDS-when-job-becomes-idle.patch
-Patch0083: 0083-aio-wait-Increase-num_waiters-even-in-home-thread.patch
-Patch0084: 0084-test-bdrv-drain-Drain-with-block-jobs-in-an-I-O-thre.patch
-Patch0085: 0085-test-blockjob-Acquire-AioContext-around-job_cancel_s.patch
-Patch0086: 0086-job-Use-AIO_WAIT_WHILE-in-job_finish_sync.patch
-Patch0087: 0087-test-bdrv-drain-Test-AIO_WAIT_WHILE-in-completion-ca.patch
-Patch0088: 0088-block-Add-missing-locking-in-bdrv_co_drain_bh_cb.patch
-Patch0089: 0089-block-backend-Add-.drained_poll-callback.patch
-Patch0090: 0090-block-backend-Fix-potential-double-blk_delete.patch
-Patch0091: 0091-block-backend-Decrease-in_flight-only-after-callback.patch
-Patch0092: 0092-blockjob-Lie-better-in-child_job_drained_poll.patch
-Patch0093: 0093-block-Remove-aio_poll-in-bdrv_drain_poll-variants.patch
-Patch0094: 0094-test-bdrv-drain-Test-nested-poll-in-bdrv_drain_poll_.patch
-Patch0095: 0095-job-Avoid-deadlocks-in-job_completed_txn_abort.patch
-Patch0096: 0096-test-bdrv-drain-AIO_WAIT_WHILE-in-job-.commit-.abort.patch
-Patch0097: 0097-test-bdrv-drain-Fix-outdated-comments.patch
-Patch0098: 0098-block-Use-a-single-global-AioWait.patch
-Patch0099: 0099-test-bdrv-drain-Test-draining-job-source-child-and-p.patch
-Patch0100: 0100-block-rbd-pull-out-qemu_rbd_convert_options.patch
-Patch0101: 0101-block-rbd-Attempt-to-parse-legacy-filenames.patch
-Patch0102: 0102-block-rbd-add-deprecation-documentation-for-filename.patch
-Patch0103: 0103-block-rbd-add-iotest-for-rbd-legacy-keyvalue-filenam.patch
-Patch0104: 0104-luks-Allow-share-rw-on.patch
+Patch0001: 0001-migration-colo.c-Fix-compilation-issue-when-disable-.patch
+Patch0005: 0005-Initial-redhat-build.patch
+Patch0006: 0006-Enable-disable-devices-for-RHEL.patch
+Patch0007: 0007-Machine-type-related-general-changes.patch
+Patch0008: 0008-Add-aarch64-machine-types.patch
+Patch0009: 0009-Add-ppc64-machine-types.patch
+Patch0010: 0010-Add-s390x-machine-types.patch
+Patch0011: 0011-Add-x86_64-machine-types.patch
+Patch0012: 0012-Enable-make-check.patch
+Patch0013: 0013-Use-kvm-by-default.patch
+Patch0014: 0014-vfio-cap-number-of-devices-that-can-be-assigned.patch
+Patch0015: 0015-Add-support-statement-to-help-output.patch
+Patch0016: 0016-globally-limit-the-maximum-number-of-CPUs.patch
+Patch0017: 0017-Add-support-for-simpletrace.patch
+Patch0018: 0018-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
+Patch0019: 0019-usb-xhci-Fix-PCI-capability-order.patch
+Patch0020: 0020-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -483,7 +399,7 @@ the Secure Shell (SSH) protocol.
 %prep
 %setup -q -n qemu-%{version}
 
-%patch0004 -p1
+%patch0001 -p1
 %patch0005 -p1
 %patch0006 -p1
 %patch0007 -p1
@@ -500,90 +416,6 @@ the Secure Shell (SSH) protocol.
 %patch0018 -p1
 %patch0019 -p1
 %patch0020 -p1
-%patch0021 -p1
-%patch0022 -p1
-%patch0023 -p1
-%patch0024 -p1
-%patch0025 -p1
-%patch0026 -p1
-%patch0027 -p1
-%patch0028 -p1
-%patch0029 -p1
-%patch0030 -p1
-%patch0031 -p1
-%patch0032 -p1
-%patch0033 -p1
-%patch0034 -p1
-%patch0035 -p1
-%patch0036 -p1
-%patch0037 -p1
-%patch0038 -p1
-%patch0039 -p1
-%patch0040 -p1
-%patch0041 -p1
-%patch0042 -p1
-%patch0043 -p1
-%patch0044 -p1
-%patch0045 -p1
-%patch0046 -p1
-%patch0047 -p1
-%patch0048 -p1
-%patch0049 -p1
-%patch0050 -p1
-%patch0051 -p1
-%patch0052 -p1
-%patch0053 -p1
-%patch0054 -p1
-%patch0055 -p1
-%patch0056 -p1
-%patch0057 -p1
-%patch0058 -p1
-%patch0059 -p1
-%patch0060 -p1
-%patch0061 -p1
-%patch0062 -p1
-%patch0063 -p1
-%patch0064 -p1
-%patch0065 -p1
-%patch0066 -p1
-%patch0067 -p1
-%patch0068 -p1
-%patch0069 -p1
-%patch0070 -p1
-%patch0071 -p1
-%patch0072 -p1
-%patch0073 -p1
-%patch0074 -p1
-%patch0075 -p1
-%patch0076 -p1
-%patch0077 -p1
-%patch0078 -p1
-%patch0079 -p1
-%patch0080 -p1
-%patch0081 -p1
-%patch0082 -p1
-%patch0083 -p1
-%patch0084 -p1
-%patch0085 -p1
-%patch0086 -p1
-%patch0087 -p1
-%patch0088 -p1
-%patch0089 -p1
-%patch0090 -p1
-%patch0091 -p1
-%patch0092 -p1
-%patch0093 -p1
-%patch0094 -p1
-%patch0095 -p1
-%patch0096 -p1
-%patch0097 -p1
-%patch0098 -p1
-%patch0099 -p1
-%patch0100 -p1
-%patch0101 -p1
-%patch0102 -p1
-%patch0103 -p1
-%patch0104 -p1
 
 %build
 %global buildarch %{kvm_target}-softmmu
@@ -1056,8 +888,10 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %doc %{qemudocdir}/qemu-qmp-ref.html
 %doc %{qemudocdir}/qemu-qmp-ref.txt
 %{_mandir}/man7/qemu-qmp-ref.7*
+%{_mandir}/man7/qemu-cpu-models.7*
 %{_bindir}/qemu-keymap
 %{_bindir}/qemu-pr-helper
+%{_bindir}/qemu-edid
 %{_unitdir}/qemu-pr-helper.service
 %{_unitdir}/qemu-pr-helper.socket
 %{_mandir}/man7/qemu-ga-ref.7*
@@ -1170,9 +1004,10 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
-* Thu Nov 08 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.0.0-2.el8
-- Mass import 2.12.0 fixes into 3.0
+* Mon Nov 05 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-0.el8
+- Rebase qemu-kvm to qemu 3.1.0 RC2
 
+* Mon Nov 05 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-42.el8
 - kvm-luks-Allow-share-rw-on.patch [bz#1629701]
 - kvm-redhat-reenable-gluster-support.patch [bz#1599340]
 - kvm-redhat-bump-libusb-requirement.patch [bz#1627970]
@@ -1183,12 +1018,15 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 - Resolves: bz#1629701
   ("share-rw=on" does not work for luks format image - Fast Train)
 
+* Tue Oct 16 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-41.el8
 - kvm-block-rbd-pull-out-qemu_rbd_convert_options.patch [bz#1635585]
 - kvm-block-rbd-Attempt-to-parse-legacy-filenames.patch [bz#1635585]
 - kvm-block-rbd-add-deprecation-documentation-for-filename.patch [bz#1635585]
 - kvm-block-rbd-add-iotest-for-rbd-legacy-keyvalue-filenam.patch [bz#1635585]
 - Resolves: bz#1635585
   (rbd json format of 7.6 is incompatible with 7.5)
+
+* Tue Oct 16 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-40.el8
 
 - kvm-vnc-call-sasl_server_init-only-when-required.patch [bz#1609327]
 - kvm-nbd-server-fix-NBD_CMD_CACHE.patch [bz#1636142]
@@ -1248,6 +1086,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 - Resolves: bz#1639374
   (qemu-img map 'Aborted (core dumped)' when specifying a plain file)
 
+* Tue Oct 16 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 
 - kvm-linux-headers-update.patch [bz#1508142]
 - kvm-s390x-cpumodel-Set-up-CPU-model-for-AP-device-suppor.patch [bz#1508142]
 - kvm-s390x-kvm-enable-AP-instruction-interpretation-for-g.patch [bz#1508142]
@@ -1257,6 +1096,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 - Resolves: bz#1508142
   ([IBM 8.0 FEAT] KVM: Guest-dedicated Crypto Adapters - qemu part)
 
+* Mon Oct 15 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-38.el8
 - kvm-Revert-hw-acpi-build-build-SRAT-memory-affinity-stru.patch [bz#1609235]
 - kvm-add-udev-kvm-check.patch [bz#1552663]
 - kvm-aio-posix-Don-t-count-ctx-notifier-as-progress-when-.patch [bz#1623085]
@@ -1287,12 +1127,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 - Resolves: bz#1633928
   (CVE-2018-3639 qemu-kvm: hw: cpu: speculative store bypass [rhel-8.0])
 
+* Fri Oct 12 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-37.el8
 - kvm-block-for-jobs-do-not-clear-user_paused-until-after-.patch [bz#1635583]
 - kvm-iotests-Add-failure-matching-to-common.qemu.patch [bz#1635583]
 - kvm-block-iotest-to-catch-abort-on-forced-blockjob-cance.patch [bz#1635583]
 - Resolves: bz#1635583
   (Quitting VM causes qemu core dump once the block mirror job paused for no enough target space)
 
+* Fri Oct 12 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - qemu-kvm-2.12.0-36
 - kvm-check-Only-test-ivshm-when-it-is-compiled-in.patch [bz#1621817]
 - kvm-Disable-ivshmem.patch [bz#1621817]
 - kvm-mirror-Fail-gracefully-for-source-target.patch [bz#1637963]
@@ -1305,10 +1147,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 - Resolves: bz#1637970
   (allow using node-names with block-commit)
 
+* Thu Oct 11 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-35.el8
 - kvm-redhat-make-the-plugins-executable.patch [bz#1638304]
 - Resolves: bz#1638304
   (the driver packages lack all the library Requires)
 
+* Thu Oct 11 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-34.el8
 - kvm-seccomp-allow-sched_setscheduler-with-SCHED_IDLE-pol.patch [bz#1618356]
 - kvm-seccomp-use-SIGSYS-signal-instead-of-killing-the-thr.patch [bz#1618356]
 - kvm-seccomp-prefer-SCMP_ACT_KILL_PROCESS-if-available.patch [bz#1618356]
@@ -1319,9 +1163,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
   (QEMU core dumped when hotplug memory exceeding host hugepages and with discard-data=yes)
 - Resolves: bz#1618356
   (qemu-kvm: Qemu: seccomp: blacklist is not applied to all threads [rhel-8])
-
-* Fri Oct 12 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.0.0-1.el8
-- Rebase on qemu-kvm 3.0.0
 
 * Fri Oct 05 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-33.el8
 - kvm-migration-postcopy-Clear-have_listen_thread.patch [bz#1608765]

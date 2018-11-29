@@ -1,0 +1,343 @@
+From f0cd0ed26f3a3ae0610fad93c9dde26b54910abb Mon Sep 17 00:00:00 2001
+From: Miroslav Rezanina <mrezanin@redhat.com>
+Date: Fri, 12 Oct 2018 07:31:11 +0200
+Subject: Initial redhat build
+
+This patch introduces redhat build structure in redhat subdirectory. In addition,
+several issues are fixed in QEMU tree:
+
+ - Change of app name for sasl_server_init in VNC code from qemu to qemu-kvm
+  - As we use qemu-kvm as name in all places, this is updated to be consistent
+ - Man page renamed from qemu to qemu-kvm
+  - man page is installed using make install so we have to fix it in qemu tree
+ - Use "/share/qemu-kvm" as SHARE_SUFFIX
+  - We reconfigured our share to qemu-kvm to be consistent with used name
+
+This rebase includes changes up to qemu-kvm-2.12.0-42.el8
+---
+ Makefile                      |    3 +-
+ block/Makefile.objs           |    2 +-
+ block/vxhs.c                  |  119 ++-
+ configure                     |   33 +-
+ os-posix.c                    |    2 +-
+ redhat/Makefile               |   82 ++
+ redhat/Makefile.common        |   49 ++
+ redhat/qemu-kvm.spec.template | 1723 +++++++++++++++++++++++++++++++++++++++++
+ ui/vnc.c                      |    2 +-
+ 9 files changed, 1972 insertions(+), 43 deletions(-)
+ create mode 100644 redhat/Makefile
+ create mode 100644 redhat/Makefile.common
+ create mode 100644 redhat/qemu-kvm.spec.template
+
+diff --git a/Makefile b/Makefile
+index f294718..152821a 100644
+--- a/Makefile
++++ b/Makefile
+@@ -503,6 +503,7 @@ CAP_CFLAGS += -DCAPSTONE_HAS_ARM
+ CAP_CFLAGS += -DCAPSTONE_HAS_ARM64
+ CAP_CFLAGS += -DCAPSTONE_HAS_POWERPC
+ CAP_CFLAGS += -DCAPSTONE_HAS_X86
++CAP_CFLAGS += -Wp,-D_GLIBCXX_ASSERTIONS
+ 
+ subdir-capstone: .git-submodule-status
+ 	$(call quiet-command,$(MAKE) -C $(SRC_PATH)/capstone CAPSTONE_SHARED=no BUILDDIR="$(BUILD_DIR)/capstone" CC="$(CC)" AR="$(AR)" LD="$(LD)" RANLIB="$(RANLIB)" CFLAGS="$(CAP_CFLAGS)" $(SUBDIR_MAKEFLAGS) $(BUILD_DIR)/capstone/$(LIBCAPSTONE))
+@@ -830,7 +831,7 @@ install-doc: $(DOCS)
+ 	$(INSTALL_DATA) docs/interop/qemu-qmp-ref.txt "$(DESTDIR)$(qemu_docdir)"
+ ifdef CONFIG_POSIX
+ 	$(INSTALL_DIR) "$(DESTDIR)$(mandir)/man1"
+-	$(INSTALL_DATA) qemu.1 "$(DESTDIR)$(mandir)/man1"
++	$(INSTALL_DATA) qemu.1 "$(DESTDIR)$(mandir)/man1/qemu-kvm.1"
+ 	$(INSTALL_DIR) "$(DESTDIR)$(mandir)/man7"
+ 	$(INSTALL_DATA) docs/interop/qemu-qmp-ref.7 "$(DESTDIR)$(mandir)/man7"
+ 	$(INSTALL_DATA) docs/qemu-block-drivers.7 "$(DESTDIR)$(mandir)/man7"
+diff --git a/block/Makefile.objs b/block/Makefile.objs
+index 46d585c..a244100 100644
+--- a/block/Makefile.objs
++++ b/block/Makefile.objs
+@@ -30,7 +30,7 @@ block-obj-$(CONFIG_LIBNFS) += nfs.o
+ block-obj-$(CONFIG_CURL) += curl.o
+ block-obj-$(CONFIG_RBD) += rbd.o
+ block-obj-$(CONFIG_GLUSTERFS) += gluster.o
+-block-obj-$(CONFIG_VXHS) += vxhs.o
++#block-obj-$(CONFIG_VXHS) += vxhs.o
+ block-obj-$(CONFIG_LIBSSH2) += ssh.o
+ block-obj-y += accounting.o dirty-bitmap.o
+ block-obj-y += write-threshold.o
+diff --git a/block/vxhs.c b/block/vxhs.c
+index 0cb0a00..9164b3e 100644
+--- a/block/vxhs.c
++++ b/block/vxhs.c
+@@ -9,7 +9,8 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include <qnio/qnio_api.h>
++#include "block/vxhs_shim.h"
++#include <gmodule.h>
+ #include <sys/param.h>
+ #include "block/block_int.h"
+ #include "block/qdict.h"
+@@ -59,6 +60,97 @@ typedef struct BDRVVXHSState {
+     char *tlscredsid; /* tlscredsid */
+ } BDRVVXHSState;
+ 
++#define LIBVXHS_FULL_PATHNAME "/usr/lib64/qemu/libvxhs.so.1"
++static bool libvxhs_loaded;
++static GModule *libvxhs_handle;
++
++static LibVXHSFuncs libvxhs;
++
++typedef struct LibVXHSSymbols {
++    const char *name;
++    gpointer *addr;
++} LibVXHSSymbols;
++
++static LibVXHSSymbols libvxhs_symbols[] = {
++    {"iio_init",        (gpointer *) &libvxhs.iio_init},
++    {"iio_fini",        (gpointer *) &libvxhs.iio_fini},
++    {"iio_min_version", (gpointer *) &libvxhs.iio_min_version},
++    {"iio_max_version", (gpointer *) &libvxhs.iio_max_version},
++    {"iio_open",        (gpointer *) &libvxhs.iio_open},
++    {"iio_close",       (gpointer *) &libvxhs.iio_close},
++    {"iio_writev",      (gpointer *) &libvxhs.iio_writev},
++    {"iio_readv",       (gpointer *) &libvxhs.iio_readv},
++    {"iio_ioctl",       (gpointer *) &libvxhs.iio_ioctl},
++    {NULL}
++};
++
++static void bdrv_vxhs_set_funcs(GModule *handle, Error **errp)
++{
++    int i = 0;
++    while (libvxhs_symbols[i].name) {
++        const char *name = libvxhs_symbols[i].name;
++        if (!g_module_symbol(handle, name, libvxhs_symbols[i].addr)) {
++            error_setg(errp, "%s could not be loaded from libvxhs: %s",
++                       name, g_module_error());
++            return;
++        }
++        ++i;
++    }
++}
++
++static void bdrv_vxhs_load_libs(Error **errp)
++{
++    Error *local_err = NULL;
++    int32_t ver;
++
++    if (libvxhs_loaded) {
++        return;
++    }
++
++    if (!g_module_supported()) {
++        error_setg(errp, "modules are not supported on this platform: %s",
++                     g_module_error());
++        return;
++    }
++
++    libvxhs_handle = g_module_open(LIBVXHS_FULL_PATHNAME,
++                                   G_MODULE_BIND_LAZY | G_MODULE_BIND_LOCAL);
++    if (!libvxhs_handle) {
++        error_setg(errp, "The VXHS library from Veritas might not be installed "
++                   "correctly (%s)", g_module_error());
++        return;
++    }
++
++    g_module_make_resident(libvxhs_handle);
++
++    bdrv_vxhs_set_funcs(libvxhs_handle, &local_err);
++    if (local_err) {
++        error_propagate(errp, local_err);
++        return;
++    }
++
++    /* Now check to see if the libvxhs we are using here is supported
++     * by the loaded version */
++
++    ver = (*libvxhs.iio_min_version)();
++    if (ver > QNIO_VERSION) {
++        error_setg(errp, "Trying to use libvxhs version %"PRId32" API, but "
++                         "only %"PRId32" or newer is supported by %s",
++                          QNIO_VERSION, ver, LIBVXHS_FULL_PATHNAME);
++        return;
++    }
++
++    ver = (*libvxhs.iio_max_version)();
++    if (ver < QNIO_VERSION) {
++        error_setg(errp, "Trying to use libvxhs version %"PRId32" API, but "
++                         "only %"PRId32" or earlier is supported by %s",
++                          QNIO_VERSION, ver, LIBVXHS_FULL_PATHNAME);
++        return;
++    }
++
++    libvxhs_loaded = true;
++}
++
+ static void vxhs_complete_aio_bh(void *opaque)
+ {
+     VXHSAIOCB *acb = opaque;
+@@ -226,7 +318,7 @@ static void vxhs_refresh_limits(BlockDriverState *bs, Error **errp)
+ static int vxhs_init_and_ref(void)
+ {
+     if (vxhs_ref++ == 0) {
+-        if (iio_init(QNIO_VERSION, vxhs_iio_callback)) {
++        if ((*libvxhs.iio_init)(QNIO_VERSION, vxhs_iio_callback)) {
+             return -ENODEV;
+         }
+     }
+@@ -236,7 +328,7 @@ static int vxhs_init_and_ref(void)
+ static void vxhs_unref(void)
+ {
+     if (--vxhs_ref == 0) {
+-        iio_fini();
++        (*libvxhs.iio_fini)();
+     }
+ }
+ 
+@@ -306,8 +398,17 @@ static int vxhs_open(BlockDriverState *bs, QDict *options,
+     char *client_key = NULL;
+     char *client_cert = NULL;
+ 
++    bdrv_vxhs_load_libs(&local_err);
++    if (local_err) {
++        error_propagate(errp, local_err);
++        /* on error, cannot cleanup because the iio_fini() function
++         * is not loaded */
++        return -EINVAL;
++    }
++
+     ret = vxhs_init_and_ref();
+     if (ret < 0) {
++        error_setg(&local_err, "libvxhs iio_init() failed");
+         ret = -EINVAL;
+         goto out;
+     }
+@@ -392,8 +493,8 @@ static int vxhs_open(BlockDriverState *bs, QDict *options,
+     /*
+      * Open qnio channel to storage agent if not opened before
+      */
+-    dev_handlep = iio_open(of_vsa_addr, s->vdisk_guid, 0,
+-                           cacert, client_key, client_cert);
++    dev_handlep = (*libvxhs.iio_open)(of_vsa_addr, s->vdisk_guid, 0,
++                                      cacert, client_key, client_cert);
+     if (dev_handlep == NULL) {
+         trace_vxhs_open_iio_open(of_vsa_addr);
+         ret = -ENODEV;
+@@ -453,11 +554,11 @@ static BlockAIOCB *vxhs_aio_rw(BlockDriverState *bs, uint64_t offset,
+ 
+     switch (iodir) {
+     case VDISK_AIO_WRITE:
+-            ret = iio_writev(dev_handle, acb, qiov->iov, qiov->niov,
++            ret = (*libvxhs.iio_writev)(dev_handle, acb, qiov->iov, qiov->niov,
+                              offset, size, iio_flags);
+             break;
+     case VDISK_AIO_READ:
+-            ret = iio_readv(dev_handle, acb, qiov->iov, qiov->niov,
++            ret = (*libvxhs.iio_writev)(dev_handle, acb, qiov->iov, qiov->niov,
+                             offset, size, iio_flags);
+             break;
+     default:
+@@ -506,7 +607,7 @@ static void vxhs_close(BlockDriverState *bs)
+      * Close vDisk device
+      */
+     if (s->vdisk_hostinfo.dev_handle) {
+-        iio_close(s->vdisk_hostinfo.dev_handle);
++        (*libvxhs.iio_close)(s->vdisk_hostinfo.dev_handle);
+         s->vdisk_hostinfo.dev_handle = NULL;
+     }
+ 
+@@ -528,7 +629,7 @@ static int64_t vxhs_get_vdisk_stat(BDRVVXHSState *s)
+     int ret = 0;
+     void *dev_handle = s->vdisk_hostinfo.dev_handle;
+ 
+-    ret = iio_ioctl(dev_handle, IOR_VDISK_STAT, &vdisk_size, 0);
++    ret = (*libvxhs.iio_ioctl)(dev_handle, IOR_VDISK_STAT, &vdisk_size, 0);
+     if (ret < 0) {
+         trace_vxhs_get_vdisk_stat_err(s->vdisk_guid, ret, errno);
+         return -EIO;
+diff --git a/configure b/configure
+index 0a3c6a7..98b05c5 100755
+--- a/configure
++++ b/configure
+@@ -3459,7 +3459,7 @@ fi
+ 
+ glib_req_ver=2.40
+ glib_modules=gthread-2.0
+-if test "$modules" = yes; then
++if test "$modules" = yes -o "$vxhs" = yes; then
+     glib_modules="$glib_modules gmodule-export-2.0"
+ fi
+ 
+@@ -5494,33 +5494,6 @@ if compile_prog "" "" ; then
+ fi
+ 
+ ##########################################
+-# Veritas HyperScale block driver VxHS
+-# Check if libvxhs is installed
+-
+-if test "$vxhs" != "no" ; then
+-  cat > $TMPC <<EOF
+-#include <stdint.h>
+-#include <qnio/qnio_api.h>
+-
+-void *vxhs_callback;
+-
+-int main(void) {
+-    iio_init(QNIO_VERSION, vxhs_callback);
+-    return 0;
+-}
+-EOF
+-  vxhs_libs="-lvxhs -lssl"
+-  if compile_prog "" "$vxhs_libs" ; then
+-    vxhs=yes
+-  else
+-    if test "$vxhs" = "yes" ; then
+-      feature_not_found "vxhs block device" "Install libvxhs See github"
+-    fi
+-    vxhs=no
+-  fi
+-fi
+-
+-##########################################
+ # check for _Static_assert()
+ 
+ have_static_assert=no
+@@ -6854,8 +6827,8 @@ if test "$pthread_setname_np" = "yes" ; then
+ fi
+ 
+ if test "$vxhs" = "yes" ; then
+-  echo "CONFIG_VXHS=y" >> $config_host_mak
+-  echo "VXHS_LIBS=$vxhs_libs" >> $config_host_mak
++  echo "CONFIG_VXHS=m" >> $config_host_mak
++  echo "VXHS_LIBS= -lssl" >> $config_host_mak
+ fi
+ 
+ if test "$libpmem" = "yes" ; then
+diff --git a/os-posix.c b/os-posix.c
+index 4bd80e4..ca13206 100644
+--- a/os-posix.c
++++ b/os-posix.c
+@@ -82,7 +82,7 @@ void os_setup_signal_handling(void)
+ /* Find a likely location for support files using the location of the binary.
+    For installed binaries this will be "$bindir/../share/qemu".  When
+    running from the build tree this will be "$bindir/../pc-bios".  */
+-#define SHARE_SUFFIX "/share/qemu"
++#define SHARE_SUFFIX "/share/qemu-kvm"
+ #define BUILD_SUFFIX "/pc-bios"
+ char *os_find_datadir(void)
+ {
+diff --git a/ui/vnc.c b/ui/vnc.c
+index 0c1b477..d7903a7 100644
+--- a/ui/vnc.c
++++ b/ui/vnc.c
+@@ -3962,7 +3962,7 @@ void vnc_display_open(const char *id, Error **errp)
+ 
+ #ifdef CONFIG_VNC_SASL
+     if (sasl) {
+-        int saslErr = sasl_server_init(NULL, "qemu");
++        int saslErr = sasl_server_init(NULL, "qemu-kvm");
+ 
+         if (saslErr != SASL_OK) {
+             error_setg(errp, "Failed to initialize SASL auth: %s",
+-- 
+1.8.3.1
+
