@@ -1,4 +1,4 @@
-From 2bfcbb3ece3cda4cf977cb3983df84830bde90a3 Mon Sep 17 00:00:00 2001
+From f06750384e9e241c7cc6f14b6fdedea3c4237790 Mon Sep 17 00:00:00 2001
 From: Eduardo Habkost <ehabkost@redhat.com>
 Date: Wed, 4 Dec 2013 18:53:17 +0100
 Subject: Add support statement to -help output
@@ -23,7 +23,7 @@ Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
  1 file changed, 9 insertions(+)
 
 diff --git a/vl.c b/vl.c
-index 39d152a..db628b8 100644
+index 22bd99c..74b32c4 100644
 --- a/vl.c
 +++ b/vl.c
 @@ -1904,9 +1904,17 @@ static void version(void)

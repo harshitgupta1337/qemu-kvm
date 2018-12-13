@@ -1,4 +1,4 @@
-From b91ee13e30cef65d02e3e0f9324931f1e2589426 Mon Sep 17 00:00:00 2001
+From 445df6a548c20d21c3275d91bcd96c6b0fde9c97 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Thu, 18 Dec 2014 06:27:49 +0100
 Subject: Use kvm by default

@@ -1,4 +1,4 @@
-From c59789ec7d5213bda9aeb48aacef2e3e897fdf7e Mon Sep 17 00:00:00 2001
+From 01e49fb467fd831c62f3640e546e313298a7c5c0 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 12:36:59 +0200
 Subject: Machine type related general changes
@@ -12,7 +12,6 @@ Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
  hw/acpi/ich9.c                    |  16 +++
  hw/acpi/piix4.c                   |   6 +-
  hw/char/serial.c                  |  16 +++
- hw/display/cirrus_vga_isa.c       |   2 +-
  hw/display/vga-isa.c              |   2 +-
  hw/net/e1000.c                    |  18 ++-
  hw/net/e1000e.c                   |  21 ++++
@@ -30,7 +29,7 @@ Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
  migration/migration.h             |   5 +
  qdev-monitor.c                    |   1 -
  scripts/vmstate-static-checker.py |   1 -
- 21 files changed, 354 insertions(+), 11 deletions(-)
+ 20 files changed, 353 insertions(+), 10 deletions(-)
 
 diff --git a/hw/acpi/ich9.c b/hw/acpi/ich9.c
 index a4e87b8..23a7baa 100644
@@ -145,19 +144,6 @@ index 02463e3..a591387 100644
      return s->poll_msl >= 0;
  }
  
-diff --git a/hw/display/cirrus_vga_isa.c b/hw/display/cirrus_vga_isa.c
-index 1cb607d..22678a3 100644
---- a/hw/display/cirrus_vga_isa.c
-+++ b/hw/display/cirrus_vga_isa.c
-@@ -67,7 +67,7 @@ static void isa_cirrus_vga_realizefn(DeviceState *dev, Error **errp)
- 
- static Property isa_cirrus_vga_properties[] = {
-     DEFINE_PROP_UINT32("vgamem_mb", struct ISACirrusVGAState,
--                       cirrus_vga.vga.vram_size_mb, 4),
-+                       cirrus_vga.vga.vram_size_mb, 16),
-     DEFINE_PROP_BOOL("blitter", struct ISACirrusVGAState,
-                      cirrus_vga.enable_blitter, true),
-     DEFINE_PROP_END_OF_LIST(),
 diff --git a/hw/display/vga-isa.c b/hw/display/vga-isa.c
 index fa44242..7835c83 100644
 --- a/hw/display/vga-isa.c
@@ -707,7 +693,7 @@ index a5080ad..b943ec9 100644
 +
  #endif
 diff --git a/migration/migration.c b/migration/migration.c
-index b261c1e..fb425b5 100644
+index 49ffb99..0d9cb7a 100644
 --- a/migration/migration.c
 +++ b/migration/migration.c
 @@ -105,6 +105,8 @@ enum mig_rp_message_type {

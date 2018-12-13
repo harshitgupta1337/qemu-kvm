@@ -1,4 +1,4 @@
-From f0cd0ed26f3a3ae0610fad93c9dde26b54910abb Mon Sep 17 00:00:00 2001
+From 8ff84e7f181aa0f64b3b6178d9ac808c61f5bec8 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 12 Oct 2018 07:31:11 +0200
 Subject: Initial redhat build
@@ -13,18 +13,26 @@ several issues are fixed in QEMU tree:
  - Use "/share/qemu-kvm" as SHARE_SUFFIX
   - We reconfigured our share to qemu-kvm to be consistent with used name
 
-This rebase includes changes up to qemu-kvm-2.12.0-42.el8
+This rebase includes changes up to qemu-kvm-2.12.0-47.el8
+
+Rebase notes (3.1.0):
+- added new configure options
+
+Merged patches (3.1.0):
+- 01f0c9f RHEL8: Add disable configure options to qemu spec file
+- Spec file cleanups
 ---
- Makefile                      |    3 +-
- block/Makefile.objs           |    2 +-
- block/vxhs.c                  |  119 ++-
- configure                     |   33 +-
- os-posix.c                    |    2 +-
- redhat/Makefile               |   82 ++
- redhat/Makefile.common        |   49 ++
- redhat/qemu-kvm.spec.template | 1723 +++++++++++++++++++++++++++++++++++++++++
- ui/vnc.c                      |    2 +-
- 9 files changed, 1972 insertions(+), 43 deletions(-)
+ Makefile                          |    3 +-
+ block/Makefile.objs               |    2 +-
+ block/vxhs.c                      |  119 ++-
+ configure                         |   33 +-
+ os-posix.c                        |    2 +-
+ redhat/Makefile                   |   82 ++
+ redhat/Makefile.common            |   49 +
+ redhat/qemu-kvm.spec.template     | 1813 +++++++++++++++++++++++++++++++++++++
+ redhat/scripts/process-patches.sh |    7 +-
+ ui/vnc.c                          |    2 +-
+ 10 files changed, 2064 insertions(+), 48 deletions(-)
  create mode 100644 redhat/Makefile
  create mode 100644 redhat/Makefile.common
  create mode 100644 redhat/qemu-kvm.spec.template

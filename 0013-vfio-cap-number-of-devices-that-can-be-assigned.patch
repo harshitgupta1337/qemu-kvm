@@ -1,4 +1,4 @@
-From 3094b4ac400f54f26b837226f44fc0a18f0726e6 Mon Sep 17 00:00:00 2001
+From 0b8b44ec1fc3a0d17f13c07ac4c7351769a63300 Mon Sep 17 00:00:00 2001
 From: Bandan Das <bsd@redhat.com>
 Date: Tue, 3 Dec 2013 20:05:13 +0100
 Subject: vfio: cap number of devices that can be assigned
@@ -37,7 +37,7 @@ Merged patches (2.9.0):
  1 file changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/hw/vfio/pci.c b/hw/vfio/pci.c
-index 5c7bd96..598f771 100644
+index 6e0000c..d242c62 100644
 --- a/hw/vfio/pci.c
 +++ b/hw/vfio/pci.c
 @@ -36,6 +36,7 @@

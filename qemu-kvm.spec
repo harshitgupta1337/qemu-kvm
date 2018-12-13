@@ -7,11 +7,8 @@
 %global have_fdt      0
 %global have_gluster  1
 %global have_kvm_setup 0
-%global have_seccomp 1
 %global have_memlock_limits 0
 %global have_vxhs     0
-%global have_vhost_user 1
-%global have_tcmalloc 0
 
 %ifnarch %{ix86} x86_64
     %global have_usbredir 0
@@ -64,15 +61,14 @@ Requires: %{name}-block-rbd = %{epoch}:%{version}-%{release}     \
 Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 
 # Macro to properly setup RHEL/RHEV conflict handling
-%define rhel_rhev_conflicts()                                          \
-Conflicts: %1-ma                                                       \
-Conflicts: %1-rhev                                                     \
-Provides: %1-rhel = %{epoch}:%{version}-%{release}
+%define rhev_ma_conflicts()                                      \
+Obsoletes: %1-ma                                                 \
+Obsoletes: %1-rhev
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 0%{?dist}.next.candidate
+Release: 1%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -80,11 +76,6 @@ Group: Development/Tools
 URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
-
-# OOM killer breaks builds with parallel make on s390x
-%ifarch s390x
-    %define _smp_mflags %{nil}
-%endif
 
 Source0: http://wiki.qemu.org/download/qemu-3.1.0.tar.xz
 
@@ -113,24 +104,22 @@ Source34: 81-kvm-rhel.rules
 Source35: udev-kvm-check.c
 
 
-
-Patch0001: 0001-migration-colo.c-Fix-compilation-issue-when-disable-.patch
-Patch0005: 0005-Initial-redhat-build.patch
-Patch0006: 0006-Enable-disable-devices-for-RHEL.patch
-Patch0007: 0007-Machine-type-related-general-changes.patch
-Patch0008: 0008-Add-aarch64-machine-types.patch
-Patch0009: 0009-Add-ppc64-machine-types.patch
-Patch0010: 0010-Add-s390x-machine-types.patch
-Patch0011: 0011-Add-x86_64-machine-types.patch
-Patch0012: 0012-Enable-make-check.patch
-Patch0013: 0013-Use-kvm-by-default.patch
-Patch0014: 0014-vfio-cap-number-of-devices-that-can-be-assigned.patch
-Patch0015: 0015-Add-support-statement-to-help-output.patch
-Patch0016: 0016-globally-limit-the-maximum-number-of-CPUs.patch
-Patch0017: 0017-Add-support-for-simpletrace.patch
-Patch0018: 0018-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
-Patch0019: 0019-usb-xhci-Fix-PCI-capability-order.patch
-Patch0020: 0020-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
+Patch0004: 0004-Initial-redhat-build.patch
+Patch0005: 0005-Enable-disable-devices-for-RHEL.patch
+Patch0006: 0006-Machine-type-related-general-changes.patch
+Patch0007: 0007-Add-aarch64-machine-types.patch
+Patch0008: 0008-Add-ppc64-machine-types.patch
+Patch0009: 0009-Add-s390x-machine-types.patch
+Patch0010: 0010-Add-x86_64-machine-types.patch
+Patch0011: 0011-Enable-make-check.patch
+Patch0012: 0012-Use-kvm-by-default.patch
+Patch0013: 0013-vfio-cap-number-of-devices-that-can-be-assigned.patch
+Patch0014: 0014-Add-support-statement-to-help-output.patch
+Patch0015: 0015-globally-limit-the-maximum-number-of-CPUs.patch
+Patch0016: 0016-Add-support-for-simpletrace.patch
+Patch0017: 0017-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
+Patch0018: 0018-usb-xhci-Fix-PCI-capability-order.patch
+Patch0019: 0019-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -157,9 +146,7 @@ BuildRequires: libcacard-devel
 # For smartcard NSS support
 BuildRequires: nss-devel
 %endif
-%if %{have_seccomp}
 BuildRequires: libseccomp-devel >= 2.3.0
-%endif
 # For network block driver
 BuildRequires: libcurl-devel
 BuildRequires: libssh2-devel
@@ -236,8 +223,7 @@ Requires:      mesa-dri-drivers
 %endif
 
 Requires: qemu-kvm-core = %{epoch}:%{version}-%{release}
-Conflicts: qemu-kvm-ma
-Conflicts: qemu-kvm-rhev
+%rhev_ma_conflicts qemu-kvm
 
 %{requires_all_modules}
 
@@ -265,9 +251,7 @@ Requires: ipxe-roms-qemu >= 20170123-1
 Requires: SLOF >= %{SLOF_gittagdate}-1.git%{SLOF_gittagcommit}
 %endif
 Requires: %{name}-common = %{epoch}:%{version}-%{release}
-%if %{have_seccomp}
 Requires: libseccomp >= 2.3.0
-%endif
 # For compressed guest memory dumps
 Requires: lzo snappy
 %if %{have_gluster}
@@ -284,7 +268,7 @@ Requires: libusbx >= 1.0.19
 Requires: usbredir >= 0.7.1
 %endif
 
-%rhel_rhev_conflicts qemu-kvm
+%rhev_ma_conflicts qemu-kvm
 
 %description -n qemu-kvm-core
 qemu-kvm is an open source virtualizer that provides hardware
@@ -297,7 +281,7 @@ hardware for a full system such as a PC and its associated peripherals.
 Summary: QEMU command line tool for manipulating disk images
 Group: Development/Tools
 
-%rhel_rhev_conflicts qemu-img
+%rhev_ma_conflicts qemu-img
 
 %description -n qemu-img
 This package provides a command line tool for manipulating disk images.
@@ -312,7 +296,7 @@ Requires(post): systemd-units
 Requires(preun): systemd-units
 Requires(postun): systemd-units
 
-%rhel_rhev_conflicts qemu-kvm-common
+%rhev_ma_conflicts qemu-kvm-common
 
 %description -n qemu-kvm-common
 qemu-kvm is an open source virtualizer that provides hardware emulation for
@@ -326,11 +310,6 @@ Summary: QEMU guest agent
 Requires(post): systemd-units
 Requires(preun): systemd-units
 Requires(postun): systemd-units
-
-# OOM killer breaks builds with parallel make on s390x
-%ifarch s390x
-    %define _smp_mflags %{nil}
-%endif
 
 %description -n qemu-guest-agent
 qemu-kvm is an open source virtualizer that provides hardware emulation for
@@ -397,25 +376,8 @@ the Secure Shell (SSH) protocol.
 
 
 %prep
-%setup -q -n qemu-%{version}
-
-%patch0001 -p1
-%patch0005 -p1
-%patch0006 -p1
-%patch0007 -p1
-%patch0008 -p1
-%patch0009 -p1
-%patch0010 -p1
-%patch0011 -p1
-%patch0012 -p1
-%patch0013 -p1
-%patch0014 -p1
-%patch0015 -p1
-%patch0016 -p1
-%patch0017 -p1
-%patch0018 -p1
-%patch0019 -p1
-%patch0020 -p1
+%setup -n qemu-%{version}
+%autopatch -p1
 
 %build
 %global buildarch %{kvm_target}-softmmu
@@ -467,11 +429,8 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
 %else
   --disable-rdma \
 %endif
-%if 0%{have_seccomp}
+  --disable-pvrdma \
   --enable-seccomp \
-%else
-  --disable-seccomp \
-%endif
 %if 0%{have_spice}
   --enable-spice \
   --enable-smartcard \
@@ -489,20 +448,17 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
 %else
   --disable-usb-redir \
 %endif
-%if 0%{have_tcmalloc}
-  --enable-tcmalloc \
-%else
   --disable-tcmalloc \
-%endif
 %if 0%{have_vxhs}
   --enable-vxhs \
 %else
   --disable-vxhs \
 %endif
-%if 0%{have_vhost_user}
   --enable-vhost-user \
+%ifarch %{ix86} x86_64
+  --enable-avx2 \
 %else
-  --disable-vhost-user \
+  --disable-avx2 \
 %endif
   --python=%{__python3} \
   --target-list="%{buildarch}" \
@@ -582,8 +538,16 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --enable-capstone \
   --disable-git-update \
   --disable-crypto-afalg \
-  --disable-debug-mutex
-
+  --disable-debug-mutex \
+  --disable-bochs \
+  --disable-cloop \
+  --disable-dmg \
+  --disable-qcow1 \
+  --disable-vdi \
+  --disable-vvfat \
+  --disable-qed \
+  --disable-parallels \
+  --disable-sheepdog
 
 echo "config-host.mak contents:"
 echo "==="
@@ -812,12 +776,6 @@ install -D -m 0644 %{SOURCE12} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/bridge.conf
 install -m 0644 %{_sourcedir}/qemu-pr-helper.service %{buildroot}%{_unitdir}
 install -m 0644 %{_sourcedir}/qemu-pr-helper.socket %{buildroot}%{_unitdir}
 
-%if 0
-make %{?_smp_mflags} $buildldflags DESTDIR=$RPM_BUILD_ROOT install-libcacard
-
-find $RPM_BUILD_ROOT -name "libcacard.so*" -exec chmod +x \{\} \;
-%endif
-
 find $RPM_BUILD_ROOT -name '*.la' -or -name '*.a' | xargs rm -f
 
 # We need to make the block device modules executable else
@@ -1004,8 +962,123 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
-* Mon Nov 05 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-0.el8
-- Rebase qemu-kvm to qemu 3.1.0 RC2
+* Thu Dec 13 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-1.el8
+- Rebase to qemu-kvm 3.1.0
+
+* Tue Dec 11 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - qemu-kvm-2.12.0-47
+- kvm-Disable-CONFIG_IPMI-and-CONFIG_I2C-for-ppc64.patch [bz#1640044]
+- kvm-Disable-CONFIG_CAN_BUS-and-CONFIG_CAN_SJA1000.patch [bz#1640042]
+- Resolves: bz#1640042
+  (Disable CONFIG_CAN_BUS and CONFIG_CAN_SJA1000 config switches)
+- Resolves: bz#1640044
+  (Disable CONFIG_I2C and CONFIG_IPMI in default-configs/ppc64-softmmu.mak)
+
+* Tue Dec 11 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - qemu-kvm-2.12.0-46 
+- kvm-qcow2-Give-the-refcount-cache-the-minimum-possible-s.patch [bz#1656507]
+- kvm-docs-Document-the-new-default-sizes-of-the-qcow2-cac.patch [bz#1656507]
+- kvm-qcow2-Fix-Coverity-warning-when-calculating-the-refc.patch [bz#1656507]
+- kvm-include-Add-IEC-binary-prefixes-in-qemu-units.h.patch [bz#1656507]
+- kvm-qcow2-Options-documentation-fixes.patch [bz#1656507]
+- kvm-include-Add-a-lookup-table-of-sizes.patch [bz#1656507]
+- kvm-qcow2-Make-sizes-more-humanly-readable.patch [bz#1656507]
+- kvm-qcow2-Avoid-duplication-in-setting-the-refcount-cach.patch [bz#1656507]
+- kvm-qcow2-Assign-the-L2-cache-relatively-to-the-image-si.patch [bz#1656507]
+- kvm-qcow2-Increase-the-default-upper-limit-on-the-L2-cac.patch [bz#1656507]
+- kvm-qcow2-Resize-the-cache-upon-image-resizing.patch [bz#1656507]
+- kvm-qcow2-Set-the-default-cache-clean-interval-to-10-min.patch [bz#1656507]
+- kvm-qcow2-Explicit-number-replaced-by-a-constant.patch [bz#1656507]
+- kvm-block-backend-Set-werror-rerror-defaults-in-blk_new.patch [bz#1657637]
+- kvm-qcow2-Fix-cache-clean-interval-documentation.patch [bz#1656507]
+- Resolves: bz#1656507
+  ([RHEL.8] qcow2 cache is too small)
+- Resolves: bz#1657637
+  (Wrong werror default for -device drive=<node-name>)
+
+* Thu Dec 06 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - qemu-kvm-2.12.0-45
+- kvm-target-ppc-add-basic-support-for-PTCR-on-POWER9.patch [bz#1639069]
+- kvm-linux-headers-Update-for-nested-KVM-HV-downstream-on.patch [bz#1639069]
+- kvm-target-ppc-Add-one-reg-id-for-ptcr.patch [bz#1639069]
+- kvm-ppc-spapr_caps-Add-SPAPR_CAP_NESTED_KVM_HV.patch [bz#1639069]
+- kvm-Re-enable-CONFIG_HYPERV_TESTDEV.patch [bz#1651195]
+- kvm-qxl-use-guest_monitor_config-for-local-renderer.patch [bz#1610163]
+- kvm-Declare-cirrus-vga-as-deprecated.patch [bz#1651994]
+- kvm-Do-not-build-bluetooth-support.patch [bz#1654651]
+- kvm-vfio-helpers-Fix-qemu_vfio_open_pci-crash.patch [bz#1645840]
+- kvm-balloon-Allow-multiple-inhibit-users.patch [bz#1650272]
+- kvm-Use-inhibit-to-prevent-ballooning-without-synchr.patch [bz#1650272]
+- kvm-vfio-Inhibit-ballooning-based-on-group-attachment-to.patch [bz#1650272]
+- kvm-vfio-ccw-pci-Allow-devices-to-opt-in-for-ballooning.patch [bz#1650272]
+- kvm-vfio-pci-Handle-subsystem-realpath-returning-NULL.patch [bz#1650272]
+- kvm-vfio-pci-Fix-failure-to-close-file-descriptor-on-err.patch [bz#1650272]
+- kvm-postcopy-Synchronize-usage-of-the-balloon-inhibitor.patch [bz#1650272]
+- Resolves: bz#1610163
+  (guest shows border blurred screen with some resolutions when qemu boot with -device qxl-vga ,and guest on rhel7.6 has no  such question)
+- Resolves: bz#1639069
+  ([IBM 8.0 FEAT] POWER9 - Nested virtualization in RHEL8.0 KVM for ppc64le - qemu-kvm side)
+- Resolves: bz#1645840
+  (Qemu core dump when hotplug nvme:// drive via -blockdev)
+- Resolves: bz#1650272
+  (Ballooning is incompatible with vfio assigned devices, but not prevented)
+- Resolves: bz#1651195
+  (Re-enable hyperv-testdev device)
+- Resolves: bz#1651994
+  (Declare the "Cirrus VGA" device emulation of QEMU as deprecated in RHEL8)
+- Resolves: bz#1654651
+  (Qemu: hw: bt: keep bt/* objects from building [rhel-8.0])
+
+* Tue Nov 27 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - qemu-kvm-2.12.0-43
+- kvm-block-Make-more-block-drivers-compile-time-configura.patch [bz#1598842 bz#1598842]
+- kvm-RHEL8-Add-disable-configure-options-to-qemu-spec-fil.patch [bz#1598842]
+- Resolves: bz#1598842
+  (Compile out unused block drivers)
+
+* Mon Nov 26 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - qemu-kvm-2.12.0-43
+
+- kvm-configure-add-test-for-libudev.patch [bz#1636185]
+- kvm-qga-linux-report-disk-serial-number.patch [bz#1636185]
+- kvm-qga-linux-return-disk-device-in-guest-get-fsinfo.patch [bz#1636185]
+- kvm-qemu-error-introduce-error-warn-_report_once.patch [bz#1625173]
+- kvm-intel-iommu-start-to-use-error_report_once.patch [bz#1625173]
+- kvm-intel-iommu-replace-more-vtd_err_-traces.patch [bz#1625173]
+- kvm-intel_iommu-introduce-vtd_reset_caches.patch [bz#1625173]
+- kvm-intel_iommu-better-handling-of-dmar-state-switch.patch [bz#1625173]
+- kvm-intel_iommu-move-ce-fetching-out-when-sync-shadow.patch [bz#1625173 bz#1629616]
+- kvm-intel_iommu-handle-invalid-ce-for-shadow-sync.patch [bz#1625173 bz#1629616]
+- kvm-block-remove-bdrv_dirty_bitmap_make_anon.patch [bz#1518989]
+- kvm-block-simplify-code-around-releasing-bitmaps.patch [bz#1518989]
+- kvm-hbitmap-Add-advance-param-to-hbitmap_iter_next.patch [bz#1518989]
+- kvm-test-hbitmap-Add-non-advancing-iter_next-tests.patch [bz#1518989]
+- kvm-block-dirty-bitmap-Add-bdrv_dirty_iter_next_area.patch [bz#1518989]
+- kvm-blockdev-backup-add-bitmap-argument.patch [bz#1518989]
+- kvm-dirty-bitmap-switch-assert-fails-to-errors-in-bdrv_m.patch [bz#1518989]
+- kvm-dirty-bitmap-rename-bdrv_undo_clear_dirty_bitmap.patch [bz#1518989]
+- kvm-dirty-bitmap-make-it-possible-to-restore-bitmap-afte.patch [bz#1518989]
+- kvm-blockdev-rename-block-dirty-bitmap-clear-transaction.patch [bz#1518989]
+- kvm-qapi-add-transaction-support-for-x-block-dirty-bitma.patch [bz#1518989]
+- kvm-block-dirty-bitmaps-add-user_locked-status-checker.patch [bz#1518989]
+- kvm-block-dirty-bitmaps-fix-merge-permissions.patch [bz#1518989]
+- kvm-block-dirty-bitmaps-allow-clear-on-disabled-bitmaps.patch [bz#1518989]
+- kvm-block-dirty-bitmaps-prohibit-enable-disable-on-locke.patch [bz#1518989]
+- kvm-block-backup-prohibit-backup-from-using-in-use-bitma.patch [bz#1518989]
+- kvm-nbd-forbid-use-of-frozen-bitmaps.patch [bz#1518989]
+- kvm-bitmap-Update-count-after-a-merge.patch [bz#1518989]
+- kvm-iotests-169-drop-deprecated-autoload-parameter.patch [bz#1518989]
+- kvm-block-qcow2-improve-error-message-in-qcow2_inactivat.patch [bz#1518989]
+- kvm-bloc-qcow2-drop-dirty_bitmaps_loaded-state-variable.patch [bz#1518989]
+- kvm-dirty-bitmaps-clean-up-bitmaps-loading-and-migration.patch [bz#1518989]
+- kvm-iotests-improve-169.patch [bz#1518989]
+- kvm-iotests-169-add-cases-for-source-vm-resuming.patch [bz#1518989]
+- kvm-pc-dimm-turn-alignment-assert-into-check.patch [bz#1630116]
+- Resolves: bz#1518989
+  (RFE: QEMU Incremental live backup)
+- Resolves: bz#1625173
+  ([NVMe Device Assignment] Guest could not boot up with q35+iommu)
+- Resolves: bz#1629616
+  (boot guest with q35+vIOMMU+ device assignment, qemu terminal shows "qemu-kvm: VFIO_UNMAP_DMA: -22" when return assigned network devices from vfio driver to ixgbe in guest)
+- Resolves: bz#1630116
+  (pc_dimm_get_free_addr: assertion failed: (QEMU_ALIGN_UP(address_space_start, align) == address_space_start))
+- Resolves: bz#1636185
+  ([RFE] Report disk device name and serial number (qemu-guest-agent on Linux))
 
 * Mon Nov 05 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-42.el8
 - kvm-luks-Allow-share-rw-on.patch [bz#1629701]

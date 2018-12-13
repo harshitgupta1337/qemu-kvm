@@ -1,4 +1,4 @@
-From 51a0ce09fb01c87cb9bd7f1fca850e8d5d573f5f Mon Sep 17 00:00:00 2001
+From 5a614332800ab5367d0be248e665250fe92964ba Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:48:41 +0200
 Subject: Enable make check
@@ -9,7 +9,7 @@ make check run during build.
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 ---
  redhat/qemu-kvm.spec.template |  2 +-
- tests/Makefile.include        | 32 ++++++++++++++++----------------
+ tests/Makefile.include        | 20 ++++++++++----------
  tests/boot-serial-test.c      |  6 +++++-
  tests/cpu-plug-test.c         |  3 ++-
  tests/e1000-test.c            |  2 ++
@@ -18,10 +18,10 @@ Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
  tests/qemu-iotests/group      |  4 ++--
  tests/test-x86-cpuid-compat.c |  2 ++
  tests/usb-hcd-xhci-test.c     |  4 ++++
- 10 files changed, 42 insertions(+), 27 deletions(-)
+ 10 files changed, 36 insertions(+), 21 deletions(-)
 
 diff --git a/tests/Makefile.include b/tests/Makefile.include
-index 613242b..baeb608 100644
+index fb0b449..f2305a5 100644
 --- a/tests/Makefile.include
 +++ b/tests/Makefile.include
 @@ -171,20 +171,20 @@ check-qtest-pci-$(CONFIG_IPACK) += $(check-qtest-ipack-y)
@@ -80,44 +80,6 @@ index 613242b..baeb608 100644
  check-qtest-ppc64-$(CONFIG_RTL8139_PCI) += tests/test-filter-redirector$(EXESUF)
  check-qtest-ppc64-y += tests/display-vga-test$(EXESUF)
  check-qtest-ppc64-y += tests/numa-test$(EXESUF)
-@@ -685,15 +685,15 @@ tests/endianness-test$(EXESUF): tests/endianness-test.o
- tests/spapr-phb-test$(EXESUF): tests/spapr-phb-test.o $(libqos-obj-y)
- tests/prom-env-test$(EXESUF): tests/prom-env-test.o $(libqos-obj-y)
- tests/rtas-test$(EXESUF): tests/rtas-test.o $(libqos-spapr-obj-y)
--tests/fdc-test$(EXESUF): tests/fdc-test.o
-+#tests/fdc-test$(EXESUF): tests/fdc-test.o
- tests/ide-test$(EXESUF): tests/ide-test.o $(libqos-pc-obj-y)
- tests/ahci-test$(EXESUF): tests/ahci-test.o $(libqos-pc-obj-y)
--tests/ipmi-kcs-test$(EXESUF): tests/ipmi-kcs-test.o
--tests/ipmi-bt-test$(EXESUF): tests/ipmi-bt-test.o
-+#tests/ipmi-kcs-test$(EXESUF): tests/ipmi-kcs-test.o
-+#tests/ipmi-bt-test$(EXESUF): tests/ipmi-bt-test.o
- tests/hd-geo-test$(EXESUF): tests/hd-geo-test.o
- tests/boot-order-test$(EXESUF): tests/boot-order-test.o $(libqos-obj-y)
- tests/boot-serial-test$(EXESUF): tests/boot-serial-test.o $(libqos-obj-y)
--tests/bios-tables-test$(EXESUF): tests/bios-tables-test.o \
-+#tests/bios-tables-test$(EXESUF): tests/bios-tables-test.o \
- 	tests/boot-sector.o tests/acpi-utils.o $(libqos-obj-y)
- tests/pxe-test$(EXESUF): tests/pxe-test.o tests/boot-sector.o $(libqos-obj-y)
- tests/tmp105-test$(EXESUF): tests/tmp105-test.o $(libqos-omap-obj-y)
-@@ -707,7 +707,7 @@ tests/e1000-test$(EXESUF): tests/e1000-test.o
- tests/e1000e-test$(EXESUF): tests/e1000e-test.o $(libqos-pc-obj-y)
- tests/rtl8139-test$(EXESUF): tests/rtl8139-test.o $(libqos-pc-obj-y)
- tests/pcnet-test$(EXESUF): tests/pcnet-test.o
--tests/pnv-xscom-test$(EXESUF): tests/pnv-xscom-test.o
-+#tests/pnv-xscom-test$(EXESUF): tests/pnv-xscom-test.o
- tests/eepro100-test$(EXESUF): tests/eepro100-test.o
- tests/vmxnet3-test$(EXESUF): tests/vmxnet3-test.o
- tests/ne2000-test$(EXESUF): tests/ne2000-test.o
-@@ -755,7 +755,7 @@ tests/test-filter-mirror$(EXESUF): tests/test-filter-mirror.o $(qtest-obj-y)
- tests/test-filter-redirector$(EXESUF): tests/test-filter-redirector.o $(qtest-obj-y)
- tests/test-x86-cpuid-compat$(EXESUF): tests/test-x86-cpuid-compat.o $(qtest-obj-y)
- tests/ivshmem-test$(EXESUF): tests/ivshmem-test.o contrib/ivshmem-server/ivshmem-server.o $(libqos-pc-obj-y) $(libqos-spapr-obj-y)
--tests/megasas-test$(EXESUF): tests/megasas-test.o $(libqos-spapr-obj-y) $(libqos-pc-obj-y)
-+#tests/megasas-test$(EXESUF): tests/megasas-test.o $(libqos-spapr-obj-y) $(libqos-pc-obj-y)
- tests/vhost-user-bridge$(EXESUF): tests/vhost-user-bridge.o $(test-util-obj-y) libvhost-user.a
- tests/test-uuid$(EXESUF): tests/test-uuid.o $(test-util-obj-y)
- tests/test-arm-mptimer$(EXESUF): tests/test-arm-mptimer.o
 diff --git a/tests/boot-serial-test.c b/tests/boot-serial-test.c
 index 8ec6aed..6a533b9 100644
 --- a/tests/boot-serial-test.c
@@ -222,7 +184,7 @@ index 32741d7..85ef52e 100755
       *)
          ;;
 diff --git a/tests/qemu-iotests/group b/tests/qemu-iotests/group
-index 2722103..ede8887 100644
+index 61a6d98..05996ae 100644
 --- a/tests/qemu-iotests/group
 +++ b/tests/qemu-iotests/group
 @@ -77,7 +77,7 @@

@@ -1,4 +1,4 @@
-From edae60c4f30697c3c859cc9c88f80c0ed3dc0f0e Mon Sep 17 00:00:00 2001
+From a4f172dc05fc5b2fc28cd1a2121b70a3d4549ab2 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:10:31 +0200
 Subject: Add x86_64 machine types
@@ -6,15 +6,17 @@ Subject: Add x86_64 machine types
 Adding changes to add RHEL machine types for x86_64 architecture.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+Rebase notes (3.1.0):
+- Removed xsave changes
 ---
- hw/i386/acpi-build.c  |   3 +
- hw/i386/pc.c          |   7 +-
- hw/i386/pc_piix.c     | 194 ++++++++++++++++-
- hw/i386/pc_q35.c      |  93 ++++++++-
- include/hw/i386/pc.h  | 564 ++++++++++++++++++++++++++++++++++++++++++++++++++
- target/i386/cpu.c     |   9 +-
- target/i386/machine.c |  21 ++
- 7 files changed, 884 insertions(+), 7 deletions(-)
+ hw/i386/acpi-build.c |   3 +
+ hw/i386/pc.c         |   7 +-
+ hw/i386/pc_piix.c    | 191 ++++++++++++++++-
+ hw/i386/pc_q35.c     |  93 ++++++++-
+ include/hw/i386/pc.h | 564 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ target/i386/cpu.c    |   9 +-
+ 6 files changed, 860 insertions(+), 7 deletions(-)
 
 diff --git a/hw/i386/acpi-build.c b/hw/i386/acpi-build.c
 index 236a20e..3360da9 100644
@@ -63,7 +65,7 @@ index 567439e..a609332 100644
      hc->pre_plug = pc_machine_device_pre_plug_cb;
      hc->plug = pc_machine_device_plug_cb;
 diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
-index 7092d6d..83c22ae 100644
+index 7092d6d..af9eb8c 100644
 --- a/hw/i386/pc_piix.c
 +++ b/hw/i386/pc_piix.c
 @@ -50,6 +50,7 @@
@@ -93,20 +95,10 @@ index 7092d6d..83c22ae 100644
  static void pc_compat_2_3(MachineState *machine)
  {
      PCMachineState *pcms = PC_MACHINE(machine);
-@@ -433,6 +435,7 @@ static void pc_i440fx_3_1_machine_options(MachineClass *m)
-     pc_i440fx_machine_options(m);
-     m->alias = "pc";
-     m->is_default = 1;
-+    SET_MACHINE_COMPAT(m, PC_COMPAT_2_12);
- }
- 
- DEFINE_I440FX_MACHINE(v3_1, "pc-i440fx-3.1", NULL,
-@@ -1157,3 +1160,190 @@ static void xenfv_machine_options(MachineClass *m)
+@@ -1157,3 +1159,188 @@ static void xenfv_machine_options(MachineClass *m)
  DEFINE_PC_MACHINE(xenfv, "xenfv", pc_xen_hvm_init,
                    xenfv_machine_options);
  #endif
-+machine_init(pc_machine_init);
-+
 +#endif  /* Disabled for Red Hat Enterprise Linux */
 +
 +/* Red Hat Enterprise Linux machine types */
@@ -1025,45 +1017,6 @@ index e9b9183..573de14 100644
      { NULL, NULL },
  };
  
-diff --git a/target/i386/machine.c b/target/i386/machine.c
-index 225b5d4..c60e1b8 100644
---- a/target/i386/machine.c
-+++ b/target/i386/machine.c
-@@ -964,6 +964,26 @@ static const VMStateDescription vmstate_svm_npt = {
-     }
- };
- 
-+static bool vmstate_xsave_needed(void *opaque)
-+{
-+    /* The xsave state is already on the main "cpu" section */
-+    return false;
-+}
-+
-+static const VMStateDescription vmstate_xsave ={
-+    .name = "cpu/xsave",
-+    .version_id = 1,
-+    .minimum_version_id = 1,
-+    .minimum_version_id_old = 1,
-+    .needed = vmstate_xsave_needed,
-+    .fields      = (VMStateField []) {
-+        VMSTATE_UINT64_V(env.xcr0, X86CPU, 1),
-+        VMSTATE_UINT64_V(env.xstate_bv, X86CPU, 1),
-+        VMSTATE_YMMH_REGS_VARS(env.xmm_regs, X86CPU, CPU_NB_REGS, 1),
-+        VMSTATE_END_OF_LIST()
-+    }
-+};
-+
- VMStateDescription vmstate_x86_cpu = {
-     .name = "cpu",
-     .version_id = 12,
-@@ -1089,6 +1109,7 @@ VMStateDescription vmstate_x86_cpu = {
-         &vmstate_msr_intel_pt,
-         &vmstate_msr_virt_ssbd,
-         &vmstate_svm_npt,
-+        &vmstate_xsave,
-         NULL
-     }
- };
 -- 
 1.8.3.1
 

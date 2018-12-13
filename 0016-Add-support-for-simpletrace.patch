@@ -1,4 +1,4 @@
-From 30887ffc7e908ebed5381c08181cd6a2a6bc5e98 Mon Sep 17 00:00:00 2001
+From 490f864563ddcb367e6cf58d1be4a9cbed3a5e2b Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Thu, 8 Oct 2015 09:50:17 +0200
 Subject: Add support for simpletrace

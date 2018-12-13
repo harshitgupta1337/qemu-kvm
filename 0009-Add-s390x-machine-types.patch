@@ -1,4 +1,4 @@
-From a47c6d2b9d75dcb15810fcfedcddf5eadf0ec227 Mon Sep 17 00:00:00 2001
+From 07b2731f23166ca13bace5faacd35ab5129fb878 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:47:32 +0200
 Subject: Add s390x machine types
