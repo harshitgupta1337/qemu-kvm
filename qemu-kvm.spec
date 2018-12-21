@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -120,6 +120,20 @@ Patch0016: 0016-Add-support-for-simpletrace.patch
 Patch0017: 0017-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
 Patch0018: 0018-usb-xhci-Fix-PCI-capability-order.patch
 Patch0019: 0019-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
+# For bz#1655820 - Can't migarate between rhel8 and rhel7 when guest has device "video"
+Patch20: kvm-pc-7.5-compat-entries.patch
+# For bz#1655820 - Can't migarate between rhel8 and rhel7 when guest has device "video"
+Patch21: kvm-compat-Generic-HW_COMPAT_RHEL7_6.patch
+# For bz#1655820 - Can't migarate between rhel8 and rhel7 when guest has device "video"
+Patch22: kvm-pc-PC_RHEL7_6_COMPAT.patch
+# For bz#1655820 - Can't migarate between rhel8 and rhel7 when guest has device "video"
+Patch23: kvm-pc-Add-compat-for-pc-i440fx-rhel7.6.0-machine-type.patch
+# For bz#1655820 - Can't migarate between rhel8 and rhel7 when guest has device "video"
+Patch24: kvm-pc-Add-pc-q35-8.0.0-machine-type.patch
+# For bz#1655820 - Can't migarate between rhel8 and rhel7 when guest has device "video"
+Patch25: kvm-pc-Add-x-migrate-smi-count-off-to-PC_RHEL7_6_COMPAT.patch
+# For bz#1659604 - 8->7 migration failed: qemu-kvm: error: failed to set MSR 0x4b564d02 to 0x27fc13285
+Patch26: kvm-clear-out-KVM_ASYNC_PF_DELIVERY_AS_PF_VMEXIT-for.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -242,7 +256,12 @@ Requires: qemu-img = %{epoch}:%{version}-%{release}
 %ifarch %{ix86} x86_64
 Requires: seabios-bin >= 1.10.2-1
 Requires: sgabios-bin
+Requires: edk2-ovmf
 %endif
+%ifarch aarch64
+Requires: edk2-aarch64
+%endif
+
 %ifnarch aarch64 s390x
 Requires: seavgabios-bin >= 1.10.2-1
 Requires: ipxe-roms-qemu >= 20170123-1
@@ -962,6 +981,22 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Dec 21 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-2.el8
+- kvm-pc-7.5-compat-entries.patch [bz#1655820]
+- kvm-compat-Generic-HW_COMPAT_RHEL7_6.patch [bz#1655820]
+- kvm-pc-PC_RHEL7_6_COMPAT.patch [bz#1655820]
+- kvm-pc-Add-compat-for-pc-i440fx-rhel7.6.0-machine-type.patch [bz#1655820]
+- kvm-pc-Add-pc-q35-8.0.0-machine-type.patch [bz#1655820]
+- kvm-pc-Add-x-migrate-smi-count-off-to-PC_RHEL7_6_COMPAT.patch [bz#1655820]
+- kvm-clear-out-KVM_ASYNC_PF_DELIVERY_AS_PF_VMEXIT-for.patch [bz#1659604]
+- kvm-Add-edk2-Requires-to-qemu-kvm.patch [bz#1660208]
+- Resolves: bz#1655820
+  (Can't migarate between rhel8 and rhel7 when guest has device "video")
+- Resolves: bz#1659604
+  (8->7 migration failed: qemu-kvm: error: failed to set MSR 0x4b564d02 to 0x27fc13285)
+- Resolves: bz#1660208
+  (qemu-kvm: Should depend on the architecture-appropriate guest firmware)
+
 * Thu Dec 13 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-1.el8
 - Rebase to qemu-kvm 3.1.0
 

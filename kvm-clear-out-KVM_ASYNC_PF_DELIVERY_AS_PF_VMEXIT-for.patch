@@ -1,0 +1,119 @@
+From fece44d5054ef13f483d7531a8462cb7f8ff5b93 Mon Sep 17 00:00:00 2001
+From: Bandan Das <bsd@redhat.com>
+Date: Fri, 14 Dec 2018 19:33:40 +0000
+Subject: [PATCH 7/8] kvm: clear out KVM_ASYNC_PF_DELIVERY_AS_PF_VMEXIT for
+ older machine types
+
+RH-Author: Bandan Das <bsd@redhat.com>
+Message-id: <jpgmup79a3v.fsf@linux.bootlegged.copy>
+Patchwork-id: 83523
+O-Subject: [RHEL8 qemu-kvm PATCH] kvm: clear out KVM_ASYNC_PF_DELIVERY_AS_PF_VMEXIT for older machine types
+Bugzilla: 1659604
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Pankaj Gupta <pagupta@redhat.com>
+RH-Acked-by: Eduardo Habkost <ehabkost@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1659604
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=19521246
+Upstream: Not applicable
+Branch: rhel8/master-3.1.0 on top of [RHEL8 qemu-kvm PATCH v3 0/5] 8.0.0 x86 machine types
+
+After the addition of support for async pf injection to L1, newer
+hypervisors  advertise the feature using bit 2 of the
+MSR_KVM_ASYNC_PF_EN msr. However, this was reserved in older
+hypervisors which results in an error during migration like so:
+
+qemu-kvm: error: failed to set MSR 0x4b564d02 to 0x27fc13285
+qemu-kvm: /builddir/build/BUILD/qemu-2.12.0/target/i386/kvm.c:1940: kvm_put_msrs: Assertion `ret == cpu->kvm_msr_buf->nmsrs' failed.
+Aborted (core dumped)
+
+This patch introduces a new bool that is set for older machine types.
+When set, Qemu's stored value clears out bit 2. This should be safe
+because the guest can still enable it by writing to the MSR after
+checking for support. A reset/migration for <7.6 machine type would
+reset the bit though.
+
+Signed-off-by: Bandan Das <bsd@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/i386/pc.c        | 1 +
+ hw/i386/pc_piix.c   | 1 +
+ hw/i386/pc_q35.c    | 1 +
+ include/hw/boards.h | 2 ++
+ target/i386/kvm.c   | 4 ++++
+ 5 files changed, 9 insertions(+)
+
+diff --git a/hw/i386/pc.c b/hw/i386/pc.c
+index a609332..18268d3 100644
+--- a/hw/i386/pc.c
++++ b/hw/i386/pc.c
+@@ -2391,6 +2391,7 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
+     pcmc->linuxboot_dma_enabled = true;
+     assert(!mc->get_hotplug_handler);
+     pcmc->pc_rom_ro = true;
++    mc->async_pf_vmexit_disable = false;
+     mc->get_hotplug_handler = pc_get_hotpug_handler;
+     mc->cpu_index_to_instance_props = pc_cpu_index_to_props;
+     mc->get_default_cpu_node_id = pc_get_default_cpu_node_id;
+diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
+index efee5e7..46c494a 100644
+--- a/hw/i386/pc_piix.c
++++ b/hw/i386/pc_piix.c
+@@ -1186,6 +1186,7 @@ static void pc_machine_rhel760_options(MachineClass *m)
+ {
+     pc_machine_rhel7_options(m);
+     m->desc = "RHEL 7.6.0 PC (i440FX + PIIX, 1996)";
++    m->async_pf_vmexit_disable = true;
+     SET_MACHINE_COMPAT(m, PC_RHEL7_6_COMPAT);
+ }
+ 
+diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
+index 0b7223f..1810cf2 100644
+--- a/hw/i386/pc_q35.c
++++ b/hw/i386/pc_q35.c
+@@ -470,6 +470,7 @@ static void pc_q35_machine_rhel760_options(MachineClass *m)
+     pc_q35_machine_rhel800_options(m);
+     m->alias = NULL;
+     m->desc = "RHEL-7.6.0 PC (Q35 + ICH9, 2009)";
++    m->async_pf_vmexit_disable = true;
+     SET_MACHINE_COMPAT(m, PC_RHEL7_6_COMPAT);
+ }
+ 
+diff --git a/include/hw/boards.h b/include/hw/boards.h
+index f82f284..27463fb 100644
+--- a/include/hw/boards.h
++++ b/include/hw/boards.h
+@@ -204,6 +204,8 @@ struct MachineClass {
+     const char **valid_cpu_types;
+     strList *allowed_dynamic_sysbus_devices;
+     bool auto_enable_numa_with_memhp;
++    /* RHEL only */
++    bool async_pf_vmexit_disable;
+     void (*numa_auto_assign_ram)(MachineClass *mc, NodeInfo *nodes,
+                                  int nb_nodes, ram_addr_t size);
+     bool ignore_boot_device_suffixes;
+diff --git a/target/i386/kvm.c b/target/i386/kvm.c
+index b2401d1..5b0ce82 100644
+--- a/target/i386/kvm.c
++++ b/target/i386/kvm.c
+@@ -2351,6 +2351,7 @@ static int kvm_get_msrs(X86CPU *cpu)
+     struct kvm_msr_entry *msrs = cpu->kvm_msr_buf->entries;
+     int ret, i;
+     uint64_t mtrr_top_bits;
++    MachineClass *mc = MACHINE_GET_CLASS(qdev_get_machine());
+ 
+     kvm_msr_buf_reset(cpu);
+ 
+@@ -2648,6 +2649,9 @@ static int kvm_get_msrs(X86CPU *cpu)
+             break;
+         case MSR_KVM_ASYNC_PF_EN:
+             env->async_pf_en_msr = msrs[i].data;
++            if (mc->async_pf_vmexit_disable) {
++                env->async_pf_en_msr &= ~(1ULL << 2);
++            }
+             break;
+         case MSR_KVM_PV_EOI_EN:
+             env->pv_eoi_en_msr = msrs[i].data;
+-- 
+1.8.3.1
+
