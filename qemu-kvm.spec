@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -136,6 +136,10 @@ Patch25: kvm-pc-Add-x-migrate-smi-count-off-to-PC_RHEL7_6_COMPAT.patch
 Patch26: kvm-clear-out-KVM_ASYNC_PF_DELIVERY_AS_PF_VMEXIT-for.patch
 # For bz#1656508 - Machine types for qemu-kvm based on rebase to qemu-3.1 (ppc64le)
 Patch27: kvm-redhat-define-pseries-rhel8.0.0-machine-type.patch
+# For bz#1656510 - Machine types for qemu-kvm based on rebase to qemu-3.1 (s390x)
+Patch28: kvm-hw-s390x-s390-virtio-ccw-Add-machine-types-for-RHEL8.patch
+# For bz#1661967 - Kernel prints the message "VPHN is not supported. Disabling polling..."
+Patch29: kvm-spapr-Add-H-Call-H_HOME_NODE_ASSOCIATIVITY.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -983,6 +987,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Jan 11 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-4.el8
+- kvm-hw-s390x-s390-virtio-ccw-Add-machine-types-for-RHEL8.patch [bz#1656510]
+- kvm-spapr-Add-H-Call-H_HOME_NODE_ASSOCIATIVITY.patch [bz#1661967]
+- Resolves: bz#1656510
+  (Machine types for qemu-kvm based on rebase to qemu-3.1 (s390x))
+- Resolves: bz#1661967
+  (Kernel prints the message "VPHN is not supported. Disabling polling...")
+
 * Thu Jan 03 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-3.el8
 - kvm-redhat-define-pseries-rhel8.0.0-machine-type.patch [bz#1656508]
 - Resolves: bz#1656508
