@@ -1,0 +1,84 @@
+From c63a58b4e1d3db52301bec072ac8025216731f35 Mon Sep 17 00:00:00 2001
+From: Eduardo Habkost <ehabkost@redhat.com>
+Date: Wed, 16 Jan 2019 23:18:18 +0000
+Subject: [PATCH 3/7] globals: Allow global properties to be optional
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eduardo Habkost <ehabkost@redhat.com>
+Message-id: <20190116231819.29310-4-ehabkost@redhat.com>
+Patchwork-id: 84029
+O-Subject: [RHEL-8.0/AV qemu-kvm PATCH 3/4] globals: Allow global properties to be optional
+Bugzilla: 1648023
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+
+Upstream tree: git://git.kernel.org/pub/scm/virt/kvm/mst/qemu.git
+Upstream commit: d7741743f4f3d2683d1bb6938f88dc0167c21afa
+
+Making some global properties optional will let us simplify
+compat code when a given property works on most (but not all)
+subclasses of a given type.
+
+Device types will be able to opt out from optional compat
+properties by simply not registering those properties.
+
+Backport conflict notes:
+    Patching qdev_prop_set_globals(), because our downstream tree
+    still doesn't have object_apply_global_props() from commit
+    ea9ce8934c5d ("hw: apply accel compat properties without
+    touching globals")
+
+Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
+Reviewed-by: Cornelia Huck <cohuck@redhat.com>
+Reviewed-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/core/qdev-properties.c | 3 +++
+ include/hw/qdev-core.h    | 3 +++
+ 2 files changed, 6 insertions(+)
+
+diff --git a/hw/core/qdev-properties.c b/hw/core/qdev-properties.c
+index 35072de..2023c1a 100644
+--- a/hw/core/qdev-properties.c
++++ b/hw/core/qdev-properties.c
+@@ -1255,6 +1255,9 @@ void qdev_prop_set_globals(DeviceState *dev)
+         if (object_dynamic_cast(OBJECT(dev), prop->driver) == NULL) {
+             continue;
+         }
++        if (prop->optional && !object_property_find(OBJECT(dev), prop->property, NULL)) {
++            continue;
++        }
+         prop->used = true;
+         object_property_parse(OBJECT(dev), prop->value, prop->property, &err);
+         if (err != NULL) {
+diff --git a/include/hw/qdev-core.h b/include/hw/qdev-core.h
+index a24d0dd..a10f60f 100644
+--- a/include/hw/qdev-core.h
++++ b/include/hw/qdev-core.h
+@@ -252,6 +252,8 @@ struct PropertyInfo {
+  * @user_provided: Set to true if property comes from user-provided config
+  * (command-line or config file).
+  * @used: Set to true if property was used when initializing a device.
++ * @optional: If set to true, GlobalProperty will be skipped without errors
++ *            if the property doesn't exist.
+  * @errp: Error destination, used like first argument of error_setg()
+  *        in case property setting fails later. If @errp is NULL, we
+  *        print warnings instead of ignoring errors silently. For
+@@ -264,6 +266,7 @@ typedef struct GlobalProperty {
+     const char *value;
+     bool user_provided;
+     bool used;
++    bool optional;
+     Error **errp;
+ } GlobalProperty;
+ 
+-- 
+1.8.3.1
+

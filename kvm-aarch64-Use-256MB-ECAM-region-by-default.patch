@@ -1,0 +1,38 @@
+From 4d20863ae382c9ce2a8b7f88aee7a1d1228112a7 Mon Sep 17 00:00:00 2001
+From: Wei Huang <wei@redhat.com>
+Date: Thu, 17 Jan 2019 17:33:57 +0000
+Subject: [PATCH 7/7] aarch64: Use 256MB ECAM region by default
+
+RH-Author: Wei Huang <wei@redhat.com>
+Message-id: <20190117173357.31514-4-wei@redhat.com>
+Patchwork-id: 84039
+O-Subject: [RHEL8 qemu-kvm PATCH v3 3/3] aarch64: Use 256MB ECAM region by default
+Bugzilla: 1656504
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+RH-Acked-by: Auger Eric <eric.auger@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+
+This patch turns on 256MB ECAM region to support a larger number (up to
+256) of PCIe buses on virt-rhel8.0.0.
+
+Signed-off-by: Wei Huang <wei@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/arm/virt.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index 21965e4..bee8f10 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -2144,6 +2144,5 @@ static void rhel800_virt_instance_init(Object *obj)
+ static void rhel800_virt_options(MachineClass *mc)
+ {
+     SET_MACHINE_COMPAT(mc, ARM_RHEL_COMPAT);
+-    vmc->no_highmem_ecam = true;
+ }
+ DEFINE_RHEL_MACHINE_AS_LATEST(8, 0, 0)
+-- 
+1.8.3.1
+
