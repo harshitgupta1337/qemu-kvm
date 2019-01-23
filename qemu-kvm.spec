@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 5%{?dist}
+Release: 6%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -154,6 +154,10 @@ Patch34: kvm-aarch64-Add-virt-rhel8.0.0-machine-type-for-ARM.patch
 Patch35: kvm-aarch64-Set-virt-rhel8.0.0-max_cpus-to-512.patch
 # For bz#1656504 - Machine types for qemu-kvm based on rebase to qemu-3.1 (aarch64)
 Patch36: kvm-aarch64-Use-256MB-ECAM-region-by-default.patch
+# For bz#1653114 - Incorrect NUMA nodes passed to qemu-kvm guest in ibm,max-associativity-domains property
+Patch37: kvm-spapr-Fix-ibm-max-associativity-domains-property-num.patch
+# For bz#1668205 - Guest quit with error when hotunplug cpu
+Patch38: kvm-cpus-ignore-ESRCH-in-qemu_cpu_kick_thread.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1001,6 +1005,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Wed Jan 23 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-6.el8
+- kvm-spapr-Fix-ibm-max-associativity-domains-property-num.patch [bz#1653114]
+- kvm-cpus-ignore-ESRCH-in-qemu_cpu_kick_thread.patch [bz#1668205]
+- Resolves: bz#1653114
+  (Incorrect NUMA nodes passed to qemu-kvm guest in ibm,max-associativity-domains property)
+- Resolves: bz#1668205
+  (Guest quit with error when hotunplug cpu)
+
 * Mon Jan 21 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-5.el8
 - kvm-virtio-Helper-for-registering-virtio-device-types.patch [bz#1648023]
 - kvm-virtio-Provide-version-specific-variants-of-virtio-P.patch [bz#1648023]

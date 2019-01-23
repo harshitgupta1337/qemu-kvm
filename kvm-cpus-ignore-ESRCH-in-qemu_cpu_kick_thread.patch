@@ -1,0 +1,62 @@
+From 5f57f764ebb7451c71ffa04130ad2f2e4cb531e8 Mon Sep 17 00:00:00 2001
+From: Laurent Vivier <lvivier@redhat.com>
+Date: Wed, 23 Jan 2019 09:15:22 +0000
+Subject: [PATCH 2/2] cpus: ignore ESRCH in qemu_cpu_kick_thread()
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+Message-id: <20190123091522.17581-1-lvivier@redhat.com>
+Patchwork-id: 84092
+O-Subject: [RHEL-8.0/AV qemu-kvm PATCH v2] cpus: ignore ESRCH in qemu_cpu_kick_thread()
+Bugzilla: 1668205
+RH-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Serhii Popovych <spopovyc@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+
+We can have a race condition between qemu_cpu_kick_thread() and
+qemu_kvm_cpu_thread_fn() when we hotunplug a CPU. In this case,
+qemu_cpu_kick_thread() can try to kick a thread that is exiting.
+pthread_kill() returns an error and qemu is stopped by an exit(1).
+
+   qemu:qemu_cpu_kick_thread: No such process
+
+We can ignore safely this error.
+
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+(cherry picked from commit e9979ef245549b8e1fd240ec9937271c7fda0b57)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+
+BRANCH: rhel8/master-3.1.0
+BZ:   https://bugzilla.redhat.com/show_bug.cgi?id=1668205
+BREW: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=19905615
+UPSTREAM: In maintainer pull request
+          git://github.com/bonzini/qemu.git tags/for-upstream
+TEST: Upstream version tested by QE
+---
+v2: add BRANCH: tag to make happy virt-ci-maint-team
+
+ cpus.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ cpus.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/cpus.c b/cpus.c
+index 0ddeeef..4717490 100644
+--- a/cpus.c
++++ b/cpus.c
+@@ -1778,7 +1778,7 @@ static void qemu_cpu_kick_thread(CPUState *cpu)
+     }
+     cpu->thread_kicked = true;
+     err = pthread_kill(cpu->thread->thread, SIG_IPI);
+-    if (err) {
++    if (err && err != ESRCH) {
+         fprintf(stderr, "qemu:%s: %s", __func__, strerror(err));
+         exit(1);
+     }
+-- 
+1.8.3.1
+
