@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 6%{?dist}
+Release: 7%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -158,6 +158,10 @@ Patch36: kvm-aarch64-Use-256MB-ECAM-region-by-default.patch
 Patch37: kvm-spapr-Fix-ibm-max-associativity-domains-property-num.patch
 # For bz#1668205 - Guest quit with error when hotunplug cpu
 Patch38: kvm-cpus-ignore-ESRCH-in-qemu_cpu_kick_thread.patch
+# For bz#1653511 - qemu doesn't report all support cpu features which cause libvirt cannot get the support status of hv_tlbflush
+Patch39: kvm-i386-kvm-expose-HV_CPUID_ENLIGHTMENT_INFO.EAX-and-HV.patch
+# For bz#1653511 - qemu doesn't report all support cpu features which cause libvirt cannot get the support status of hv_tlbflush
+Patch40: kvm-i386-kvm-add-a-comment-explaining-why-.feat_names-ar.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1005,6 +1009,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Jan 24 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-7.el8
+- kvm-i386-kvm-expose-HV_CPUID_ENLIGHTMENT_INFO.EAX-and-HV.patch [bz#1653511]
+- kvm-i386-kvm-add-a-comment-explaining-why-.feat_names-ar.patch [bz#1653511]
+- Resolves: bz#1653511
+  (qemu doesn't report all support cpu features which cause libvirt cannot get the support status of hv_tlbflush)
+
 * Wed Jan 23 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-6.el8
 - kvm-spapr-Fix-ibm-max-associativity-domains-property-num.patch [bz#1653114]
 - kvm-cpus-ignore-ESRCH-in-qemu_cpu_kick_thread.patch [bz#1668205]
