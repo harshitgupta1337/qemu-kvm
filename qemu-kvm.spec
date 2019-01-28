@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 7%{?dist}
+Release: 8%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -162,6 +162,8 @@ Patch38: kvm-cpus-ignore-ESRCH-in-qemu_cpu_kick_thread.patch
 Patch39: kvm-i386-kvm-expose-HV_CPUID_ENLIGHTMENT_INFO.EAX-and-HV.patch
 # For bz#1653511 - qemu doesn't report all support cpu features which cause libvirt cannot get the support status of hv_tlbflush
 Patch40: kvm-i386-kvm-add-a-comment-explaining-why-.feat_names-ar.patch
+# For bz#1666601 - [q35] dst qemu core dumped when do rdma migration with Mellanox IB QDR card
+Patch41: kvm-migration-rdma-unregister-fd-handler.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1009,6 +1011,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Jan 28 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-8.el8
+- kvm-migration-rdma-unregister-fd-handler.patch [bz#1666601]
+- Resolves: bz#1666601
+  ([q35] dst qemu core dumped when do rdma migration with Mellanox IB QDR card)
+
 * Thu Jan 24 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-7.el8
 - kvm-i386-kvm-expose-HV_CPUID_ENLIGHTMENT_INFO.EAX-and-HV.patch [bz#1653511]
 - kvm-i386-kvm-add-a-comment-explaining-why-.feat_names-ar.patch [bz#1653511]
