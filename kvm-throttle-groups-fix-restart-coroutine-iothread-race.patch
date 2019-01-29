@@ -1,0 +1,120 @@
+From 02287430957782ffb1db0d7d17693a73925ea02f Mon Sep 17 00:00:00 2001
+From: Stefan Hajnoczi <stefanha@redhat.com>
+Date: Tue, 29 Jan 2019 07:02:49 +0000
+Subject: [PATCH 1/2] throttle-groups: fix restart coroutine iothread race
+
+RH-Author: Stefan Hajnoczi <stefanha@redhat.com>
+Message-id: <20190129070250.22709-2-stefanha@redhat.com>
+Patchwork-id: 84139
+O-Subject: [RHEL-8.0/AV qemu-kvm PATCH 1/2] throttle-groups: fix restart coroutine iothread race
+Bugzilla: 1655947
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+The following QMP command leads to a crash when iothreads are used:
+
+  { 'execute': 'device_del', 'arguments': {'id': 'data'} }
+
+The backtrace involves the queue restart coroutine where
+tgm->throttle_state is a NULL pointer because
+throttle_group_unregister_tgm() has already been called:
+
+  (gdb) bt full
+  #0  0x00005585a7a3b378 in qemu_mutex_lock_impl (mutex=0xffffffffffffffd0, file=0x5585a7bb3d54 "block/throttle-groups.c", line=412) at util/qemu-thread-posix.c:64
+        err = <optimized out>
+        __PRETTY_FUNCTION__ = "qemu_mutex_lock_impl"
+        __func__ = "qemu_mutex_lock_impl"
+  #1  0x00005585a79be074 in throttle_group_restart_queue_entry (opaque=0x5585a9de4eb0) at block/throttle-groups.c:412
+        _f = <optimized out>
+        data = 0x5585a9de4eb0
+        tgm = 0x5585a9079440
+        ts = 0x0
+        tg = 0xffffffffffffff98
+        is_write = false
+        empty_queue = 255
+
+This coroutine should not execute in the iothread after the throttle
+group member has been unregistered!
+
+The root cause is that the device_del code path schedules the restart
+coroutine in the iothread while holding the AioContext lock.  Therefore
+the iothread cannot execute the coroutine until after device_del
+releases the lock - by this time it's too late.
+
+This patch adds a reference count to ThrottleGroupMember so we can
+synchronously wait for restart coroutines to complete.  Once they are
+done it is safe to unregister the ThrottleGroupMember.
+
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Reviewed-by: Alberto Garcia <berto@igalia.com>
+Message-id: 20190114133257.30299-2-stefanha@redhat.com
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+(cherry picked from commit bc19a0a6e4505390f99d3c593ebaf11b7962cc59)
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ block/throttle-groups.c         | 9 +++++++++
+ include/block/throttle-groups.h | 5 +++++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/block/throttle-groups.c b/block/throttle-groups.c
+index 5d8213a..a5a2037 100644
+--- a/block/throttle-groups.c
++++ b/block/throttle-groups.c
+@@ -415,6 +415,9 @@ static void coroutine_fn throttle_group_restart_queue_entry(void *opaque)
+     }
+ 
+     g_free(data);
++
++    atomic_dec(&tgm->restart_pending);
++    aio_wait_kick();
+ }
+ 
+ static void throttle_group_restart_queue(ThrottleGroupMember *tgm, bool is_write)
+@@ -430,6 +433,8 @@ static void throttle_group_restart_queue(ThrottleGroupMember *tgm, bool is_write
+      * be no timer pending on this tgm at this point */
+     assert(!timer_pending(tgm->throttle_timers.timers[is_write]));
+ 
++    atomic_inc(&tgm->restart_pending);
++
+     co = qemu_coroutine_create(throttle_group_restart_queue_entry, rd);
+     aio_co_enter(tgm->aio_context, co);
+ }
+@@ -538,6 +543,7 @@ void throttle_group_register_tgm(ThrottleGroupMember *tgm,
+ 
+     tgm->throttle_state = ts;
+     tgm->aio_context = ctx;
++    atomic_set(&tgm->restart_pending, 0);
+ 
+     qemu_mutex_lock(&tg->lock);
+     /* If the ThrottleGroup is new set this ThrottleGroupMember as the token */
+@@ -584,6 +590,9 @@ void throttle_group_unregister_tgm(ThrottleGroupMember *tgm)
+         return;
+     }
+ 
++    /* Wait for throttle_group_restart_queue_entry() coroutines to finish */
++    AIO_WAIT_WHILE(tgm->aio_context, atomic_read(&tgm->restart_pending) > 0);
++
+     qemu_mutex_lock(&tg->lock);
+     for (i = 0; i < 2; i++) {
+         assert(tgm->pending_reqs[i] == 0);
+diff --git a/include/block/throttle-groups.h b/include/block/throttle-groups.h
+index e2fd051..712a8e6 100644
+--- a/include/block/throttle-groups.h
++++ b/include/block/throttle-groups.h
+@@ -43,6 +43,11 @@ typedef struct ThrottleGroupMember {
+      */
+     unsigned int io_limits_disabled;
+ 
++    /* Number of pending throttle_group_restart_queue_entry() coroutines.
++     * Accessed with atomic operations.
++     */
++    unsigned int restart_pending;
++
+     /* The following fields are protected by the ThrottleGroup lock.
+      * See the ThrottleGroup documentation for details.
+      * throttle_state tells us if I/O limits are configured. */
+-- 
+1.8.3.1
+

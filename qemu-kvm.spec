@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 9%{?dist}
+Release: 10%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -168,6 +168,10 @@ Patch41: kvm-migration-rdma-unregister-fd-handler.patch
 Patch42: kvm-s390x-tod-Properly-stop-the-KVM-TOD-while-the-guest-.patch
 # For bz#1659127 - Stress guest and stop it, then do live migration, guest hit call trace on destination end
 Patch43: kvm-hw-s390x-Fix-bad-mask-in-time2tod.patch
+# For bz#1655947 - qemu-kvm core dumped after unplug the device which was set io throttling parameters
+Patch44: kvm-throttle-groups-fix-restart-coroutine-iothread-race.patch
+# For bz#1655947 - qemu-kvm core dumped after unplug the device which was set io throttling parameters
+Patch45: kvm-iotests-add-238-for-throttling-tgm-unregister-iothre.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1015,6 +1019,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Jan 29 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-10.el8
+- kvm-throttle-groups-fix-restart-coroutine-iothread-race.patch [bz#1655947]
+- kvm-iotests-add-238-for-throttling-tgm-unregister-iothre.patch [bz#1655947]
+- Resolves: bz#1655947
+  (qemu-kvm core dumped after unplug the device which was set io throttling parameters)
+
 * Tue Jan 29 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-9.el8
 - kvm-migration-rdma-unregister-fd-handler.patch [bz#1666601]
 - kvm-s390x-tod-Properly-stop-the-KVM-TOD-while-the-guest-.patch [bz#1659127]
