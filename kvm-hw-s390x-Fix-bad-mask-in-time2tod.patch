@@ -1,0 +1,50 @@
+From c6ac9501471c3c931367b1967ad97ecfc498249c Mon Sep 17 00:00:00 2001
+From: David Hildenbrand <david@redhat.com>
+Date: Fri, 21 Dec 2018 15:33:17 +0000
+Subject: [PATCH 3/3] hw/s390x: Fix bad mask in time2tod()
+
+RH-Author: David Hildenbrand <david@redhat.com>
+Message-id: <20181221153317.27647-3-david@redhat.com>
+Patchwork-id: 83743
+O-Subject: [RHEL-8.0 qemu-kvm v2 PATCH 2/2] hw/s390x: Fix bad mask in time2tod()
+Bugzilla: 1659127
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Since "s390x/tcg: avoid overflows in time2tod/tod2time", the
+time2tod() function tries to deal with the 9 uppermost bits in the
+time value, but uses the wrong mask for this: 0xff80000000000000 should
+be used instead of 0xff10000000000000 here.
+
+Fixes: 14055ce53c2d901d826ffad7fb7d6bb8ab46bdfd
+Cc: qemu-stable@nongnu.org
+Signed-off-by: Thomas Huth <thuth@redhat.com>
+Message-Id: <1544792887-14575-1-git-send-email-thuth@redhat.com>
+Reviewed-by: David Hildenbrand <david@redhat.com>
+[CH: tweaked commit message]
+Signed-off-by: Cornelia Huck <cohuck@redhat.com>
+(cherry picked from commit aba7a5a2de3dba5917024df25441f715b9249e31)
+Signed-off-by: David Hildenbrand <david@redhat.com>
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ include/hw/s390x/tod.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/hw/s390x/tod.h b/include/hw/s390x/tod.h
+index cbd7552..47ef9de 100644
+--- a/include/hw/s390x/tod.h
++++ b/include/hw/s390x/tod.h
+@@ -56,7 +56,7 @@ typedef struct S390TODClass {
+ /* Converts ns to s390's clock format */
+ static inline uint64_t time2tod(uint64_t ns)
+ {
+-    return (ns << 9) / 125 + (((ns & 0xff10000000000000ull) / 125) << 9);
++    return (ns << 9) / 125 + (((ns & 0xff80000000000000ull) / 125) << 9);
+ }
+ 
+ /* Converts s390's clock format to ns */
+-- 
+1.8.3.1
+

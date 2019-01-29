@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 8%{?dist}
+Release: 9%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -164,6 +164,10 @@ Patch39: kvm-i386-kvm-expose-HV_CPUID_ENLIGHTMENT_INFO.EAX-and-HV.patch
 Patch40: kvm-i386-kvm-add-a-comment-explaining-why-.feat_names-ar.patch
 # For bz#1666601 - [q35] dst qemu core dumped when do rdma migration with Mellanox IB QDR card
 Patch41: kvm-migration-rdma-unregister-fd-handler.patch
+# For bz#1659127 - Stress guest and stop it, then do live migration, guest hit call trace on destination end
+Patch42: kvm-s390x-tod-Properly-stop-the-KVM-TOD-while-the-guest-.patch
+# For bz#1659127 - Stress guest and stop it, then do live migration, guest hit call trace on destination end
+Patch43: kvm-hw-s390x-Fix-bad-mask-in-time2tod.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1011,6 +1015,15 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Jan 29 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-9.el8
+- kvm-migration-rdma-unregister-fd-handler.patch [bz#1666601]
+- kvm-s390x-tod-Properly-stop-the-KVM-TOD-while-the-guest-.patch [bz#1659127]
+- kvm-hw-s390x-Fix-bad-mask-in-time2tod.patch [bz#1659127]
+- Resolves: bz#1659127
+  (Stress guest and stop it, then do live migration, guest hit call trace on destination end)
+- Resolves: bz#1666601
+  ([q35] dst qemu core dumped when do rdma migration with Mellanox IB QDR card)
+
 * Mon Jan 28 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-8.el8
 - kvm-migration-rdma-unregister-fd-handler.patch [bz#1666601]
 - Resolves: bz#1666601
