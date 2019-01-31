@@ -1,0 +1,122 @@
+From ee704181e5f2dd1ebc6a2de0f9e750a11541cd47 Mon Sep 17 00:00:00 2001
+From: Markus Armbruster <armbru@redhat.com>
+Date: Thu, 31 Jan 2019 14:28:01 +0000
+Subject: [PATCH 2/2] json: Fix % handling when not interpolating
+
+RH-Author: Markus Armbruster <armbru@redhat.com>
+Message-id: <20190131142801.15268-2-armbru@redhat.com>
+Patchwork-id: 84158
+O-Subject: [RHEL-8.0/AV qemu-kvm PATCH 1/1] json: Fix % handling when not interpolating
+Bugzilla: 1668244
+RH-Acked-by: Richard Jones <rjones@redhat.com>
+RH-Acked-by: Daniel P. Berrange <berrange@redhat.com>
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+
+From: Christophe Fergeau <cfergeau@redhat.com>
+
+Commit 8bca4613 added support for %% in json strings when interpolating,
+but in doing so broke handling of % when not interpolating.
+
+When parse_string() is fed a string token containing '%', it skips the
+'%' regardless of ctxt->ap, i.e. even it's not interpolating.  If the
+'%' is the string's last character, it fails an assertion.  Else, it
+"merely" swallows the '%'.
+
+Fix parse_string() to handle '%' specially only when interpolating.
+
+To gauge the bug's impact, let's review non-interpolating users of this
+parser, i.e. code passing NULL context to json_message_parser_init():
+
+* tests/check-qjson.c, tests/test-qobject-input-visitor.c,
+  tests/test-visitor-serialization.c
+
+  Plenty of tests, but we still failed to cover the buggy case.
+
+* monitor.c: QMP input
+
+* qga/main.c: QGA input
+
+* qobject_from_json():
+
+  - qobject-input-visitor.c: JSON command line option arguments of
+    -display and -blockdev
+
+    Reproducer: -blockdev '{"%"}'
+
+  - block.c: JSON pseudo-filenames starting with "json:"
+
+    Reproducer: https://bugzilla.redhat.com/show_bug.cgi?id=1668244#c3
+
+  - block/rbd.c: JSON key pairs
+
+    Pseudo-filenames starting with "rbd:".
+
+Command line, QMP and QGA input are trusted.
+
+Filenames are trusted when they come from command line, QMP or HMP.
+They are untrusted when they come from from image file headers.
+Example: QCOW2 backing file name.  Note that this is *not* the security
+boundary between host and guest.  It's the boundary between host and an
+image file from an untrusted source.
+
+Neither failing an assertion nor skipping a character in a filename of
+your choice looks exploitable.  Note that we don't support compiling
+with NDEBUG.
+
+Fixes: 8bca4613e6cddd948895b8db3def05950463495b
+Cc: qemu-stable@nongnu.org
+Signed-off-by: Christophe Fergeau <cfergeau@redhat.com>
+Message-Id: <20190102140535.11512-1-cfergeau@redhat.com>
+Reviewed-by: Eric Blake <eblake@redhat.com>
+Tested-by: Richard W.M. Jones <rjones@redhat.com>
+[Commit message extended to discuss impact]
+Signed-off-by: Markus Armbruster <armbru@redhat.com>
+(cherry picked from commit bbc0586ced6e9ffdfd29d89fcc917b3d90ac3938)
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ qobject/json-parser.c | 10 ++++++----
+ tests/check-qjson.c   |  5 +++++
+ 2 files changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/qobject/json-parser.c b/qobject/json-parser.c
+index 5a840df..53e91cb 100644
+--- a/qobject/json-parser.c
++++ b/qobject/json-parser.c
+@@ -208,11 +208,13 @@ static QString *parse_string(JSONParserContext *ctxt, JSONToken *token)
+             }
+             break;
+         case '%':
+-            if (ctxt->ap && ptr[1] != '%') {
+-                parse_error(ctxt, token, "can't interpolate into string");
+-                goto out;
++            if (ctxt->ap) {
++                if (ptr[1] != '%') {
++                    parse_error(ctxt, token, "can't interpolate into string");
++                    goto out;
++                }
++                ptr++;
+             }
+-            ptr++;
+             /* fall through */
+         default:
+             cp = mod_utf8_codepoint(ptr, 6, &end);
+diff --git a/tests/check-qjson.c b/tests/check-qjson.c
+index d876a7a..fa2afcc 100644
+--- a/tests/check-qjson.c
++++ b/tests/check-qjson.c
+@@ -176,6 +176,11 @@ static void utf8_string(void)
+             "\xCE\xBA\xE1\xBD\xB9\xCF\x83\xCE\xBC\xCE\xB5",
+             "\\u03BA\\u1F79\\u03C3\\u03BC\\u03B5",
+         },
++            /* '%' character when not interpolating */
++        {
++            "100%",
++            "100%",
++        },
+         /* 2  Boundary condition test cases */
+         /* 2.1  First possible sequence of a certain length */
+         /*
+-- 
+1.8.3.1
+

@@ -1,0 +1,52 @@
+From cd667708de23ea78479cc68dd8ae4c9b429a4ec8 Mon Sep 17 00:00:00 2001
+From: Danilo de Paula <ddepaula@redhat.com>
+Date: Thu, 31 Jan 2019 00:16:44 +0000
+Subject: [PATCH 1/2] Fix fsfreeze-hook path in the man page.
+
+RH-Author: Danilo de Paula <ddepaula@redhat.com>
+Message-id: <20190131001644.6237-2-ddepaula@redhat.com>
+Patchwork-id: 84152
+O-Subject: [RHEL8/rhel + RHEL8/AV qemu-kvm PATCH 1/1] Fix fsfreeze-hook path in the man page.
+Bugzilla: 1644985
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+
+fsfreeze-hook final PATH is defined in redhat/qemu-kvm.spec.template
+since it's being copied in the install section.
+
+In that way, even with the configuration changes proposed by Marc
+in qemu-devel [1], the information would still be different.
+
+Wanting to avoid having to re-write some part of the building system
+including a new option, or use [1] and call ./configure again with --with-confsuffix=/qemu-ga,
+I decided to manually edit this directly in the file.
+
+To play safe, an alternative is to do this in the spec file with something like
+sed -i '/\/etc\/qemu\/fsfreeze-hook/,${s//\/etc\/qemu-ga\/fsfreeze-hook//;b};$q1' qemu-ga.texi
+In case the original file changes during a rebase, sed would fail and
+the problem could be detected. But I believe this would make maintaining this even harder.
+
+[1] http://lists.gnu.org/archive/html/qemu-devel/2018-11/msg05088.html
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ qemu-ga.texi | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/qemu-ga.texi b/qemu-ga.texi
+index 4c7a8fd..3105e30 100644
+--- a/qemu-ga.texi
++++ b/qemu-ga.texi
+@@ -58,7 +58,7 @@ file format).
+   Enable fsfreeze hook. Accepts an optional argument that specifies
+   script to run on freeze/thaw. Script will be called with
+   'freeze'/'thaw' arguments accordingly (default is
+-  @samp{/etc/qemu/fsfreeze-hook}). If using -F with an argument, do
++  @samp{/etc/qemu-ga/fsfreeze-hook}). If using -F with an argument, do
+   not follow -F with a space (for example:
+   @samp{-F/var/run/fsfreezehook.sh}).
+ 
+-- 
+1.8.3.1
+
