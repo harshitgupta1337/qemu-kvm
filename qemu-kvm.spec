@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 11%{?dist}
+Release: 12%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -172,8 +172,6 @@ Patch43: kvm-hw-s390x-Fix-bad-mask-in-time2tod.patch
 Patch44: kvm-throttle-groups-fix-restart-coroutine-iothread-race.patch
 # For bz#1655947 - qemu-kvm core dumped after unplug the device which was set io throttling parameters
 Patch45: kvm-iotests-add-238-for-throttling-tgm-unregister-iothre.patch
-# For bz#1644985 - The "fsfreeze-hook" script path shown by command "qemu-ga --help" or "man qemu-ga" is wrong - Fast Train
-Patch46: kvm-Fix-fsfreeze-hook-path-in-the-man-page.patch
 # For bz#1668244 - qemu-img: /var/tmp/v2vovl9951f8.qcow2: CURL: Error opening file: The requested URL returned error: 404 Not Found
 Patch47: kvm-json-Fix-handling-when-not-interpolating.patch
 
@@ -1023,6 +1021,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Jan 31 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-12.el8
+- Removing kvm-Fix-fsfreeze-hook-path-in-the-man-page.patch [bz#1644985]
+
 * Thu Jan 31 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-11.el8
 - kvm-Fix-fsfreeze-hook-path-in-the-man-page.patch [bz#1644985]
 - kvm-json-Fix-handling-when-not-interpolating.patch [bz#1668244]
