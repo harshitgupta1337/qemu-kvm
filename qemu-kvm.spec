@@ -174,6 +174,12 @@ Patch44: kvm-throttle-groups-fix-restart-coroutine-iothread-race.patch
 Patch45: kvm-iotests-add-238-for-throttling-tgm-unregister-iothre.patch
 # For bz#1668244 - qemu-img: /var/tmp/v2vovl9951f8.qcow2: CURL: Error opening file: The requested URL returned error: 404 Not Found
 Patch47: kvm-json-Fix-handling-when-not-interpolating.patch
+# For bz#1665896 - VNC unix listener socket is deleted after first client quits
+Patch48: kvm-io-ensure-UNIX-client-doesn-t-unlink-server-socket.patch
+# For bz#1668248 - "An unknown error has occurred" when using cdrom to install the system with two blockdev disks.(when choose installation destination)
+Patch49: kvm-scsi-disk-Don-t-use-empty-string-as-device-id.patch
+# For bz#1668248 - "An unknown error has occurred" when using cdrom to install the system with two blockdev disks.(when choose installation destination)
+Patch50: kvm-scsi-disk-Add-device_id-property.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1021,8 +1027,15 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
-* Thu Jan 31 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-12.el8
+* Fri Feb 08 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-12.el8
 - Removing kvm-Fix-fsfreeze-hook-path-in-the-man-page.patch [bz#1644985]
+- kvm-io-ensure-UNIX-client-doesn-t-unlink-server-socket.patch [bz#1665896]
+- kvm-scsi-disk-Don-t-use-empty-string-as-device-id.patch [bz#1668248]
+- kvm-scsi-disk-Add-device_id-property.patch [bz#1668248]
+- Resolves: bz#1665896
+  (VNC unix listener socket is deleted after first client quits)
+- Resolves: bz#1668248
+  ("An unknown error has occurred" when using cdrom to install the system with two blockdev disks.(when choose installation destination))
 
 * Thu Jan 31 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-11.el8
 - kvm-Fix-fsfreeze-hook-path-in-the-man-page.patch [bz#1644985]
