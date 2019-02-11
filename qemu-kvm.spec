@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 12%{?dist}
+Release: 13%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -180,6 +180,25 @@ Patch48: kvm-io-ensure-UNIX-client-doesn-t-unlink-server-socket.patch
 Patch49: kvm-scsi-disk-Don-t-use-empty-string-as-device-id.patch
 # For bz#1668248 - "An unknown error has occurred" when using cdrom to install the system with two blockdev disks.(when choose installation destination)
 Patch50: kvm-scsi-disk-Add-device_id-property.patch
+# For bz#1669922 - Backport avocado-qemu tests for QEMU 3.1
+Patch51: kvm-Acceptance-tests-add-Linux-initrd-checking-test.patch
+# For bz#1671519 - RHEL8.0 Snapshot3 - qemu doesn't free up hugepage memory when hotplug/hotunplug using memory-backend-file (qemu-kvm)
+Patch52: kvm-mmap-alloc-unfold-qemu_ram_mmap.patch
+# For bz#1671519 - RHEL8.0 Snapshot3 - qemu doesn't free up hugepage memory when hotplug/hotunplug using memory-backend-file (qemu-kvm)
+Patch53: kvm-mmap-alloc-fix-hugetlbfs-misaligned-length-in-ppc64.patch
+# For bz#1653590 - [Fast train]had better stop qemu immediately while guest was making use of an improper page size
+Patch54: kvm-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
+# For bz#1673014 - Local VM and migrated VM on the same host can run with same RAW file as visual disk source while without shareable configured or lock manager enabled
+Patch55: kvm-block-Fix-invalidate_cache-error-path-for-parent-act.patch
+# For bz#1656276 - qemu-kvm core dumped after hotplug the deleted disk with iothread parameter
+# For bz#1662508 - Qemu core dump when start guest with two disks using same drive
+Patch56: kvm-virtio-scsi-Move-BlockBackend-back-to-the-main-AioCo.patch
+# For bz#1656276 - qemu-kvm core dumped after hotplug the deleted disk with iothread parameter
+# For bz#1662508 - Qemu core dump when start guest with two disks using same drive
+Patch57: kvm-scsi-disk-Acquire-the-AioContext-in-scsi_-_realize.patch
+# For bz#1656276 - qemu-kvm core dumped after hotplug the deleted disk with iothread parameter
+# For bz#1662508 - Qemu core dump when start guest with two disks using same drive
+Patch58: kvm-virtio-scsi-Forbid-devices-with-different-iothreads-.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1027,6 +1046,28 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Feb 11 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-13.el8
+- kvm-Acceptance-tests-add-Linux-initrd-checking-test.patch [bz#1669922]
+- kvm-mmap-alloc-unfold-qemu_ram_mmap.patch [bz#1671519]
+- kvm-mmap-alloc-fix-hugetlbfs-misaligned-length-in-ppc64.patch [bz#1671519]
+- kvm-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch [bz#1653590]
+- kvm-block-Fix-invalidate_cache-error-path-for-parent-act.patch [bz#1673014]
+- kvm-virtio-scsi-Move-BlockBackend-back-to-the-main-AioCo.patch [bz#1656276 bz#1662508]
+- kvm-scsi-disk-Acquire-the-AioContext-in-scsi_-_realize.patch [bz#1656276 bz#1662508]
+- kvm-virtio-scsi-Forbid-devices-with-different-iothreads-.patch [bz#1656276 bz#1662508]
+- Resolves: bz#1653590
+  ([Fast train]had better stop qemu immediately while guest was making use of an improper page size)
+- Resolves: bz#1656276
+  (qemu-kvm core dumped after hotplug the deleted disk with iothread parameter)
+- Resolves: bz#1662508
+  (Qemu core dump when start guest with two disks using same drive)
+- Resolves: bz#1669922
+  (Backport avocado-qemu tests for QEMU 3.1)
+- Resolves: bz#1671519
+  (RHEL8.0 Snapshot3 - qemu doesn't free up hugepage memory when hotplug/hotunplug using memory-backend-file (qemu-kvm))
+- Resolves: bz#1673014
+  (Local VM and migrated VM on the same host can run with same RAW file as visual disk source while without shareable configured or lock manager enabled)
+
 * Fri Feb 08 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-12.el8
 - Removing kvm-Fix-fsfreeze-hook-path-in-the-man-page.patch [bz#1644985]
 - kvm-io-ensure-UNIX-client-doesn-t-unlink-server-socket.patch [bz#1665896]

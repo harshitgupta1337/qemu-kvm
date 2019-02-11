@@ -1,0 +1,177 @@
+From 1a283b8cdd349b9085488a516f26f453c8591ce2 Mon Sep 17 00:00:00 2001
+From: David Gibson <dgibson@redhat.com>
+Date: Tue, 5 Feb 2019 04:47:57 +0000
+Subject: [PATCH 3/8] mmap-alloc: fix hugetlbfs misaligned length in ppc64
+
+RH-Author: David Gibson <dgibson@redhat.com>
+Message-id: <20190205044757.13591-3-dgibson@redhat.com>
+Patchwork-id: 84233
+O-Subject: [RHELAV-8.0 qemu-kvm PATCH 2/2] mmap-alloc: fix hugetlbfs misaligned length in ppc64
+Bugzilla: 1671519
+RH-Acked-by: Pankaj Gupta <pagupta@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+
+From: Murilo Opsfelder Araujo <muriloo@linux.ibm.com>
+
+The commit 7197fb4058bcb68986bae2bb2c04d6370f3e7218 ("util/mmap-alloc:
+fix hugetlb support on ppc64") fixed Huge TLB mappings on ppc64.
+
+However, we still need to consider the underlying huge page size
+during munmap() because it requires that both address and length be a
+multiple of the underlying huge page size for Huge TLB mappings.
+Quote from "Huge page (Huge TLB) mappings" paragraph under NOTES
+section of the munmap(2) manual:
+
+  "For munmap(), addr and length must both be a multiple of the
+  underlying huge page size."
+
+On ppc64, the munmap() in qemu_ram_munmap() does not work for Huge TLB
+mappings because the mapped segment can be aligned with the underlying
+huge page size, not aligned with the native system page size, as
+returned by getpagesize().
+
+This has the side effect of not releasing huge pages back to the pool
+after a hugetlbfs file-backed memory device is hot-unplugged.
+
+This patch fixes the situation in qemu_ram_mmap() and
+qemu_ram_munmap() by considering the underlying page size on ppc64.
+
+After this patch, memory hot-unplug releases huge pages back to the
+pool.
+
+Fixes: 7197fb4058bcb68986bae2bb2c04d6370f3e7218
+Signed-off-by: Murilo Opsfelder Araujo <muriloo@linux.ibm.com>
+Reviewed-by: Greg Kurz <groug@kaod.org>
+Signed-off-by: David Gibson <david@gibson.dropbear.id.au>
+(cherry picked from commit 53adb9d43e1abba187387a51f238e878e934c647)
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1671519
+
+Signed-off-by: David Gibson <dgibson@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ exec.c                    |  4 ++--
+ include/qemu/mmap-alloc.h |  2 +-
+ util/mmap-alloc.c         | 22 ++++++++++++++++------
+ util/oslib-posix.c        |  2 +-
+ 4 files changed, 20 insertions(+), 10 deletions(-)
+
+diff --git a/exec.c b/exec.c
+index bb6170d..38eaf0f 100644
+--- a/exec.c
++++ b/exec.c
+@@ -1870,7 +1870,7 @@ static void *file_ram_alloc(RAMBlock *block,
+     if (mem_prealloc) {
+         os_mem_prealloc(fd, area, memory, smp_cpus, errp);
+         if (errp && *errp) {
+-            qemu_ram_munmap(area, memory);
++            qemu_ram_munmap(fd, area, memory);
+             return NULL;
+         }
+     }
+@@ -2391,7 +2391,7 @@ static void reclaim_ramblock(RAMBlock *block)
+         xen_invalidate_map_cache_entry(block->host);
+ #ifndef _WIN32
+     } else if (block->fd >= 0) {
+-        qemu_ram_munmap(block->host, block->max_length);
++        qemu_ram_munmap(block->fd, block->host, block->max_length);
+         close(block->fd);
+ #endif
+     } else {
+diff --git a/include/qemu/mmap-alloc.h b/include/qemu/mmap-alloc.h
+index 50385e3..ef04f0e 100644
+--- a/include/qemu/mmap-alloc.h
++++ b/include/qemu/mmap-alloc.h
+@@ -9,6 +9,6 @@ size_t qemu_mempath_getpagesize(const char *mem_path);
+ 
+ void *qemu_ram_mmap(int fd, size_t size, size_t align, bool shared);
+ 
+-void qemu_ram_munmap(void *ptr, size_t size);
++void qemu_ram_munmap(int fd, void *ptr, size_t size);
+ 
+ #endif
+diff --git a/util/mmap-alloc.c b/util/mmap-alloc.c
+index f71ea03..8565885 100644
+--- a/util/mmap-alloc.c
++++ b/util/mmap-alloc.c
+@@ -80,6 +80,7 @@ void *qemu_ram_mmap(int fd, size_t size, size_t align, bool shared)
+     int flags;
+     int guardfd;
+     size_t offset;
++    size_t pagesize;
+     size_t total;
+     void *guardptr;
+     void *ptr;
+@@ -100,7 +101,8 @@ void *qemu_ram_mmap(int fd, size_t size, size_t align, bool shared)
+      * anonymous memory is OK.
+      */
+     flags = MAP_PRIVATE;
+-    if (fd == -1 || qemu_fd_getpagesize(fd) == getpagesize()) {
++    pagesize = qemu_fd_getpagesize(fd);
++    if (fd == -1 || pagesize == getpagesize()) {
+         guardfd = -1;
+         flags |= MAP_ANONYMOUS;
+     } else {
+@@ -109,6 +111,7 @@ void *qemu_ram_mmap(int fd, size_t size, size_t align, bool shared)
+     }
+ #else
+     guardfd = -1;
++    pagesize = getpagesize();
+     flags = MAP_PRIVATE | MAP_ANONYMOUS;
+ #endif
+ 
+@@ -120,7 +123,7 @@ void *qemu_ram_mmap(int fd, size_t size, size_t align, bool shared)
+ 
+     assert(is_power_of_2(align));
+     /* Always align to host page size */
+-    assert(align >= getpagesize());
++    assert(align >= pagesize);
+ 
+     flags = MAP_FIXED;
+     flags |= fd == -1 ? MAP_ANONYMOUS : 0;
+@@ -143,17 +146,24 @@ void *qemu_ram_mmap(int fd, size_t size, size_t align, bool shared)
+      * a guard page guarding against potential buffer overflows.
+      */
+     total -= offset;
+-    if (total > size + getpagesize()) {
+-        munmap(ptr + size + getpagesize(), total - size - getpagesize());
++    if (total > size + pagesize) {
++        munmap(ptr + size + pagesize, total - size - pagesize);
+     }
+ 
+     return ptr;
+ }
+ 
+-void qemu_ram_munmap(void *ptr, size_t size)
++void qemu_ram_munmap(int fd, void *ptr, size_t size)
+ {
++    size_t pagesize;
++
+     if (ptr) {
+         /* Unmap both the RAM block and the guard page */
+-        munmap(ptr, size + getpagesize());
++#if defined(__powerpc64__) && defined(__linux__)
++        pagesize = qemu_fd_getpagesize(fd);
++#else
++        pagesize = getpagesize();
++#endif
++        munmap(ptr, size + pagesize);
+     }
+ }
+diff --git a/util/oslib-posix.c b/util/oslib-posix.c
+index c1bee2a..97b2f3b 100644
+--- a/util/oslib-posix.c
++++ b/util/oslib-posix.c
+@@ -226,7 +226,7 @@ void qemu_vfree(void *ptr)
+ void qemu_anon_ram_free(void *ptr, size_t size)
+ {
+     trace_qemu_anon_ram_free(ptr, size);
+-    qemu_ram_munmap(ptr, size);
++    qemu_ram_munmap(-1, ptr, size);
+ }
+ 
+ void qemu_set_block(int fd)
+-- 
+1.8.3.1
+

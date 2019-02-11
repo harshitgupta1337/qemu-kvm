@@ -1,0 +1,105 @@
+From ba8f254594f7033183cda79b47e2c7a5c1f5bcfe Mon Sep 17 00:00:00 2001
+From: Yash Mankad <ymankad@redhat.com>
+Date: Mon, 4 Feb 2019 19:14:22 +0000
+Subject: [PATCH 1/8] Acceptance tests: add Linux initrd checking test
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Yash Mankad <ymankad@redhat.com>
+Message-id: <cd36327815bc6d0836e5a51237f13302ef7eda25.1549307526.git.ymankad@redhat.com>
+Patchwork-id: 84209
+O-Subject: [RHEL-8.0/AV qemu-kvm PATCH 1/1] Acceptance tests: add Linux initrd checking test
+Bugzilla: 1669922
+RH-Acked-by: Wainer dos Santos Moschetta <wainersm@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+
+From: Wainer dos Santos Moschetta <wainersm@redhat.com>
+
+QEMU used to exits with a not accurate error message when
+an initrd > 2GiB was passed. That was fixed on patch:
+
+	commit f3839fda5771596152b75dd1e1a6d050e6e6e380
+	Author: Li Zhijian <lizhijian@cn.fujitsu.com>
+	Date:   Thu Sep 13 18:07:13 2018 +0800
+
+    	change get_image_size return type to int64_t
+
+This change adds a regression test for that fix. It starts
+QEMU with a 2GiB dummy initrd, and checks that it evaluates the
+file size correctly and prints an accurate message.
+
+Signed-off-by: Wainer dos Santos Moschetta <wainersm@redhat.com>
+Reviewed-by: Caio Carrara <ccarrara@redhat.com>
+Reviewed-by: Cleber Rosa <crosa@redhat.com>
+Reviewed-by: Eduardo Habkost <ehabkost@redhat.com>
+Reviewed-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Tested-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Message-Id: <20181109182153.5390-1-wainersm@redhat.com>
+Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
+(cherry picked from commit 82d4c923a580751c86dc0852a7cc8e369a78e8ad)
+Signed-off-by: Yash Mankad <ymankad@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ tests/acceptance/linux_initrd.py | 48 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 48 insertions(+)
+ create mode 100644 tests/acceptance/linux_initrd.py
+
+diff --git a/tests/acceptance/linux_initrd.py b/tests/acceptance/linux_initrd.py
+new file mode 100644
+index 0000000..737355c
+--- /dev/null
++++ b/tests/acceptance/linux_initrd.py
+@@ -0,0 +1,48 @@
++# Linux initrd acceptance test.
++#
++# Copyright (c) 2018 Red Hat, Inc.
++#
++# Author:
++#  Wainer dos Santos Moschetta <wainersm@redhat.com>
++#
++# This work is licensed under the terms of the GNU GPL, version 2 or
++# later.  See the COPYING file in the top-level directory.
++
++import tempfile
++from avocado.utils.process import run
++
++from avocado_qemu import Test
++
++
++class LinuxInitrd(Test):
++    """
++    Checks QEMU evaluates correctly the initrd file passed as -initrd option.
++
++    :avocado: enable
++    :avocado: tags=x86_64
++    """
++
++    timeout = 60
++
++    def test_with_2gib_file_should_exit_error_msg(self):
++        """
++        Pretends to boot QEMU with an initrd file with size of 2GiB
++        and expect it exits with error message.
++        """
++        kernel_url = ('https://mirrors.kernel.org/fedora/releases/28/'
++                      'Everything/x86_64/os/images/pxeboot/vmlinuz')
++        kernel_hash = '238e083e114c48200f80d889f7e32eeb2793e02a'
++        kernel_path = self.fetch_asset(kernel_url, asset_hash=kernel_hash)
++        max_size = 2 * (1024 ** 3) - 1
++
++        with tempfile.NamedTemporaryFile() as initrd:
++            initrd.seek(max_size)
++            initrd.write(b'\0')
++            initrd.flush()
++            cmd = "%s -kernel %s -initrd %s" % (self.qemu_bin, kernel_path,
++                                                initrd.name)
++            res = run(cmd, ignore_status=True)
++            self.assertEqual(res.exit_status, 1)
++            expected_msg = r'.*initrd is too large.*max: \d+, need %s.*' % (
++                max_size + 1)
++            self.assertRegex(res.stderr_text, expected_msg)
+-- 
+1.8.3.1
+
