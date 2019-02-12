@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 13%{?dist}
+Release: 14%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -199,6 +199,8 @@ Patch57: kvm-scsi-disk-Acquire-the-AioContext-in-scsi_-_realize.patch
 # For bz#1656276 - qemu-kvm core dumped after hotplug the deleted disk with iothread parameter
 # For bz#1662508 - Qemu core dump when start guest with two disks using same drive
 Patch58: kvm-virtio-scsi-Forbid-devices-with-different-iothreads-.patch
+# For bz#1644985 - The "fsfreeze-hook" script path shown by command "qemu-ga --help" or "man qemu-ga" is wrong - Fast Train
+Patch59: kvm-doc-fix-the-configuration-path.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1046,6 +1048,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Feb 12 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-14.el8
+- kvm-doc-fix-the-configuration-path.patch [bz#1644985]
+- Resolves: bz#1644985
+  (The "fsfreeze-hook" script path shown by command "qemu-ga --help" or "man qemu-ga" is wrong - Fast Train)
+
 * Mon Feb 11 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-13.el8
 - kvm-Acceptance-tests-add-Linux-initrd-checking-test.patch [bz#1669922]
 - kvm-mmap-alloc-unfold-qemu_ram_mmap.patch [bz#1671519]
