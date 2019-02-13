@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 14%{?dist}
+Release: 15%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -102,6 +102,7 @@ Source32: qemu-pr-helper.service
 Source33: qemu-pr-helper.socket
 Source34: 81-kvm-rhel.rules
 Source35: udev-kvm-check.c
+Source36: README.tests
 
 
 Patch0004: 0004-Initial-redhat-build.patch
@@ -406,6 +407,18 @@ with the host over a virtio-serial channel named "org.qemu.guest_agent.0"
 
 This package does not need to be installed on the host OS.
 
+%package tests
+Summary: tests for the qemu-kvm package
+Requires: %{name} = %{epoch}:%{version}-%{release}
+
+%define testsdir %{_libdir}/%{name}/tests-src
+
+%description tests
+The qemu-kvm-tests rpm contains tests that can be used to verify
+the functionality of the installed qemu-kvm package
+
+Install this package if you want access to the avocado_qemu
+tests, or qemu-iotests.
 
 %package  block-curl
 Summary: QEMU CURL block driver
@@ -684,11 +697,35 @@ mkdir -p $RPM_BUILD_ROOT%{_bindir}/
 mkdir -p $RPM_BUILD_ROOT%{_udevrulesdir}/
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}
 
+# Create new directories and put them all under tests-src
+mkdir -p $RPM_BUILD_ROOT%{testsdir}/tests/
+mkdir -p $RPM_BUILD_ROOT%{testsdir}/tests/acceptance
+mkdir -p $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests
+mkdir -p $RPM_BUILD_ROOT%{testsdir}/scripts
+mkdir -p $RPM_BUILD_ROOT%{testsdir}/scripts/qmp
+
 install -p -m 0755 udev-kvm-check $RPM_BUILD_ROOT%{_udevdir}
 install -p -m 0644 %{SOURCE34} $RPM_BUILD_ROOT%{_udevrulesdir}
 
 install -m 0644 scripts/dump-guest-memory.py \
                 $RPM_BUILD_ROOT%{_datadir}/%{name}
+
+# Install avocado_qemu tests
+cp -R tests/acceptance/* $RPM_BUILD_ROOT%{testsdir}/tests/acceptance/
+
+# Install qemu.py and qmp/ scripts required to run avocado_qemu tests
+install -p -m 0644 scripts/qemu.py $RPM_BUILD_ROOT%{testsdir}/scripts/
+cp -R scripts/qmp/* $RPM_BUILD_ROOT%{testsdir}/scripts/qmp
+install -p -m 0755 tests/Makefile.include $RPM_BUILD_ROOT%{testsdir}/tests/
+
+# Install qemu-iotests
+cp -R tests/qemu-iotests/* $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/
+# Avoid ambiguous 'python' interpreter name
+find $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/env python+%{__python3}+' {} \;
+find $RPM_BUILD_ROOT%{testsdir}/scripts/qmp/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/env python+%{__python3}+' {} \;
+find $RPM_BUILD_ROOT%{testsdir}/scripts/qmp/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/python+%{__python3}+' {} \;
+
+install -p -m 0644 %{SOURCE36} $RPM_BUILD_ROOT%{testsdir}/README
 
 make DESTDIR=$RPM_BUILD_ROOT \
     sharedir="%{_datadir}/%{name}" \
@@ -870,6 +907,12 @@ chmod +x $RPM_BUILD_ROOT%{_libdir}/qemu-kvm/block-*.so
 
 %check
 export DIFF=diff; make check V=1
+pushd tests/qemu-iotests
+./check -v -raw 001 002 003 004 005 008 009 010 011 012 021 025 032 033 045 048 052 063 077 086 101 104 106 120 132 140 143 145 147 150 152 157 159 160 162 170 171 175 181 184 194 205 208 218 221 222 226 227 232
+./check -v -qcow2 001 002 003 004 005 007 008 009 010 011 012 013 017 018 019 020 021 022 024 025 027 028 029 031 032 033 034 035 036 037 038 039 042 043 046 047 048 049 050 052 053 054 056 057 058 060 061 062 063 065 066 068 069 072 073 074 080 085 086 087 089 090 091 095 096 097 098 102 103 104 105 107 108 110 111 114 117 120 122 126 127 130 132 133 134 137 138 140 141 142 143 144 145 147 150 151 152 154 156 157 158 159 162 165 170 174 176 177 179 181 184 187 188 189 190 191 194 195 196 198 201 202 203 204 205 206 208 209 214 216 217 218 222 223 226 227 232
+./check -v -luks 001 002 003 004 005 008 009 010 011 012 021 032 033 048 052 140 143 145 157 162 174 181 184 208 218 227
+./check -v -nbd 001 002 003 004 005 008 009 010 011 021 032 033 045 077 094 104 119 123 132 143 145 147 151 152 162 181 184 194 205 208 218 222
+popd
 
 %post -n qemu-kvm-core
 # load kvm modules now, so we can make sure no reboot is needed.
@@ -1029,6 +1072,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_datadir}/%{name}/qemu-ga
 %dir %{_localstatedir}/log/qemu-ga
 
+%files tests
+%{testsdir}
+
 %files block-curl
 %{_libdir}/qemu-kvm/block-curl.so
 
@@ -1048,6 +1094,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Wed Feb 13 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-15.el8
+- kvm-Add-raw-qcow2-nbd-and-luks-iotests-to-run-during-the.patch [bz#1664855]
+- kvm-Introduce-the-qemu-kvm-tests-rpm.patch [bz#1669924]
+- Resolves: bz#1664855
+  (Run iotests in qemu-kvm build %check phase)
+- Resolves: bz#1669924
+  (qemu-kvm packaging: Package the avocado_qemu tests and qemu-iotests in a new rpm)
+
 * Tue Feb 12 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-14.el8
 - kvm-doc-fix-the-configuration-path.patch [bz#1644985]
 - Resolves: bz#1644985
