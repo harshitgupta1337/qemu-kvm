@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 15%{?dist}
+Release: 16%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -202,6 +202,10 @@ Patch57: kvm-scsi-disk-Acquire-the-AioContext-in-scsi_-_realize.patch
 Patch58: kvm-virtio-scsi-Forbid-devices-with-different-iothreads-.patch
 # For bz#1644985 - The "fsfreeze-hook" script path shown by command "qemu-ga --help" or "man qemu-ga" is wrong - Fast Train
 Patch59: kvm-doc-fix-the-configuration-path.patch
+# For bz#1664997 - Restrict floppy device to RHEL-7 machine types
+Patch60: kvm-fdc-Revert-downstream-disablement-of-device-floppy.patch
+# For bz#1664997 - Restrict floppy device to RHEL-7 machine types
+Patch61: kvm-fdc-Restrict-floppy-controllers-to-RHEL-7-machine-ty.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1094,6 +1098,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Feb 25 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-16.el8
+- kvm-fdc-Revert-downstream-disablement-of-device-floppy.patch [bz#1664997]
+- kvm-fdc-Restrict-floppy-controllers-to-RHEL-7-machine-ty.patch [bz#1664997]
+- Resolves: bz#1664997
+  (Restrict floppy device to RHEL-7 machine types)
+
 * Wed Feb 13 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-15.el8
 - kvm-Add-raw-qcow2-nbd-and-luks-iotests-to-run-during-the.patch [bz#1664855]
 - kvm-Introduce-the-qemu-kvm-tests-rpm.patch [bz#1669924]
