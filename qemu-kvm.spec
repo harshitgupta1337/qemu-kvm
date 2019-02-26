@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 17%{?dist}
+Release: 18%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -208,6 +208,14 @@ Patch60: kvm-fdc-Revert-downstream-disablement-of-device-floppy.patch
 Patch61: kvm-fdc-Restrict-floppy-controllers-to-RHEL-7-machine-ty.patch
 # For bz#1678968 - -blockdev: auto-read-only is ineffective for drivers on read-only whitelist
 Patch62: kvm-block-Apply-auto-read-only-for-ro-whitelist-drivers.patch
+# For bz#1661030 - Remove MPX support from 8.0 machine types
+Patch63: kvm-target-i386-Disable-MPX-support-on-named-CPU-models.patch
+# For bz#1661515 - Remove PCONFIG and INTEL_PT from Icelake-* CPU models
+Patch64: kvm-i386-remove-the-new-CPUID-PCONFIG-from-Icelake-Serve.patch
+# For bz#1661515 - Remove PCONFIG and INTEL_PT from Icelake-* CPU models
+Patch65: kvm-i386-remove-the-INTEL_PT-CPUID-bit-from-named-CPU-mo.patch
+# For bz#1661515 - Remove PCONFIG and INTEL_PT from Icelake-* CPU models
+Patch66: kvm-Revert-i386-Add-CPUID-bit-for-PCONFIG.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1100,6 +1108,16 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Feb 26 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-18.el8
+- kvm-target-i386-Disable-MPX-support-on-named-CPU-models.patch [bz#1661030]
+- kvm-i386-remove-the-new-CPUID-PCONFIG-from-Icelake-Serve.patch [bz#1661515]
+- kvm-i386-remove-the-INTEL_PT-CPUID-bit-from-named-CPU-mo.patch [bz#1661515]
+- kvm-Revert-i386-Add-CPUID-bit-for-PCONFIG.patch [bz#1661515]
+- Resolves: bz#1661030
+  (Remove MPX support from 8.0 machine types)
+- Resolves: bz#1661515
+  (Remove PCONFIG and INTEL_PT from Icelake-* CPU models)
+
 * Tue Feb 26 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-17.el8
 - kvm-block-Apply-auto-read-only-for-ro-whitelist-drivers.patch [bz#1678968]
 - Resolves: bz#1678968

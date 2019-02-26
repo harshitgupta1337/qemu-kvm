@@ -1,0 +1,57 @@
+From da2d528c3cffe22bd1b90b446a045376e4370845 Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Sat, 16 Feb 2019 00:00:50 +0000
+Subject: [PATCH 4/4] Revert "i386: Add CPUID bit for PCONFIG"
+
+RH-Author: Paolo Bonzini <pbonzini@redhat.com>
+Message-id: <1550275250-41719-4-git-send-email-pbonzini@redhat.com>
+Patchwork-id: 84524
+O-Subject: [rhel-av-8.0.0 qemu-kvm PATCH 3/3] Revert "i386: Add CPUID bit for PCONFIG"
+Bugzilla: 1661515
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+
+From: Robert Hoo <robert.hu@linux.intel.com>
+
+This reverts commit 5131dc433df54b37e8e918d8fba7fe10344e7a7b.
+For new instruction 'PCONFIG' will not be exposed to guest.
+
+Signed-off-by: Robert Hoo <robert.hu@linux.intel.com>
+Message-Id: <1545227081-213696-3-git-send-email-robert.hu@linux.intel.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+(cherry picked from commit 712f807e1965c8f1f1da5bbec2b92a8c540e6631)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ target/i386/cpu.c | 2 +-
+ target/i386/cpu.h | 1 -
+ 2 files changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index 169a2ce..d990070 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -1077,7 +1077,7 @@ static FeatureWordInfo feature_word_info[FEATURE_WORDS] = {
+             NULL, NULL, NULL, NULL,
+             NULL, NULL, NULL, NULL,
+             NULL, NULL, NULL, NULL,
+-            NULL, NULL, "pconfig", NULL,
++            NULL, NULL, NULL, NULL,
+             NULL, NULL, NULL, NULL,
+             NULL, NULL, "spec-ctrl", NULL,
+             NULL, "arch-capabilities", NULL, "ssbd",
+diff --git a/target/i386/cpu.h b/target/i386/cpu.h
+index dd88151..26412f1 100644
+--- a/target/i386/cpu.h
++++ b/target/i386/cpu.h
+@@ -692,7 +692,6 @@ typedef uint32_t FeatureWordArray[FEATURE_WORDS];
+ 
+ #define CPUID_7_0_EDX_AVX512_4VNNIW (1U << 2) /* AVX512 Neural Network Instructions */
+ #define CPUID_7_0_EDX_AVX512_4FMAPS (1U << 3) /* AVX512 Multiply Accumulation Single Precision */
+-#define CPUID_7_0_EDX_PCONFIG (1U << 18)       /* Platform Configuration */
+ #define CPUID_7_0_EDX_SPEC_CTRL     (1U << 26) /* Speculation Control */
+ #define CPUID_7_0_EDX_ARCH_CAPABILITIES (1U << 29)  /*Arch Capabilities*/
+ #define CPUID_7_0_EDX_SPEC_CTRL_SSBD  (1U << 31) /* Speculative Store Bypass Disable */
+-- 
+1.8.3.1
+

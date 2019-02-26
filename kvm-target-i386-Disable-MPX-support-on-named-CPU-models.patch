@@ -1,0 +1,153 @@
+From 18cf0d751c615e83243e13f3170508289cd78457 Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Sat, 16 Feb 2019 00:01:45 +0000
+Subject: [PATCH 1/4] target/i386: Disable MPX support on named CPU models
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Paolo Bonzini <pbonzini@redhat.com>
+Message-id: <1550275305-42020-1-git-send-email-pbonzini@redhat.com>
+Patchwork-id: 84525
+O-Subject: [rhel-av-8.0.0 qemu-kvm PATCH] target/i386: Disable MPX support on named CPU models
+Bugzilla: 1661030
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+
+Bugzilla: 1661030
+
+Brew build: http://brewweb.devel.redhat.com/brew/taskinfo?taskID=20232369
+
+MPX support is being phased out by Intel; GCC has dropped it, Linux
+is also going to do that.  Even though KVM will have special code
+to support MPX after the kernel proper stops enabling it in XCR0,
+we probably also want to deprecate that in a few years.  As a start,
+do not enable it by default for any named CPU model starting with
+the 4.0 machine types; this include Skylake, Icelake and Cascadelake.
+
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Message-Id: <20181220121100.21554-1-pbonzini@redhat.com>
+Reviewed-by:   Wainer dos Santos Moschetta <wainersm@redhat.com>
+Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
+(cherry picked from commit ecb85fe48cacb2f8740186e81f2f38a2e02bd963)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+
+Conflicts:
+	hw/i386/pc.c [old-style global properties]
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ include/hw/i386/pc.h | 28 ++++++++++++++++++++++++++++
+ target/i386/cpu.c    | 14 +++++++-------
+ 2 files changed, 35 insertions(+), 7 deletions(-)
+
+diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
+index 426a975..782d728 100644
+--- a/include/hw/i386/pc.h
++++ b/include/hw/i386/pc.h
+@@ -1022,6 +1022,34 @@ extern void igd_passthrough_isa_bridge_create(PCIBus *bus, uint16_t gpu_dev_id);
+             .driver   = TYPE_X86_CPU,\
+             .property = "x-migrate-smi-count",\
+             .value    = "off",\
++        },{ /* PC_RHEL7_6_COMPAT from pc_compat_3_1 */ \
++            .driver   = "Skylake-Client" "-" TYPE_X86_CPU,\
++            .property = "mpx",\
++            .value    = "on",\
++        },{ /* PC_RHEL7_6_COMPAT from pc_compat_3_1 */ \
++            .driver   = "Skylake-Client-IBRS" "-" TYPE_X86_CPU,\
++            .property = "mpx",\
++            .value    = "on",\
++        },{ /* PC_RHEL7_6_COMPAT from pc_compat_3_1 */ \
++            .driver   = "Skylake-Server" "-" TYPE_X86_CPU,\
++            .property = "mpx",\
++            .value    = "on",\
++        },{ /* PC_RHEL7_6_COMPAT from pc_compat_3_1 */ \
++            .driver   = "Skylake-Server-IBRS" "-" TYPE_X86_CPU,\
++            .property = "mpx",\
++            .value    = "on",\
++        },{ /* PC_RHEL7_6_COMPAT from pc_compat_3_1 */ \
++            .driver   = "Cascadelake-Server" "-" TYPE_X86_CPU,\
++            .property = "mpx",\
++            .value    = "on",\
++        },{ /* PC_RHEL7_6_COMPAT from pc_compat_3_1 */ \
++            .driver   = "Icelake-Client" "-" TYPE_X86_CPU,\
++            .property = "mpx",\
++            .value    = "on",\
++        },{ /* PC_RHEL7_6_COMPAT from pc_compat_3_1 */ \
++            .driver   = "Icelake-Server" "-" TYPE_X86_CPU,\
++            .property = "mpx",\
++            .value    = "on",\
+         },
+ 
+ /* Similar to PC_COMPAT_2_11 + PC_COMPAT_2_10, but:
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index 8570b25..dbcf632 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -2358,7 +2358,7 @@ static X86CPUDefinition builtin_x86_defs[] = {
+             CPUID_7_0_EBX_HLE | CPUID_7_0_EBX_AVX2 | CPUID_7_0_EBX_SMEP |
+             CPUID_7_0_EBX_BMI2 | CPUID_7_0_EBX_ERMS | CPUID_7_0_EBX_INVPCID |
+             CPUID_7_0_EBX_RTM | CPUID_7_0_EBX_RDSEED | CPUID_7_0_EBX_ADX |
+-            CPUID_7_0_EBX_SMAP | CPUID_7_0_EBX_MPX,
++            CPUID_7_0_EBX_SMAP,
+         /* Missing: XSAVES (not supported by some Linux versions,
+          * including v4.1 to v4.12).
+          * KVM doesn't yet expose any XSAVES state save component,
+@@ -2405,7 +2405,7 @@ static X86CPUDefinition builtin_x86_defs[] = {
+             CPUID_7_0_EBX_HLE | CPUID_7_0_EBX_AVX2 | CPUID_7_0_EBX_SMEP |
+             CPUID_7_0_EBX_BMI2 | CPUID_7_0_EBX_ERMS | CPUID_7_0_EBX_INVPCID |
+             CPUID_7_0_EBX_RTM | CPUID_7_0_EBX_RDSEED | CPUID_7_0_EBX_ADX |
+-            CPUID_7_0_EBX_SMAP | CPUID_7_0_EBX_MPX,
++            CPUID_7_0_EBX_SMAP,
+         /* Missing: XSAVES (not supported by some Linux versions,
+          * including v4.1 to v4.12).
+          * KVM doesn't yet expose any XSAVES state save component,
+@@ -2450,7 +2450,7 @@ static X86CPUDefinition builtin_x86_defs[] = {
+             CPUID_7_0_EBX_HLE | CPUID_7_0_EBX_AVX2 | CPUID_7_0_EBX_SMEP |
+             CPUID_7_0_EBX_BMI2 | CPUID_7_0_EBX_ERMS | CPUID_7_0_EBX_INVPCID |
+             CPUID_7_0_EBX_RTM | CPUID_7_0_EBX_RDSEED | CPUID_7_0_EBX_ADX |
+-            CPUID_7_0_EBX_SMAP | CPUID_7_0_EBX_MPX | CPUID_7_0_EBX_CLWB |
++            CPUID_7_0_EBX_SMAP | CPUID_7_0_EBX_CLWB |
+             CPUID_7_0_EBX_AVX512F | CPUID_7_0_EBX_AVX512DQ |
+             CPUID_7_0_EBX_AVX512BW | CPUID_7_0_EBX_AVX512CD |
+             CPUID_7_0_EBX_AVX512VL | CPUID_7_0_EBX_CLFLUSHOPT,
+@@ -2502,7 +2502,7 @@ static X86CPUDefinition builtin_x86_defs[] = {
+             CPUID_7_0_EBX_HLE | CPUID_7_0_EBX_AVX2 | CPUID_7_0_EBX_SMEP |
+             CPUID_7_0_EBX_BMI2 | CPUID_7_0_EBX_ERMS | CPUID_7_0_EBX_INVPCID |
+             CPUID_7_0_EBX_RTM | CPUID_7_0_EBX_RDSEED | CPUID_7_0_EBX_ADX |
+-            CPUID_7_0_EBX_SMAP | CPUID_7_0_EBX_MPX | CPUID_7_0_EBX_CLWB |
++            CPUID_7_0_EBX_SMAP | CPUID_7_0_EBX_CLWB |
+             CPUID_7_0_EBX_AVX512F | CPUID_7_0_EBX_AVX512DQ |
+             CPUID_7_0_EBX_AVX512BW | CPUID_7_0_EBX_AVX512CD |
+             CPUID_7_0_EBX_AVX512VL,
+@@ -2552,7 +2552,7 @@ static X86CPUDefinition builtin_x86_defs[] = {
+             CPUID_7_0_EBX_HLE | CPUID_7_0_EBX_AVX2 | CPUID_7_0_EBX_SMEP |
+             CPUID_7_0_EBX_BMI2 | CPUID_7_0_EBX_ERMS | CPUID_7_0_EBX_INVPCID |
+             CPUID_7_0_EBX_RTM | CPUID_7_0_EBX_RDSEED | CPUID_7_0_EBX_ADX |
+-            CPUID_7_0_EBX_SMAP | CPUID_7_0_EBX_MPX | CPUID_7_0_EBX_CLWB |
++            CPUID_7_0_EBX_SMAP | CPUID_7_0_EBX_CLWB |
+             CPUID_7_0_EBX_AVX512F | CPUID_7_0_EBX_AVX512DQ |
+             CPUID_7_0_EBX_AVX512BW | CPUID_7_0_EBX_AVX512CD |
+             CPUID_7_0_EBX_AVX512VL | CPUID_7_0_EBX_CLFLUSHOPT |
+@@ -2608,7 +2608,7 @@ static X86CPUDefinition builtin_x86_defs[] = {
+             CPUID_7_0_EBX_HLE | CPUID_7_0_EBX_AVX2 | CPUID_7_0_EBX_SMEP |
+             CPUID_7_0_EBX_BMI2 | CPUID_7_0_EBX_ERMS | CPUID_7_0_EBX_INVPCID |
+             CPUID_7_0_EBX_RTM | CPUID_7_0_EBX_RDSEED | CPUID_7_0_EBX_ADX |
+-            CPUID_7_0_EBX_SMAP | CPUID_7_0_EBX_MPX | CPUID_7_0_EBX_INTEL_PT,
++            CPUID_7_0_EBX_SMAP | CPUID_7_0_EBX_INTEL_PT,
+         .features[FEAT_7_0_ECX] =
+             CPUID_7_0_ECX_VBMI | CPUID_7_0_ECX_UMIP | CPUID_7_0_ECX_PKU |
+             CPUID_7_0_ECX_OSPKE | CPUID_7_0_ECX_VBMI2 | CPUID_7_0_ECX_GFNI |
+@@ -2663,7 +2663,7 @@ static X86CPUDefinition builtin_x86_defs[] = {
+             CPUID_7_0_EBX_HLE | CPUID_7_0_EBX_AVX2 | CPUID_7_0_EBX_SMEP |
+             CPUID_7_0_EBX_BMI2 | CPUID_7_0_EBX_ERMS | CPUID_7_0_EBX_INVPCID |
+             CPUID_7_0_EBX_RTM | CPUID_7_0_EBX_RDSEED | CPUID_7_0_EBX_ADX |
+-            CPUID_7_0_EBX_SMAP | CPUID_7_0_EBX_MPX | CPUID_7_0_EBX_CLWB |
++            CPUID_7_0_EBX_SMAP | CPUID_7_0_EBX_CLWB |
+             CPUID_7_0_EBX_AVX512F | CPUID_7_0_EBX_AVX512DQ |
+             CPUID_7_0_EBX_AVX512BW | CPUID_7_0_EBX_AVX512CD |
+             CPUID_7_0_EBX_AVX512VL | CPUID_7_0_EBX_CLFLUSHOPT |
+-- 
+1.8.3.1
+
