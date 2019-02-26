@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 16%{?dist}
+Release: 17%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -206,6 +206,8 @@ Patch59: kvm-doc-fix-the-configuration-path.patch
 Patch60: kvm-fdc-Revert-downstream-disablement-of-device-floppy.patch
 # For bz#1664997 - Restrict floppy device to RHEL-7 machine types
 Patch61: kvm-fdc-Restrict-floppy-controllers-to-RHEL-7-machine-ty.patch
+# For bz#1678968 - -blockdev: auto-read-only is ineffective for drivers on read-only whitelist
+Patch62: kvm-block-Apply-auto-read-only-for-ro-whitelist-drivers.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1098,6 +1100,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Feb 26 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-17.el8
+- kvm-block-Apply-auto-read-only-for-ro-whitelist-drivers.patch [bz#1678968]
+- Resolves: bz#1678968
+  (-blockdev: auto-read-only is ineffective for drivers on read-only whitelist)
+
 * Mon Feb 25 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-16.el8
 - kvm-fdc-Revert-downstream-disablement-of-device-floppy.patch [bz#1664997]
 - kvm-fdc-Restrict-floppy-controllers-to-RHEL-7-machine-ty.patch [bz#1664997]
