@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 18%{?dist}
+Release: 19%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -216,6 +216,10 @@ Patch64: kvm-i386-remove-the-new-CPUID-PCONFIG-from-Icelake-Serve.patch
 Patch65: kvm-i386-remove-the-INTEL_PT-CPUID-bit-from-named-CPU-mo.patch
 # For bz#1661515 - Remove PCONFIG and INTEL_PT from Icelake-* CPU models
 Patch66: kvm-Revert-i386-Add-CPUID-bit-for-PCONFIG.patch
+# For bz#1608649 - Query-migrate get "failed" status after migrate-cancel
+Patch67: kvm-migration-Fix-cancel-state.patch
+# For bz#1608649 - Query-migrate get "failed" status after migrate-cancel
+Patch68: kvm-migration-rdma-Fix-qemu_rdma_cleanup-null-check.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1108,6 +1112,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Mar 15 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-19.el8
+- kvm-migration-Fix-cancel-state.patch [bz#1608649]
+- kvm-migration-rdma-Fix-qemu_rdma_cleanup-null-check.patch [bz#1608649]
+- Resolves: bz#1608649
+  (Query-migrate get "failed" status after migrate-cancel)
+
 * Tue Feb 26 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-18.el8
 - kvm-target-i386-Disable-MPX-support-on-named-CPU-models.patch [bz#1661030]
 - kvm-i386-remove-the-new-CPUID-PCONFIG-from-Icelake-Serve.patch [bz#1661515]
