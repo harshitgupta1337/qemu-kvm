@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 19%{?dist}
+Release: 20%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -220,6 +220,8 @@ Patch66: kvm-Revert-i386-Add-CPUID-bit-for-PCONFIG.patch
 Patch67: kvm-migration-Fix-cancel-state.patch
 # For bz#1608649 - Query-migrate get "failed" status after migrate-cancel
 Patch68: kvm-migration-rdma-Fix-qemu_rdma_cleanup-null-check.patch
+# For bz#1686260 - stibp is missing on qemu 3.0 and qemu 3.1
+Patch69: kvm-i386-Add-stibp-flag-name.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1112,6 +1114,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Mar 15 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-20.el8
+- kvm-i386-Add-stibp-flag-name.patch [bz#1686260]
+- Resolves: bz#1686260
+  (stibp is missing on qemu 3.0 and qemu 3.1)
+
 * Fri Mar 15 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-19.el8
 - kvm-migration-Fix-cancel-state.patch [bz#1608649]
 - kvm-migration-rdma-Fix-qemu_rdma_cleanup-null-check.patch [bz#1608649]

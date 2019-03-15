@@ -1,0 +1,51 @@
+From 730ab8e3a8e9a703f2b2374b8f55429dd6b2254c Mon Sep 17 00:00:00 2001
+From: Eduardo Habkost <ehabkost@redhat.com>
+Date: Thu, 14 Mar 2019 19:41:28 +0000
+Subject: [PATCH] i386: Add "stibp" flag name
+
+RH-Author: Eduardo Habkost <ehabkost@redhat.com>
+Message-id: <20190314194128.15795-2-ehabkost@redhat.com>
+Patchwork-id: 84870
+O-Subject: [RHEL-AV-8.0.0 qemu-kvm PATCH 1/1] i386: Add "stibp" flag name
+Bugzilla: 1686260
+RH-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+
+The STIBP flag may be supported by the host KVM module, so QEMU
+can allow it to be configured manually, and it can be exposed to
+guests when using "-cpu host".
+
+No additional migration code is required because the whole
+contents of spec_ctrl is already migrated in the "cpu/spec_ctrl"
+section.
+
+Corresponding KVM patch was submitted at:
+https://lore.kernel.org/lkml/20181205191956.31480-1-ehabkost@redhat.com/
+
+Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
+Message-Id: <20181210180250.31299-1-ehabkost@redhat.com>
+Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
+(cherry picked from commit 0e8916582991b9fd0b94850a8444b8b80d0a0955)
+Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ target/i386/cpu.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index d990070..c115572 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -1079,7 +1079,7 @@ static FeatureWordInfo feature_word_info[FEATURE_WORDS] = {
+             NULL, NULL, NULL, NULL,
+             NULL, NULL, NULL, NULL,
+             NULL, NULL, NULL, NULL,
+-            NULL, NULL, "spec-ctrl", NULL,
++            NULL, NULL, "spec-ctrl", "stibp",
+             NULL, "arch-capabilities", NULL, "ssbd",
+         },
+         .cpuid = {
+-- 
+1.8.3.1
+
