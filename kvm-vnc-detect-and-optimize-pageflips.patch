@@ -1,0 +1,95 @@
+From c233fdd40580baf460b34655aa72a9a489b4501b Mon Sep 17 00:00:00 2001
+From: Gerd Hoffmann <kraxel@redhat.com>
+Date: Thu, 7 Mar 2019 09:11:50 +0000
+Subject: [PATCH 5/9] vnc: detect and optimize pageflips
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Gerd Hoffmann <kraxel@redhat.com>
+Message-id: <20190307091150.6551-2-kraxel@redhat.com>
+Patchwork-id: 84816
+O-Subject: [RHEL-8.0/AV qemu-kvm PATCH 1/1] vnc: detect and optimize pageflips
+Bugzilla: 1666206
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: John Snow <jsnow@redhat.com>
+
+When size and format of the display surface stays the same we can just
+tag the guest display as dirty and be done with it.
+
+There is no need need to resize the vnc server display or to touch the
+vnc client dirty bits.  On the next refresh cycle
+vnc_refresh_server_surface() will check for actual display content
+changes and update the client dirty bits as needed.
+
+The desktop resize and framebuffer format notifications to the vnc
+client will be skipped too.
+
+Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Message-id: 20190116101049.8929-1-kraxel@redhat.com
+(cherry picked from commit 61e77a5f0c788495566aecb437bcf6b2cf9cda97)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ ui/vnc.c | 25 ++++++++++++++++++++++---
+ 1 file changed, 22 insertions(+), 3 deletions(-)
+
+diff --git a/ui/vnc.c b/ui/vnc.c
+index d7903a7..765bdc5 100644
+--- a/ui/vnc.c
++++ b/ui/vnc.c
+@@ -742,6 +742,17 @@ static void vnc_update_server_surface(VncDisplay *vd)
+                        width, height);
+ }
+ 
++static bool vnc_check_pageflip(DisplaySurface *s1,
++                               DisplaySurface *s2)
++{
++    return (s1 != NULL &&
++            s2 != NULL &&
++            surface_width(s1) == surface_width(s2) &&
++            surface_height(s1) == surface_height(s2) &&
++            surface_format(s1) == surface_format(s2));
++
++}
++
+ static void vnc_dpy_switch(DisplayChangeListener *dcl,
+                            DisplaySurface *surface)
+ {
+@@ -749,6 +760,7 @@ static void vnc_dpy_switch(DisplayChangeListener *dcl,
+         "Display output is not active.";
+     static DisplaySurface *placeholder;
+     VncDisplay *vd = container_of(dcl, VncDisplay, dcl);
++    bool pageflip = vnc_check_pageflip(vd->ds, surface);
+     VncState *vs;
+ 
+     if (surface == NULL) {
+@@ -761,14 +773,21 @@ static void vnc_dpy_switch(DisplayChangeListener *dcl,
+     vnc_abort_display_jobs(vd);
+     vd->ds = surface;
+ 
+-    /* server surface */
+-    vnc_update_server_surface(vd);
+-
+     /* guest surface */
+     qemu_pixman_image_unref(vd->guest.fb);
+     vd->guest.fb = pixman_image_ref(surface->image);
+     vd->guest.format = surface->format;
+ 
++    if (pageflip) {
++        vnc_set_area_dirty(vd->guest.dirty, vd, 0, 0,
++                           surface_width(surface),
++                           surface_height(surface));
++        return;
++    }
++
++    /* server surface */
++    vnc_update_server_surface(vd);
++
+     QTAILQ_FOREACH(vs, &vd->clients, next) {
+         vnc_colordepth(vs);
+         vnc_desktop_resize(vs);
+-- 
+1.8.3.1
+

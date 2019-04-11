@@ -39,6 +39,7 @@
 %endif
 %ifarch s390x
     %global kvm_target    s390x
+    %global have_kvm_setup 1
 %endif
 %ifarch ppc
     %global kvm_target    ppc
@@ -68,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 20%{?dist}
+Release: 21%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -222,6 +223,20 @@ Patch67: kvm-migration-Fix-cancel-state.patch
 Patch68: kvm-migration-rdma-Fix-qemu_rdma_cleanup-null-check.patch
 # For bz#1686260 - stibp is missing on qemu 3.0 and qemu 3.1
 Patch69: kvm-i386-Add-stibp-flag-name.patch
+# For bz#1674438 - RHEL8.0 - Guest reboot fails after memory hotplug multiple times (kvm)
+Patch71: kvm-spapr-fix-out-of-bounds-write-in-spapr_populate_drme.patch
+# For bz#1655065 - [rhel.8.0][fast train]'qemu-img measure' size does not match the real allocated size for luks-inside-qcow2 image
+Patch72: kvm-qcow2-include-LUKS-payload-overhead-in-qemu-img-meas.patch
+# For bz#1655065 - [rhel.8.0][fast train]'qemu-img measure' size does not match the real allocated size for luks-inside-qcow2 image
+Patch73: kvm-iotests-add-LUKS-payload-overhead-to-178-qemu-img-me.patch
+# For bz#1666206 - vnc server should detect page-flips and avoid sending fullscreen updates then.
+Patch74: kvm-vnc-detect-and-optimize-pageflips.patch
+# For bz#1669053 - Guest call trace when boot with nvdimm device backed by /dev/dax
+Patch76: kvm-hostmem-file-reject-invalid-pmem-file-sizes.patch
+# For bz#1687582 - QEMU IOTEST 200 fails with 'virtio-scsi-pci is not a valid device model name'
+Patch77: kvm-iotests-Fix-test-200-on-s390x-without-virtio-pci.patch
+# For bz#1652572 - QEMU core dumped if stop nfs service during migration
+Patch78: kvm-block-file-posix-do-not-fail-on-unlock-bytes.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -366,6 +381,7 @@ Requires: glusterfs-api >= 3.6.0
 %endif
 %if %{have_kvm_setup}
 Requires(post): systemd-units
+Requires(preun): systemd-units
     %ifarch %{power64}
 Requires: powerpc-utils
     %endif
@@ -929,8 +945,8 @@ chmod +x $RPM_BUILD_ROOT%{_libdir}/qemu-kvm/block-*.so
 export DIFF=diff; make check V=1
 pushd tests/qemu-iotests
 ./check -v -raw 001 002 003 004 005 008 009 010 011 012 021 025 032 033 045 048 052 063 077 086 101 104 106 120 132 140 143 145 147 150 152 157 159 160 162 170 171 175 181 184 194 205 208 218 221 222 226 227 232
-./check -v -qcow2 001 002 003 004 005 007 008 009 010 011 012 013 017 018 019 020 021 022 024 025 027 028 029 031 032 033 034 035 036 037 038 039 042 043 046 047 048 049 050 052 053 054 056 057 058 060 061 062 063 065 066 068 069 072 073 074 080 085 086 087 089 090 091 095 096 097 098 102 103 104 105 107 108 110 111 114 117 120 122 126 127 130 132 133 134 137 138 140 141 142 143 144 145 147 150 151 152 154 156 157 158 159 162 165 170 174 176 177 179 181 184 187 188 189 190 191 194 195 196 198 201 202 203 204 205 206 208 209 214 216 217 218 222 223 226 227 232
-./check -v -luks 001 002 003 004 005 008 009 010 011 012 021 032 033 048 052 140 143 145 157 162 174 181 184 208 218 227
+./check -v -qcow2 001 002 003 004 005 007 008 009 010 011 012 017 018 019 020 021 022 024 025 027 028 029 031 032 033 034 035 036 037 038 039 042 043 046 047 048 049 050 052 053 054 056 057 058 062 063 065 066 068 069 072 073 074 080 085 086 087 089 090 091 095 096 097 098 102 103 104 105 107 108 110 111 114 117 120 126 127 130 132 133 134 137 138 140 141 142 143 144 145 147 150 151 152 156 157 158 159 162 165 170 174 177 179 181 184 187 188 189 190 191 194 195 196 198 201 202 203 204 205 206 208 209 214 216 217 218 222 223 226 227 232
+./check -v -luks 001 002 003 004 005 008 009 010 011 012 021 032 033 052 140 143 145 157 162 174 181 184 208 218 227
 ./check -v -nbd 001 002 003 004 005 008 009 010 011 021 032 033 045 077 094 104 119 123 132 143 145 147 151 152 162 181 184 194 205 208 218 222
 popd
 
@@ -946,6 +962,11 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
     if systemctl is-enabled kvm-setup.service > /dev/null; then
         systemctl start kvm-setup.service
     fi
+%endif
+
+%if %{have_kvm_setup}
+%preun -n qemu-kvm-core
+%systemd_preun kvm-setup.service
 %endif
 
 %post -n qemu-kvm-common
@@ -1114,6 +1135,35 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Apr 11 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-21.el8
+- kvm-Remove-7-qcow2-and-luks-iotests-that-are-taking-25-s.patch [bz#1683473]
+- kvm-spapr-fix-out-of-bounds-write-in-spapr_populate_drme.patch [bz#1674438]
+- kvm-qcow2-include-LUKS-payload-overhead-in-qemu-img-meas.patch [bz#1655065]
+- kvm-iotests-add-LUKS-payload-overhead-to-178-qemu-img-me.patch [bz#1655065]
+- kvm-vnc-detect-and-optimize-pageflips.patch [bz#1666206]
+- kvm-Load-kvm-module-during-boot.patch [bz#1676907 bz#1685995]
+- kvm-hostmem-file-reject-invalid-pmem-file-sizes.patch [bz#1669053]
+- kvm-iotests-Fix-test-200-on-s390x-without-virtio-pci.patch [bz#1687582]
+- kvm-block-file-posix-do-not-fail-on-unlock-bytes.patch [bz#1652572]
+- Resolves: bz#1652572
+  (QEMU core dumped if stop nfs service during migration)
+- Resolves: bz#1655065
+  ([rhel.8.0][fast train]'qemu-img measure' size does not match the real allocated size for luks-inside-qcow2 image)
+- Resolves: bz#1666206
+  (vnc server should detect page-flips and avoid sending fullscreen updates then.)
+- Resolves: bz#1669053
+  (Guest call trace when boot with nvdimm device backed by /dev/dax)
+- Resolves: bz#1674438
+  (RHEL8.0 - Guest reboot fails after memory hotplug multiple times (kvm))
+- Resolves: bz#1676907
+  (/dev/kvm device exists but kernel module is not loaded on boot up causing VM start to fail in libvirt)
+- Resolves: bz#1683473
+  (Remove 7 qcow2 & luks iotests from rhel8 fast train build %check phase)
+- Resolves: bz#1685995
+  (/dev/kvm device exists but kernel module is not loaded on boot up causing VM start to fail in libvirt)
+- Resolves: bz#1687582
+  (QEMU IOTEST 200 fails with 'virtio-scsi-pci is not a valid device model name')
+
 * Fri Mar 15 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-20.el8
 - kvm-i386-Add-stibp-flag-name.patch [bz#1686260]
 - Resolves: bz#1686260

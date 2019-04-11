@@ -1,0 +1,74 @@
+From 2744bd7eb7955e7ae995a48784760e48c33c1e73 Mon Sep 17 00:00:00 2001
+From: David Gibson <dgibson@redhat.com>
+Date: Wed, 27 Feb 2019 04:54:34 +0000
+Subject: [PATCH 2/9] spapr: fix out of bounds write in spapr_populate_drmem_v2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: David Gibson <dgibson@redhat.com>
+Message-id: <20190227045434.23465-1-dgibson@redhat.com>
+Patchwork-id: 84720
+O-Subject: [RHELAV-8.1 qemu-kvm PATCH] spapr: fix out of bounds write in spapr_populate_drmem_v2
+Bugzilla: 1674438
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Serhii Popovych <spopovyc@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+
+From: Fabiano Rosas <farosas@linux.ibm.com>
+
+buf_len is uint8_t which is not large enough to hold the result of:
+
+  nr_entries * sizeof(struct sPAPRDrconfCellV2) + sizeof(uint32_t);
+
+for a nr_entries greater than 10.
+
+This causes the allocated buffer 'int_buf' to be smaller than expected
+and we eventually overwrite some of glibc's control structures (see
+"chunk" in https://sourceware.org/glibc/wiki/MallocInternals)
+
+The following error is seen while trying to free int_buf:
+
+  "free(): invalid next size (fast)"
+
+Fixes: a324d6f166 "spapr: Support ibm,dynamic-memory-v2 property"
+Signed-off-by: Fabiano Rosas <farosas@linux.ibm.com>
+Message-Id: <20190213172926.21740-1-farosas@linux.ibm.com>
+Reviewed-by: Greg Kurz <groug@kaod.org>
+Signed-off-by: David Gibson <david@gibson.dropbear.id.au>
+(cherry picked from commit cc941111a5bc5f498185fa3824c3b6579c7d45ad)
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1674438
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=20382722
+Branch: rhel8/master-3.1.0
+
+Signed-off-by: David Gibson <dgibson@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/ppc/spapr.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
+index bd2abb7..c1478bf 100644
+--- a/hw/ppc/spapr.c
++++ b/hw/ppc/spapr.c
+@@ -688,14 +688,14 @@ static int spapr_populate_drmem_v2(sPAPRMachineState *spapr, void *fdt,
+                                    int offset, MemoryDeviceInfoList *dimms)
+ {
+     MachineState *machine = MACHINE(spapr);
+-    uint8_t *int_buf, *cur_index, buf_len;
++    uint8_t *int_buf, *cur_index;
+     int ret;
+     uint64_t lmb_size = SPAPR_MEMORY_BLOCK_SIZE;
+     uint64_t addr, cur_addr, size;
+     uint32_t nr_boot_lmbs = (machine->device_memory->base / lmb_size);
+     uint64_t mem_end = machine->device_memory->base +
+                        memory_region_size(&machine->device_memory->mr);
+-    uint32_t node, nr_entries = 0;
++    uint32_t node, buf_len, nr_entries = 0;
+     sPAPRDRConnector *drc;
+     DrconfCellQueue *elem, *next;
+     MemoryDeviceInfoList *info;
+-- 
+1.8.3.1
+

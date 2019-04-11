@@ -1,0 +1,62 @@
+From 887d5afffeff844b1284b380e53f178f68e15087 Mon Sep 17 00:00:00 2001
+From: Thomas Huth <thuth@redhat.com>
+Date: Wed, 3 Apr 2019 10:17:09 +0100
+Subject: [PATCH 8/9] iotests: Fix test 200 on s390x without virtio-pci
+
+RH-Author: Thomas Huth <thuth@redhat.com>
+Message-id: <20190403101709.3284-2-thuth@redhat.com>
+Patchwork-id: 85312
+O-Subject: [RHEL-AV-8.0.1 qemu-kvm PATCH 1/1] iotests: Fix test 200 on s390x without virtio-pci
+Bugzilla: 1687582
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: David Hildenbrand <david@redhat.com>
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+
+virtio-pci is optional on s390x, e.g. in downstream RHEL builds, it
+is disabled. On s390x, virtio-ccw should be used instead. Other tests
+like 051 or 240 already use virtio-scsi-ccw instead of virtio-scsi-pci
+on s390x, so let's do the same here and always use virtio-scsi-ccw on
+s390x.
+
+Signed-off-by: Thomas Huth <thuth@redhat.com>
+Reviewed-by: John Snow <jsnow@redhat.com>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit e0a59749efc246646bb208e553489b894450cbcd)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ tests/qemu-iotests/200 | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/tests/qemu-iotests/200 b/tests/qemu-iotests/200
+index b9ebd5a..8301ff5 100755
+--- a/tests/qemu-iotests/200
++++ b/tests/qemu-iotests/200
+@@ -52,13 +52,21 @@ ${QEMU_IMG} create -f $IMGFMT -F $IMGFMT "${TEST_IMG}" -b "${BACKING_IMG}" 512M
+ 
+ ${QEMU_IO} -c "write -P 0xa5 512 300M" "${BACKING_IMG}" | _filter_qemu_io
+ 
++case "$QEMU_DEFAULT_MACHINE" in
++  s390-ccw-virtio)
++      virtio_scsi="-device virtio-scsi-ccw,id=scsi0,iothread=iothread0"
++      ;;
++  *)
++      virtio_scsi="-device pci-bridge,id=bridge1,chassis_nr=1,bus=pci.0
++          -device virtio-scsi-pci,bus=bridge1,addr=0x1f,id=scsi0,iothread=iothread0"
++      ;;
++esac
++
+ echo
+ echo === Starting QEMU VM ===
+ echo
+ qemu_comm_method="qmp"
+-_launch_qemu -device pci-bridge,id=bridge1,chassis_nr=1,bus=pci.0 \
+-             -object iothread,id=iothread0 \
+-             -device virtio-scsi-pci,bus=bridge1,addr=0x1f,id=scsi0,iothread=iothread0 \
++_launch_qemu -object iothread,id=iothread0 $virtio_scsi \
+              -drive file="${TEST_IMG}",media=disk,if=none,cache=$CACHEMODE,id=drive_sysdisk,format=$IMGFMT \
+              -device scsi-hd,drive=drive_sysdisk,bus=scsi0.0,id=sysdisk,bootindex=0
+ h1=$QEMU_HANDLE
+-- 
+1.8.3.1
+

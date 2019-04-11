@@ -1,0 +1,183 @@
+From 1b9f228788eb2d7f50961241e28f7a9afadc62ab Mon Sep 17 00:00:00 2001
+From: Stefan Hajnoczi <stefanha@redhat.com>
+Date: Thu, 21 Mar 2019 10:56:08 +0000
+Subject: [PATCH 7/9] hostmem-file: reject invalid pmem file sizes
+
+RH-Author: Stefan Hajnoczi <stefanha@redhat.com>
+Message-id: <20190321105608.29960-2-stefanha@redhat.com>
+Patchwork-id: 85081
+O-Subject: [RHEL-AV-8.0.1 qemu-kvm PATCH 1/1] hostmem-file: reject invalid pmem file sizes
+Bugzilla: 1669053
+RH-Acked-by: Eduardo Habkost <ehabkost@redhat.com>
+RH-Acked-by: Pankaj Gupta <pagupta@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+
+Guests started with NVDIMMs larger than the underlying host file produce
+confusing errors inside the guest.  This happens because the guest
+accesses pages beyond the end of the file.
+
+Check the pmem file size on startup and print a clear error message if
+the size is invalid.
+
+Fixes: https://bugzilla.redhat.com/show_bug.cgi?id=1669053
+Cc: Wei Yang <richardw.yang@linux.intel.com>
+Cc: Zhang Yi <yi.z.zhang@linux.intel.com>
+Cc: Eduardo Habkost <ehabkost@redhat.com>
+Cc: Igor Mammedov <imammedo@redhat.com>
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Message-Id: <20190214031004.32522-3-stefanha@redhat.com>
+Reviewed-by: Wei Yang <richardw.yang@linux.intel.com>
+Reviewed-by: Igor Mammedov <imammedo@redhat.com>
+Reviewed-by: Pankaj Gupta <pagupta@redhat.com>
+Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
+(cherry picked from commit 314aec4a6e06844937f1677f6cba21981005f389)
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ backends/hostmem-file.c | 23 +++++++++++++++++++++
+ include/qemu/osdep.h    | 13 ++++++++++++
+ util/oslib-posix.c      | 53 +++++++++++++++++++++++++++++++++++++++++++++++++
+ util/oslib-win32.c      |  5 +++++
+ 4 files changed, 94 insertions(+)
+
+diff --git a/backends/hostmem-file.c b/backends/hostmem-file.c
+index 6630021..8d85d56 100644
+--- a/backends/hostmem-file.c
++++ b/backends/hostmem-file.c
+@@ -57,6 +57,29 @@ file_backend_memory_alloc(HostMemoryBackend *backend, Error **errp)
+ #ifndef CONFIG_POSIX
+     error_setg(errp, "-mem-path not supported on this host");
+ #else
++
++    /*
++     * Verify pmem file size since starting a guest with an incorrect size
++     * leads to confusing failures inside the guest.
++     */
++    if (fb->is_pmem) {
++        Error *local_err = NULL;
++        uint64_t size;
++
++        size = qemu_get_pmem_size(fb->mem_path, &local_err);
++        if (!size) {
++            error_propagate(errp, local_err);
++            return;
++        }
++
++        if (backend->size > size) {
++            error_setg(errp, "size property %" PRIu64 " is larger than "
++                       "pmem file \"%s\" size %" PRIu64, backend->size,
++                       fb->mem_path, size);
++            return;
++        }
++    }
++
+     backend->force_prealloc = mem_prealloc;
+     path = object_get_canonical_path(OBJECT(backend));
+     memory_region_init_ram_from_file(&backend->mr, OBJECT(backend),
+diff --git a/include/qemu/osdep.h b/include/qemu/osdep.h
+index 3bf48bc..c68a85b 100644
+--- a/include/qemu/osdep.h
++++ b/include/qemu/osdep.h
+@@ -553,6 +553,19 @@ void os_mem_prealloc(int fd, char *area, size_t sz, int smp_cpus,
+                      Error **errp);
+ 
+ /**
++ * qemu_get_pmem_size:
++ * @filename: path to a pmem file
++ * @errp: pointer to a NULL-initialized error object
++ *
++ * Determine the size of a persistent memory file.  Besides supporting files on
++ * DAX file systems, this function also supports Linux devdax character
++ * devices.
++ *
++ * Returns: the size or 0 on failure
++ */
++uint64_t qemu_get_pmem_size(const char *filename, Error **errp);
++
++/**
+  * qemu_get_pid_name:
+  * @pid: pid of a process
+  *
+diff --git a/util/oslib-posix.c b/util/oslib-posix.c
+index 97b2f3b..b173fc0 100644
+--- a/util/oslib-posix.c
++++ b/util/oslib-posix.c
+@@ -496,6 +496,59 @@ void os_mem_prealloc(int fd, char *area, size_t memory, int smp_cpus,
+     }
+ }
+ 
++uint64_t qemu_get_pmem_size(const char *filename, Error **errp)
++{
++    struct stat st;
++
++    if (stat(filename, &st) < 0) {
++        error_setg(errp, "unable to stat pmem file \"%s\"", filename);
++        return 0;
++    }
++
++#if defined(__linux__)
++    /* Special handling for devdax character devices */
++    if (S_ISCHR(st.st_mode)) {
++        char *subsystem_path = NULL;
++        char *subsystem = NULL;
++        char *size_path = NULL;
++        char *size_str = NULL;
++        uint64_t ret = 0;
++
++        subsystem_path = g_strdup_printf("/sys/dev/char/%d:%d/subsystem",
++                                         major(st.st_rdev), minor(st.st_rdev));
++        subsystem = g_file_read_link(subsystem_path, NULL);
++        if (!subsystem) {
++            error_setg(errp, "unable to read subsystem for pmem file \"%s\"",
++                       filename);
++            goto devdax_err;
++        }
++
++        if (!g_str_has_suffix(subsystem, "/dax")) {
++            error_setg(errp, "pmem file \"%s\" is not a dax device", filename);
++            goto devdax_err;
++        }
++
++        size_path = g_strdup_printf("/sys/dev/char/%d:%d/size",
++                                    major(st.st_rdev), minor(st.st_rdev));
++        if (!g_file_get_contents(size_path, &size_str, NULL, NULL)) {
++            error_setg(errp, "unable to read size for pmem file \"%s\"",
++                       size_path);
++            goto devdax_err;
++        }
++
++        ret = g_ascii_strtoull(size_str, NULL, 0);
++
++devdax_err:
++        g_free(size_str);
++        g_free(size_path);
++        g_free(subsystem);
++        g_free(subsystem_path);
++        return ret;
++    }
++#endif /* defined(__linux__) */
++
++    return st.st_size;
++}
+ 
+ char *qemu_get_pid_name(pid_t pid)
+ {
+diff --git a/util/oslib-win32.c b/util/oslib-win32.c
+index b4c17f5..bd633af 100644
+--- a/util/oslib-win32.c
++++ b/util/oslib-win32.c
+@@ -560,6 +560,11 @@ void os_mem_prealloc(int fd, char *area, size_t memory, int smp_cpus,
+     }
+ }
+ 
++uint64_t qemu_get_pmem_size(const char *filename, Error **errp)
++{
++    error_setg(errp, "pmem support not available");
++    return 0;
++}
+ 
+ char *qemu_get_pid_name(pid_t pid)
+ {
+-- 
+1.8.3.1
+
