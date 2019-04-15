@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 21%{?dist}
+Release: 22%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -237,6 +237,10 @@ Patch76: kvm-hostmem-file-reject-invalid-pmem-file-sizes.patch
 Patch77: kvm-iotests-Fix-test-200-on-s390x-without-virtio-pci.patch
 # For bz#1652572 - QEMU core dumped if stop nfs service during migration
 Patch78: kvm-block-file-posix-do-not-fail-on-unlock-bytes.patch
+# For bz#1687578 - Incorrect CVE vulnerabilities reported on Cascade Lake cpus
+Patch79: kvm-i386-kvm-Disable-arch_capabilities-if-MSR-can-t-be-s.patch
+# For bz#1687578 - Incorrect CVE vulnerabilities reported on Cascade Lake cpus
+Patch80: kvm-i386-Make-arch_capabilities-migratable.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1135,6 +1139,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Apr 15 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-22.el8
+- kvm-i386-kvm-Disable-arch_capabilities-if-MSR-can-t-be-s.patch [bz#1687578]
+- kvm-i386-Make-arch_capabilities-migratable.patch [bz#1687578]
+- Resolves: bz#1687578
+  (Incorrect CVE vulnerabilities reported on Cascade Lake cpus)
+
 * Thu Apr 11 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-21.el8
 - kvm-Remove-7-qcow2-and-luks-iotests-that-are-taking-25-s.patch [bz#1683473]
 - kvm-spapr-fix-out-of-bounds-write-in-spapr_populate_drme.patch [bz#1674438]
