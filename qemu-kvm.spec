@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 3.1.0
-Release: 23%{?dist}
+Release: 24%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -243,6 +243,10 @@ Patch79: kvm-i386-kvm-Disable-arch_capabilities-if-MSR-can-t-be-s.patch
 Patch80: kvm-i386-Make-arch_capabilities-migratable.patch
 # For bz#1693173 - CVE-2018-20815 qemu-kvm: QEMU: device_tree: heap buffer overflow while loading device tree blob [rhel-av-8]
 Patch81: kvm-device_tree-Fix-integer-overflowing-in-load_device_t.patch
+# For bz#1688915 - [Intel 8.0 Alpha] physical bits should  <= 48  when host with 5level paging &EPT5 and qemu command with "-cpu qemu64" parameters.
+Patch82: kvm-x86-host-phys-bits-limit-option.patch
+# For bz#1688915 - [Intel 8.0 Alpha] physical bits should  <= 48  when host with 5level paging &EPT5 and qemu command with "-cpu qemu64" parameters.
+Patch83: kvm-rhel-Set-host-phys-bits-limit-48-on-rhel-machine-typ.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1141,6 +1145,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Apr 26 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-24.el8
+- kvm-x86-host-phys-bits-limit-option.patch [bz#1688915]
+- kvm-rhel-Set-host-phys-bits-limit-48-on-rhel-machine-typ.patch [bz#1688915]
+- Resolves: bz#1688915
+  ([Intel 8.0 Alpha] physical bits should  <= 48  when host with 5level paging &EPT5 and qemu command with "-cpu qemu64" parameters.)
+
 * Tue Apr 23 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-23.el8
 - kvm-device_tree-Fix-integer-overflowing-in-load_device_t.patch [bz#1693173]
 - Resolves: bz#1693173
