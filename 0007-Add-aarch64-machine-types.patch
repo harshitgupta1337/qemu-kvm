@@ -1,4 +1,4 @@
-From 68e46b1a3bc650bc35ccc49606c3f31e29165512 Mon Sep 17 00:00:00 2001
+From b2c73bd35f8c0fa536004d18275ffcfe63096622 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 12:53:31 +0200
 Subject: Add aarch64 machine types
@@ -6,24 +6,37 @@ Subject: Add aarch64 machine types
 Adding changes to add RHEL machine types for aarch64 architecture.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+Rebase changes (weekly-190111):
+- Use upstream compat handling
+
+Rebase changes (weekly-190308):
+- Removed a15memmap (upstream)
+
+Merged patches (weekly-190125):
+- 7bfdb4c aarch64: Add virt-rhel8.0.0 machine type for ARM
+- 3433e69 aarch64: Set virt-rhel8.0.0 max_cpus to 512
+- 4d20863 aarch64: Use 256MB ECAM region by default
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/arm/virt.c         | 126 +++++++++++++++++++++++++++++++++++++++++++++++++-
- include/hw/arm/virt.h |  22 +++++++++
- 2 files changed, 147 insertions(+), 1 deletion(-)
+ hw/arm/virt.c         | 140 +++++++++++++++++++++++++++++++++++++++++-
+ include/hw/arm/virt.h |  11 ++++
+ 2 files changed, 150 insertions(+), 1 deletion(-)
 
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index f69e7eb..84a86c1 100644
+index ce2664a30b..5602d9f6b0 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
-@@ -60,6 +60,7 @@
- #include "standard-headers/linux/input.h"
- #include "hw/arm/smmuv3.h"
+@@ -62,6 +62,7 @@
+ #include "hw/acpi/acpi.h"
+ #include "target/arm/internals.h"
  
-+#if 0 /* disabled Red Hat Enterprise Linux */
++#if 0 /* Disabled for Red Hat Enterprise Linux */
  #define DEFINE_VIRT_MACHINE_LATEST(major, minor, latest) \
      static void virt_##major##_##minor##_class_init(ObjectClass *oc, \
                                                      void *data) \
-@@ -87,7 +88,36 @@
+@@ -88,7 +89,49 @@
      DEFINE_VIRT_MACHINE_LATEST(major, minor, true)
  #define DEFINE_VIRT_MACHINE(major, minor) \
      DEFINE_VIRT_MACHINE_LATEST(major, minor, false)
@@ -58,18 +71,31 @@ index f69e7eb..84a86c1 100644
 +    DEFINE_RHEL_MACHINE_LATEST(major, minor, subminor, true)
 +#define DEFINE_RHEL_MACHINE(major, minor, subminor)             \
 +    DEFINE_RHEL_MACHINE_LATEST(major, minor, subminor, false)
++
++/* This variable is for changes to properties that are RHEL specific,
++ * different to the current upstream and to be applied to the latest
++ * machine type.
++ */
++GlobalProperty arm_rhel_compat[] = {
++    {
++        .driver   = "virtio-net-pci",
++        .property = "romfile",
++        .value    = "",
++    },
++};
++const size_t arm_rhel_compat_len = G_N_ELEMENTS(arm_rhel_compat);
  
  /* Number of external interrupt lines to configure the GIC with */
  #define NUM_IRQS 256
-@@ -1578,6 +1608,7 @@ static void machvirt_init(MachineState *machine)
+@@ -1658,6 +1701,7 @@ static void machvirt_init(MachineState *machine)
      qemu_add_machine_init_done_notifier(&vms->machine_done);
  }
  
-+#if 0 /* disabled for RHEL */
++#if 0 /* Disabled for Red Hat Enterprise Linux */
  static bool virt_get_secure(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -1606,6 +1637,7 @@ static void virt_set_virt(Object *obj, bool value, Error **errp)
+@@ -1686,6 +1730,7 @@ static void virt_set_virt(Object *obj, bool value, Error **errp)
      vms->virt = value;
  }
  
@@ -77,41 +103,31 @@ index f69e7eb..84a86c1 100644
  static bool virt_get_highmem(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -1660,6 +1692,7 @@ static void virt_set_gic_version(Object *obj, const char *value, Error **errp)
+@@ -1740,6 +1785,7 @@ static void virt_set_gic_version(Object *obj, const char *value, Error **errp)
      }
  }
  
-+#if 0
++#if 0 /* Disabled for Red Hat Enterprise Linux */
  static char *virt_get_iommu(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -1687,6 +1720,7 @@ static void virt_set_iommu(Object *obj, const char *value, Error **errp)
+@@ -1767,6 +1813,7 @@ static void virt_set_iommu(Object *obj, const char *value, Error **errp)
          error_append_hint(errp, "Valid values are none, smmuv3.\n");
      }
  }
-+#endif
++#endif /* disabled for RHEL */
  
  static CpuInstanceProperties
  virt_cpu_index_to_props(MachineState *ms, unsigned cpu_index)
-@@ -1726,6 +1760,7 @@ static const CPUArchIdList *virt_possible_cpu_arch_ids(MachineState *ms)
+@@ -1806,6 +1853,7 @@ static const CPUArchIdList *virt_possible_cpu_arch_ids(MachineState *ms)
      return ms->possible_cpus;
  }
  
-+#if 0 /* disabled for RHEL */
++#if 0 /* Disabled for Red Hat Enterprise Linux */
  static void virt_machine_device_plug_cb(HotplugHandler *hotplug_dev,
                                          DeviceState *dev, Error **errp)
  {
-@@ -1890,6 +1925,9 @@ DEFINE_VIRT_MACHINE(3, 0)
- #define VIRT_COMPAT_2_12 \
-     HW_COMPAT_2_12
- 
-+#define VIRT_COMPAT_2_12 \
-+    HW_COMPAT_2_12
-+
- static void virt_2_12_instance_init(Object *obj)
- {
-     virt_3_0_instance_init(obj);
-@@ -2017,3 +2055,89 @@ static void virt_machine_2_6_options(MachineClass *mc)
+@@ -2071,3 +2119,93 @@ static void virt_machine_2_6_options(MachineClass *mc)
      vmc->no_pmu = true;
  }
  DEFINE_VIRT_MACHINE(2, 6)
@@ -123,11 +139,11 @@ index f69e7eb..84a86c1 100644
 +
 +    mc->family = "virt-rhel-Z";
 +    mc->init = machvirt_init;
-+    /* Start max_cpus at the maximum QEMU supports. We'll further restrict
-+     * it later in machvirt_init, where we have more information about the
++    /* Start with max_cpus set to 512, which is the maximum supported by KVM.
++     * The value may be reduced later when we have more information about the
 +     * configuration of the particular instance.
 +     */
-+    mc->max_cpus = 255;
++    mc->max_cpus = 512;
 +    mc->block_default_type = IF_VIRTIO;
 +    mc->no_cdrom = 1;
 +    mc->pci_allow_0_address = true;
@@ -154,7 +170,7 @@ index f69e7eb..84a86c1 100644
 +}
 +type_init(rhel_machine_init);
 +
-+static void rhel760_virt_instance_init(Object *obj)
++static void rhel800_virt_instance_init(Object *obj)
 +{
 +    VirtMachineState *vms = VIRT_MACHINE(obj);
 +    VirtMachineClass *vmc = VIRT_MACHINE_GET_CLASS(vms);
@@ -179,6 +195,8 @@ index f69e7eb..84a86c1 100644
 +                                    "Set GIC version. "
 +                                    "Valid values are 2, 3 and host", NULL);
 +
++    vms->highmem_ecam = !vmc->no_highmem_ecam;
++
 +    if (vmc->no_its) {
 +        vms->its = false;
 +    } else {
@@ -192,28 +210,30 @@ index f69e7eb..84a86c1 100644
 +                                        NULL);
 +    }
 +
-+    vms->memmap=a15memmap;
++    /* IOMMU is disabled by default and non-configurable for RHEL */
++    vms->iommu = VIRT_IOMMU_NONE;
++
 +    vms->irqmap=a15irqmap;
 +}
 +
-+static void rhel760_virt_options(MachineClass *mc)
++static void rhel800_virt_options(MachineClass *mc)
 +{
-+    SET_MACHINE_COMPAT(mc, ARM_RHEL_COMPAT);
++    compat_props_add(mc->compat_props, arm_rhel_compat, arm_rhel_compat_len);
 +}
-+DEFINE_RHEL_MACHINE_AS_LATEST(7, 6, 0)
++DEFINE_RHEL_MACHINE_AS_LATEST(8, 0, 0)
 diff --git a/include/hw/arm/virt.h b/include/hw/arm/virt.h
-index 4cc57a7..3237e97 100644
+index 507517c603..e49f872b1c 100644
 --- a/include/hw/arm/virt.h
 +++ b/include/hw/arm/virt.h
-@@ -130,6 +130,7 @@ typedef struct {
+@@ -136,6 +136,7 @@ typedef struct {
  
- #define VIRT_ECAM_ID(high) (high ? VIRT_PCIE_ECAM_HIGH : VIRT_PCIE_ECAM)
+ #define VIRT_ECAM_ID(high) (high ? VIRT_HIGH_PCIE_ECAM : VIRT_PCIE_ECAM)
  
 +#if 0 /* disabled for Red Hat Enterprise Linux */
  #define TYPE_VIRT_MACHINE   MACHINE_TYPE_NAME("virt")
  #define VIRT_MACHINE(obj) \
      OBJECT_CHECK(VirtMachineState, (obj), TYPE_VIRT_MACHINE)
-@@ -138,6 +139,27 @@ typedef struct {
+@@ -144,6 +145,16 @@ typedef struct {
  #define VIRT_MACHINE_CLASS(klass) \
      OBJECT_CLASS_CHECK(VirtMachineClass, klass, TYPE_VIRT_MACHINE)
  
@@ -227,20 +247,9 @@ index 4cc57a7..3237e97 100644
 +    OBJECT_CLASS_CHECK(VirtMachineClass, klass, TYPE_RHEL_MACHINE)
 +#endif
 +
-+/* This macro is for changes to properties that are RHEL specific,
-+ * different to the current upstream and to be applied to the latest
-+ * machine type.
-+ */
-+#define ARM_RHEL_COMPAT \
-+    {\
-+        .driver   = "virtio-net-pci",\
-+        .property = "romfile",\
-+        .value    = "",\
-+    },
-+
  void virt_acpi_setup(VirtMachineState *vms);
  
  /* Return the number of used redistributor regions  */
 -- 
-1.8.3.1
+2.20.1
 

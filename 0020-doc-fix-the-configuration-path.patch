@@ -1,7 +1,7 @@
-From a02908747e85b4064da8acabe724f9202ab17fba Mon Sep 17 00:00:00 2001
+From b1799db735fe51f8b31c565814d79c7ec4fc82dc Mon Sep 17 00:00:00 2001
 From: Danilo de Paula <ddepaula@redhat.com>
 Date: Fri, 8 Feb 2019 11:51:14 +0000
-Subject: [PATCH] doc: fix the configuration path
+Subject: doc: fix the configuration path
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -32,10 +32,10 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  2 files changed, 8 insertions(+), 5 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 8710720..24e9ef0 100644
+index 41a77a90af..20c39c41a8 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -937,11 +937,14 @@ ui/shader.o: $(SRC_PATH)/ui/shader.c \
+@@ -877,11 +877,14 @@ ui/shader.o: $(SRC_PATH)/ui/shader.c \
  MAKEINFO=makeinfo
  MAKEINFOINCLUDES= -I docs -I $(<D) -I $(@D)
  MAKEINFOFLAGS=--no-split --number-sections $(MAKEINFOINCLUDES)
@@ -54,7 +54,7 @@ index 8710720..24e9ef0 100644
  %.html: %.texi docs/version.texi
  	$(call quiet-command,LC_ALL=C $(MAKEINFO) $(MAKEINFOFLAGS) --no-headers \
 diff --git a/qemu-ga.texi b/qemu-ga.texi
-index 4c7a8fd..f00ad83 100644
+index 4c7a8fd163..f00ad830f2 100644
 --- a/qemu-ga.texi
 +++ b/qemu-ga.texi
 @@ -30,7 +30,7 @@ set user's password
@@ -76,5 +76,5 @@ index 4c7a8fd..f00ad83 100644
    @samp{-F/var/run/fsfreezehook.sh}).
  
 -- 
-1.8.3.1
+2.20.1
 

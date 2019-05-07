@@ -1,4 +1,4 @@
-From 081800f80d82ce8d71a1075b3d888f2e298ad183 Mon Sep 17 00:00:00 2001
+From ec354bd88aaaf383bdb2177f94dec39b930cbf90 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 30 Nov 2018 09:11:03 +0100
 Subject: Use qemu-kvm in documentation instead of qemu-system-<arch>
@@ -16,15 +16,16 @@ We change the name and location of qemu-kvm binaries. Update documentation
 to reflect this change. Only architectures available in RHEL are updated.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- docs/qemu-block-drivers.texi |  70 +++++++++++-----------
- docs/qemu-cpu-models.texi    |   8 +--
- qemu-doc.texi                |  70 +++++++++++-----------
- qemu-options.hx              | 140 ++++++++++++++++++++++---------------------
+ docs/qemu-block-drivers.texi |  70 +++++++++---------
+ docs/qemu-cpu-models.texi    |   8 +-
+ qemu-doc.texi                |  70 +++++++++---------
+ qemu-options.hx              | 140 ++++++++++++++++++-----------------
  4 files changed, 146 insertions(+), 142 deletions(-)
 
 diff --git a/docs/qemu-block-drivers.texi b/docs/qemu-block-drivers.texi
-index 38e9f34..2e71ec9 100644
+index da06a9bc83..03c6705505 100644
 --- a/docs/qemu-block-drivers.texi
 +++ b/docs/qemu-block-drivers.texi
 @@ -405,7 +405,7 @@ QEMU can automatically create a virtual FAT disk image from a
@@ -235,10 +236,10 @@ index 38e9f34..2e71ec9 100644
  
  @var{host}:@var{bus}:@var{slot}.@var{func} is the NVMe controller's PCI device
 diff --git a/docs/qemu-cpu-models.texi b/docs/qemu-cpu-models.texi
-index 1935f98..93672de 100644
+index 23c11dc86f..8697254ad4 100644
 --- a/docs/qemu-cpu-models.texi
 +++ b/docs/qemu-cpu-models.texi
-@@ -387,25 +387,25 @@ CPU models / features in QEMU and libvirt
+@@ -566,25 +566,25 @@ CPU models / features in QEMU and libvirt
  @item Host passthrough
  
  @example
@@ -269,10 +270,10 @@ index 1935f98..93672de 100644
  
  @end table
 diff --git a/qemu-doc.texi b/qemu-doc.texi
-index f7ad1df..0e4b34a 100644
+index ae3c3f9632..a8cd3660bc 100644
 --- a/qemu-doc.texi
 +++ b/qemu-doc.texi
-@@ -205,12 +205,12 @@ Note that, by default, GUS shares IRQ(7) with parallel ports and so
+@@ -206,12 +206,12 @@ Note that, by default, GUS shares IRQ(7) with parallel ports and so
  QEMU must be told to not have parallel ports to have working GUS.
  
  @example
@@ -287,7 +288,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  
  Or some other unclaimed IRQ.
-@@ -226,7 +226,7 @@ CS4231A is the chip used in Windows Sound System and GUSMAX products
+@@ -227,7 +227,7 @@ CS4231A is the chip used in Windows Sound System and GUSMAX products
  Download and uncompress the linux image (@file{linux.img}) and type:
  
  @example
@@ -296,7 +297,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  
  Linux should boot and give you a prompt.
-@@ -236,7 +236,7 @@ Linux should boot and give you a prompt.
+@@ -237,7 +237,7 @@ Linux should boot and give you a prompt.
  
  @example
  @c man begin SYNOPSIS
@@ -305,7 +306,7 @@ index f7ad1df..0e4b34a 100644
  @c man end
  @end example
  
-@@ -276,21 +276,21 @@ is specified in seconds. The default is 0 which means no timeout. Libiscsi
+@@ -277,21 +277,21 @@ is specified in seconds. The default is 0 which means no timeout. Libiscsi
  
  Example (without authentication):
  @example
@@ -330,7 +331,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  
  @item NBD
-@@ -305,12 +305,12 @@ Syntax for specifying a NBD device using Unix Domain Sockets
+@@ -306,12 +306,12 @@ Syntax for specifying a NBD device using Unix Domain Sockets
  
  Example for TCP
  @example
@@ -345,7 +346,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  
  @item SSH
-@@ -318,8 +318,8 @@ QEMU supports SSH (Secure Shell) access to remote disks.
+@@ -319,8 +319,8 @@ QEMU supports SSH (Secure Shell) access to remote disks.
  
  Examples:
  @example
@@ -356,7 +357,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  
  Currently authentication must be done using ssh-agent.  Other
-@@ -337,7 +337,7 @@ sheepdog[+tcp|+unix]://[host:port]/vdiname[?socket=path][#snapid|#tag]
+@@ -338,7 +338,7 @@ sheepdog[+tcp|+unix]://[host:port]/vdiname[?socket=path][#snapid|#tag]
  
  Example
  @example
@@ -365,7 +366,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  
  See also @url{https://sheepdog.github.io/sheepdog/}.
-@@ -363,17 +363,17 @@ JSON:
+@@ -364,17 +364,17 @@ JSON:
  Example
  @example
  URI:
@@ -386,7 +387,7 @@ index f7ad1df..0e4b34a 100644
  @                                      file.debug=9,file.logfile=/var/log/qemu-gluster.log,
  @                                      file.server.0.type=tcp,file.server.0.host=1.2.3.4,file.server.0.port=24007,
  @                                      file.server.1.type=unix,file.server.1.socket=/var/run/glusterd.socket
-@@ -438,9 +438,9 @@ of <protocol>.
+@@ -439,9 +439,9 @@ of <protocol>.
  
  Example: boot from a remote Fedora 20 live ISO image
  @example
@@ -398,7 +399,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  
  Example: boot from a remote Fedora 20 cloud image using a local overlay for
-@@ -448,7 +448,7 @@ writes, copy-on-read, and a readahead of 64k
+@@ -449,7 +449,7 @@ writes, copy-on-read, and a readahead of 64k
  @example
  qemu-img create -f qcow2 -o backing_file='json:@{"file.driver":"http",, "file.url":"https://dl.fedoraproject.org/pub/fedora/linux/releases/20/Images/x86_64/Fedora-x86_64-20-20131211.1-sda.qcow2",, "file.readahead":"64k"@}' /tmp/Fedora-x86_64-20-20131211.1-sda.qcow2
  
@@ -407,7 +408,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  
  Example: boot from an image stored on a VMware vSphere server with a self-signed
-@@ -457,7 +457,7 @@ of 10 seconds.
+@@ -458,7 +458,7 @@ of 10 seconds.
  @example
  qemu-img create -f qcow2 -o backing_file='json:@{"file.driver":"https",, "file.url":"https://user:password@@vsphere.example.com/folder/test/test-flat.vmdk?dcPath=Datacenter&dsName=datastore1",, "file.sslverify":"off",, "file.readahead":"64k",, "file.timeout":10@}' /tmp/test.qcow2
  
@@ -416,7 +417,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  
  @end table
-@@ -824,7 +824,7 @@ On Linux hosts, a shared memory device is available.  The basic syntax
+@@ -825,7 +825,7 @@ On Linux hosts, a shared memory device is available.  The basic syntax
  is:
  
  @example
@@ -425,7 +426,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  
  where @var{hostmem} names a host memory backend.  For a POSIX shared
-@@ -845,7 +845,7 @@ memory server is:
+@@ -846,7 +846,7 @@ memory server is:
  ivshmem-server -p @var{pidfile} -S @var{path} -m @var{shm-name} -l @var{shm-size} -n @var{vectors}
  
  # Then start your qemu instances with matching arguments
@@ -434,7 +435,7 @@ index f7ad1df..0e4b34a 100644
                   -chardev socket,path=@var{path},id=@var{id}
  @end example
  
-@@ -870,7 +870,7 @@ Instead of specifying the <shm size> using POSIX shm, you may specify
+@@ -871,7 +871,7 @@ Instead of specifying the <shm size> using POSIX shm, you may specify
  a memory backend that has hugepage support:
  
  @example
@@ -443,7 +444,7 @@ index f7ad1df..0e4b34a 100644
                   -device ivshmem-plain,memdev=mb1
  @end example
  
-@@ -886,7 +886,7 @@ kernel testing.
+@@ -887,7 +887,7 @@ kernel testing.
  
  The syntax is:
  @example
@@ -452,7 +453,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  
  Use @option{-kernel} to provide the Linux kernel image and
-@@ -901,7 +901,7 @@ If you do not need graphical output, you can disable it and redirect
+@@ -902,7 +902,7 @@ If you do not need graphical output, you can disable it and redirect
  the virtual serial port and the QEMU monitor to the console with the
  @option{-nographic} option. The typical command line is:
  @example
@@ -461,7 +462,7 @@ index f7ad1df..0e4b34a 100644
                   -append "root=/dev/hda console=ttyS0" -nographic
  @end example
  
-@@ -967,7 +967,7 @@ Network adapter that supports CDC ethernet and RNDIS protocols.  @var{id}
+@@ -968,7 +968,7 @@ Network adapter that supports CDC ethernet and RNDIS protocols.  @var{id}
  specifies a netdev defined with @code{-netdev @dots{},id=@var{id}}.
  For instance, user-mode networking can be used with
  @example
@@ -470,7 +471,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  @item usb-ccid
  Smartcard reader device
-@@ -986,7 +986,7 @@ no type is given, the HCI logic corresponds to @code{-bt hci,vlan=0}.
+@@ -987,7 +987,7 @@ no type is given, the HCI logic corresponds to @code{-bt hci,vlan=0}.
  This USB device implements the USB Transport Layer of HCI.  Example
  usage:
  @example
@@ -479,7 +480,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  @end table
  
-@@ -1063,7 +1063,7 @@ For this setup it is recommended to restrict it to listen on a UNIX domain
+@@ -1064,7 +1064,7 @@ For this setup it is recommended to restrict it to listen on a UNIX domain
  socket only. For example
  
  @example
@@ -488,7 +489,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  
  This ensures that only users on local box with read/write access to that
-@@ -1086,7 +1086,7 @@ is running the password is set with the monitor. Until the monitor is used to
+@@ -1087,7 +1087,7 @@ is running the password is set with the monitor. Until the monitor is used to
  set the password all clients will be rejected.
  
  @example
@@ -497,7 +498,7 @@ index f7ad1df..0e4b34a 100644
  (qemu) change vnc password
  Password: ********
  (qemu)
-@@ -1103,7 +1103,7 @@ support provides a secure session, but no authentication. This allows any
+@@ -1104,7 +1104,7 @@ support provides a secure session, but no authentication. This allows any
  client to connect, and provides an encrypted session.
  
  @example
@@ -506,7 +507,7 @@ index f7ad1df..0e4b34a 100644
    -object tls-creds-x509,id=tls0,dir=/etc/pki/qemu,endpoint=server,verify-peer=no \
    -vnc :1,tls-creds=tls0 -monitor stdio
  @end example
-@@ -1125,7 +1125,7 @@ same syntax as previously, but with @code{verify-peer} set to @code{yes}
+@@ -1126,7 +1126,7 @@ same syntax as previously, but with @code{verify-peer} set to @code{yes}
  instead.
  
  @example
@@ -515,7 +516,7 @@ index f7ad1df..0e4b34a 100644
    -object tls-creds-x509,id=tls0,dir=/etc/pki/qemu,endpoint=server,verify-peer=yes \
    -vnc :1,tls-creds=tls0 -monitor stdio
  @end example
-@@ -1138,7 +1138,7 @@ Finally, the previous method can be combined with VNC password authentication
+@@ -1139,7 +1139,7 @@ Finally, the previous method can be combined with VNC password authentication
  to provide two layers of authentication for clients.
  
  @example
@@ -524,7 +525,7 @@ index f7ad1df..0e4b34a 100644
    -object tls-creds-x509,id=tls0,dir=/etc/pki/qemu,endpoint=server,verify-peer=yes \
    -vnc :1,tls-creds=tls0,password -monitor stdio
  (qemu) change vnc password
-@@ -1163,7 +1163,7 @@ used for authentication, but assuming use of one supporting SSF,
+@@ -1164,7 +1164,7 @@ used for authentication, but assuming use of one supporting SSF,
  then QEMU can be launched with:
  
  @example
@@ -533,7 +534,7 @@ index f7ad1df..0e4b34a 100644
  @end example
  
  @node vnc_sec_certificate_sasl
-@@ -1177,7 +1177,7 @@ credentials. This can be enabled, by combining the 'sasl' option
+@@ -1178,7 +1178,7 @@ credentials. This can be enabled, by combining the 'sasl' option
  with the aforementioned TLS + x509 options:
  
  @example
@@ -542,7 +543,7 @@ index f7ad1df..0e4b34a 100644
    -object tls-creds-x509,id=tls0,dir=/etc/pki/qemu,endpoint=server,verify-peer=yes \
    -vnc :1,tls-creds=tls0,sasl -monitor stdio
  @end example
-@@ -1572,7 +1572,7 @@ QEMU has a primitive support to work with gdb, so that you can do
+@@ -1573,7 +1573,7 @@ QEMU has a primitive support to work with gdb, so that you can do
  In order to use gdb, launch QEMU with the '-s' option. It will wait for a
  gdb connection:
  @example
@@ -551,7 +552,7 @@ index f7ad1df..0e4b34a 100644
                      -append "root=/dev/hda"
  Connected to host network interface: tun0
  Waiting gdb connection on port 1234
-@@ -1818,7 +1818,7 @@ Set the initial VGA graphic mode. The default is 800x600x32.
+@@ -1819,7 +1819,7 @@ Set the initial VGA graphic mode. The default is 800x600x32.
  Set OpenBIOS variables in NVRAM, for example:
  
  @example
@@ -561,7 +562,7 @@ index f7ad1df..0e4b34a 100644
   -prom-env 'boot-args=conf=hd:2,\yaboot.conf'
  @end example
 diff --git a/qemu-options.hx b/qemu-options.hx
-index 5e13aa9..2a60e51 100644
+index 0f55062546..7ec1a3b099 100644
 --- a/qemu-options.hx
 +++ b/qemu-options.hx
 @@ -253,7 +253,7 @@ This option defines a free-form string that can be used to describe @var{fd}.
@@ -606,7 +607,7 @@ index 5e13aa9..2a60e51 100644
  @end example
  
  If @var{slots} and @var{maxmem} are not specified, memory hotplug won't
-@@ -438,12 +438,12 @@ Enable audio and selected sound hardware. Use 'help' to print all
+@@ -668,12 +668,12 @@ Enable audio and selected sound hardware. Use 'help' to print all
  available sound hardware.
  
  @example
@@ -625,7 +626,7 @@ index 5e13aa9..2a60e51 100644
  @end example
  
  Note that Linux's i810_audio OSS kernel (for AC97) module might
-@@ -918,21 +918,21 @@ is off.
+@@ -1148,21 +1148,21 @@ is off.
  
  Instead of @option{-cdrom} you can use:
  @example
@@ -653,7 +654,7 @@ index 5e13aa9..2a60e51 100644
  -add-fd fd=3,set=2,opaque="rdwr:/path/to/file"
  -add-fd fd=4,set=2,opaque="rdonly:/path/to/file"
  -drive file=/dev/fdset/2,index=0,media=disk
-@@ -940,28 +940,28 @@ qemu-system-i386
+@@ -1170,28 +1170,28 @@ qemu-system-i386
  
  You can connect a CDROM to the slave of ide0:
  @example
@@ -688,7 +689,7 @@ index 5e13aa9..2a60e51 100644
  @end example
  ETEXI
  
-@@ -1975,8 +1975,8 @@ The following two example do exactly the same, to show how @option{-nic} can
+@@ -2217,8 +2217,8 @@ The following two example do exactly the same, to show how @option{-nic} can
  be used to shorten the command line length (note that the e1000 is the default
  on i386, so the @option{model=e1000} parameter could even be omitted here, too):
  @example
@@ -699,7 +700,7 @@ index 5e13aa9..2a60e51 100644
  @end example
  
  @item -nic none
-@@ -2047,7 +2047,7 @@ can not be resolved.
+@@ -2289,7 +2289,7 @@ can not be resolved.
  
  Example:
  @example
@@ -708,7 +709,7 @@ index 5e13aa9..2a60e51 100644
  @end example
  
  @item domainname=@var{domain}
-@@ -2071,7 +2071,7 @@ a guest from a local directory.
+@@ -2313,7 +2313,7 @@ a guest from a local directory.
  
  Example (using pxelinux):
  @example
@@ -717,7 +718,7 @@ index 5e13aa9..2a60e51 100644
      -netdev user,id=n1,tftp=/path/to/tftp/files,bootfile=/pxelinux.0
  @end example
  
-@@ -2105,7 +2105,7 @@ screen 0, use the following:
+@@ -2347,7 +2347,7 @@ screen 0, use the following:
  
  @example
  # on the host
@@ -726,7 +727,7 @@ index 5e13aa9..2a60e51 100644
  # this host xterm should open in the guest X11 server
  xterm -display :1
  @end example
-@@ -2115,7 +2115,7 @@ the guest, use the following:
+@@ -2357,7 +2357,7 @@ the guest, use the following:
  
  @example
  # on the host
@@ -735,7 +736,7 @@ index 5e13aa9..2a60e51 100644
  telnet localhost 5555
  @end example
  
-@@ -2134,7 +2134,7 @@ lifetime, like in the following example:
+@@ -2376,7 +2376,7 @@ lifetime, like in the following example:
  @example
  # open 10.10.1.1:4321 on bootup, connect 10.0.2.100:1234 to it whenever
  # the guest accesses it
@@ -744,7 +745,7 @@ index 5e13aa9..2a60e51 100644
  @end example
  
  Or you can execute a command on every TCP connection established by the guest,
-@@ -2143,7 +2143,7 @@ so that QEMU behaves similar to an inetd process for that virtual server:
+@@ -2385,7 +2385,7 @@ so that QEMU behaves similar to an inetd process for that virtual server:
  @example
  # call "netcat 10.10.1.1 4321" on every TCP connection to 10.0.2.100:1234
  # and connect the TCP stream to its stdin/stdout
@@ -753,7 +754,7 @@ index 5e13aa9..2a60e51 100644
  @end example
  
  @end table
-@@ -2170,21 +2170,22 @@ Examples:
+@@ -2412,21 +2412,22 @@ Examples:
  
  @example
  #launch a QEMU instance with the default network script
@@ -779,7 +780,7 @@ index 5e13aa9..2a60e51 100644
          -netdev tap,id=n1,"helper=/path/to/qemu-bridge-helper"
  @end example
  
-@@ -2201,13 +2202,13 @@ Examples:
+@@ -2443,13 +2444,13 @@ Examples:
  @example
  #launch a QEMU instance with the default network helper to
  #connect a TAP device to bridge br0
@@ -795,7 +796,7 @@ index 5e13aa9..2a60e51 100644
  @end example
  
  @item -netdev socket,id=@var{id}[,fd=@var{h}][,listen=[@var{host}]:@var{port}][,connect=@var{host}:@var{port}]
-@@ -2222,13 +2223,13 @@ specifies an already opened TCP socket.
+@@ -2464,13 +2465,13 @@ specifies an already opened TCP socket.
  Example:
  @example
  # launch a first QEMU instance
@@ -815,7 +816,7 @@ index 5e13aa9..2a60e51 100644
  @end example
  
  @item -netdev socket,id=@var{id}[,fd=@var{h}][,mcast=@var{maddr}:@var{port}[,localaddr=@var{addr}]]
-@@ -2251,15 +2252,15 @@ Use @option{fd=h} to specify an already opened UDP multicast socket.
+@@ -2493,15 +2494,15 @@ Use @option{fd=h} to specify an already opened UDP multicast socket.
  Example:
  @example
  # launch one QEMU instance
@@ -838,7 +839,7 @@ index 5e13aa9..2a60e51 100644
                   -device e1000,netdev=n3,mac=52:54:00:12:34:58 \
                   -netdev socket,id=n3,mcast=230.0.0.1:1234
  @end example
-@@ -2267,7 +2268,7 @@ qemu-system-i386 linux.img \
+@@ -2509,7 +2510,7 @@ qemu-system-i386 linux.img \
  Example (User Mode Linux compat.):
  @example
  # launch QEMU instance (note mcast address selected is UML's default)
@@ -847,7 +848,7 @@ index 5e13aa9..2a60e51 100644
                   -device e1000,netdev=n1,mac=52:54:00:12:34:56 \
                   -netdev socket,id=n1,mcast=239.192.168.1:1102
  # launch UML
-@@ -2276,9 +2277,12 @@ qemu-system-i386 linux.img \
+@@ -2518,9 +2519,12 @@ qemu-system-i386 linux.img \
  
  Example (send packets from host's 1.2.3.4):
  @example
@@ -863,7 +864,7 @@ index 5e13aa9..2a60e51 100644
  @end example
  
  @item -netdev l2tpv3,id=@var{id},src=@var{srcaddr},dst=@var{dstaddr}[,srcport=@var{srcport}][,dstport=@var{dstport}],txsession=@var{txsession}[,rxsession=@var{rxsession}][,ipv6][,udp][,cookie64][,counter][,pincounter][,txcookie=@var{txcookie}][,rxcookie=@var{rxcookie}][,offset=@var{offset}]
-@@ -2336,7 +2340,7 @@ brctl addif br-lan vmtunnel0
+@@ -2578,7 +2582,7 @@ brctl addif br-lan vmtunnel0
  # on 4.3.2.1
  # launch QEMU instance - if your network has reorder or is very lossy add ,pincounter
  
@@ -872,7 +873,7 @@ index 5e13aa9..2a60e51 100644
      -netdev l2tpv3,id=n1,src=4.2.3.1,dst=1.2.3.4,udp,srcport=16384,dstport=16384,rxsession=0xffffffff,txsession=0xffffffff,counter
  
  @end example
-@@ -2353,7 +2357,7 @@ Example:
+@@ -2595,7 +2599,7 @@ Example:
  # launch vde switch
  vde_switch -F -sock /tmp/myswitch
  # launch QEMU instance
@@ -881,7 +882,7 @@ index 5e13aa9..2a60e51 100644
  @end example
  
  @item -netdev vhost-user,chardev=@var{id}[,vhostforce=on|off][,queues=n]
-@@ -2367,11 +2371,11 @@ be created for multiqueue vhost-user.
+@@ -2609,11 +2613,11 @@ be created for multiqueue vhost-user.
  
  Example:
  @example
@@ -898,7 +899,7 @@ index 5e13aa9..2a60e51 100644
  @end example
  
  @item -netdev hubport,id=@var{id},hubid=@var{hubid}[,netdev=@var{nd}]
-@@ -2805,7 +2809,7 @@ and communicate.  Requires the Linux @code{vhci} driver installed.  Can
+@@ -3053,7 +3057,7 @@ and communicate.  Requires the Linux @code{vhci} driver installed.  Can
  be used as following:
  
  @example
@@ -907,7 +908,7 @@ index 5e13aa9..2a60e51 100644
  @end example
  
  @item -bt device:@var{dev}[,vlan=@var{n}]
-@@ -3255,14 +3259,14 @@ ETEXI
+@@ -3503,14 +3507,14 @@ ETEXI
  
  DEF("realtime", HAS_ARG, QEMU_OPTION_realtime,
      "-realtime [mlock=on|off]\n"
@@ -925,7 +926,7 @@ index 5e13aa9..2a60e51 100644
  (enabled by default).
  ETEXI
  
-@@ -3300,7 +3304,7 @@ connections will likely be TCP-based, but also UDP, pseudo TTY, or even
+@@ -3548,7 +3552,7 @@ connections will likely be TCP-based, but also UDP, pseudo TTY, or even
  stdio are reasonable use case. The latter is allowing to start QEMU from
  within gdb and establish the connection via a pipe:
  @example
@@ -934,7 +935,7 @@ index 5e13aa9..2a60e51 100644
  @end example
  ETEXI
  
-@@ -4251,7 +4255,7 @@ which specify the queue number of cryptodev backend, the default of
+@@ -4467,7 +4471,7 @@ which specify the queue number of cryptodev backend, the default of
  
  @example
  
@@ -943,7 +944,7 @@ index 5e13aa9..2a60e51 100644
     [...] \
         -object cryptodev-backend-builtin,id=cryptodev0 \
         -device virtio-crypto-pci,id=crypto0,cryptodev=cryptodev0 \
-@@ -4271,7 +4275,7 @@ of cryptodev backend for multiqueue vhost-user, the default of @var{queues} is 1
+@@ -4487,7 +4491,7 @@ of cryptodev backend for multiqueue vhost-user, the default of @var{queues} is 1
  
  @example
  
@@ -953,5 +954,5 @@ index 5e13aa9..2a60e51 100644
         -chardev socket,id=chardev0,path=/path/to/socket \
         -object cryptodev-vhost-user,id=cryptodev0,chardev=chardev0 \
 -- 
-1.8.3.1
+2.20.1
 

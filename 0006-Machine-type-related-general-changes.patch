@@ -1,6 +1,6 @@
-From 01e49fb467fd831c62f3640e546e313298a7c5c0 Mon Sep 17 00:00:00 2001
+From 4f20f7503073886c51e82fbbdfe78d6c79ea5df7 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
-Date: Fri, 19 Oct 2018 12:36:59 +0200
+Date: Fri, 11 Jan 2019 09:54:45 +0100
 Subject: Machine type related general changes
 
 This patch is first part of original "Add RHEL machine types" patch we
@@ -8,31 +8,40 @@ split to allow easier review. It contains changes not related to any
 architecture.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+Rebase changes (4.0.0):
+- Remove e1000 device duplication changes to reflect upstream solution
+- Rewrite machine compat properties to upstream solution
+
+Merged patches (4.0.0):
+- d4c0957 compat: Generic HW_COMPAT_RHEL7_6
+- cbac773 virtio: Make disable-legacy/disable-modern compat properties optional
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/acpi/ich9.c                    |  16 +++
- hw/acpi/piix4.c                   |   6 +-
- hw/char/serial.c                  |  16 +++
- hw/display/vga-isa.c              |   2 +-
- hw/net/e1000.c                    |  18 ++-
- hw/net/e1000e.c                   |  21 ++++
- hw/net/rtl8139.c                  |   4 +-
- hw/smbios/smbios.c                |   1 +
- hw/timer/i8254_common.c           |   2 +-
- hw/timer/mc146818rtc.c            |   6 +
- hw/usb/hcd-uhci.c                 |   4 +-
- hw/usb/hcd-xhci.c                 |  20 ++++
- hw/usb/hcd-xhci.h                 |   2 +
- include/hw/acpi/ich9.h            |   3 +
- include/hw/compat.h               | 229 ++++++++++++++++++++++++++++++++++++++
- include/hw/usb.h                  |   4 +
- migration/migration.c             |   2 +
- migration/migration.h             |   5 +
- qdev-monitor.c                    |   1 -
- scripts/vmstate-static-checker.py |   1 -
- 20 files changed, 353 insertions(+), 10 deletions(-)
+ hw/acpi/ich9.c          |  16 +++
+ hw/acpi/piix4.c         |   6 +-
+ hw/char/serial.c        |  16 +++
+ hw/core/machine.c       | 268 ++++++++++++++++++++++++++++++++++++++++
+ hw/display/vga-isa.c    |   2 +-
+ hw/net/e1000.c          |  10 ++
+ hw/net/e1000e.c         |  21 ++++
+ hw/net/rtl8139.c        |   4 +-
+ hw/smbios/smbios.c      |   1 +
+ hw/timer/i8254_common.c |   2 +-
+ hw/timer/mc146818rtc.c  |   6 +
+ hw/usb/hcd-uhci.c       |   4 +-
+ hw/usb/hcd-xhci.c       |  20 +++
+ hw/usb/hcd-xhci.h       |   2 +
+ include/hw/acpi/ich9.h  |   3 +
+ include/hw/boards.h     |  18 +++
+ include/hw/usb.h        |   4 +
+ migration/migration.c   |   2 +
+ migration/migration.h   |   5 +
+ 19 files changed, 403 insertions(+), 7 deletions(-)
 
 diff --git a/hw/acpi/ich9.c b/hw/acpi/ich9.c
-index a4e87b8..23a7baa 100644
+index 168a713eff..0a6346f1cf 100644
 --- a/hw/acpi/ich9.c
 +++ b/hw/acpi/ich9.c
 @@ -441,6 +441,18 @@ static void ich9_pm_set_enable_tco(Object *obj, bool value, Error **errp)
@@ -66,10 +75,10 @@ index a4e87b8..23a7baa 100644
                          ich9_pm_get_disable_s3,
                          ich9_pm_set_disable_s3,
 diff --git a/hw/acpi/piix4.c b/hw/acpi/piix4.c
-index e330f24..b213f65 100644
+index 9c079d6834..d742777134 100644
 --- a/hw/acpi/piix4.c
 +++ b/hw/acpi/piix4.c
-@@ -310,7 +310,7 @@ static const VMStateDescription vmstate_cpuhp_state = {
+@@ -315,7 +315,7 @@ static bool piix4_vmstate_need_smbus(void *opaque, int version_id)
  static const VMStateDescription vmstate_acpi = {
      .name = "piix4_pm",
      .version_id = 3,
@@ -78,7 +87,7 @@ index e330f24..b213f65 100644
      .minimum_version_id_old = 1,
      .load_state_old = acpi_load_old,
      .post_load = vmstate_acpi_post_load,
-@@ -670,8 +670,8 @@ static void piix4_send_gpe(AcpiDeviceIf *adev, AcpiEventStatusBits ev)
+@@ -684,8 +684,8 @@ static void piix4_send_gpe(AcpiDeviceIf *adev, AcpiEventStatusBits ev)
  
  static Property piix4_pm_properties[] = {
      DEFINE_PROP_UINT32("smb_io_base", PIIX4PMState, smb_io_base, 0),
@@ -90,7 +99,7 @@ index e330f24..b213f65 100644
      DEFINE_PROP_BOOL("acpi-pci-hotplug-with-bridge-support", PIIX4PMState,
                       use_acpi_pci_hotplug, true),
 diff --git a/hw/char/serial.c b/hw/char/serial.c
-index 02463e3..a591387 100644
+index 7c42a2abfc..ae63cc0104 100644
 --- a/hw/char/serial.c
 +++ b/hw/char/serial.c
 @@ -30,6 +30,7 @@
@@ -144,8 +153,287 @@ index 02463e3..a591387 100644
      return s->poll_msl >= 0;
  }
  
+diff --git a/hw/core/machine.c b/hw/core/machine.c
+index 743fef2898..fd1594d1ad 100644
+--- a/hw/core/machine.c
++++ b/hw/core/machine.c
+@@ -24,6 +24,274 @@
+ #include "hw/pci/pci.h"
+ #include "hw/mem/nvdimm.h"
+ 
++/* Mostly like hw_compat_2_1 but:
++ *  *    we don't need virtio-scsi-pci since 7.0 already had that on
++ *   *
++ *    * RH: Note, qemu-extended-regs should have been enabled in the 7.1
++ *     * machine type, but was accidentally turned off in 7.2 onwards.
++ *      *
++ *       */
++GlobalProperty hw_compat_rhel_7_1[] = {
++        { /* COMPAT_RHEL7.1 */
++            .driver   = "intel-hda-generic",
++            .property = "old_msi_addr",
++            .value    = "on",
++        },{
++            .driver   = "VGA",
++            .property = "qemu-extended-regs",
++            .value    = "off",
++        },{
++            .driver   = "secondary-vga",
++            .property = "qemu-extended-regs",
++            .value    = "off",
++        },{
++            .driver   = "usb-mouse",
++            .property = "usb_version",
++            .value    = stringify(1),
++        },{
++            .driver   = "usb-kbd",
++            .property = "usb_version",
++            .value    = stringify(1),
++        },{
++            .driver   = "virtio-pci",
++            .property = "virtio-pci-bus-master-bug-migration",
++            .value    = "on",
++        },{
++            .driver   = "virtio-blk-pci",
++            .property = "any_layout",
++            .value    = "off",
++        },{
++            .driver   = "virtio-serial-pci",
++            .property = "any_layout",
++            .value    = "off",
++        },{
++            .driver   = "virtio-9p-pci",
++            .property = "any_layout",
++            .value    = "off",
++        },{
++            .driver   = "virtio-rng-pci",
++            .property = "any_layout",
++            .value    = "off",
++        },{ /* HW_COMPAT_RHEL7_1 - introduced with 2.10.0 */
++            .driver   = "migration",
++            .property = "send-configuration",
++            .value    = "off",
++        },
++};
++const size_t hw_compat_rhel_7_1_len = G_N_ELEMENTS(hw_compat_rhel_7_1);
++
++/* Mostly like hw_compat_2_4 + 2_3 but:
++ *  *  we don't need "any_layout" as it has been backported to 7.2
++ *   */
++
++GlobalProperty hw_compat_rhel_7_2[] = {
++        {
++            .driver   = "virtio-blk-device",
++            .property = "scsi",
++            .value    = "true",
++        },{
++            .driver   = "e1000-82540em",
++            .property = "extra_mac_registers",
++            .value    = "off",
++        },{
++            .driver   = "virtio-pci",
++            .property = "x-disable-pcie",
++            .value    = "on",
++        },{
++            .driver   = "virtio-pci",
++            .property = "migrate-extra",
++            .value    = "off",
++        },{ /* HW_COMPAT_RHEL7_2 */
++            .driver   = "fw_cfg_mem",
++            .property = "dma_enabled",
++            .value    = "off",
++        },{ /* HW_COMPAT_RHEL7_2 */
++            .driver   = "fw_cfg_io",
++            .property = "dma_enabled",
++            .value    = "off",
++        },{ /* HW_COMPAT_RHEL7_2 */
++            .driver   = "isa-fdc",
++            .property = "fallback",
++            .value    = "144",
++        },{ /* HW_COMPAT_RHEL7_2 */
++            .driver   = "virtio-pci",
++            .property = "disable-modern",
++            .value    = "on",
++            .optional = true,
++        },{ /* HW_COMPAT_RHEL7_2 */
++            .driver   = "virtio-pci",
++            .property = "disable-legacy",
++            .value    = "off",
++            .optional = true,
++        },{ /* HW_COMPAT_RHEL7_2 */
++            .driver   = TYPE_PCI_DEVICE,
++            .property = "x-pcie-lnksta-dllla",
++            .value    = "off",
++        },{ /* HW_COMPAT_RHEL7_2 */
++            .driver   = "virtio-pci",
++            .property = "page-per-vq",
++            .value    = "on",
++        },{ /* HW_COMPAT_RHEL7_2 - introduced with 2.10.0 */
++            .driver   = "migration",
++            .property = "send-section-footer",
++            .value    = "off",
++        },{ /* HW_COMPAT_RHEL7_2 - introduced with 2.10.0 */
++            .driver   = "migration",
++            .property = "store-global-state",
++            .value    = "off",
++        },
++};
++const size_t hw_compat_rhel_7_2_len = G_N_ELEMENTS(hw_compat_rhel_7_2);
++
++/* Mostly like HW_COMPAT_2_6 + HW_COMPAT_2_7 + HW_COMPAT_2_8 except
++ *  * disable-modern, disable-legacy, page-per-vq have already been
++ *   * backported to RHEL7.3
++ *    */
++GlobalProperty hw_compat_rhel_7_3[] = {
++    { /* HW_COMPAT_RHEL7_3 */
++        .driver   = "virtio-mmio",
++        .property = "format_transport_address",
++        .value    = "off",
++    },{ /* HW_COMPAT_RHEL7_3 */
++        .driver   = "virtio-serial-device",
++        .property = "emergency-write",
++        .value    = "off",
++    },{ /* HW_COMPAT_RHEL7_3 */
++        .driver   = "ioapic",
++        .property = "version",
++        .value    = "0x11",
++    },{ /* HW_COMPAT_RHEL7_3 */
++        .driver   = "intel-iommu",
++        .property = "x-buggy-eim",
++        .value    = "true",
++    },{ /* HW_COMPAT_RHEL7_3 */
++        .driver   = "virtio-pci",
++        .property = "x-ignore-backend-features",
++        .value    = "on",
++    },{ /* HW_COMPAT_RHEL7_3 */
++        .driver   = "fw_cfg_mem",
++        .property = "x-file-slots",
++        .value    = stringify(0x10),
++    },{ /* HW_COMPAT_RHEL7_3 */
++        .driver   = "fw_cfg_io",
++        .property = "x-file-slots",
++        .value    = stringify(0x10),
++    },{ /* HW_COMPAT_RHEL7_3 */
++        .driver   = "pflash_cfi01",
++        .property = "old-multiple-chip-handling",
++        .value    = "on",
++    },{ /* HW_COMPAT_RHEL7_3 */
++        .driver   = TYPE_PCI_DEVICE,
++        .property = "x-pcie-extcap-init",
++        .value    = "off",
++    },{ /* HW_COMPAT_RHEL7_3 */
++        .driver   = "virtio-pci",
++        .property = "x-pcie-deverr-init",
++        .value    = "off",
++    },{ /* HW_COMPAT_RHEL7_3 */
++        .driver   = "virtio-pci",
++        .property = "x-pcie-lnkctl-init",
++        .value    = "off",
++    },{ /* HW_COMPAT_RHEL7_3 */
++        .driver   = "virtio-pci",
++        .property = "x-pcie-pm-init",
++        .value    = "off",
++    },{ /* HW_COMPAT_RHEL7_3 */
++        .driver   = "virtio-net-device",
++        .property = "x-mtu-bypass-backend",
++        .value    = "off",
++    },{ /* HW_COMPAT_RHEL7_3 */
++        .driver   = "e1000e",
++        .property = "__redhat_e1000e_7_3_intr_state",
++        .value    = "on",
++    },
++};
++const size_t hw_compat_rhel_7_3_len = G_N_ELEMENTS(hw_compat_rhel_7_3);
++
++/* Mostly like hw_compat_2_9 except
++ *  * x-mtu-bypass-backend, x-migrate-msix has already been
++ *   * backported to RHEL7.4. shpc was already on in 7.4.
++ *    */
++GlobalProperty hw_compat_rhel_7_4[] = {
++    { /* HW_COMPAT_RHEL7_4 */
++        .driver   = "intel-iommu",
++        .property = "pt",
++        .value    = "off",
++    },
++};
++const size_t hw_compat_rhel_7_4_len = G_N_ELEMENTS(hw_compat_rhel_7_4);
++
++/* The same as hw_compat_2_11 + hw_compat_2_10 */
++GlobalProperty hw_compat_rhel_7_5[] = {
++    { /* HW_COMPAT_RHEL7_5 from HW_COMPAT_2_11 */
++        .driver   = "hpet",
++        .property = "hpet-offset-saved",
++        .value    = "false",
++    },{ /* HW_COMPAT_RHEL7_5 from HW_COMPAT_2_11 */
++        .driver   = "virtio-blk-pci",
++        .property = "vectors",
++        .value    = "2",
++    },{ /* HW_COMPAT_RHEL7_5 from HW_COMPAT_2_11 */
++        .driver   = "vhost-user-blk-pci",
++        .property = "vectors",
++        .value    = "2",
++    },{ /* HW_COMPAT_RHEL7_5 from HW_COMPAT_2_11 but
++           bz 1608778 modified for our naming */
++        .driver   = "e1000-82540em",
++        .property = "migrate_tso_props",
++        .value    = "off",
++    },{ /* HW_COMPAT_RHEL7_5 from HW_COMPAT_2_10 */
++        .driver   = "virtio-mouse-device",
++        .property = "wheel-axis",
++        .value    = "false",
++    },{ /* HW_COMPAT_RHEL7_5 from HW_COMPAT_2_10 */
++        .driver   = "virtio-tablet-device",
++        .property = "wheel-axis",
++        .value    = "false",
++    },{ /* HW_COMPAT_RHEL7_5 */
++        .driver   = "cirrus-vga",
++        .property = "vgamem_mb",
++        .value    = "16",
++    },{ /* HW_COMPAT_RHEL7_5 */
++        .driver   = "migration",
++        .property = "decompress-error-check",
++        .value    = "off",
++    },
++};
++const size_t hw_compat_rhel_7_5_len = G_N_ELEMENTS(hw_compat_rhel_7_5);
++
++/* The same as hw_compat_3_0 + hw_compat_2_12
++ *  * except that
++ *   *   there's nothing in 3_0
++ *    *   migration.decompress-error-check=off was in 7.5 from bz 1584139
++ *     *
++ *      */
++GlobalProperty hw_compat_rhel_7_6[] = {
++    { /* HW_COMPAT_RHEL7_6 from HW_COMPAT_2_12 */
++        .driver   = "hda-audio",
++        .property = "use-timer",
++        .value    = "false",
++    },{ /* HW_COMPAT_RHEL7_6 from HW_COMPAT_2_12 */
++        .driver   = "cirrus-vga",
++        .property = "global-vmstate",
++        .value    = "true",
++    },{ /* HW_COMPAT_RHEL7_6 from HW_COMPAT_2_12 */
++        .driver   = "VGA",
++        .property = "global-vmstate",
++        .value    = "true",
++    },{ /* HW_COMPAT_RHEL7_6 from HW_COMPAT_2_12 */
++        .driver   = "vmware-svga",
++        .property = "global-vmstate",
++        .value    = "true",
++    },{ /* HW_COMPAT_RHEL7_6 from HW_COMPAT_2_12 */
++        .driver   = "qxl-vga",
++        .property = "global-vmstate",
++        .value    = "true",
++    },
++};
++const size_t hw_compat_rhel_7_6_len = G_N_ELEMENTS(hw_compat_rhel_7_6);
++
++
+ GlobalProperty hw_compat_3_1[] = {
+     { "pcie-root-port", "x-speed", "2_5" },
+     { "pcie-root-port", "x-width", "1" },
 diff --git a/hw/display/vga-isa.c b/hw/display/vga-isa.c
-index fa44242..7835c83 100644
+index fa44242e0d..7835c8380a 100644
 --- a/hw/display/vga-isa.c
 +++ b/hw/display/vga-isa.c
 @@ -80,7 +80,7 @@ static void vga_isa_realizefn(DeviceState *dev, Error **errp)
@@ -158,10 +446,10 @@ index fa44242..7835c83 100644
  };
  
 diff --git a/hw/net/e1000.c b/hw/net/e1000.c
-index 2e07880..e886e7c 100644
+index 6ac19216df..a4de04ab89 100644
 --- a/hw/net/e1000.c
 +++ b/hw/net/e1000.c
-@@ -1673,6 +1673,16 @@ static void pci_e1000_realize(PCIDevice *pci_dev, Error **errp)
+@@ -1691,6 +1691,16 @@ static void pci_e1000_realize(PCIDevice *pci_dev, Error **errp)
  
      pci_conf = pci_dev->config;
  
@@ -178,37 +466,8 @@ index 2e07880..e886e7c 100644
      /* TODO: RST# value should be 0, PCI spec 6.2.4 */
      pci_conf[PCI_CACHE_LINE_SIZE] = 0x10;
  
-@@ -1773,7 +1783,7 @@ static const TypeInfo e1000_base_info = {
- 
- static const E1000Info e1000_devices[] = {
-     {
--        .name      = "e1000",
-+        .name      = "e1000-82540em",
-         .device_id = E1000_DEV_ID_82540EM,
-         .revision  = 0x03,
-         .phy_id2   = E1000_PHY_ID2_8254xx_DEFAULT,
-@@ -1794,6 +1804,11 @@ static const E1000Info e1000_devices[] = {
- #endif
- };
- 
-+static const TypeInfo e1000_default_info = {
-+    .name          = "e1000",
-+    .parent        = "e1000-82540em",
-+};
-+
- static void e1000_register_types(void)
- {
-     int i;
-@@ -1811,6 +1826,7 @@ static void e1000_register_types(void)
- 
-         type_register(&type_info);
-     }
-+    type_register_static(&e1000_default_info);
- }
- 
- type_init(e1000_register_types)
 diff --git a/hw/net/e1000e.c b/hw/net/e1000e.c
-index 510ddb3..f1de9e5 100644
+index 510ddb3897..f1de9e5058 100644
 --- a/hw/net/e1000e.c
 +++ b/hw/net/e1000e.c
 @@ -75,6 +75,11 @@ typedef struct E1000EState {
@@ -282,7 +541,7 @@ index 510ddb3..f1de9e5 100644
                          e1000e_prop_disable_vnet, bool),
      DEFINE_PROP_SIGNED("subsys_ven", E1000EState, subsys_ven,
 diff --git a/hw/net/rtl8139.c b/hw/net/rtl8139.c
-index 2342a09..0c916b7 100644
+index 2342a095e3..0c916b7a21 100644
 --- a/hw/net/rtl8139.c
 +++ b/hw/net/rtl8139.c
 @@ -3174,7 +3174,7 @@ static int rtl8139_pre_save(void *opaque)
@@ -305,7 +564,7 @@ index 2342a09..0c916b7 100644
          VMSTATE_UINT16(tally_counters.TxUndrn, RTL8139State),
  
 diff --git a/hw/smbios/smbios.c b/hw/smbios/smbios.c
-index 9209394..43cf057 100644
+index 47be9071fa..3ea04e621e 100644
 --- a/hw/smbios/smbios.c
 +++ b/hw/smbios/smbios.c
 @@ -775,6 +775,7 @@ void smbios_set_defaults(const char *manufacturer, const char *product,
@@ -317,7 +576,7 @@ index 9209394..43cf057 100644
      SMBIOS_SET_DEFAULT(type2.product, product);
      SMBIOS_SET_DEFAULT(type2.version, version);
 diff --git a/hw/timer/i8254_common.c b/hw/timer/i8254_common.c
-index 6190b6f..ad2ad2d 100644
+index 6190b6fc5d..ad2ad2d09f 100644
 --- a/hw/timer/i8254_common.c
 +++ b/hw/timer/i8254_common.c
 @@ -268,7 +268,7 @@ static const VMStateDescription vmstate_pit_common = {
@@ -330,11 +589,11 @@ index 6190b6f..ad2ad2d 100644
                               vmstate_pit_channel, PITChannelState),
          VMSTATE_INT64(channels[0].next_transition_time,
 diff --git a/hw/timer/mc146818rtc.c b/hw/timer/mc146818rtc.c
-index e4e4de8..3eced9c 100644
+index 513f105e62..10a3d44be1 100644
 --- a/hw/timer/mc146818rtc.c
 +++ b/hw/timer/mc146818rtc.c
 @@ -35,6 +35,7 @@
- #include "qapi/qapi-events-misc.h"
+ #include "qapi/qapi-events-target.h"
  #include "qapi/visitor.h"
  #include "exec/address-spaces.h"
 +#include "migration/migration.h"
@@ -354,10 +613,10 @@ index e4e4de8..3eced9c 100644
  }
  
 diff --git a/hw/usb/hcd-uhci.c b/hw/usb/hcd-uhci.c
-index 836b11f..9d7b9df 100644
+index 09df29ff9c..95542290ff 100644
 --- a/hw/usb/hcd-uhci.c
 +++ b/hw/usb/hcd-uhci.c
-@@ -1214,12 +1214,14 @@ static void usb_uhci_common_realize(PCIDevice *dev, Error **errp)
+@@ -1216,12 +1216,14 @@ static void usb_uhci_common_realize(PCIDevice *dev, Error **errp)
      UHCIState *s = UHCI(dev);
      uint8_t *pci_conf = s->dev.config;
      int i;
@@ -374,10 +633,10 @@ index 836b11f..9d7b9df 100644
      if (s->masterbus) {
          USBPort *ports[NB_PORTS];
 diff --git a/hw/usb/hcd-xhci.c b/hw/usb/hcd-xhci.c
-index 8f1a01a..ca19474 100644
+index ec28bee319..ad351a7b6d 100644
 --- a/hw/usb/hcd-xhci.c
 +++ b/hw/usb/hcd-xhci.c
-@@ -3560,9 +3560,27 @@ static const VMStateDescription vmstate_xhci_slot = {
+@@ -3580,9 +3580,27 @@ static const VMStateDescription vmstate_xhci_slot = {
      }
  };
  
@@ -405,7 +664,7 @@ index 8f1a01a..ca19474 100644
      .fields = (VMStateField[]) {
          VMSTATE_UINT32(type,   XHCIEvent),
          VMSTATE_UINT32(ccode,  XHCIEvent),
-@@ -3571,6 +3589,8 @@ static const VMStateDescription vmstate_xhci_event = {
+@@ -3591,6 +3609,8 @@ static const VMStateDescription vmstate_xhci_event = {
          VMSTATE_UINT32(flags,  XHCIEvent),
          VMSTATE_UINT8(slotid,  XHCIEvent),
          VMSTATE_UINT8(epid,    XHCIEvent),
@@ -415,10 +674,10 @@ index 8f1a01a..ca19474 100644
      }
  };
 diff --git a/hw/usb/hcd-xhci.h b/hw/usb/hcd-xhci.h
-index fc36a4c..89d4cf7 100644
+index 240caa4e51..11bd05dfd5 100644
 --- a/hw/usb/hcd-xhci.h
 +++ b/hw/usb/hcd-xhci.h
-@@ -153,6 +153,8 @@ typedef struct XHCIEvent {
+@@ -154,6 +154,8 @@ typedef struct XHCIEvent {
      uint32_t flags;
      uint8_t slotid;
      uint8_t epid;
@@ -428,7 +687,7 @@ index fc36a4c..89d4cf7 100644
  
  typedef struct XHCIInterrupter {
 diff --git a/include/hw/acpi/ich9.h b/include/hw/acpi/ich9.h
-index 59aeb06..7b5cc25 100644
+index 41568d1837..1a23ccc412 100644
 --- a/include/hw/acpi/ich9.h
 +++ b/include/hw/acpi/ich9.h
 @@ -61,6 +61,9 @@ typedef struct ICH9LPCPMRegs {
@@ -441,249 +700,38 @@ index 59aeb06..7b5cc25 100644
  } ICH9LPCPMRegs;
  
  #define ACPI_PM_PROP_TCO_ENABLED "enable_tco"
-diff --git a/include/hw/compat.h b/include/hw/compat.h
-index 6f4d5fc..f08cc7c 100644
---- a/include/hw/compat.h
-+++ b/include/hw/compat.h
-@@ -285,4 +285,233 @@
-         .value    = "on",\
-     },
+diff --git a/include/hw/boards.h b/include/hw/boards.h
+index e231860666..456e4a944c 100644
+--- a/include/hw/boards.h
++++ b/include/hw/boards.h
+@@ -335,4 +335,22 @@ extern const size_t hw_compat_2_2_len;
+ extern GlobalProperty hw_compat_2_1[];
+ extern const size_t hw_compat_2_1_len;
  
-+/* Mostly like HW_COMPAT_2_1 but:
-+ *    we don't need virtio-scsi-pci since 7.0 already had that on
-+ *
-+ * RH: Note, qemu-extended-regs should have been enabled in the 7.1
-+ * machine type, but was accidentally turned off in 7.2 onwards.
-+ *
-+ */
-+#define HW_COMPAT_RHEL7_1 \
-+        { /* COMPAT_RHEL7.1 */ \
-+            .driver   = "intel-hda-generic",\
-+            .property = "old_msi_addr",\
-+            .value    = "on",\
-+        },{\
-+            .driver   = "VGA",\
-+            .property = "qemu-extended-regs",\
-+            .value    = "off",\
-+        },{\
-+            .driver   = "secondary-vga",\
-+            .property = "qemu-extended-regs",\
-+            .value    = "off",\
-+        },{\
-+            .driver   = "usb-mouse",\
-+            .property = "usb_version",\
-+            .value    = stringify(1),\
-+        },{\
-+            .driver   = "usb-kbd",\
-+            .property = "usb_version",\
-+            .value    = stringify(1),\
-+        },{\
-+            .driver   = "virtio-pci",\
-+            .property = "virtio-pci-bus-master-bug-migration",\
-+            .value    = "on",\
-+        },{\
-+            .driver   = "virtio-blk-pci",\
-+            .property = "any_layout",\
-+            .value    = "off",\
-+        },{\
-+            .driver   = "virtio-balloon-pci",\
-+            .property = "any_layout",\
-+            .value    = "off",\
-+        },{\
-+            .driver   = "virtio-serial-pci",\
-+            .property = "any_layout",\
-+            .value    = "off",\
-+        },{\
-+            .driver   = "virtio-9p-pci",\
-+            .property = "any_layout",\
-+            .value    = "off",\
-+        },{\
-+            .driver   = "virtio-rng-pci",\
-+            .property = "any_layout",\
-+            .value    = "off",\
-+        },{ /* HW_COMPAT_RHEL7_1 - introduced with 2.10.0 */ \
-+            .driver   = "migration",\
-+            .property = "send-configuration",\
-+            .value    = "off",\
-+        },
++extern GlobalProperty hw_compat_rhel_7_6[];
++extern const size_t hw_compat_rhel_7_6_len;
 +
-+/* Mostly like HW_COMPAT_2_4 + 2_3 but:
-+ *  we don't need "any_layout" as it has been backported to 7.2
-+ */
++extern GlobalProperty hw_compat_rhel_7_5[];
++extern const size_t hw_compat_rhel_7_5_len;
 +
-+#define HW_COMPAT_RHEL7_2 \
-+        {\
-+            .driver   = "virtio-blk-device",\
-+            .property = "scsi",\
-+            .value    = "true",\
-+        },{\
-+            .driver   = "e1000-82540em",\
-+            .property = "extra_mac_registers",\
-+            .value    = "off",\
-+        },{\
-+            .driver   = "virtio-pci",\
-+            .property = "x-disable-pcie",\
-+            .value    = "on",\
-+        },{\
-+            .driver   = "virtio-pci",\
-+            .property = "migrate-extra",\
-+            .value    = "off",\
-+        },{ /* HW_COMPAT_RHEL7_2 */ \
-+            .driver   = "fw_cfg_mem",\
-+            .property = "dma_enabled",\
-+            .value    = "off",\
-+        },{ /* HW_COMPAT_RHEL7_2 */ \
-+            .driver   = "fw_cfg_io",\
-+            .property = "dma_enabled",\
-+            .value    = "off",\
-+        },{ /* HW_COMPAT_RHEL7_2 */ \
-+            .driver   = "isa-fdc",\
-+            .property = "fallback",\
-+            .value    = "144",\
-+        },{ /* HW_COMPAT_RHEL7_2 */ \
-+            .driver   = "virtio-pci",\
-+            .property = "disable-modern",\
-+            .value    = "on",\
-+        },{ /* HW_COMPAT_RHEL7_2 */ \
-+            .driver   = "virtio-pci",\
-+            .property = "disable-legacy",\
-+            .value    = "off",\
-+        },{ /* HW_COMPAT_RHEL7_2 */ \
-+            .driver   = TYPE_PCI_DEVICE,\
-+            .property = "x-pcie-lnksta-dllla",\
-+            .value    = "off",\
-+        },{ /* HW_COMPAT_RHEL7_2 */ \
-+            .driver   = "virtio-pci",\
-+            .property = "page-per-vq",\
-+            .value    = "on",\
-+        },{ /* HW_COMPAT_RHEL7_2 - introduced with 2.10.0 */ \
-+            .driver   = "migration",\
-+            .property = "send-section-footer",\
-+            .value    = "off",\
-+        },{ /* HW_COMPAT_RHEL7_2 - introduced with 2.10.0 */ \
-+            .driver   = "migration",\
-+            .property = "store-global-state",\
-+            .value    = "off",\
-+        },
++extern GlobalProperty hw_compat_rhel_7_4[];
++extern const size_t hw_compat_rhel_7_4_len;
 +
-+/* Mostly like HW_COMPAT_2_6 + HW_COMPAT_2_7 + HW_COMPAT_2_8 except
-+ * disable-modern, disable-legacy, page-per-vq have already been
-+ * backported to RHEL7.3
-+ */
-+#define HW_COMPAT_RHEL7_3 \
-+    { /* HW_COMPAT_RHEL7_3 */ \
-+        .driver   = "virtio-mmio",\
-+        .property = "format_transport_address",\
-+        .value    = "off",\
-+    },{ /* HW_COMPAT_RHEL7_3 */ \
-+        .driver   = "virtio-serial-device",\
-+        .property = "emergency-write",\
-+        .value    = "off",\
-+    },{ /* HW_COMPAT_RHEL7_3 */ \
-+        .driver   = "ioapic",\
-+        .property = "version",\
-+        .value    = "0x11",\
-+    },{ /* HW_COMPAT_RHEL7_3 */ \
-+        .driver   = "intel-iommu",\
-+        .property = "x-buggy-eim",\
-+        .value    = "true",\
-+    },{ /* HW_COMPAT_RHEL7_3 */ \
-+        .driver   = "virtio-pci",\
-+        .property = "x-ignore-backend-features",\
-+        .value    = "on",\
-+    },{ /* HW_COMPAT_RHEL7_3 */ \
-+        .driver   = "fw_cfg_mem",\
-+        .property = "x-file-slots",\
-+        .value    = stringify(0x10),\
-+    },{ /* HW_COMPAT_RHEL7_3 */ \
-+        .driver   = "fw_cfg_io",\
-+        .property = "x-file-slots",\
-+        .value    = stringify(0x10),\
-+    },{ /* HW_COMPAT_RHEL7_3 */ \
-+        .driver   = "pflash_cfi01",\
-+        .property = "old-multiple-chip-handling",\
-+        .value    = "on",\
-+    },{ /* HW_COMPAT_RHEL7_3 */ \
-+        .driver   = TYPE_PCI_DEVICE,\
-+        .property = "x-pcie-extcap-init",\
-+        .value    = "off",\
-+    },{ /* HW_COMPAT_RHEL7_3 */ \
-+        .driver   = "virtio-pci",\
-+        .property = "x-pcie-deverr-init",\
-+        .value    = "off",\
-+    },{ /* HW_COMPAT_RHEL7_3 */ \
-+        .driver   = "virtio-pci",\
-+        .property = "x-pcie-lnkctl-init",\
-+        .value    = "off",\
-+    },{ /* HW_COMPAT_RHEL7_3 */ \
-+        .driver   = "virtio-pci",\
-+        .property = "x-pcie-pm-init",\
-+        .value    = "off",\
-+    },{ /* HW_COMPAT_RHEL7_3 */ \
-+        .driver   = "virtio-net-device",\
-+        .property = "x-mtu-bypass-backend",\
-+        .value    = "off",\
-+    },{ /* HW_COMPAT_RHEL7_3 */ \
-+        .driver   = "e1000e",\
-+        .property = "__redhat_e1000e_7_3_intr_state",\
-+        .value    = "on",\
-+    },
++extern GlobalProperty hw_compat_rhel_7_3[];
++extern const size_t hw_compat_rhel_7_3_len;
 +
-+/* Mostly like HW_COMPAT_2_9 except
-+ * x-mtu-bypass-backend, x-migrate-msix has already been
-+ * backported to RHEL7.4. shpc was already on in 7.4.
-+ */
-+#define HW_COMPAT_RHEL7_4 \
-+    { /* HW_COMPAT_RHEL7_4 */ \
-+        .driver   = "intel-iommu",\
-+        .property = "pt",\
-+        .value    = "off",\
-+    },
++extern GlobalProperty hw_compat_rhel_7_2[];
++extern const size_t hw_compat_rhel_7_2_len;
 +
-+/* The same as HW_COMPAT_2_11 + HW_COMPAT_2_10 */
-+#define HW_COMPAT_RHEL7_5 \
-+    { /* HW_COMPAT_RHEL7_5 from HW_COMPAT_2_11 */ \
-+        .driver   = "hpet",\
-+        .property = "hpet-offset-saved",\
-+        .value    = "false",\
-+    },{ /* HW_COMPAT_RHEL7_5 from HW_COMPAT_2_11 */ \
-+        .driver   = "virtio-blk-pci",\
-+        .property = "vectors",\
-+        .value    = "2",\
-+    },{ /* HW_COMPAT_RHEL7_5 from HW_COMPAT_2_11 */ \
-+        .driver   = "vhost-user-blk-pci",\
-+        .property = "vectors",\
-+        .value    = "2",\
-+    },{ /* HW_COMPAT_RHEL7_5 from HW_COMPAT_2_11 but \
-+           bz 1608778 modified for our naming */ \
-+        .driver   = "e1000-82540em",\
-+        .property = "migrate_tso_props",\
-+        .value    = "off",\
-+    },{ /* HW_COMPAT_RHEL7_5 from HW_COMPAT_2_10 */ \
-+        .driver   = "virtio-mouse-device",\
-+        .property = "wheel-axis",\
-+        .value    = "false",\
-+    },{ /* HW_COMPAT_RHEL7_5 from HW_COMPAT_2_10 */ \
-+        .driver   = "virtio-tablet-device",\
-+        .property = "wheel-axis",\
-+        .value    = "false",\
-+    },{ /* HW_COMPAT_RHEL7_5 */ \
-+        .driver   = "cirrus-vga",\
-+        .property = "vgamem_mb",\
-+        .value    = "16",\
-+    },{ /* HW_COMPAT_RHEL7_5 */ \
-+        .driver   = "migration",\
-+        .property = "decompress-error-check",\
-+        .value    = "off",\
-+    },
++extern GlobalProperty hw_compat_rhel_7_1[];
++extern const size_t hw_compat_rhel_7_1_len;
 +
-+
- #endif /* HW_COMPAT_H */
+ #endif
 diff --git a/include/hw/usb.h b/include/hw/usb.h
-index a5080ad..b943ec9 100644
+index c21f41c8a9..71502b0bad 100644
 --- a/include/hw/usb.h
 +++ b/include/hw/usb.h
-@@ -606,4 +606,8 @@ int usb_get_quirks(uint16_t vendor_id, uint16_t product_id,
+@@ -604,4 +604,8 @@ int usb_get_quirks(uint16_t vendor_id, uint16_t product_id,
                     uint8_t interface_class, uint8_t interface_subclass,
                     uint8_t interface_protocol);
  
@@ -693,10 +741,10 @@ index a5080ad..b943ec9 100644
 +
  #endif
 diff --git a/migration/migration.c b/migration/migration.c
-index 49ffb99..0d9cb7a 100644
+index 609e0df5d0..a160172a0c 100644
 --- a/migration/migration.c
 +++ b/migration/migration.c
-@@ -105,6 +105,8 @@ enum mig_rp_message_type {
+@@ -116,6 +116,8 @@ enum mig_rp_message_type {
      MIG_RP_MSG_MAX
  };
  
@@ -706,13 +754,13 @@ index 49ffb99..0d9cb7a 100644
     migrations at once.  For now we don't need to add
     dynamic creation of migration */
 diff --git a/migration/migration.h b/migration/migration.h
-index e413d4d..795238c 100644
+index 438f17edad..c793dcc50b 100644
 --- a/migration/migration.h
 +++ b/migration/migration.h
-@@ -292,6 +292,11 @@ void migrate_send_rp_resume_ack(MigrationIncomingState *mis, uint32_t value);
+@@ -307,6 +307,11 @@ void init_dirty_bitmap_incoming_migration(void);
+ void migrate_add_address(SocketAddress *address);
  
- void dirty_bitmap_mig_before_vm_start(void);
- void init_dirty_bitmap_incoming_migration(void);
+ int foreach_not_ignored_block(RAMBlockIterFunc func, void *opaque);
 +/*
 + * Disables a load of subsections that were added in 2.2/rh7.2 for backwards
 + * migration compatibility.
@@ -720,31 +768,7 @@ index e413d4d..795238c 100644
 +extern bool migrate_pre_2_2;
  
  #define qemu_ram_foreach_block \
-   #warning "Use qemu_ram_foreach_block_migratable in migration code"
-diff --git a/qdev-monitor.c b/qdev-monitor.c
-index 07147c6..47ea051 100644
---- a/qdev-monitor.c
-+++ b/qdev-monitor.c
-@@ -47,7 +47,6 @@ typedef struct QDevAlias
- 
- /* Please keep this table sorted by typename. */
- static const QDevAlias qdev_alias_table[] = {
--    { "e1000", "e1000-82540em" },
-     { "ich9-ahci", "ahci" },
-     { "lsi53c895a", "lsi" },
-     { "virtio-9p-ccw", "virtio-9p", QEMU_ARCH_S390X },
-diff --git a/scripts/vmstate-static-checker.py b/scripts/vmstate-static-checker.py
-index d346728..4bca2bf 100755
---- a/scripts/vmstate-static-checker.py
-+++ b/scripts/vmstate-static-checker.py
-@@ -105,7 +105,6 @@ def get_changed_sec_name(sec):
-     # Section names can change -- see commit 292b1634 for an example.
-     changes = {
-         "ICH9 LPC": "ICH9-LPC",
--        "e1000-82540em": "e1000",
-     }
- 
-     for item in changes:
+   #warning "Use foreach_not_ignored_block in migration code"
 -- 
-1.8.3.1
+2.20.1
 

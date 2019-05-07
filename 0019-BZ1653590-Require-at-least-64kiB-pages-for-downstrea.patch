@@ -1,8 +1,7 @@
-From b5ede4ceec64a7b812f40457771948420cd3780f Mon Sep 17 00:00:00 2001
+From 581909cc6cb4e8286126721b76a79e93a9880e1f Mon Sep 17 00:00:00 2001
 From: David Gibson <dgibson@redhat.com>
 Date: Wed, 6 Feb 2019 03:58:56 +0000
-Subject: [PATCH 4/8] BZ1653590: Require at least 64kiB pages for downstream
- guests & hosts
+Subject: BZ1653590: Require at least 64kiB pages for downstream guests & hosts
 
 RH-Author: David Gibson <dgibson@redhat.com>
 Message-id: <20190206035856.19058-1-dgibson@redhat.com>
@@ -23,9 +22,6 @@ Downstream, however, we simply don't support 4kiB pagesize configured
 kernels in guest or host, so we can have qemu simply error out in this
 situation.
 
-Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1653590
-Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=20089737
-Branch: rhel8/master-3.1.0
 Testing: Attempted to start a guest with cap-hpt-max-page-size=4k and verified
          it failed immediately with a qemu error
 
@@ -36,11 +32,11 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/hw/ppc/spapr_caps.c b/hw/ppc/spapr_caps.c
-index 64f98ae..ace7325 100644
+index edc5ed0e0c..f59ab398d4 100644
 --- a/hw/ppc/spapr_caps.c
 +++ b/hw/ppc/spapr_caps.c
-@@ -325,12 +325,19 @@ void spapr_check_pagesize(sPAPRMachineState *spapr, hwaddr pagesize,
- static void cap_hpt_maxpagesize_apply(sPAPRMachineState *spapr,
+@@ -340,12 +340,19 @@ void spapr_check_pagesize(SpaprMachineState *spapr, hwaddr pagesize,
+ static void cap_hpt_maxpagesize_apply(SpaprMachineState *spapr,
                                        uint8_t val, Error **errp)
  {
 +#if 0 /* disabled for RHEL */
@@ -60,5 +56,5 @@ index 64f98ae..ace7325 100644
      spapr_check_pagesize(spapr, qemu_getrampagesize(), errp);
  }
 -- 
-1.8.3.1
+2.20.1
 

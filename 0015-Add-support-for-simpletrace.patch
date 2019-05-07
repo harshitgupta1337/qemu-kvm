@@ -1,4 +1,4 @@
-From 490f864563ddcb367e6cf58d1be4a9cbed3a5e2b Mon Sep 17 00:00:00 2001
+From 75da6e38041efca51934a46a4d481eaac57d4b1e Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Thu, 8 Oct 2015 09:50:17 +0200
 Subject: Add support for simpletrace
@@ -23,23 +23,24 @@ Merged patches (2.3.0):
 - 85c4c8f trace: add systemtap-initscript README file to RPM
 
 (cherry picked from commit bfc1d7f3628f2ffbabbae71d57a506cea6663ddf)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  .gitignore                              |  2 ++
  Makefile                                |  4 +++
- README.systemtap                        | 43 +++++++++++++++++++++++++++++++++
- redhat/qemu-kvm.spec.template           | 29 ++++++++++++++++++++--
+ README.systemtap                        | 43 +++++++++++++++++++++++++
+ redhat/qemu-kvm.spec.template           | 26 ++++++++++++++-
  scripts/systemtap/conf.d/qemu_kvm.conf  |  4 +++
  scripts/systemtap/script.d/qemu_kvm.stp |  1 +
- 6 files changed, 81 insertions(+), 2 deletions(-)
+ 6 files changed, 79 insertions(+), 1 deletion(-)
  create mode 100644 README.systemtap
  create mode 100644 scripts/systemtap/conf.d/qemu_kvm.conf
  create mode 100644 scripts/systemtap/script.d/qemu_kvm.stp
 
 diff --git a/Makefile b/Makefile
-index 152821a..8710720 100644
+index 05f62eab3c..41a77a90af 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -892,6 +892,10 @@ endif
+@@ -832,6 +832,10 @@ endif
  		$(INSTALL_DATA) $(SRC_PATH)/pc-bios/keymaps/$$x "$(DESTDIR)$(qemu_datadir)/keymaps"; \
  	done
  	$(INSTALL_DATA) $(BUILD_DIR)/trace-events-all "$(DESTDIR)$(qemu_datadir)/trace-events-all"
@@ -52,7 +53,7 @@ index 152821a..8710720 100644
          done
 diff --git a/README.systemtap b/README.systemtap
 new file mode 100644
-index 0000000..ad913fc
+index 0000000000..ad913fc990
 --- /dev/null
 +++ b/README.systemtap
 @@ -0,0 +1,43 @@
@@ -101,7 +102,7 @@ index 0000000..ad913fc
 +  # /usr/share/qemu-kvm/simpletrace.py --no-header /usr/share/qemu-kvm/trace-events /tmp/trace.log
 diff --git a/scripts/systemtap/conf.d/qemu_kvm.conf b/scripts/systemtap/conf.d/qemu_kvm.conf
 new file mode 100644
-index 0000000..372d816
+index 0000000000..372d8160a4
 --- /dev/null
 +++ b/scripts/systemtap/conf.d/qemu_kvm.conf
 @@ -0,0 +1,4 @@
@@ -111,11 +112,11 @@ index 0000000..372d816
 +qemu_kvm_OPT="-s4" # per-CPU buffer size, in megabytes
 diff --git a/scripts/systemtap/script.d/qemu_kvm.stp b/scripts/systemtap/script.d/qemu_kvm.stp
 new file mode 100644
-index 0000000..c04abf9
+index 0000000000..c04abf9449
 --- /dev/null
 +++ b/scripts/systemtap/script.d/qemu_kvm.stp
 @@ -0,0 +1 @@
 +probe qemu.kvm.simpletrace.handle_qmp_command,qemu.kvm.simpletrace.monitor_protocol_*,qemu.kvm.simpletrace.migrate_set_state {}
 -- 
-1.8.3.1
+2.20.1
 

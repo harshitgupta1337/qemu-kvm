@@ -1,4 +1,4 @@
-From 8ff84e7f181aa0f64b3b6178d9ac808c61f5bec8 Mon Sep 17 00:00:00 2001
+From 223a694c9878013afa2ae9024cb35fbc3a334174 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 12 Oct 2018 07:31:11 +0200
 Subject: Initial redhat build
@@ -13,35 +13,57 @@ several issues are fixed in QEMU tree:
  - Use "/share/qemu-kvm" as SHARE_SUFFIX
   - We reconfigured our share to qemu-kvm to be consistent with used name
 
-This rebase includes changes up to qemu-kvm-2.12.0-47.el8
+This rebase includes changes up to qemu-kvm-3.1.0-23.el8
 
 Rebase notes (3.1.0):
 - added new configure options
 
+Rebase notes (4.0.0):
+- Added dependency to perl-Test-Harness (upstream)
+- Added dependency to python3-sphinx (upstream)
+- Change location of icons (upstream)
+- Remove .desktop file (added upstream)
+- Added qemu-trace-stap (added upstream)
+- Removed elf2dmp (added upstream)
+- Remove .buildinfo
+- Added pvh.bin rom (added upstream)
+- Added interop documentation files
+- Use python module instead of qemu.py (upstream)
+
 Merged patches (3.1.0):
 - 01f0c9f RHEL8: Add disable configure options to qemu spec file
 - Spec file cleanups
+
+Merged patches (4.0.0):
+- aa4297c Add edk2 Requires to qemu-kvm
+- d124ff5779 Fixing brew build target
+- eb204b5 Introduce the qemu-kvm-tests rpm
+- 223cf0c Load kvm module during boot (partial)
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  Makefile                          |    3 +-
  block/Makefile.objs               |    2 +-
- block/vxhs.c                      |  119 ++-
+ block/vxhs.c                      |  119 +-
  configure                         |   33 +-
  os-posix.c                        |    2 +-
  redhat/Makefile                   |   82 ++
- redhat/Makefile.common            |   49 +
- redhat/qemu-kvm.spec.template     | 1813 +++++++++++++++++++++++++++++++++++++
+ redhat/Makefile.common            |   51 +
+ redhat/README.tests               |   39 +
+ redhat/qemu-kvm.spec.template     | 2082 +++++++++++++++++++++++++++++
  redhat/scripts/process-patches.sh |    7 +-
  ui/vnc.c                          |    2 +-
- 10 files changed, 2064 insertions(+), 48 deletions(-)
+ 11 files changed, 2374 insertions(+), 48 deletions(-)
  create mode 100644 redhat/Makefile
  create mode 100644 redhat/Makefile.common
+ create mode 100644 redhat/README.tests
  create mode 100644 redhat/qemu-kvm.spec.template
 
 diff --git a/Makefile b/Makefile
-index f294718..152821a 100644
+index 04a0d45050..05f62eab3c 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -503,6 +503,7 @@ CAP_CFLAGS += -DCAPSTONE_HAS_ARM
+@@ -470,6 +470,7 @@ CAP_CFLAGS += -DCAPSTONE_HAS_ARM
  CAP_CFLAGS += -DCAPSTONE_HAS_ARM64
  CAP_CFLAGS += -DCAPSTONE_HAS_POWERPC
  CAP_CFLAGS += -DCAPSTONE_HAS_X86
@@ -49,7 +71,7 @@ index f294718..152821a 100644
  
  subdir-capstone: .git-submodule-status
  	$(call quiet-command,$(MAKE) -C $(SRC_PATH)/capstone CAPSTONE_SHARED=no BUILDDIR="$(BUILD_DIR)/capstone" CC="$(CC)" AR="$(AR)" LD="$(LD)" RANLIB="$(RANLIB)" CFLAGS="$(CAP_CFLAGS)" $(SUBDIR_MAKEFLAGS) $(BUILD_DIR)/capstone/$(LIBCAPSTONE))
-@@ -830,7 +831,7 @@ install-doc: $(DOCS)
+@@ -749,7 +750,7 @@ install-doc: $(DOCS) install-sphinxdocs
  	$(INSTALL_DATA) docs/interop/qemu-qmp-ref.txt "$(DESTDIR)$(qemu_docdir)"
  ifdef CONFIG_POSIX
  	$(INSTALL_DIR) "$(DESTDIR)$(mandir)/man1"
@@ -59,7 +81,7 @@ index f294718..152821a 100644
  	$(INSTALL_DATA) docs/interop/qemu-qmp-ref.7 "$(DESTDIR)$(mandir)/man7"
  	$(INSTALL_DATA) docs/qemu-block-drivers.7 "$(DESTDIR)$(mandir)/man7"
 diff --git a/block/Makefile.objs b/block/Makefile.objs
-index 46d585c..a244100 100644
+index 7a81892a52..f4cf03bed9 100644
 --- a/block/Makefile.objs
 +++ b/block/Makefile.objs
 @@ -30,7 +30,7 @@ block-obj-$(CONFIG_LIBNFS) += nfs.o
@@ -72,7 +94,7 @@ index 46d585c..a244100 100644
  block-obj-y += accounting.o dirty-bitmap.o
  block-obj-y += write-threshold.o
 diff --git a/block/vxhs.c b/block/vxhs.c
-index 0cb0a00..9164b3e 100644
+index 2e18229ba4..3dbb9544bc 100644
 --- a/block/vxhs.c
 +++ b/block/vxhs.c
 @@ -9,7 +9,8 @@
@@ -263,10 +285,10 @@ index 0cb0a00..9164b3e 100644
          trace_vxhs_get_vdisk_stat_err(s->vdisk_guid, ret, errno);
          return -EIO;
 diff --git a/configure b/configure
-index 0a3c6a7..98b05c5 100755
+index 1c563a7027..eb0a0dde86 100755
 --- a/configure
 +++ b/configure
-@@ -3459,7 +3459,7 @@ fi
+@@ -3612,7 +3612,7 @@ fi
  
  glib_req_ver=2.40
  glib_modules=gthread-2.0
@@ -275,10 +297,11 @@ index 0a3c6a7..98b05c5 100755
      glib_modules="$glib_modules gmodule-export-2.0"
  fi
  
-@@ -5494,33 +5494,6 @@ if compile_prog "" "" ; then
+@@ -5755,33 +5755,6 @@ if compile_prog "" "" ; then
+     have_sysmacros=yes
  fi
  
- ##########################################
+-##########################################
 -# Veritas HyperScale block driver VxHS
 -# Check if libvxhs is installed
 -
@@ -305,11 +328,10 @@ index 0a3c6a7..98b05c5 100755
 -  fi
 -fi
 -
--##########################################
+ ##########################################
  # check for _Static_assert()
  
- have_static_assert=no
-@@ -6854,8 +6827,8 @@ if test "$pthread_setname_np" = "yes" ; then
+@@ -7218,8 +7191,8 @@ elif test "$pthread_setname_np_wo_tid" = "yes" ; then
  fi
  
  if test "$vxhs" = "yes" ; then
@@ -321,7 +343,7 @@ index 0a3c6a7..98b05c5 100755
  
  if test "$libpmem" = "yes" ; then
 diff --git a/os-posix.c b/os-posix.c
-index 4bd80e4..ca13206 100644
+index 4bd80e44e6..ca13206b31 100644
 --- a/os-posix.c
 +++ b/os-posix.c
 @@ -82,7 +82,7 @@ void os_setup_signal_handling(void)
@@ -334,10 +356,10 @@ index 4bd80e4..ca13206 100644
  char *os_find_datadir(void)
  {
 diff --git a/ui/vnc.c b/ui/vnc.c
-index 0c1b477..d7903a7 100644
+index 1871422e1d..8226524c16 100644
 --- a/ui/vnc.c
 +++ b/ui/vnc.c
-@@ -3962,7 +3962,7 @@ void vnc_display_open(const char *id, Error **errp)
+@@ -3982,7 +3982,7 @@ void vnc_display_open(const char *id, Error **errp)
  
  #ifdef CONFIG_VNC_SASL
      if (sasl) {
@@ -347,5 +369,5 @@ index 0c1b477..d7903a7 100644
          if (saslErr != SASL_OK) {
              error_setg(errp, "Failed to initialize SASL auth: %s",
 -- 
-1.8.3.1
+2.20.1
 

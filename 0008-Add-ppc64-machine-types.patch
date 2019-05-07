@@ -1,4 +1,4 @@
-From 4f9094b11eb831317879d9c6108f6f706546fea5 Mon Sep 17 00:00:00 2001
+From 373a3f8f11227ba6bce10dab17ddfb6caffc75cf Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:27:13 +0200
 Subject: Add ppc64 machine types
@@ -6,8 +6,25 @@ Subject: Add ppc64 machine types
 Adding changes to add RHEL machine types for ppc64 architecture.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+Rebase changes (weekly-190111):
+- remove instance options and use upstream solution
+- Use upstream compat handling
+- Replace SPAPR_PCI_2_7_MMIO_WIN_SIZE with value (changed upstream)
+
+Rebase changes (weekly-190104):
+- re-add handling of instance_options (removed upstream)
+- Use p8 as default for rhel machine types (p9 default upstream)
+
+Rebase changes (weekly-190315):
+- sPAPRMachineClass renamed to SpaprMachineClass (upstream)
+
+Merged patches (weekly-190104):
+- 467d59a redhat: define pseries-rhel8.0.0 machine type
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/ppc/spapr.c          | 252 ++++++++++++++++++++++++++++++++++++++++++++++++
+ hw/ppc/spapr.c          | 252 ++++++++++++++++++++++++++++++++++++++++
  hw/ppc/spapr_cpu_core.c |  13 +++
  include/hw/ppc/spapr.h  |   1 +
  target/ppc/compat.c     |  13 ++-
@@ -15,75 +32,112 @@ Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
  5 files changed, 279 insertions(+), 1 deletion(-)
 
 diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
-index 7afd1a1..76a4e83 100644
+index b52b82d298..daa59203ea 100644
 --- a/hw/ppc/spapr.c
 +++ b/hw/ppc/spapr.c
-@@ -3906,6 +3906,7 @@ static void spapr_machine_class_init(ObjectClass *oc, void *data)
-     smc->default_caps.caps[SPAPR_CAP_NESTED_KVM_HV] = SPAPR_CAP_OFF;
+@@ -4300,6 +4300,7 @@ static void spapr_machine_class_init(ObjectClass *oc, void *data)
      spapr_caps_add_properties(smc, &error_abort);
      smc->irq = &spapr_irq_xics;
+     smc->dr_phb_enabled = true;
 +    smc->has_power9_support = true;
  }
  
  static const TypeInfo spapr_machine_info = {
-@@ -3956,6 +3957,7 @@ static const TypeInfo spapr_machine_info = {
+@@ -4344,6 +4345,7 @@ static const TypeInfo spapr_machine_info = {
      }                                                                \
      type_init(spapr_machine_register_##suffix)
  
 +#if 0 /* Disabled for Red Hat Enterprise Linux */
-  /*
-  * pseries-3.1
+ /*
+  * pseries-4.0
   */
-@@ -4169,6 +4171,7 @@ DEFINE_SPAPR_MACHINE(2_8, "2.8", false);
-         .property = "pre-2.8-migration",            \
-         .value    = "on",                           \
-     },
+@@ -4499,6 +4501,7 @@ DEFINE_SPAPR_MACHINE(2_8, "2.8", false);
+ /*
+  * pseries-2.7
+  */
 +#endif
  
- static void phb_placement_2_7(sPAPRMachineState *spapr, uint32_t index,
+ static void phb_placement_2_7(SpaprMachineState *spapr, uint32_t index,
                                uint64_t *buid, hwaddr *pio,
-@@ -4219,6 +4222,7 @@ static void phb_placement_2_7(sPAPRMachineState *spapr, uint32_t index,
+@@ -4549,6 +4552,7 @@ static void phb_placement_2_7(SpaprMachineState *spapr, uint32_t index,
       */
  }
  
 +#if 0 /* Disabled for Red Hat Enterprise Linux */
- static void spapr_machine_2_7_instance_options(MachineState *machine)
+ static void spapr_machine_2_7_class_options(MachineClass *mc)
  {
-     sPAPRMachineState *spapr = SPAPR_MACHINE(machine);
-@@ -4378,6 +4382,254 @@ static void spapr_machine_2_1_class_options(MachineClass *mc)
-     SET_MACHINE_COMPAT(mc, SPAPR_COMPAT_2_1);
+     SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
+@@ -4663,6 +4667,254 @@ static void spapr_machine_2_1_class_options(MachineClass *mc)
+     compat_props_add(mc->compat_props, hw_compat_2_1, hw_compat_2_1_len);
  }
  DEFINE_SPAPR_MACHINE(2_1, "2.1", false);
 +#endif
 +
 +/*
-+ * pseries-rhel7.6.0
++ * pseries-rhel8.0.0
 + */
 +
-+static void spapr_machine_rhel760_instance_options(MachineState *machine)
-+{
-+}
-+
-+static void spapr_machine_rhel760_class_options(MachineClass *mc)
++static void spapr_machine_rhel800_class_options(MachineClass *mc)
 +{
 +    /* Defaults for the latest behaviour inherited from the base class */
 +}
 +
-+DEFINE_SPAPR_MACHINE(rhel760, "rhel7.6.0", true);
++DEFINE_SPAPR_MACHINE(rhel800, "rhel8.0.0", true);
++
++/*
++ * pseries-rhel7.6.0
++ * like spapr_compat_2_12 and spapr_compat_3_0
++ * spapr_compat_0 is empty
++ */
++GlobalProperty spapr_compat_rhel7_6[] = {
++    {
++        .driver = TYPE_POWERPC_CPU,
++        .property = "pre-3.0-migration",
++        .value    = "on",
++    },
++    {
++        .driver = TYPE_SPAPR_CPU_CORE,
++        .property = "pre-3.0-migration",
++        .value    = "on",
++    },
++};
++const size_t spapr_compat_rhel7_6_len = G_N_ELEMENTS(spapr_compat_rhel7_6);
++
++
++static void spapr_machine_rhel760_class_options(MachineClass *mc)
++{
++    SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
++
++    spapr_machine_rhel800_class_options(mc);
++    compat_props_add(mc->compat_props, hw_compat_rhel_7_6, hw_compat_rhel_7_6_len);
++    compat_props_add(mc->compat_props, spapr_compat_rhel7_6, spapr_compat_rhel7_6_len);
++
++    /* from spapr_machine_3_0_class_options() */
++    smc->legacy_irq_allocation = true;
++    smc->irq = &spapr_irq_xics_legacy;
++
++    /* from spapr_machine_2_12_class_options() */
++    /* We depend on kvm_enabled() to choose a default value for the
++     * hpt-max-page-size capability. Of course we can't do it here
++     * because this is too early and the HW accelerator isn't initialzed
++     * yet. Postpone this to machine init (see default_caps_with_cpu()).
++     */
++    smc->default_caps.caps[SPAPR_CAP_HPT_MAXPAGESIZE] = 0;
++    /* Defaults for the latest behaviour inherited from the base class */
++    mc->default_cpu_type = POWERPC_CPU_TYPE_NAME("power8_v2.0");
++}
++
++DEFINE_SPAPR_MACHINE(rhel760, "rhel7.6.0", false);
 +
 +/*
 + * pseries-rhel7.6.0-sxxm
 + *
 + * pseries-rhel7.6.0 with speculative execution exploit mitigations enabled by default
 + */
-+static void spapr_machine_rhel760sxxm_instance_options(MachineState *machine)
-+{
-+    spapr_machine_rhel760_instance_options(machine);
-+}
 +
 +static void spapr_machine_rhel760sxxm_class_options(MachineClass *mc)
 +{
-+    sPAPRMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
++    SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
 +
 +    spapr_machine_rhel760_class_options(mc);
 +    smc->default_caps.caps[SPAPR_CAP_CFPC] = SPAPR_CAP_WORKAROUND;
@@ -93,24 +147,11 @@ index 7afd1a1..76a4e83 100644
 +
 +DEFINE_SPAPR_MACHINE(rhel760sxxm, "rhel7.6.0-sxxm", false);
 +
-+/*
-+ * pseries-rhel7.5.0
-+ * like SPAPR_COMPAT_2_11 and SPAPR_COMPAT_2_10
-+ * SPAPR_CAP_HTM already enabled in 7.4
-+ *
-+ */
-+#define SPAPR_COMPAT_RHEL7_5                                           \
-+    HW_COMPAT_RHEL7_5                                                  \
-+
-+static void spapr_machine_rhel750_instance_options(MachineState *machine)
-+{
-+    spapr_machine_rhel760_instance_options(machine);
-+}
-+
 +static void spapr_machine_rhel750_class_options(MachineClass *mc)
 +{
 +    spapr_machine_rhel760_class_options(mc);
-+    SET_MACHINE_COMPAT(mc, SPAPR_COMPAT_RHEL7_5);
++    compat_props_add(mc->compat_props, hw_compat_rhel_7_5, hw_compat_rhel_7_5_len);
++
 +}
 +
 +DEFINE_SPAPR_MACHINE(rhel750, "rhel7.5.0", false);
@@ -120,14 +161,10 @@ index 7afd1a1..76a4e83 100644
 + *
 + * pseries-rhel7.5.0 with speculative execution exploit mitigations enabled by default
 + */
-+static void spapr_machine_rhel750sxxm_instance_options(MachineState *machine)
-+{
-+    spapr_machine_rhel750_instance_options(machine);
-+}
 +
 +static void spapr_machine_rhel750sxxm_class_options(MachineClass *mc)
 +{
-+    sPAPRMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
++    SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
 +
 +    spapr_machine_rhel750_class_options(mc);
 +    smc->default_caps.caps[SPAPR_CAP_CFPC] = SPAPR_CAP_WORKAROUND;
@@ -139,28 +176,24 @@ index 7afd1a1..76a4e83 100644
 +
 +/*
 + * pseries-rhel7.4.0
-+ * like SPAPR_COMPAT_2_9
++ * like spapr_compat_2_9
 + */
-+
-+#define SPAPR_COMPAT_RHEL7_4                                           \
-+    HW_COMPAT_RHEL7_4                                                  \
-+    {                                                                  \
-+        .driver = TYPE_POWERPC_CPU,                                    \
-+        .property = "pre-2.10-migration",                              \
-+        .value    = "on",                                              \
-+    },                                                                 \
-+
-+static void spapr_machine_rhel740_instance_options(MachineState *machine)
-+{
-+    spapr_machine_rhel750_instance_options(machine);
-+}
++GlobalProperty spapr_compat_rhel7_4[] = {
++    {
++        .driver = TYPE_POWERPC_CPU,
++        .property = "pre-2.10-migration",
++        .value    = "on",
++    },
++};
++const size_t spapr_compat_rhel7_4_len = G_N_ELEMENTS(spapr_compat_rhel7_4);
 +
 +static void spapr_machine_rhel740_class_options(MachineClass *mc)
 +{
-+    sPAPRMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
++    SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
 +
 +    spapr_machine_rhel750_class_options(mc);
-+    SET_MACHINE_COMPAT(mc, SPAPR_COMPAT_RHEL7_4);
++    compat_props_add(mc->compat_props, hw_compat_rhel_7_4, hw_compat_rhel_7_4_len);
++    compat_props_add(mc->compat_props, spapr_compat_rhel7_4, spapr_compat_rhel7_4_len);
 +    mc->numa_auto_assign_ram = numa_legacy_auto_assign_ram;
 +    smc->has_power9_support = false;
 +    smc->pre_2_10_has_unused_icps = true;
@@ -175,14 +208,10 @@ index 7afd1a1..76a4e83 100644
 + *
 + * pseries-rhel7.4.0 with speculative execution exploit mitigations enabled by default
 + */
-+static void spapr_machine_rhel740sxxm_instance_options(MachineState *machine)
-+{
-+    spapr_machine_rhel740_instance_options(machine);
-+}
 +
 +static void spapr_machine_rhel740sxxm_class_options(MachineClass *mc)
 +{
-+    sPAPRMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
++    SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
 +
 +    spapr_machine_rhel740_class_options(mc);
 +    smc->default_caps.caps[SPAPR_CAP_CFPC] = SPAPR_CAP_WORKAROUND;
@@ -194,51 +223,47 @@ index 7afd1a1..76a4e83 100644
 +
 +/*
 + * pseries-rhel7.3.0
-+ * like SPAPR_COMPAT_2_6/_2_7/_2_8 but "ddw" has been backported to RHEL7_3
++ * like spapr_compat_2_6/_2_7/_2_8 but "ddw" has been backported to RHEL7_3
 + */
-+#define SPAPR_COMPAT_RHEL7_3 \
-+    HW_COMPAT_RHEL7_3                               \
-+    {                                               \
-+        .driver   = TYPE_SPAPR_PCI_HOST_BRIDGE,     \
-+        .property = "mem_win_size",                 \
-+        .value    = stringify(SPAPR_PCI_2_7_MMIO_WIN_SIZE),\
-+    },                                              \
-+    {                                               \
-+        .driver   = TYPE_SPAPR_PCI_HOST_BRIDGE,     \
-+        .property = "mem64_win_size",               \
-+        .value    = "0",                            \
-+    },                                              \
-+    {                                               \
-+        .driver = TYPE_POWERPC_CPU,                 \
-+        .property = "pre-2.8-migration",            \
-+        .value    = "on",                           \
-+    },                                              \
-+    {                                               \
-+        .driver = TYPE_SPAPR_PCI_HOST_BRIDGE,       \
-+        .property = "pre-2.8-migration",            \
-+        .value    = "on",                           \
-+    },                                              \
-+    {                                               \
-+        .driver   = TYPE_SPAPR_PCI_HOST_BRIDGE,     \
-+        .property = "pcie-extended-configuration-space",\
-+        .value    = "off",                          \
++GlobalProperty spapr_compat_rhel7_3[] = {
++    {
++        .driver   = TYPE_SPAPR_PCI_HOST_BRIDGE,
++        .property = "mem_win_size",
++        .value    = "0xf80000000",
 +    },
-+
-+static void spapr_machine_rhel730_instance_options(MachineState *machine)
-+{
-+    sPAPRMachineState *spapr = SPAPR_MACHINE(machine);
-+
-+    spapr_machine_rhel740_instance_options(machine);
-+    spapr->use_hotplug_event_source = false;
-+}
++    {
++        .driver   = TYPE_SPAPR_PCI_HOST_BRIDGE,
++        .property = "mem64_win_size",
++        .value    = "0",
++    },
++    {
++        .driver = TYPE_POWERPC_CPU,
++        .property = "pre-2.8-migration",
++        .value    = "on",
++    },
++    {
++        .driver = TYPE_SPAPR_PCI_HOST_BRIDGE,
++        .property = "pre-2.8-migration",
++        .value    = "on",
++    },
++    {
++        .driver   = TYPE_SPAPR_PCI_HOST_BRIDGE,
++        .property = "pcie-extended-configuration-space",
++        .value    = "off",
++    },
++};
++const size_t spapr_compat_rhel7_3_len = G_N_ELEMENTS(spapr_compat_rhel7_3);
 +
 +static void spapr_machine_rhel730_class_options(MachineClass *mc)
 +{
-+    sPAPRMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
++    SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
 +
 +    spapr_machine_rhel740_class_options(mc);
 +    mc->default_cpu_type = POWERPC_CPU_TYPE_NAME("power7_v2.3");
-+    SET_MACHINE_COMPAT(mc, SPAPR_COMPAT_RHEL7_3);
++    mc->default_machine_opts = "modern-hotplug-events=off";
++    compat_props_add(mc->compat_props, hw_compat_rhel_7_3, hw_compat_rhel_7_3_len);
++    compat_props_add(mc->compat_props, spapr_compat_rhel7_3, spapr_compat_rhel7_3_len);
++
 +    smc->phb_placement = phb_placement_2_7;
 +}
 +
@@ -249,14 +274,10 @@ index 7afd1a1..76a4e83 100644
 + *
 + * pseries-rhel7.3.0 with speculative execution exploit mitigations enabled by default
 + */
-+static void spapr_machine_rhel730sxxm_instance_options(MachineState *machine)
-+{
-+    spapr_machine_rhel730_instance_options(machine);
-+}
 +
 +static void spapr_machine_rhel730sxxm_class_options(MachineClass *mc)
 +{
-+    sPAPRMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
++    SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
 +
 +    spapr_machine_rhel730_class_options(mc);
 +    smc->default_caps.caps[SPAPR_CAP_CFPC] = SPAPR_CAP_WORKAROUND;
@@ -269,36 +290,32 @@ index 7afd1a1..76a4e83 100644
 +/*
 + * pseries-rhel7.2.0
 + */
-+/* Should be like SPAPR_COMPAT_2_5 + 2_4 + 2_3, but "dynamic-reconfiguration"
++/* Should be like spapr_compat_2_5 + 2_4 + 2_3, but "dynamic-reconfiguration"
 + * has been backported to RHEL7_2 so we don't need it here.
 + */
 +
-+#define SPAPR_COMPAT_RHEL7_2 \
-+    HW_COMPAT_RHEL7_2 \
-+    { \
-+        .driver   = "spapr-vlan", \
-+        .property = "use-rx-buffer-pools", \
-+        .value    = "off", \
-+    },{ \
-+        .driver   = TYPE_SPAPR_PCI_HOST_BRIDGE,\
-+        .property = "ddw",\
-+        .value    = stringify(off),\
++GlobalProperty spapr_compat_rhel7_2[] = {
++    {
++        .driver   = "spapr-vlan",
++        .property = "use-rx-buffer-pools",
++        .value    = "off",
++    },{
++        .driver   = TYPE_SPAPR_PCI_HOST_BRIDGE,
++        .property = "ddw",
++        .value    = "off",
 +    },
-+
-+
-+static void spapr_machine_rhel720_instance_options(MachineState *machine)
-+{
-+    spapr_machine_rhel730_instance_options(machine);
-+}
++};
++const size_t spapr_compat_rhel7_2_len = G_N_ELEMENTS(spapr_compat_rhel7_2);
 +
 +static void spapr_machine_rhel720_class_options(MachineClass *mc)
 +{
-+    sPAPRMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
++    SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
 +
 +    spapr_machine_rhel730_class_options(mc);
 +    smc->use_ohci_by_default = true;
 +    mc->has_hotpluggable_cpus = NULL;
-+    SET_MACHINE_COMPAT(mc, SPAPR_COMPAT_RHEL7_2);
++    compat_props_add(mc->compat_props, hw_compat_rhel_7_2, hw_compat_rhel_7_2_len);
++    compat_props_add(mc->compat_props, spapr_compat_rhel7_2, spapr_compat_rhel7_2_len);
 +}
 +
 +DEFINE_SPAPR_MACHINE(rhel720, "rhel7.2.0", false);
@@ -306,10 +323,10 @@ index 7afd1a1..76a4e83 100644
  static void spapr_machine_register_types(void)
  {
 diff --git a/hw/ppc/spapr_cpu_core.c b/hw/ppc/spapr_cpu_core.c
-index 63a7bb6..fcf6174 100644
+index c664969b5b..7556debbef 100644
 --- a/hw/ppc/spapr_cpu_core.c
 +++ b/hw/ppc/spapr_cpu_core.c
-@@ -22,6 +22,7 @@
+@@ -21,6 +21,7 @@
  #include "sysemu/numa.h"
  #include "sysemu/hw_accel.h"
  #include "qemu/error-report.h"
@@ -317,15 +334,15 @@ index 63a7bb6..fcf6174 100644
  
  static void spapr_cpu_reset(void *opaque)
  {
-@@ -218,6 +219,7 @@ static void spapr_realize_vcpu(PowerPCCPU *cpu, sPAPRMachineState *spapr,
+@@ -222,6 +223,7 @@ static void spapr_realize_vcpu(PowerPCCPU *cpu, SpaprMachineState *spapr,
      CPUPPCState *env = &cpu->env;
      CPUState *cs = CPU(cpu);
      Error *local_err = NULL;
-+    sPAPRMachineClass *smc = SPAPR_MACHINE_GET_CLASS(spapr);
++    SpaprMachineClass *smc = SPAPR_MACHINE_GET_CLASS(spapr);
  
      object_property_set_bool(OBJECT(cpu), true, "realized", &local_err);
      if (local_err) {
-@@ -230,6 +232,17 @@ static void spapr_realize_vcpu(PowerPCCPU *cpu, sPAPRMachineState *spapr,
+@@ -234,6 +236,17 @@ static void spapr_realize_vcpu(PowerPCCPU *cpu, SpaprMachineState *spapr,
      cpu_ppc_set_vhyp(cpu, PPC_VIRTUAL_HYPERVISOR(spapr));
      kvmppc_set_papr(cpu);
  
@@ -344,19 +361,19 @@ index 63a7bb6..fcf6174 100644
      spapr_cpu_reset(cpu);
  
 diff --git a/include/hw/ppc/spapr.h b/include/hw/ppc/spapr.h
-index 6279711..d2370e5 100644
+index 5ea8081041..8737516ada 100644
 --- a/include/hw/ppc/spapr.h
 +++ b/include/hw/ppc/spapr.h
-@@ -106,6 +106,7 @@ struct sPAPRMachineClass {
-     bool pre_2_10_has_unused_icps;
+@@ -120,6 +120,7 @@ struct SpaprMachineClass {
      bool legacy_irq_allocation;
+     bool broken_host_serial_model; /* present real host info to the guest */
  
 +    bool has_power9_support;
-     void (*phb_placement)(sPAPRMachineState *spapr, uint32_t index,
+     void (*phb_placement)(SpaprMachineState *spapr, uint32_t index,
                            uint64_t *buid, hwaddr *pio, 
                            hwaddr *mmio32, hwaddr *mmio64,
 diff --git a/target/ppc/compat.c b/target/ppc/compat.c
-index 7de4bf3..3e2e353 100644
+index 7de4bf3122..3e2e35342d 100644
 --- a/target/ppc/compat.c
 +++ b/target/ppc/compat.c
 @@ -105,8 +105,19 @@ static const CompatInfo *compat_by_pvr(uint32_t pvr)
@@ -381,10 +398,10 @@ index 7de4bf3..3e2e353 100644
      const CompatInfo *compat = compat_by_pvr(compat_pvr);
      const CompatInfo *min = compat_by_pvr(min_compat_pvr);
 diff --git a/target/ppc/cpu.h b/target/ppc/cpu.h
-index ab68abe..c559740 100644
+index 0707177584..60cc41fd53 100644
 --- a/target/ppc/cpu.h
 +++ b/target/ppc/cpu.h
-@@ -1376,6 +1376,7 @@ static inline int cpu_mmu_index (CPUPPCState *env, bool ifetch)
+@@ -1381,6 +1381,7 @@ static inline int cpu_mmu_index (CPUPPCState *env, bool ifetch)
  
  /* Compatibility modes */
  #if defined(TARGET_PPC64)
@@ -393,5 +410,5 @@ index ab68abe..c559740 100644
                        uint32_t min_compat_pvr, uint32_t max_compat_pvr);
  bool ppc_type_check_compat(const char *cputype, uint32_t compat_pvr,
 -- 
-1.8.3.1
+2.20.1
 

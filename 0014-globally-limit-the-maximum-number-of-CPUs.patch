@@ -1,4 +1,4 @@
-From b64599f8f72d89ac75557608f1890abb8effb88b Mon Sep 17 00:00:00 2001
+From 4d15d2010db402f5910a9b7e4c147a9a3e2f2604 Mon Sep 17 00:00:00 2001
 From: Andrew Jones <drjones@redhat.com>
 Date: Tue, 21 Jan 2014 10:46:52 +0100
 Subject: globally limit the maximum number of CPUs
@@ -77,16 +77,18 @@ This commit matches the limit to current KVM_CAP_NR_VCPUS value.
 
 Conflicts:
 	vl.c
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  accel/kvm/kvm-all.c | 12 ++++++++++++
  vl.c                | 18 ++++++++++++++++++
  2 files changed, 30 insertions(+)
 
 diff --git a/accel/kvm/kvm-all.c b/accel/kvm/kvm-all.c
-index 4880a05..a8f5d47 100644
+index 241db496c3..003c0abee2 100644
 --- a/accel/kvm/kvm-all.c
 +++ b/accel/kvm/kvm-all.c
-@@ -1627,6 +1627,18 @@ static int kvm_init(MachineState *ms)
+@@ -1630,6 +1630,18 @@ static int kvm_init(MachineState *ms)
      soft_vcpus_limit = kvm_recommended_vcpus(s);
      hard_vcpus_limit = kvm_max_vcpus(s);
  
@@ -106,10 +108,10 @@ index 4880a05..a8f5d47 100644
          if (nc->num > soft_vcpus_limit) {
              warn_report("Number of %s cpus requested (%d) exceeds "
 diff --git a/vl.c b/vl.c
-index 74b32c4..0a9bdc2 100644
+index 32886ebf7f..2b95925f9b 100644
 --- a/vl.c
 +++ b/vl.c
-@@ -134,6 +134,8 @@ int main(int argc, char **argv)
+@@ -131,6 +131,8 @@ int main(int argc, char **argv)
  
  #define MAX_VIRTIO_CONSOLES 1
  
@@ -118,7 +120,7 @@ index 74b32c4..0a9bdc2 100644
  static const char *data_dir[16];
  static int data_dir_idx;
  const char *bios_name = NULL;
-@@ -1463,6 +1465,20 @@ MachineClass *find_default_machine(void)
+@@ -1508,6 +1510,20 @@ MachineClass *find_default_machine(void)
      return mc;
  }
  
@@ -139,7 +141,7 @@ index 74b32c4..0a9bdc2 100644
  MachineInfoList *qmp_query_machines(Error **errp)
  {
      GSList *el, *machines = object_class_get_list(TYPE_MACHINE, false);
-@@ -4021,6 +4037,8 @@ int main(int argc, char **argv, char **envp)
+@@ -3994,6 +4010,8 @@ int main(int argc, char **argv, char **envp)
                       "mutually exclusive");
          exit(EXIT_FAILURE);
      }
@@ -149,5 +151,5 @@ index 74b32c4..0a9bdc2 100644
      configure_rtc(qemu_find_opts_singleton("rtc"));
  
 -- 
-1.8.3.1
+2.20.1
 

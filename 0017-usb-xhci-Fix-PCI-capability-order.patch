@@ -1,4 +1,4 @@
-From a3d01620dcbc301493f6704265edddf78f6bfe1b Mon Sep 17 00:00:00 2001
+From a4af398c3849751bc240c4f8f1f0cf2fcf57d21e Mon Sep 17 00:00:00 2001
 From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
 Date: Fri, 5 May 2017 19:06:14 +0200
 Subject: usb-xhci: Fix PCI capability order
@@ -56,15 +56,16 @@ Conflicts:
 
 (cherry picked from commit a42f86dc906cc7d2c16d02bf125ed76847b469cb)
 (cherry picked from commit 992ab2e4f6e15d3e51bc716763aa8d6f45c6d29d)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  hw/usb/hcd-xhci.c | 12 ++++++------
  1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/hw/usb/hcd-xhci.c b/hw/usb/hcd-xhci.c
-index ca19474..45fcce3 100644
+index ad351a7b6d..43a47539aa 100644
 --- a/hw/usb/hcd-xhci.c
 +++ b/hw/usb/hcd-xhci.c
-@@ -3373,6 +3373,12 @@ static void usb_xhci_realize(struct PCIDevice *dev, Error **errp)
+@@ -3393,6 +3393,12 @@ static void usb_xhci_realize(struct PCIDevice *dev, Error **errp)
          xhci->max_pstreams_mask = 0;
      }
  
@@ -77,7 +78,7 @@ index ca19474..45fcce3 100644
      if (xhci->msi != ON_OFF_AUTO_OFF) {
          ret = msi_init(dev, 0x70, xhci->numintrs, true, false, &err);
          /* Any error other than -ENOTSUP(board's MSI support is broken)
-@@ -3421,12 +3427,6 @@ static void usb_xhci_realize(struct PCIDevice *dev, Error **errp)
+@@ -3441,12 +3447,6 @@ static void usb_xhci_realize(struct PCIDevice *dev, Error **errp)
                       PCI_BASE_ADDRESS_SPACE_MEMORY|PCI_BASE_ADDRESS_MEM_TYPE_64,
                       &xhci->mem);
  
@@ -91,5 +92,5 @@ index ca19474..45fcce3 100644
          /* TODO check for errors, and should fail when msix=on */
          msix_init(dev, xhci->numintrs,
 -- 
-1.8.3.1
+2.20.1
 

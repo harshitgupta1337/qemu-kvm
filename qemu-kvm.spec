@@ -68,8 +68,8 @@ Obsoletes: %1-rhev
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
-Version: 3.1.0
-Release: 24%{?dist}
+Version: 4.0.0
+Release: 0%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -78,7 +78,7 @@ URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
 
-Source0: http://wiki.qemu.org/download/qemu-3.1.0.tar.xz
+Source0: http://wiki.qemu.org/download/qemu-4.0.0.tar.xz
 
 # KSM control scripts
 Source4: ksm.service
@@ -114,139 +114,15 @@ Patch0008: 0008-Add-ppc64-machine-types.patch
 Patch0009: 0009-Add-s390x-machine-types.patch
 Patch0010: 0010-Add-x86_64-machine-types.patch
 Patch0011: 0011-Enable-make-check.patch
-Patch0012: 0012-Use-kvm-by-default.patch
-Patch0013: 0013-vfio-cap-number-of-devices-that-can-be-assigned.patch
-Patch0014: 0014-Add-support-statement-to-help-output.patch
-Patch0015: 0015-globally-limit-the-maximum-number-of-CPUs.patch
-Patch0016: 0016-Add-support-for-simpletrace.patch
-Patch0017: 0017-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
-Patch0018: 0018-usb-xhci-Fix-PCI-capability-order.patch
-Patch0019: 0019-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
-# For bz#1655820 - Can't migarate between rhel8 and rhel7 when guest has device "video"
-Patch20: kvm-pc-7.5-compat-entries.patch
-# For bz#1655820 - Can't migarate between rhel8 and rhel7 when guest has device "video"
-Patch21: kvm-compat-Generic-HW_COMPAT_RHEL7_6.patch
-# For bz#1655820 - Can't migarate between rhel8 and rhel7 when guest has device "video"
-Patch22: kvm-pc-PC_RHEL7_6_COMPAT.patch
-# For bz#1655820 - Can't migarate between rhel8 and rhel7 when guest has device "video"
-Patch23: kvm-pc-Add-compat-for-pc-i440fx-rhel7.6.0-machine-type.patch
-# For bz#1655820 - Can't migarate between rhel8 and rhel7 when guest has device "video"
-Patch24: kvm-pc-Add-pc-q35-8.0.0-machine-type.patch
-# For bz#1655820 - Can't migarate between rhel8 and rhel7 when guest has device "video"
-Patch25: kvm-pc-Add-x-migrate-smi-count-off-to-PC_RHEL7_6_COMPAT.patch
-# For bz#1659604 - 8->7 migration failed: qemu-kvm: error: failed to set MSR 0x4b564d02 to 0x27fc13285
-Patch26: kvm-clear-out-KVM_ASYNC_PF_DELIVERY_AS_PF_VMEXIT-for.patch
-# For bz#1656508 - Machine types for qemu-kvm based on rebase to qemu-3.1 (ppc64le)
-Patch27: kvm-redhat-define-pseries-rhel8.0.0-machine-type.patch
-# For bz#1656510 - Machine types for qemu-kvm based on rebase to qemu-3.1 (s390x)
-Patch28: kvm-hw-s390x-s390-virtio-ccw-Add-machine-types-for-RHEL8.patch
-# For bz#1661967 - Kernel prints the message "VPHN is not supported. Disabling polling..."
-Patch29: kvm-spapr-Add-H-Call-H_HOME_NODE_ASSOCIATIVITY.patch
-# For bz#1648023 - Provide separate device types for transitional virtio PCI devices - Fast Train
-Patch30: kvm-virtio-Helper-for-registering-virtio-device-types.patch
-# For bz#1648023 - Provide separate device types for transitional virtio PCI devices - Fast Train
-Patch31: kvm-virtio-Provide-version-specific-variants-of-virtio-P.patch
-# For bz#1648023 - Provide separate device types for transitional virtio PCI devices - Fast Train
-Patch32: kvm-globals-Allow-global-properties-to-be-optional.patch
-# For bz#1648023 - Provide separate device types for transitional virtio PCI devices - Fast Train
-Patch33: kvm-virtio-Make-disable-legacy-disable-modern-compat-pro.patch
-# For bz#1656504 - Machine types for qemu-kvm based on rebase to qemu-3.1 (aarch64)
-Patch34: kvm-aarch64-Add-virt-rhel8.0.0-machine-type-for-ARM.patch
-# For bz#1656504 - Machine types for qemu-kvm based on rebase to qemu-3.1 (aarch64)
-Patch35: kvm-aarch64-Set-virt-rhel8.0.0-max_cpus-to-512.patch
-# For bz#1656504 - Machine types for qemu-kvm based on rebase to qemu-3.1 (aarch64)
-Patch36: kvm-aarch64-Use-256MB-ECAM-region-by-default.patch
-# For bz#1653114 - Incorrect NUMA nodes passed to qemu-kvm guest in ibm,max-associativity-domains property
-Patch37: kvm-spapr-Fix-ibm-max-associativity-domains-property-num.patch
-# For bz#1668205 - Guest quit with error when hotunplug cpu
-Patch38: kvm-cpus-ignore-ESRCH-in-qemu_cpu_kick_thread.patch
-# For bz#1653511 - qemu doesn't report all support cpu features which cause libvirt cannot get the support status of hv_tlbflush
-Patch39: kvm-i386-kvm-expose-HV_CPUID_ENLIGHTMENT_INFO.EAX-and-HV.patch
-# For bz#1653511 - qemu doesn't report all support cpu features which cause libvirt cannot get the support status of hv_tlbflush
-Patch40: kvm-i386-kvm-add-a-comment-explaining-why-.feat_names-ar.patch
-# For bz#1666601 - [q35] dst qemu core dumped when do rdma migration with Mellanox IB QDR card
-Patch41: kvm-migration-rdma-unregister-fd-handler.patch
-# For bz#1659127 - Stress guest and stop it, then do live migration, guest hit call trace on destination end
-Patch42: kvm-s390x-tod-Properly-stop-the-KVM-TOD-while-the-guest-.patch
-# For bz#1659127 - Stress guest and stop it, then do live migration, guest hit call trace on destination end
-Patch43: kvm-hw-s390x-Fix-bad-mask-in-time2tod.patch
-# For bz#1655947 - qemu-kvm core dumped after unplug the device which was set io throttling parameters
-Patch44: kvm-throttle-groups-fix-restart-coroutine-iothread-race.patch
-# For bz#1655947 - qemu-kvm core dumped after unplug the device which was set io throttling parameters
-Patch45: kvm-iotests-add-238-for-throttling-tgm-unregister-iothre.patch
-# For bz#1668244 - qemu-img: /var/tmp/v2vovl9951f8.qcow2: CURL: Error opening file: The requested URL returned error: 404 Not Found
-Patch47: kvm-json-Fix-handling-when-not-interpolating.patch
-# For bz#1665896 - VNC unix listener socket is deleted after first client quits
-Patch48: kvm-io-ensure-UNIX-client-doesn-t-unlink-server-socket.patch
-# For bz#1668248 - "An unknown error has occurred" when using cdrom to install the system with two blockdev disks.(when choose installation destination)
-Patch49: kvm-scsi-disk-Don-t-use-empty-string-as-device-id.patch
-# For bz#1668248 - "An unknown error has occurred" when using cdrom to install the system with two blockdev disks.(when choose installation destination)
-Patch50: kvm-scsi-disk-Add-device_id-property.patch
-# For bz#1669922 - Backport avocado-qemu tests for QEMU 3.1
-Patch51: kvm-Acceptance-tests-add-Linux-initrd-checking-test.patch
-# For bz#1671519 - RHEL8.0 Snapshot3 - qemu doesn't free up hugepage memory when hotplug/hotunplug using memory-backend-file (qemu-kvm)
-Patch52: kvm-mmap-alloc-unfold-qemu_ram_mmap.patch
-# For bz#1671519 - RHEL8.0 Snapshot3 - qemu doesn't free up hugepage memory when hotplug/hotunplug using memory-backend-file (qemu-kvm)
-Patch53: kvm-mmap-alloc-fix-hugetlbfs-misaligned-length-in-ppc64.patch
-# For bz#1653590 - [Fast train]had better stop qemu immediately while guest was making use of an improper page size
-Patch54: kvm-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
-# For bz#1673014 - Local VM and migrated VM on the same host can run with same RAW file as visual disk source while without shareable configured or lock manager enabled
-Patch55: kvm-block-Fix-invalidate_cache-error-path-for-parent-act.patch
-# For bz#1656276 - qemu-kvm core dumped after hotplug the deleted disk with iothread parameter
-# For bz#1662508 - Qemu core dump when start guest with two disks using same drive
-Patch56: kvm-virtio-scsi-Move-BlockBackend-back-to-the-main-AioCo.patch
-# For bz#1656276 - qemu-kvm core dumped after hotplug the deleted disk with iothread parameter
-# For bz#1662508 - Qemu core dump when start guest with two disks using same drive
-Patch57: kvm-scsi-disk-Acquire-the-AioContext-in-scsi_-_realize.patch
-# For bz#1656276 - qemu-kvm core dumped after hotplug the deleted disk with iothread parameter
-# For bz#1662508 - Qemu core dump when start guest with two disks using same drive
-Patch58: kvm-virtio-scsi-Forbid-devices-with-different-iothreads-.patch
-# For bz#1644985 - The "fsfreeze-hook" script path shown by command "qemu-ga --help" or "man qemu-ga" is wrong - Fast Train
-Patch59: kvm-doc-fix-the-configuration-path.patch
-# For bz#1664997 - Restrict floppy device to RHEL-7 machine types
-Patch60: kvm-fdc-Revert-downstream-disablement-of-device-floppy.patch
-# For bz#1664997 - Restrict floppy device to RHEL-7 machine types
-Patch61: kvm-fdc-Restrict-floppy-controllers-to-RHEL-7-machine-ty.patch
-# For bz#1678968 - -blockdev: auto-read-only is ineffective for drivers on read-only whitelist
-Patch62: kvm-block-Apply-auto-read-only-for-ro-whitelist-drivers.patch
-# For bz#1661030 - Remove MPX support from 8.0 machine types
-Patch63: kvm-target-i386-Disable-MPX-support-on-named-CPU-models.patch
-# For bz#1661515 - Remove PCONFIG and INTEL_PT from Icelake-* CPU models
-Patch64: kvm-i386-remove-the-new-CPUID-PCONFIG-from-Icelake-Serve.patch
-# For bz#1661515 - Remove PCONFIG and INTEL_PT from Icelake-* CPU models
-Patch65: kvm-i386-remove-the-INTEL_PT-CPUID-bit-from-named-CPU-mo.patch
-# For bz#1661515 - Remove PCONFIG and INTEL_PT from Icelake-* CPU models
-Patch66: kvm-Revert-i386-Add-CPUID-bit-for-PCONFIG.patch
-# For bz#1608649 - Query-migrate get "failed" status after migrate-cancel
-Patch67: kvm-migration-Fix-cancel-state.patch
-# For bz#1608649 - Query-migrate get "failed" status after migrate-cancel
-Patch68: kvm-migration-rdma-Fix-qemu_rdma_cleanup-null-check.patch
-# For bz#1686260 - stibp is missing on qemu 3.0 and qemu 3.1
-Patch69: kvm-i386-Add-stibp-flag-name.patch
-# For bz#1674438 - RHEL8.0 - Guest reboot fails after memory hotplug multiple times (kvm)
-Patch71: kvm-spapr-fix-out-of-bounds-write-in-spapr_populate_drme.patch
-# For bz#1655065 - [rhel.8.0][fast train]'qemu-img measure' size does not match the real allocated size for luks-inside-qcow2 image
-Patch72: kvm-qcow2-include-LUKS-payload-overhead-in-qemu-img-meas.patch
-# For bz#1655065 - [rhel.8.0][fast train]'qemu-img measure' size does not match the real allocated size for luks-inside-qcow2 image
-Patch73: kvm-iotests-add-LUKS-payload-overhead-to-178-qemu-img-me.patch
-# For bz#1666206 - vnc server should detect page-flips and avoid sending fullscreen updates then.
-Patch74: kvm-vnc-detect-and-optimize-pageflips.patch
-# For bz#1669053 - Guest call trace when boot with nvdimm device backed by /dev/dax
-Patch76: kvm-hostmem-file-reject-invalid-pmem-file-sizes.patch
-# For bz#1687582 - QEMU IOTEST 200 fails with 'virtio-scsi-pci is not a valid device model name'
-Patch77: kvm-iotests-Fix-test-200-on-s390x-without-virtio-pci.patch
-# For bz#1652572 - QEMU core dumped if stop nfs service during migration
-Patch78: kvm-block-file-posix-do-not-fail-on-unlock-bytes.patch
-# For bz#1687578 - Incorrect CVE vulnerabilities reported on Cascade Lake cpus
-Patch79: kvm-i386-kvm-Disable-arch_capabilities-if-MSR-can-t-be-s.patch
-# For bz#1687578 - Incorrect CVE vulnerabilities reported on Cascade Lake cpus
-Patch80: kvm-i386-Make-arch_capabilities-migratable.patch
-# For bz#1693173 - CVE-2018-20815 qemu-kvm: QEMU: device_tree: heap buffer overflow while loading device tree blob [rhel-av-8]
-Patch81: kvm-device_tree-Fix-integer-overflowing-in-load_device_t.patch
-# For bz#1688915 - [Intel 8.0 Alpha] physical bits should  <= 48  when host with 5level paging &EPT5 and qemu command with "-cpu qemu64" parameters.
-Patch82: kvm-x86-host-phys-bits-limit-option.patch
-# For bz#1688915 - [Intel 8.0 Alpha] physical bits should  <= 48  when host with 5level paging &EPT5 and qemu command with "-cpu qemu64" parameters.
-Patch83: kvm-rhel-Set-host-phys-bits-limit-48-on-rhel-machine-typ.patch
+Patch0012: 0012-vfio-cap-number-of-devices-that-can-be-assigned.patch
+Patch0013: 0013-Add-support-statement-to-help-output.patch
+Patch0014: 0014-globally-limit-the-maximum-number-of-CPUs.patch
+Patch0015: 0015-Add-support-for-simpletrace.patch
+Patch0016: 0016-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
+Patch0017: 0017-usb-xhci-Fix-PCI-capability-order.patch
+Patch0018: 0018-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
+Patch0019: 0019-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
+Patch0020: 0020-doc-fix-the-configuration-path.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -304,6 +180,7 @@ BuildRequires: pixman-devel
 # Documentation requirement
 BuildRequires: perl-podlators
 BuildRequires: texinfo
+BuildRequires: python3-sphinx
 # For rdma
 %if 0%{?have_librdma}
 BuildRequires: rdma-core-devel
@@ -348,6 +225,8 @@ Requires:      mesa-libGL
 Requires:      mesa-libEGL
 Requires:      mesa-dri-drivers
 %endif
+
+BuildRequires: perl-Test-Harness
 
 Requires: qemu-kvm-core = %{epoch}:%{version}-%{release}
 %rhev_ma_conflicts qemu-kvm
@@ -692,7 +571,9 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --disable-vvfat \
   --disable-qed \
   --disable-parallels \
-  --disable-sheepdog
+  --disable-sheepdog \
+  --without-default-devices
+
 
 echo "config-host.mak contents:"
 echo "==="
@@ -702,15 +583,17 @@ echo "==="
 make V=1 %{?_smp_mflags} $buildldflags
 
 # Setup back compat qemu-kvm binary
-%{__python3} scripts/tracetool.py --backend dtrace --format stap --group=all \
-  --binary %{_libexecdir}/qemu-kvm --target-name %{kvm_target} \
-  --target-type system --probe-prefix \
-  qemu.kvm trace-events-all > qemu-kvm.stp
+%{__python3} scripts/tracetool.py --backend dtrace --format stap \
+  --group=all --binary %{_libexecdir}/qemu-kvm --probe-prefix qemu.kvm \
+  trace-events-all > qemu-kvm.stp
+
+%{__python3} scripts/tracetool.py --backends=dtrace --format=log-stap \
+  --group=all --binary %{_libexecdir}/qemu-kvm --probe-prefix qemu.kvm \
+  trace-events-all > qemu-kvm-log.stp
 
 %{__python3} scripts/tracetool.py --backend dtrace --format simpletrace-stap \
-  --group=all --binary %{_libexecdir}/qemu-kvm --target-name %{kvm_target} \
-  --target-type system --probe-prefix \
-  qemu.kvm trace-events-all > qemu-kvm-simpletrace.stp
+  --group=all --binary %{_libexecdir}/qemu-kvm --probe-prefix qemu.kvm \
+  trace-events-all > qemu-kvm-simpletrace.stp
 
 cp -a %{kvm_target}-softmmu/qemu-system-%{kvm_target} qemu-kvm
 
@@ -744,10 +627,10 @@ mkdir -p $RPM_BUILD_ROOT%{_udevrulesdir}/
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}
 
 # Create new directories and put them all under tests-src
-mkdir -p $RPM_BUILD_ROOT%{testsdir}/tests/
+mkdir -p $RPM_BUILD_ROOT%{testsdir}/python
+mkdir -p $RPM_BUILD_ROOT%{testsdir}/tests
 mkdir -p $RPM_BUILD_ROOT%{testsdir}/tests/acceptance
 mkdir -p $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests
-mkdir -p $RPM_BUILD_ROOT%{testsdir}/scripts
 mkdir -p $RPM_BUILD_ROOT%{testsdir}/scripts/qmp
 
 install -p -m 0755 udev-kvm-check $RPM_BUILD_ROOT%{_udevdir}
@@ -760,7 +643,7 @@ install -m 0644 scripts/dump-guest-memory.py \
 cp -R tests/acceptance/* $RPM_BUILD_ROOT%{testsdir}/tests/acceptance/
 
 # Install qemu.py and qmp/ scripts required to run avocado_qemu tests
-install -p -m 0644 scripts/qemu.py $RPM_BUILD_ROOT%{testsdir}/scripts/
+cp -R python/qemu $RPM_BUILD_ROOT%{testsdir}/python
 cp -R scripts/qmp/* $RPM_BUILD_ROOT%{testsdir}/scripts/qmp
 install -p -m 0755 tests/Makefile.include $RPM_BUILD_ROOT%{testsdir}/tests/
 
@@ -811,11 +694,18 @@ install -m 0644  qemu-ga.8 ${RPM_BUILD_ROOT}%{_mandir}/man8/
 
 install -m 0755 qemu-kvm $RPM_BUILD_ROOT%{_libexecdir}/
 install -m 0644 qemu-kvm.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
+install -m 0644 qemu-kvm-log.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
 install -m 0644 qemu-kvm-simpletrace.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
 
+rm $RPM_BUILD_ROOT/%{_datadir}/applications/qemu.desktop
 rm $RPM_BUILD_ROOT%{_bindir}/qemu-system-%{kvm_target}
 rm $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}.stp
 rm $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}-simpletrace.stp
+rm $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}-log.stp
+rm $RPM_BUILD_ROOT%{_bindir}/elf2dmp
+
+# Mangle qemu-kvm-stap
+sed -i -e '1 s/python/python3/' $RPM_BUILD_ROOT%{_bindir}/qemu-trace-stap
 
 # Install simpletrace
 install -m 0755 scripts/simpletrace.py $RPM_BUILD_ROOT%{_datadir}/%{name}/simpletrace.py
@@ -872,6 +762,7 @@ rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/u-boot-sam460-20100605.bin
     rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/kvmvapic.bin
     rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/linuxboot.bin
     rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/multiboot.bin
+    rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/pvh.bin
 %endif
 
 # Remove sparc files
@@ -951,11 +842,14 @@ find $RPM_BUILD_ROOT -name '*.la' -or -name '*.a' | xargs rm -f
 # RPM won't pick up their dependencies.
 chmod +x $RPM_BUILD_ROOT%{_libdir}/qemu-kvm/block-*.so
 
+# Remove buildinfo
+rm -rf $RPM_BUILD_ROOT%{qemudocdir}/interop/.buildinfo
+
 %check
 export DIFF=diff; make check V=1
 pushd tests/qemu-iotests
 ./check -v -raw 001 002 003 004 005 008 009 010 011 012 021 025 032 033 045 048 052 063 077 086 101 104 106 120 132 140 143 145 147 150 152 157 159 160 162 170 171 175 181 184 194 205 208 218 221 222 226 227 232
-./check -v -qcow2 001 002 003 004 005 007 008 009 010 011 012 017 018 019 020 021 022 024 025 027 028 029 031 032 033 034 035 036 037 038 039 042 043 046 047 048 049 050 052 053 054 056 057 058 062 063 065 066 068 069 072 073 074 080 085 086 087 089 090 091 095 096 097 098 102 103 104 105 107 108 110 111 114 117 120 126 127 130 132 133 134 137 138 140 141 142 143 144 145 147 150 151 152 156 157 158 159 162 165 170 174 177 179 181 184 187 188 189 190 191 194 195 196 198 201 202 203 204 205 206 208 209 214 216 217 218 222 223 226 227 232
+./check -v -qcow2 001 002 003 004 005 007 008 009 010 011 012 017 018 019 020 021 022 024 025 027 028 029 031 032 033 034 035 036 037 038 039 042 043 046 047 048 049 050 052 053 054 056 057 058 062 063 065 066 068 069 072 073 074 080 085 086 087 089 090 091 095 096 097 098 102 103 104 105 107 108 110 111 114 117 120 126 127 130 132 133 134 137 138 140 141 142 143 144 145 147 150 151 152 156 157 158 159 162 165 170 174 177 179 181 184 187 188 189 190 191 194 195 196 198 201 202 203 204 205 206 208 209 214 216 217 218 222 226 227 232
 ./check -v -luks 001 002 003 004 005 008 009 010 011 012 021 032 033 052 140 143 145 157 162 174 181 184 208 218 227
 ./check -v -nbd 001 002 003 004 005 008 009 010 011 021 032 033 045 077 094 104 119 123 132 143 145 147 151 152 162 181 184 194 205 208 218 222
 popd
@@ -997,14 +891,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %systemd_postun_with_restart ksm.service
 %systemd_postun_with_restart ksmtuned.service
 
-%global qemu_kvm_files \
-%{_libexecdir}/qemu-kvm \
-%{_datadir}/systemtap/tapset/qemu-kvm.stp \
-%{_datadir}/%{name}/trace-events-all \
-%{_datadir}/systemtap/tapset/qemu-kvm-simpletrace.stp \
-%{_datadir}/%{name}/systemtap/script.d/qemu_kvm.stp \
-%{_datadir}/%{name}/systemtap/conf.d/qemu_kvm.conf
-
 %files
 # Deliberately empty
 
@@ -1025,11 +911,13 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %doc %{qemudocdir}/qemu-ga-ref.txt
 %doc %{qemudocdir}/qemu-qmp-ref.html
 %doc %{qemudocdir}/qemu-qmp-ref.txt
+%doc %{qemudocdir}/interop/*
 %{_mandir}/man7/qemu-qmp-ref.7*
 %{_mandir}/man7/qemu-cpu-models.7*
 %{_bindir}/qemu-keymap
 %{_bindir}/qemu-pr-helper
 %{_bindir}/qemu-edid
+%{_bindir}/qemu-trace-stap
 %{_unitdir}/qemu-pr-helper.service
 %{_unitdir}/qemu-pr-helper.socket
 %{_mandir}/man7/qemu-ga-ref.7*
@@ -1037,6 +925,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %dir %{_datadir}/%{name}/
 %{_datadir}/%{name}/keymaps/
 %{_mandir}/man1/%{name}.1*
+%{_mandir}/man1/qemu-trace-stap.1*
 %{_mandir}/man7/qemu-block-drivers.7*
 %attr(4755, -, -) %{_libexecdir}/qemu-bridge-helper
 %config(noreplace) %{_sysconfdir}/sasl2/%{name}.conf
@@ -1067,6 +956,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
     %{_datadir}/%{name}/multiboot.bin
     %{_datadir}/%{name}/kvmvapic.bin
     %{_datadir}/%{name}/sgabios.bin
+    %{_datadir}/%{name}/pvh.bin
 %endif
 %ifarch s390x
     %{_datadir}/%{name}/s390-ccw.img
@@ -1086,14 +976,19 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
     %{_datadir}/%{name}/efi-rtl8139.rom
     %{_datadir}/%{name}/efi-ne2k_pci.rom
 %endif
-%{_datadir}/%{name}/qemu-icon.bmp
-%{_datadir}/%{name}/qemu_logo_no_text.svg
+%{_datadir}/icons/*
 %{_datadir}/%{name}/linuxboot_dma.bin
 %{_datadir}/%{name}/dump-guest-memory.py*
 %ifarch %{power64}
     %{_datadir}/%{name}/spapr-rtas.bin
 %endif
-%{?qemu_kvm_files:}
+%{_libexecdir}/qemu-kvm
+%{_datadir}/systemtap/tapset/qemu-kvm.stp
+%{_datadir}/systemtap/tapset/qemu-kvm-log.stp
+%{_datadir}/%{name}/trace-events-all
+%{_datadir}/systemtap/tapset/qemu-kvm-simpletrace.stp
+%{_datadir}/%{name}/systemtap/script.d/qemu_kvm.stp
+%{_datadir}/%{name}/systemtap/conf.d/qemu_kvm.conf
 %if 0%{have_kvm_setup}
     %{_prefix}/lib/systemd/kvm-setup
     %{_unitdir}/kvm-setup.service
@@ -1145,11 +1040,8 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
-* Fri Apr 26 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-24.el8
-- kvm-x86-host-phys-bits-limit-option.patch [bz#1688915]
-- kvm-rhel-Set-host-phys-bits-limit-48-on-rhel-machine-typ.patch [bz#1688915]
-- Resolves: bz#1688915
-  ([Intel 8.0 Alpha] physical bits should  <= 48  when host with 5level paging &EPT5 and qemu command with "-cpu qemu64" parameters.)
+* Tue May 7 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.0.0-0.el8
+- Rebase qemu-kvm to 4.0.0
 
 * Tue Apr 23 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-23.el8
 - kvm-device_tree-Fix-integer-overflowing-in-load_device_t.patch [bz#1693173]
@@ -1259,7 +1151,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
   (Local VM and migrated VM on the same host can run with same RAW file as visual disk source while without shareable configured or lock manager enabled)
 
 * Fri Feb 08 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-12.el8
-- Removing kvm-Fix-fsfreeze-hook-path-in-the-man-page.patch [bz#1644985]
 - kvm-io-ensure-UNIX-client-doesn-t-unlink-server-socket.patch [bz#1665896]
 - kvm-scsi-disk-Don-t-use-empty-string-as-device-id.patch [bz#1668248]
 - kvm-scsi-disk-Add-device_id-property.patch [bz#1668248]
@@ -1288,11 +1179,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 - kvm-hw-s390x-Fix-bad-mask-in-time2tod.patch [bz#1659127]
 - Resolves: bz#1659127
   (Stress guest and stop it, then do live migration, guest hit call trace on destination end)
-- Resolves: bz#1666601
-  ([q35] dst qemu core dumped when do rdma migration with Mellanox IB QDR card)
-
-* Mon Jan 28 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-8.el8
-- kvm-migration-rdma-unregister-fd-handler.patch [bz#1666601]
 - Resolves: bz#1666601
   ([q35] dst qemu core dumped when do rdma migration with Mellanox IB QDR card)
 
@@ -1326,6 +1212,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 * Fri Jan 11 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-4.el8
 - kvm-hw-s390x-s390-virtio-ccw-Add-machine-types-for-RHEL8.patch [bz#1656510]
 - kvm-spapr-Add-H-Call-H_HOME_NODE_ASSOCIATIVITY.patch [bz#1661967]
+- kvm-redhat-Fixing-.gitpublish-to-include-AV-information.patch []
 - Resolves: bz#1656510
   (Machine types for qemu-kvm based on rebase to qemu-3.1 (s390x))
 - Resolves: bz#1661967

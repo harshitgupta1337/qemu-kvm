@@ -1,4 +1,4 @@
-From 0b8b44ec1fc3a0d17f13c07ac4c7351769a63300 Mon Sep 17 00:00:00 2001
+From b0626d1bb4f6ec6fba1973ebb26a297e79e95437 Mon Sep 17 00:00:00 2001
 From: Bandan Das <bsd@redhat.com>
 Date: Tue, 3 Dec 2013 20:05:13 +0100
 Subject: vfio: cap number of devices that can be assigned
@@ -32,12 +32,13 @@ Merged patches (2.9.0):
 
 (cherry picked from commit 9fa3c9fc6dfcde76d80db1aa601b2d577f72ceec)
 (cherry picked from commit 3cb35556dc7d994f203d732fe952f95fcdb03c0a)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  hw/vfio/pci.c | 15 ++++++++++++++-
  1 file changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/hw/vfio/pci.c b/hw/vfio/pci.c
-index 6e0000c..d242c62 100644
+index 13badcd6ed..7c998afc0f 100644
 --- a/hw/vfio/pci.c
 +++ b/hw/vfio/pci.c
 @@ -36,6 +36,7 @@
@@ -48,7 +49,7 @@ index 6e0000c..d242c62 100644
  
  #define TYPE_VFIO_PCI "vfio-pci"
  #define PCI_VFIO(obj)    OBJECT_CHECK(VFIOPCIDevice, obj, TYPE_VFIO_PCI)
-@@ -2811,9 +2812,21 @@ static void vfio_realize(PCIDevice *pdev, Error **errp)
+@@ -2806,9 +2807,21 @@ static void vfio_realize(PCIDevice *pdev, Error **errp)
      ssize_t len;
      struct stat st;
      int groupid;
@@ -72,5 +73,5 @@ index 6e0000c..d242c62 100644
          if (!(~vdev->host.domain || ~vdev->host.bus ||
                ~vdev->host.slot || ~vdev->host.function)) {
 -- 
-1.8.3.1
+2.20.1
 
