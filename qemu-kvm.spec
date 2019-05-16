@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.0.0
-Release: 0%{?dist}
+Release: 1%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -123,6 +123,8 @@ Patch0017: 0017-usb-xhci-Fix-PCI-capability-order.patch
 Patch0018: 0018-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0019: 0019-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0020: 0020-doc-fix-the-configuration-path.patch
+Patch0021: 0021-rhel-Set-host-phys-bits-limit-48-on-rhel-machine-typ.patch
+Patch0022: 0022-redhat-Post-rebase-synchronization.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -208,6 +210,10 @@ BuildRequires: systemd-devel
 BuildRequires: libcap-ng-devel
 
 BuildRequires: diffutils
+%ifarch x86_64
+BuildRequires: libpmem-devel
+Requires: libpmem
+%endif
 
 # qemu-keymap
 BuildRequires: pkgconfig(xkbcommon)
@@ -478,6 +484,11 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
 %else
   --disable-vxhs \
 %endif
+%ifarch x86_64
+  --enable-libpmem \
+%else
+  --disable-libpmem \
+%endif
   --enable-vhost-user \
 %ifarch %{ix86} x86_64
   --enable-avx2 \
@@ -515,7 +526,7 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --enable-snappy \
   --disable-sparse \
   --disable-strip \
-  --disable-tpm \
+  --enable-tpm \
   --enable-trace-backend=dtrace \
   --disable-vde \
   --disable-vhost-scsi \
@@ -1040,8 +1051,27 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
-* Tue May 7 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.0.0-0.el8
-- Rebase qemu-kvm to 4.0.0
+* Thu May 16 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.0.0-1.el8
+- 4.0.0 temporary rebase
+- Resolves: bz#1705235
+  (Rebase qemu-kvm for RHEL-AV 8.1.0)
+
+* Mon May 06 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-25.el8
+- kvm-redhat-enable-tpmdev-passthrough.patch [bz#1688312]
+- kvm-exec-Only-count-mapped-memory-backends-for-qemu_getr.patch [bz#1680492]
+- kvm-Enable-libpmem-to-support-nvdimm.patch [bz#1705149]
+- Resolves: bz#1680492
+  (Qemu quits suddenly while system_reset after hot-plugging unsupported memory by compatible guest on P9 with 1G huge page set)
+- Resolves: bz#1688312
+  ([RFE] enable TPM passthrough at compile time (qemu-kvm))
+- Resolves: bz#1705149
+  (libpmem support is not enabled in qemu-kvm)
+
+* Fri Apr 26 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-24.el8
+- kvm-x86-host-phys-bits-limit-option.patch [bz#1688915]
+- kvm-rhel-Set-host-phys-bits-limit-48-on-rhel-machine-typ.patch [bz#1688915]
+- Resolves: bz#1688915
+  ([Intel 8.0 Alpha] physical bits should  <= 48  when host with 5level paging &EPT5 and qemu command with "-cpu qemu64" parameters.)
 
 * Tue Apr 23 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-23.el8
 - kvm-device_tree-Fix-integer-overflowing-in-load_device_t.patch [bz#1693173]

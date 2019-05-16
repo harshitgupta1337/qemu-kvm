@@ -1,0 +1,36 @@
+From bbdbdb6ebc696a8bef420b6bd39fb3f5bbe0d5d4 Mon Sep 17 00:00:00 2001
+From: Miroslav Rezanina <mrezanin@redhat.com>
+Date: Mon, 13 May 2019 16:32:48 +0200
+Subject: redhat: Post rebase synchronization
+
+We based rebase on qemu-kvm-3.1.0-23.el8. However, 8.0.1 version moved
+to qemu-kvm-3.1.0-25.el8. Adding missing changes.
+
+Merged-patches (4.0.0):
+- ebb6e97 redhat: Fix LOCALVERSION creation
+- b0ab0cc redhat: enable tpmdev passthrough (not disabling tests)
+- 7cb3c4a Enable libpmem to support nvdimm
+
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ configure                     |  4 ++++
+ redhat/Makefile               |  4 ++--
+ redhat/qemu-kvm.spec.template | 28 +++++++++++++++++++++++++++-
+ 3 files changed, 33 insertions(+), 3 deletions(-)
+
+diff --git a/configure b/configure
+index eb0a0dde86..d6d5912ee8 100755
+--- a/configure
++++ b/configure
+@@ -2411,6 +2411,10 @@ if test "$seccomp" != "no" ; then
+         seccomp="no"
+     fi
+ fi
++
++# RHEL8-specific, only passthrough for now, rhbz#1688312
++tpm_emulator=no
++
+ ##########################################
+ # xen probe
+ 
