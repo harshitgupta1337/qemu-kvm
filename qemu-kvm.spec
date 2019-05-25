@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.0.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -125,6 +125,11 @@ Patch0019: 0019-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0020: 0020-doc-fix-the-configuration-path.patch
 Patch0021: 0021-rhel-Set-host-phys-bits-limit-48-on-rhel-machine-typ.patch
 Patch0022: 0022-redhat-Post-rebase-synchronization.patch
+# For bz#1703297 - CVE-2018-12126 virt:8.0.0/qemu-kvm: hardware: Microarchitectural Store Buffer Data Sampling (MSBDS) [rhel-av-8]
+# For bz#1703304 - CVE-2018-12130 virt:8.0.0/qemu-kvm: hardware: Microarchitectural Fill Buffer Data Sampling (MFBDS) [rhel-av-8]
+# For bz#1703310 - CVE-2018-12127 virt:8.0.0/qemu-kvm: hardware: Micro-architectural Load Port Data Sampling - Information Leak (MLPDS) [rhel-av-8]
+# For bz#1707274 - CVE-2019-11091 virt:8.0.0/qemu-kvm: hardware: Microarchitectural Data Sampling Uncacheable Memory (MDSUM) [rhel-av-8.1.0]
+Patch23: kvm-target-i386-define-md-clear-bit.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -859,7 +864,7 @@ rm -rf $RPM_BUILD_ROOT%{qemudocdir}/interop/.buildinfo
 %check
 export DIFF=diff; make check V=1
 pushd tests/qemu-iotests
-./check -v -raw 001 002 003 004 005 008 009 010 011 012 021 025 032 033 045 048 052 063 077 086 101 104 106 120 132 140 143 145 147 150 152 157 159 160 162 170 171 175 181 184 194 205 208 218 221 222 226 227 232
+./check -v -raw 001 002 003 004 005 008 009 010 011 012 021 025 032 033 045 048 052 063 077 086 101 104 106 120 132 140 143 145 147 150 152 157 159 160 162 170 171 175 181 184 194 208 218 221 222 226 227 232
 ./check -v -qcow2 001 002 003 004 005 007 008 009 010 011 012 017 018 019 020 021 022 024 025 027 028 029 031 032 033 034 035 036 037 038 039 042 043 046 047 048 049 050 052 053 054 056 057 058 062 063 065 066 068 069 072 073 074 080 085 086 087 089 090 091 095 096 097 098 102 103 104 105 107 108 110 111 114 117 120 126 127 130 132 133 134 137 138 140 141 142 143 144 145 147 150 151 152 156 157 158 159 162 165 170 174 177 179 181 184 187 188 189 190 191 194 195 196 198 201 202 203 204 205 206 208 209 214 216 217 218 222 226 227 232
 ./check -v -luks 001 002 003 004 005 008 009 010 011 012 021 032 033 052 140 143 145 157 162 174 181 184 208 218 227
 ./check -v -nbd 001 002 003 004 005 008 009 010 011 021 032 033 045 077 094 104 119 123 132 143 145 147 151 152 162 181 184 194 205 208 218 222
@@ -1051,6 +1056,17 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Sat May 25 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.0.0-2.el8
+- kvm-target-i386-define-md-clear-bit.patch [bz#1703297 bz#1703304 bz#1703310 bz#1707274]
+- Resolves: bz#1703297
+  (CVE-2018-12126 virt:8.0.0/qemu-kvm: hardware: Microarchitectural Store Buffer Data Sampling (MSBDS) [rhel-av-8])
+- Resolves: bz#1703304
+  (CVE-2018-12130 virt:8.0.0/qemu-kvm: hardware: Microarchitectural Fill Buffer Data Sampling (MFBDS) [rhel-av-8])
+- Resolves: bz#1703310
+  (CVE-2018-12127 virt:8.0.0/qemu-kvm: hardware: Micro-architectural Load Port Data Sampling - Information Leak (MLPDS) [rhel-av-8])
+- Resolves: bz#1707274
+  (CVE-2019-11091 virt:8.0.0/qemu-kvm: hardware: Microarchitectural Data Sampling Uncacheable Memory (MDSUM) [rhel-av-8.1.0])
+
 * Thu May 16 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.0.0-1.el8
 - 4.0.0 temporary rebase
 - Resolves: bz#1705235
