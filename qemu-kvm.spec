@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.0.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -130,6 +130,14 @@ Patch0022: 0022-redhat-Post-rebase-synchronization.patch
 # For bz#1703310 - CVE-2018-12127 virt:8.0.0/qemu-kvm: hardware: Micro-architectural Load Port Data Sampling - Information Leak (MLPDS) [rhel-av-8]
 # For bz#1707274 - CVE-2019-11091 virt:8.0.0/qemu-kvm: hardware: Microarchitectural Data Sampling Uncacheable Memory (MDSUM) [rhel-av-8.1.0]
 Patch23: kvm-target-i386-define-md-clear-bit.patch
+# For bz#1709726 - Forward and backward migration failed with "qemu-kvm: error while loading state for instance 0x0 of device 'spapr'"
+Patch24: kvm-redhat-fix-cut-n-paste-garbage-in-hw_compat-comments.patch
+# For bz#1709726 - Forward and backward migration failed with "qemu-kvm: error while loading state for instance 0x0 of device 'spapr'"
+Patch25: kvm-compat-Generic-hw_compat_rhel_8_0.patch
+# For bz#1709726 - Forward and backward migration failed with "qemu-kvm: error while loading state for instance 0x0 of device 'spapr'"
+Patch26: kvm-redhat-sync-pseries-rhel7.6.0-with-rhel-av-8.0.1.patch
+# For bz#1709726 - Forward and backward migration failed with "qemu-kvm: error while loading state for instance 0x0 of device 'spapr'"
+Patch27: kvm-redhat-define-pseries-rhel8.1.0-machine-type.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1056,6 +1064,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue May 28 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.0.0-3.el8
+- kvm-redhat-fix-cut-n-paste-garbage-in-hw_compat-comments.patch [bz#1709726]
+- kvm-compat-Generic-hw_compat_rhel_8_0.patch [bz#1709726]
+- kvm-redhat-sync-pseries-rhel7.6.0-with-rhel-av-8.0.1.patch [bz#1709726]
+- kvm-redhat-define-pseries-rhel8.1.0-machine-type.patch [bz#1709726]
+- Resolves: bz#1709726
+  (Forward and backward migration failed with "qemu-kvm: error while loading state for instance 0x0 of device 'spapr'")
+
 * Sat May 25 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.0.0-2.el8
 - kvm-target-i386-define-md-clear-bit.patch [bz#1703297 bz#1703304 bz#1703310 bz#1707274]
 - Resolves: bz#1703297
