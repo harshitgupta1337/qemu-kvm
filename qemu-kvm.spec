@@ -8,7 +8,6 @@
 %global have_gluster  1
 %global have_kvm_setup 0
 %global have_memlock_limits 0
-%global have_vxhs     0
 
 %ifnarch %{ix86} x86_64
     %global have_usbredir 0
@@ -25,7 +24,6 @@
 %endif
 %ifarch x86_64
     %global kvm_target    x86_64
-    %global have_vxhs    1
 %else
     %global have_spice   0
     %global have_opengl  0
@@ -69,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.0.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -138,6 +136,24 @@ Patch25: kvm-compat-Generic-hw_compat_rhel_8_0.patch
 Patch26: kvm-redhat-sync-pseries-rhel7.6.0-with-rhel-av-8.0.1.patch
 # For bz#1709726 - Forward and backward migration failed with "qemu-kvm: error while loading state for instance 0x0 of device 'spapr'"
 Patch27: kvm-redhat-define-pseries-rhel8.1.0-machine-type.patch
+# For bz#1714937 - Disable VXHS support
+Patch28: kvm-Disable-VXHS-support.patch
+# For bz#1713735 - Allow ARM VIRT iommu option in RHEL8.1 machine
+Patch29: kvm-aarch64-Add-virt-rhel8.1.0-machine-type-for-ARM.patch
+# For bz#1713735 - Allow ARM VIRT iommu option in RHEL8.1 machine
+Patch30: kvm-aarch64-Allow-ARM-VIRT-iommu-option-in-RHEL8.1-machi.patch
+# For bz#1713679 - Detached device when trying to upgrade USB device firmware when in doing USB Passthrough via QEMU
+Patch31: kvm-usb-call-reset-handler-before-updating-state.patch
+# For bz#1713679 - Detached device when trying to upgrade USB device firmware when in doing USB Passthrough via QEMU
+Patch32: kvm-usb-host-skip-reset-for-untouched-devices.patch
+# For bz#1713679 - Detached device when trying to upgrade USB device firmware when in doing USB Passthrough via QEMU
+Patch33: kvm-usb-host-avoid-libusb_set_configuration-calls.patch
+# For bz#1627283 - Compile out IOH3420 on aarch64
+Patch34: kvm-aarch64-Compile-out-IOH3420.patch
+# For bz#1714891 - Guest with persistent reservation manager for a disk fails to start
+Patch35: kvm-vl-Fix-drive-blockdev-persistent-reservation-managem.patch
+# For bz#1714891 - Guest with persistent reservation manager for a disk fails to start
+Patch36: kvm-vl-Document-why-objects-are-delayed.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -430,9 +446,6 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
 
 %global block_drivers_list qcow2,raw,file,host_device,nbd,iscsi,rbd,blkdebug,luks,null-co,nvme,copy-on-read,throttle
 
-%if 0%{have_vxhs}
-    %global block_drivers_list %{block_drivers_list},vxhs
-%endif
 %if 0%{have_gluster}
     %global block_drivers_list %{block_drivers_list},gluster
 %endif
@@ -492,11 +505,6 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --disable-usb-redir \
 %endif
   --disable-tcmalloc \
-%if 0%{have_vxhs}
-  --enable-vxhs \
-%else
-  --disable-vxhs \
-%endif
 %ifarch x86_64
   --enable-libpmem \
 %else
@@ -543,6 +551,7 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --enable-trace-backend=dtrace \
   --disable-vde \
   --disable-vhost-scsi \
+  --disable-vxhs \
   --disable-virtfs \
   --disable-vnc-jpeg \
   --disable-vte \
@@ -1064,6 +1073,27 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Jun 11 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.0.0-4.el8
+- kvm-Disable-VXHS-support.patch [bz#1714937]
+- kvm-aarch64-Add-virt-rhel8.1.0-machine-type-for-ARM.patch [bz#1713735]
+- kvm-aarch64-Allow-ARM-VIRT-iommu-option-in-RHEL8.1-machi.patch [bz#1713735]
+- kvm-usb-call-reset-handler-before-updating-state.patch [bz#1713679]
+- kvm-usb-host-skip-reset-for-untouched-devices.patch [bz#1713679]
+- kvm-usb-host-avoid-libusb_set_configuration-calls.patch [bz#1713679]
+- kvm-aarch64-Compile-out-IOH3420.patch [bz#1627283]
+- kvm-vl-Fix-drive-blockdev-persistent-reservation-managem.patch [bz#1714891]
+- kvm-vl-Document-why-objects-are-delayed.patch [bz#1714891]
+- Resolves: bz#1627283
+  (Compile out IOH3420 on aarch64)
+- Resolves: bz#1713679
+  (Detached device when trying to upgrade USB device firmware when in doing USB Passthrough via QEMU)
+- Resolves: bz#1713735
+  (Allow ARM VIRT iommu option in RHEL8.1 machine)
+- Resolves: bz#1714891
+  (Guest with persistent reservation manager for a disk fails to start)
+- Resolves: bz#1714937
+  (Disable VXHS support)
+
 * Tue May 28 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.0.0-3.el8
 - kvm-redhat-fix-cut-n-paste-garbage-in-hw_compat-comments.patch [bz#1709726]
 - kvm-compat-Generic-hw_compat_rhel_8_0.patch [bz#1709726]

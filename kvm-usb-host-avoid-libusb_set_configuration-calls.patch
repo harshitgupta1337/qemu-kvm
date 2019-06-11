@@ -1,0 +1,68 @@
+From a92cfe1254f947c32f15ebb1f81b825076c5625e Mon Sep 17 00:00:00 2001
+From: Gerd Hoffmann <kraxel@redhat.com>
+Date: Tue, 4 Jun 2019 07:13:41 +0100
+Subject: [PATCH 6/9] usb-host: avoid libusb_set_configuration calls
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Gerd Hoffmann <kraxel@redhat.com>
+Message-id: <20190604071341.3432-4-kraxel@redhat.com>
+Patchwork-id: 88477
+O-Subject: [RHEL-AV-8.1.0 qemu-kvm PATCH 3/3] usb-host: avoid libusb_set_configuration calls
+Bugzilla: 1713679
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+
+Seems some devices become confused when we call
+libusb_set_configuration().  So before calling the function check
+whenever the device has multiple configurations in the first place, and
+in case it hasn't (which is the case for the majority of devices) simply
+skip the call as it will have no effect anyway.
+
+Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+Message-id: 20190522094702.17619-4-kraxel@redhat.com
+(cherry picked from commit bfe44898848614cfcb3a269bc965afbe1f0f331c)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/usb/host-libusb.c | 18 ++++++++++--------
+ 1 file changed, 10 insertions(+), 8 deletions(-)
+
+diff --git a/hw/usb/host-libusb.c b/hw/usb/host-libusb.c
+index 4e9a45a..4f765d7 100644
+--- a/hw/usb/host-libusb.c
++++ b/hw/usb/host-libusb.c
+@@ -1225,19 +1225,21 @@ static void usb_host_set_address(USBHostDevice *s, int addr)
+ 
+ static void usb_host_set_config(USBHostDevice *s, int config, USBPacket *p)
+ {
+-    int rc;
++    int rc = 0;
+ 
+     trace_usb_host_set_config(s->bus_num, s->addr, config);
+ 
+     usb_host_release_interfaces(s);
+-    rc = libusb_set_configuration(s->dh, config);
+-    if (rc != 0) {
+-        usb_host_libusb_error("libusb_set_configuration", rc);
+-        p->status = USB_RET_STALL;
+-        if (rc == LIBUSB_ERROR_NO_DEVICE) {
+-            usb_host_nodev(s);
++    if (s->ddesc.bNumConfigurations != 1) {
++        rc = libusb_set_configuration(s->dh, config);
++        if (rc != 0) {
++            usb_host_libusb_error("libusb_set_configuration", rc);
++            p->status = USB_RET_STALL;
++            if (rc == LIBUSB_ERROR_NO_DEVICE) {
++                usb_host_nodev(s);
++            }
++            return;
+         }
+-        return;
+     }
+     p->status = usb_host_claim_interfaces(s, config);
+     if (p->status != USB_RET_SUCCESS) {
+-- 
+1.8.3.1
+
