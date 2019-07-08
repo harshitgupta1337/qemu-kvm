@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.0.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -154,6 +154,16 @@ Patch34: kvm-aarch64-Compile-out-IOH3420.patch
 Patch35: kvm-vl-Fix-drive-blockdev-persistent-reservation-managem.patch
 # For bz#1714891 - Guest with persistent reservation manager for a disk fails to start
 Patch36: kvm-vl-Document-why-objects-are-delayed.patch
+# For bz#1712717 - CVE-2019-12155 qemu-kvm: QEMU: qxl: null pointer dereference while releasing spice resources [rhel-av-8]
+Patch37: kvm-qxl-check-release-info-object.patch
+# For bz#1722839 - [Intel 8.1 FEAT] MDS_NO exposure to guest - Fast Train
+Patch38: kvm-target-i386-add-MDS-NO-feature.patch
+# For bz#1588356 - qemu crashed on the source host when do storage migration with source qcow2 disk created by 'qemu-img'
+Patch39: kvm-block-file-posix-Unaligned-O_DIRECT-block-status.patch
+# For bz#1588356 - qemu crashed on the source host when do storage migration with source qcow2 disk created by 'qemu-img'
+Patch40: kvm-iotests-Test-unaligned-raw-images-with-O_DIRECT.patch
+# For bz#1707118 - enable device: bochs-display (QEMU)
+Patch41: kvm-rh-set-CONFIG_BOCHS_DISPLAY-y-for-x86.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -180,7 +190,7 @@ BuildRequires: libcacard-devel
 # For smartcard NSS support
 BuildRequires: nss-devel
 %endif
-BuildRequires: libseccomp-devel >= 2.3.0
+BuildRequires: libseccomp-devel >= 2.4.0
 # For network block driver
 BuildRequires: libcurl-devel
 BuildRequires: libssh2-devel
@@ -297,7 +307,7 @@ Requires: ipxe-roms-qemu >= 20170123-1
 Requires: SLOF >= %{SLOF_gittagdate}-1.git%{SLOF_gittagcommit}
 %endif
 Requires: %{name}-common = %{epoch}:%{version}-%{release}
-Requires: libseccomp >= 2.3.0
+Requires: libseccomp >= 2.4.0
 # For compressed guest memory dumps
 Requires: lzo snappy
 %if %{have_gluster}
@@ -845,6 +855,8 @@ rom_link() {
   rom_link ../seavgabios/vgabios-stdvga.bin vgabios-stdvga.bin
   rom_link ../seavgabios/vgabios-vmware.bin vgabios-vmware.bin
   rom_link ../seavgabios/vgabios-virtio.bin vgabios-virtio.bin
+  rom_link ../seavgabios/vgabios-ramfb.bin vgabios-ramfb.bin
+  rom_link ../seavgabios/vgabios-bochs-display.bin vgabios-bochs-display.bin
 %endif
 %ifarch x86_64
   rom_link ../seabios/bios.bin bios.bin
@@ -1002,6 +1014,8 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
     %{_datadir}/%{name}/vgabios-stdvga.bin
     %{_datadir}/%{name}/vgabios-vmware.bin
     %{_datadir}/%{name}/vgabios-virtio.bin
+    %{_datadir}/%{name}/vgabios-ramfb.bin
+    %{_datadir}/%{name}/vgabios-bochs-display.bin
     %{_datadir}/%{name}/efi-e1000.rom
     %{_datadir}/%{name}/efi-e1000e.rom
     %{_datadir}/%{name}/efi-virtio.rom
@@ -1073,6 +1087,24 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Jul 08 2019 Miroslav Rezanina <mrezanin@redhat.com> - 4.0.0-5.el8
+- kvm-qemu-kvm.spec-bump-libseccomp-2.4.0.patch [bz#1720306]
+- kvm-qxl-check-release-info-object.patch [bz#1712717]
+- kvm-target-i386-add-MDS-NO-feature.patch [bz#1722839]
+- kvm-block-file-posix-Unaligned-O_DIRECT-block-status.patch [bz#1588356]
+- kvm-iotests-Test-unaligned-raw-images-with-O_DIRECT.patch [bz#1588356]
+- kvm-rh-set-CONFIG_BOCHS_DISPLAY-y-for-x86.patch [bz#1707118]
+- Resolves: bz#1588356
+  (qemu crashed on the source host when do storage migration with source qcow2 disk created by 'qemu-img')
+- Resolves: bz#1707118
+  (enable device: bochs-display (QEMU))
+- Resolves: bz#1712717
+  (CVE-2019-12155 qemu-kvm: QEMU: qxl: null pointer dereference while releasing spice resources [rhel-av-8])
+- Resolves: bz#1720306
+  (VM failed to start with error "failed to install seccomp syscall filter in the kernel")
+- Resolves: bz#1722839
+  ([Intel 8.1 FEAT] MDS_NO exposure to guest - Fast Train)
+
 * Tue Jun 11 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.0.0-4.el8
 - kvm-Disable-VXHS-support.patch [bz#1714937]
 - kvm-aarch64-Add-virt-rhel8.1.0-machine-type-for-ARM.patch [bz#1713735]

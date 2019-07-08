@@ -1,0 +1,43 @@
+From 27b7c444c3a568e87647f5386fbfc2c0f2b1ff9b Mon Sep 17 00:00:00 2001
+From: Gerd Hoffmann <kraxel@redhat.com>
+Date: Fri, 28 Jun 2019 08:34:00 +0200
+Subject: [PATCH 6/6] rh: set CONFIG_BOCHS_DISPLAY=y for x86
+
+RH-Author: Gerd Hoffmann <kraxel@redhat.com>
+Message-id: <20190628083400.7016-2-kraxel@redhat.com>
+Patchwork-id: 88989
+O-Subject: [RHEL-AV-8.1.0 qemu-kvm PATCH v2 1/1] rh: set CONFIG_BOCHS_DISPLAY=y for x86
+Bugzilla: 1707118
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+
+-device bochs-display can replace -device VGA for cases where
+legacy vga emulation is not needed.  That is the case for UEFI
+guests (they use EFI GOP for boot display).  seabios guest can
+work too with some quirks.
+
+Main advantage: Much simpler device emulation -> reduced attach surface.
+
+Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ default-configs/x86_64-rh-devices.mak | 1 +
+ redhat/qemu-kvm.spec.template         | 4 ++++
+ 2 files changed, 5 insertions(+)
+
+diff --git a/default-configs/x86_64-rh-devices.mak b/default-configs/x86_64-rh-devices.mak
+index 01b5363..05ad6cf 100644
+--- a/default-configs/x86_64-rh-devices.mak
++++ b/default-configs/x86_64-rh-devices.mak
+@@ -12,6 +12,7 @@ CONFIG_ACPI_X86_ICH=y
+ CONFIG_AHCI=y
+ CONFIG_APIC=y
+ CONFIG_APM=y
++CONFIG_BOCHS_DISPLAY=y
+ CONFIG_DIMM=y
+ CONFIG_E1000E_PCI_EXPRESS=y
+ CONFIG_E1000_PCI=y
+-- 
+1.8.3.1
+
