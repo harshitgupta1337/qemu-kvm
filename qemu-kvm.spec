@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.0.0
-Release: 5%{?dist}
+Release: 6%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -164,6 +164,12 @@ Patch39: kvm-block-file-posix-Unaligned-O_DIRECT-block-status.patch
 Patch40: kvm-iotests-Test-unaligned-raw-images-with-O_DIRECT.patch
 # For bz#1707118 - enable device: bochs-display (QEMU)
 Patch41: kvm-rh-set-CONFIG_BOCHS_DISPLAY-y-for-x86.patch
+# For bz#1519013 - [RFE] QEMU Software TPM support (vTPM, or TPM emulation)
+Patch42: kvm-x86_64-rh-devices-add-missing-TPM-passthrough.patch
+# For bz#1519013 - [RFE] QEMU Software TPM support (vTPM, or TPM emulation)
+Patch43: kvm-x86_64-rh-devices-enable-TPM-emulation.patch
+# For bz#1719823 - [RHEL 8.1] [RFE] increase the maximum of vfio devices to more than 32 in qemu-kvm
+Patch44: kvm-vfio-increase-the-cap-on-number-of-assigned-devices-.patch
 
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -1087,6 +1093,15 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Jul 23 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.0.0-6.el8
+- kvm-x86_64-rh-devices-add-missing-TPM-passthrough.patch [bz#1519013]
+- kvm-x86_64-rh-devices-enable-TPM-emulation.patch [bz#1519013]
+- kvm-vfio-increase-the-cap-on-number-of-assigned-devices-.patch [bz#1719823]
+- Resolves: bz#1519013
+  ([RFE] QEMU Software TPM support (vTPM, or TPM emulation))
+- Resolves: bz#1719823
+  ([RHEL 8.1] [RFE] increase the maximum of vfio devices to more than 32 in qemu-kvm)
+
 * Mon Jul 08 2019 Miroslav Rezanina <mrezanin@redhat.com> - 4.0.0-5.el8
 - kvm-qemu-kvm.spec-bump-libseccomp-2.4.0.patch [bz#1720306]
 - kvm-qxl-check-release-info-object.patch [bz#1712717]
