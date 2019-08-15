@@ -1,4 +1,4 @@
-From 4d15d2010db402f5910a9b7e4c147a9a3e2f2604 Mon Sep 17 00:00:00 2001
+From 29def10374e810c82ef7e01bcdac0c0e77b42aec Mon Sep 17 00:00:00 2001
 From: Andrew Jones <drjones@redhat.com>
 Date: Tue, 21 Jan 2014 10:46:52 +0100
 Subject: globally limit the maximum number of CPUs
@@ -74,21 +74,16 @@ The recommended vcpu max limit (KVM_CAP_NR_VCPUS) should be used instead
 of the actual max vcpu limit (KVM_CAP_MAX_VCPUS) to give an error.
 
 This commit matches the limit to current KVM_CAP_NR_VCPUS value.
-
-Conflicts:
-	vl.c
-
-Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  accel/kvm/kvm-all.c | 12 ++++++++++++
  vl.c                | 18 ++++++++++++++++++
  2 files changed, 30 insertions(+)
 
 diff --git a/accel/kvm/kvm-all.c b/accel/kvm/kvm-all.c
-index 241db496c3..003c0abee2 100644
+index f450f25..2d850df 100644
 --- a/accel/kvm/kvm-all.c
 +++ b/accel/kvm/kvm-all.c
-@@ -1630,6 +1630,18 @@ static int kvm_init(MachineState *ms)
+@@ -1869,6 +1869,18 @@ static int kvm_init(MachineState *ms)
      soft_vcpus_limit = kvm_recommended_vcpus(s);
      hard_vcpus_limit = kvm_max_vcpus(s);
  
@@ -108,10 +103,10 @@ index 241db496c3..003c0abee2 100644
          if (nc->num > soft_vcpus_limit) {
              warn_report("Number of %s cpus requested (%d) exceeds "
 diff --git a/vl.c b/vl.c
-index 32886ebf7f..2b95925f9b 100644
+index dd1fadf..7c52255 100644
 --- a/vl.c
 +++ b/vl.c
-@@ -131,6 +131,8 @@ int main(int argc, char **argv)
+@@ -132,6 +132,8 @@ int main(int argc, char **argv)
  
  #define MAX_VIRTIO_CONSOLES 1
  
@@ -120,8 +115,8 @@ index 32886ebf7f..2b95925f9b 100644
  static const char *data_dir[16];
  static int data_dir_idx;
  const char *bios_name = NULL;
-@@ -1508,6 +1510,20 @@ MachineClass *find_default_machine(void)
-     return mc;
+@@ -1337,6 +1339,20 @@ static MachineClass *find_default_machine(GSList *machines)
+     return NULL;
  }
  
 +/* Maximum number of CPUs limited for Red Hat Enterprise Linux */
@@ -138,10 +133,10 @@ index 32886ebf7f..2b95925f9b 100644
 +    }
 +}
 +
- MachineInfoList *qmp_query_machines(Error **errp)
+ static int machine_help_func(QemuOpts *opts, MachineState *machine)
  {
-     GSList *el, *machines = object_class_get_list(TYPE_MACHINE, false);
-@@ -3994,6 +4010,8 @@ int main(int argc, char **argv, char **envp)
+     ObjectProperty *prop;
+@@ -3864,6 +3880,8 @@ int main(int argc, char **argv, char **envp)
                       "mutually exclusive");
          exit(EXIT_FAILURE);
      }
@@ -151,5 +146,5 @@ index 32886ebf7f..2b95925f9b 100644
      configure_rtc(qemu_find_opts_singleton("rtc"));
  
 -- 
-2.20.1
+1.8.3.1
 

@@ -1,4 +1,4 @@
-From 75da6e38041efca51934a46a4d481eaac57d4b1e Mon Sep 17 00:00:00 2001
+From 1e856ec9fb79314305380aba4c89c5d8987616a9 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Thu, 8 Oct 2015 09:50:17 +0200
 Subject: Add support for simpletrace
@@ -7,7 +7,7 @@ As simpletrace is upstream, we just need to properly handle it during rpmbuild.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 
-Rebase notes (weekly-180727):
+Rebase notes (3.1.0):
 - Fixed python 2 to python3 switch
 
 Rebase notes (2.9.0):
@@ -21,14 +21,11 @@ Merged patches (2.3.0):
 - 5292fc3 trace: add SystemTap init scripts for simpletrace bridge
 - eda9e5e simpletrace: install simpletrace.py
 - 85c4c8f trace: add systemtap-initscript README file to RPM
-
-(cherry picked from commit bfc1d7f3628f2ffbabbae71d57a506cea6663ddf)
-Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  .gitignore                              |  2 ++
  Makefile                                |  4 +++
- README.systemtap                        | 43 +++++++++++++++++++++++++
- redhat/qemu-kvm.spec.template           | 26 ++++++++++++++-
+ README.systemtap                        | 43 +++++++++++++++++++++++++++++++++
+ redhat/qemu-kvm.spec.template           | 26 +++++++++++++++++++-
  scripts/systemtap/conf.d/qemu_kvm.conf  |  4 +++
  scripts/systemtap/script.d/qemu_kvm.stp |  1 +
  6 files changed, 79 insertions(+), 1 deletion(-)
@@ -37,10 +34,10 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  create mode 100644 scripts/systemtap/script.d/qemu_kvm.stp
 
 diff --git a/Makefile b/Makefile
-index 05f62eab3c..41a77a90af 100644
+index 288a5ac..8caca6c 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -832,6 +832,10 @@ endif
+@@ -910,6 +910,10 @@ endif
  		$(INSTALL_DATA) $(SRC_PATH)/pc-bios/keymaps/$$x "$(DESTDIR)$(qemu_datadir)/keymaps"; \
  	done
  	$(INSTALL_DATA) $(BUILD_DIR)/trace-events-all "$(DESTDIR)$(qemu_datadir)/trace-events-all"
@@ -48,12 +45,12 @@ index 05f62eab3c..41a77a90af 100644
 +	$(INSTALL_DATA) $(SRC_PATH)/scripts/systemtap/script.d/qemu_kvm.stp "$(DESTDIR)$(qemu_datadir)/systemtap/script.d/"
 +	$(INSTALL_DIR) "$(DESTDIR)$(qemu_datadir)/systemtap/conf.d"
 +	$(INSTALL_DATA) $(SRC_PATH)/scripts/systemtap/conf.d/qemu_kvm.conf "$(DESTDIR)$(qemu_datadir)/systemtap/conf.d/"
- 	for d in $(TARGET_DIRS); do \
- 	$(MAKE) $(SUBDIR_MAKEFLAGS) TARGET_DIR=$$d/ -C $$d $@ || exit 1 ; \
-         done
+ 
+ .PHONY: ctags
+ ctags:
 diff --git a/README.systemtap b/README.systemtap
 new file mode 100644
-index 0000000000..ad913fc990
+index 0000000..ad913fc
 --- /dev/null
 +++ b/README.systemtap
 @@ -0,0 +1,43 @@
@@ -102,7 +99,7 @@ index 0000000000..ad913fc990
 +  # /usr/share/qemu-kvm/simpletrace.py --no-header /usr/share/qemu-kvm/trace-events /tmp/trace.log
 diff --git a/scripts/systemtap/conf.d/qemu_kvm.conf b/scripts/systemtap/conf.d/qemu_kvm.conf
 new file mode 100644
-index 0000000000..372d8160a4
+index 0000000..372d816
 --- /dev/null
 +++ b/scripts/systemtap/conf.d/qemu_kvm.conf
 @@ -0,0 +1,4 @@
@@ -112,11 +109,11 @@ index 0000000000..372d8160a4
 +qemu_kvm_OPT="-s4" # per-CPU buffer size, in megabytes
 diff --git a/scripts/systemtap/script.d/qemu_kvm.stp b/scripts/systemtap/script.d/qemu_kvm.stp
 new file mode 100644
-index 0000000000..c04abf9449
+index 0000000..c04abf9
 --- /dev/null
 +++ b/scripts/systemtap/script.d/qemu_kvm.stp
 @@ -0,0 +1 @@
 +probe qemu.kvm.simpletrace.handle_qmp_command,qemu.kvm.simpletrace.monitor_protocol_*,qemu.kvm.simpletrace.migrate_set_state {}
 -- 
-2.20.1
+1.8.3.1
 

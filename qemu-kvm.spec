@@ -66,8 +66,8 @@ Obsoletes: %1-rhev
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
-Version: 4.0.0
-Release: 6%{?dist}
+Version: 4.1.0
+Release: 1%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -76,7 +76,7 @@ URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
 
-Source0: http://wiki.qemu.org/download/qemu-4.0.0.tar.xz
+Source0: http://wiki.qemu.org/download/qemu-4.1.0-rc4.tar.xz
 
 # KSM control scripts
 Source4: ksm.service
@@ -120,57 +120,9 @@ Patch0016: 0016-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
 Patch0017: 0017-usb-xhci-Fix-PCI-capability-order.patch
 Patch0018: 0018-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0019: 0019-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
-Patch0020: 0020-doc-fix-the-configuration-path.patch
-Patch0021: 0021-rhel-Set-host-phys-bits-limit-48-on-rhel-machine-typ.patch
-Patch0022: 0022-redhat-Post-rebase-synchronization.patch
-# For bz#1703297 - CVE-2018-12126 virt:8.0.0/qemu-kvm: hardware: Microarchitectural Store Buffer Data Sampling (MSBDS) [rhel-av-8]
-# For bz#1703304 - CVE-2018-12130 virt:8.0.0/qemu-kvm: hardware: Microarchitectural Fill Buffer Data Sampling (MFBDS) [rhel-av-8]
-# For bz#1703310 - CVE-2018-12127 virt:8.0.0/qemu-kvm: hardware: Micro-architectural Load Port Data Sampling - Information Leak (MLPDS) [rhel-av-8]
-# For bz#1707274 - CVE-2019-11091 virt:8.0.0/qemu-kvm: hardware: Microarchitectural Data Sampling Uncacheable Memory (MDSUM) [rhel-av-8.1.0]
-Patch23: kvm-target-i386-define-md-clear-bit.patch
-# For bz#1709726 - Forward and backward migration failed with "qemu-kvm: error while loading state for instance 0x0 of device 'spapr'"
-Patch24: kvm-redhat-fix-cut-n-paste-garbage-in-hw_compat-comments.patch
-# For bz#1709726 - Forward and backward migration failed with "qemu-kvm: error while loading state for instance 0x0 of device 'spapr'"
-Patch25: kvm-compat-Generic-hw_compat_rhel_8_0.patch
-# For bz#1709726 - Forward and backward migration failed with "qemu-kvm: error while loading state for instance 0x0 of device 'spapr'"
-Patch26: kvm-redhat-sync-pseries-rhel7.6.0-with-rhel-av-8.0.1.patch
-# For bz#1709726 - Forward and backward migration failed with "qemu-kvm: error while loading state for instance 0x0 of device 'spapr'"
-Patch27: kvm-redhat-define-pseries-rhel8.1.0-machine-type.patch
-# For bz#1714937 - Disable VXHS support
-Patch28: kvm-Disable-VXHS-support.patch
-# For bz#1713735 - Allow ARM VIRT iommu option in RHEL8.1 machine
-Patch29: kvm-aarch64-Add-virt-rhel8.1.0-machine-type-for-ARM.patch
-# For bz#1713735 - Allow ARM VIRT iommu option in RHEL8.1 machine
-Patch30: kvm-aarch64-Allow-ARM-VIRT-iommu-option-in-RHEL8.1-machi.patch
-# For bz#1713679 - Detached device when trying to upgrade USB device firmware when in doing USB Passthrough via QEMU
-Patch31: kvm-usb-call-reset-handler-before-updating-state.patch
-# For bz#1713679 - Detached device when trying to upgrade USB device firmware when in doing USB Passthrough via QEMU
-Patch32: kvm-usb-host-skip-reset-for-untouched-devices.patch
-# For bz#1713679 - Detached device when trying to upgrade USB device firmware when in doing USB Passthrough via QEMU
-Patch33: kvm-usb-host-avoid-libusb_set_configuration-calls.patch
-# For bz#1627283 - Compile out IOH3420 on aarch64
-Patch34: kvm-aarch64-Compile-out-IOH3420.patch
-# For bz#1714891 - Guest with persistent reservation manager for a disk fails to start
-Patch35: kvm-vl-Fix-drive-blockdev-persistent-reservation-managem.patch
-# For bz#1714891 - Guest with persistent reservation manager for a disk fails to start
-Patch36: kvm-vl-Document-why-objects-are-delayed.patch
-# For bz#1712717 - CVE-2019-12155 qemu-kvm: QEMU: qxl: null pointer dereference while releasing spice resources [rhel-av-8]
-Patch37: kvm-qxl-check-release-info-object.patch
-# For bz#1722839 - [Intel 8.1 FEAT] MDS_NO exposure to guest - Fast Train
-Patch38: kvm-target-i386-add-MDS-NO-feature.patch
-# For bz#1588356 - qemu crashed on the source host when do storage migration with source qcow2 disk created by 'qemu-img'
-Patch39: kvm-block-file-posix-Unaligned-O_DIRECT-block-status.patch
-# For bz#1588356 - qemu crashed on the source host when do storage migration with source qcow2 disk created by 'qemu-img'
-Patch40: kvm-iotests-Test-unaligned-raw-images-with-O_DIRECT.patch
-# For bz#1707118 - enable device: bochs-display (QEMU)
-Patch41: kvm-rh-set-CONFIG_BOCHS_DISPLAY-y-for-x86.patch
-# For bz#1519013 - [RFE] QEMU Software TPM support (vTPM, or TPM emulation)
-Patch42: kvm-x86_64-rh-devices-add-missing-TPM-passthrough.patch
-# For bz#1519013 - [RFE] QEMU Software TPM support (vTPM, or TPM emulation)
-Patch43: kvm-x86_64-rh-devices-enable-TPM-emulation.patch
-# For bz#1719823 - [RHEL 8.1] [RFE] increase the maximum of vfio devices to more than 32 in qemu-kvm
-Patch44: kvm-vfio-increase-the-cap-on-number-of-assigned-devices-.patch
 
+BuildRequires: wget
+BuildRequires: rpm-build
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
 BuildRequires: which
@@ -189,6 +141,7 @@ BuildRequires: libusbx-devel >= 1.0.22
 BuildRequires: usbredir-devel >= 0.7.1
 %endif
 BuildRequires: texinfo
+BuildRequires: python3-sphinx
 %if %{have_spice}
 BuildRequires: spice-protocol >= 0.12.12
 BuildRequires: spice-server-devel >= 0.12.8
@@ -199,7 +152,7 @@ BuildRequires: nss-devel
 BuildRequires: libseccomp-devel >= 2.4.0
 # For network block driver
 BuildRequires: libcurl-devel
-BuildRequires: libssh2-devel
+BuildRequires: libssh-devel
 BuildRequires: librados-devel
 BuildRequires: librbd-devel
 %if %{have_gluster}
@@ -451,7 +404,7 @@ the Secure Shell (SSH) protocol.
 
 
 %prep
-%setup -n qemu-%{version}
+%setup -n qemu-%{version}-rc4
 %autopatch -p1
 
 %build
@@ -551,7 +504,7 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --enable-kvm \
   --enable-libiscsi \
   --disable-libnfs \
-  --enable-libssh2 \
+  --enable-libssh \
   --enable-libusb \
   --disable-bzip2 \
   --enable-linux-aio \
@@ -621,8 +574,11 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --disable-qed \
   --disable-parallels \
   --disable-sheepdog \
+  --disable-auth-pam \
+  --enable-iconv \
+  --disable-lzfse \
+  --enable-vhost-kernel \
   --without-default-devices
-
 
 echo "config-host.mak contents:"
 echo "==="
@@ -796,6 +752,15 @@ rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/hppa-firmware.img
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/canyonlands.dtb
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/u-boot-sam460-20100605.bin
 
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/firmware
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/edk2-*.fd
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/edk2-licenses.txt
+
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv32-virt-fw_jump.bin
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv64-sifive_u-fw_jump.bin
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv64-virt-fw_jump.bin
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/qemu-nsis.bmp
+
 %ifarch s390x
     # Use the s390-ccw.img that we've just built, not the pre-built one
     install -m 0644 pc-bios/s390-ccw/s390-ccw.img $RPM_BUILD_ROOT%{_datadir}/%{name}/
@@ -896,13 +861,16 @@ chmod +x $RPM_BUILD_ROOT%{_libdir}/qemu-kvm/block-*.so
 # Remove buildinfo
 rm -rf $RPM_BUILD_ROOT%{qemudocdir}/interop/.buildinfo
 
+# Remove spec
+rm -rf $RPM_BUILD_ROOT%{qemudocdir}/specs
+
 %check
 export DIFF=diff; make check V=1
 pushd tests/qemu-iotests
 ./check -v -raw 001 002 003 004 005 008 009 010 011 012 021 025 032 033 045 048 052 063 077 086 101 104 106 120 132 140 143 145 147 150 152 157 159 160 162 170 171 175 181 184 194 208 218 221 222 226 227 232
-./check -v -qcow2 001 002 003 004 005 007 008 009 010 011 012 017 018 019 020 021 022 024 025 027 028 029 031 032 033 034 035 036 037 038 039 042 043 046 047 048 049 050 052 053 054 056 057 058 062 063 065 066 068 069 072 073 074 080 085 086 087 089 090 091 095 096 097 098 102 103 104 105 107 108 110 111 114 117 120 126 127 130 132 133 134 137 138 140 141 142 143 144 145 147 150 151 152 156 157 158 159 162 165 170 174 177 179 181 184 187 188 189 190 191 194 195 196 198 201 202 203 204 205 206 208 209 214 216 217 218 222 226 227 232
+./check -v -qcow2 001 002 003 004 005 007 008 009 010 011 012 017 018 019 020 021 022 024 025 027 028 029 031 032 033 034 035 036 037 038 039 042 043 046 047 048 049 050 052 053 054 056 057 058 062 063 065 066 069 072 073 074 080 085 086 087 089 090 091 095 096 097 098 102 103 104 105 107 108 110 111 114 117 120 126 127 130 132 133 134 137 138 140 141 142 143 144 145 147 150 151 152 156 157 158 159 162 165 170 174 177 179 181 184 187 188 189 190 191 194 195 196 198 201 202 203 204 206 208 209 214 216 217 218 222 226 227 232
 ./check -v -luks 001 002 003 004 005 008 009 010 011 012 021 032 033 052 140 143 145 157 162 174 181 184 208 218 227
-./check -v -nbd 001 002 003 004 005 008 009 010 011 021 032 033 045 077 094 104 119 123 132 143 145 147 151 152 162 181 184 194 205 208 218 222
+./check -v -nbd 001 002 003 004 005 008 009 010 011 021 032 033 045 077 094 104 119 123 132 143 145 147 151 152 162 181 184 194 208 218 222
 popd
 
 %post -n qemu-kvm-core
@@ -1093,6 +1061,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Wed Aug 14 2019 Miroslav Rezanina <mrezanin@redhat.com> - 4.1.0-1.el8
+- Rebase to qemu 4.1.0 rc4 [bz#1705235]
+- Resolves: bz#1705235
+  (Rebase qemu-kvm for RHEL-AV 8.1.0)
+
 * Tue Jul 23 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.0.0-6.el8
 - kvm-x86_64-rh-devices-add-missing-TPM-passthrough.patch [bz#1519013]
 - kvm-x86_64-rh-devices-enable-TPM-emulation.patch [bz#1519013]
@@ -1160,10 +1133,18 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 - Resolves: bz#1707274
   (CVE-2019-11091 virt:8.0.0/qemu-kvm: hardware: Microarchitectural Data Sampling Uncacheable Memory (MDSUM) [rhel-av-8.1.0])
 
-* Thu May 16 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.0.0-1.el8
-- 4.0.0 temporary rebase
-- Resolves: bz#1705235
-  (Rebase qemu-kvm for RHEL-AV 8.1.0)
+* Wed May 15 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-26.el8
+- kvm-target-ppc-spapr-Add-SPAPR_CAP_LARGE_DECREMENTER.patch [bz#1698711]
+- kvm-target-ppc-spapr-Add-workaround-option-to-SPAPR_CAP_.patch [bz#1698711]
+- kvm-target-ppc-spapr-Add-SPAPR_CAP_CCF_ASSIST.patch [bz#1698711]
+- kvm-target-ppc-tcg-make-spapr_caps-apply-cap-cfpc-sbbc-i.patch [bz#1698711]
+- kvm-target-ppc-spapr-Enable-mitigations-by-default-for-p.patch [bz#1698711]
+- kvm-slirp-ensure-there-is-enough-space-in-mbuf-to-null-t.patch [bz#1693076]
+- kvm-slirp-don-t-manipulate-so_rcv-in-tcp_emu.patch [bz#1693076]
+- Resolves: bz#1693076
+  (CVE-2019-6778 qemu-kvm: QEMU: slirp: heap buffer overflow in tcp_emu() [rhel-av-8])
+- Resolves: bz#1698711
+  (Enable Spectre / Meltdown mitigations by default in pseries-rhel8.0.0 machine type)
 
 * Mon May 06 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 3.1.0-25.el8
 - kvm-redhat-enable-tpmdev-passthrough.patch [bz#1688312]

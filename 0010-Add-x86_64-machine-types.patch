@@ -1,4 +1,4 @@
-From 3c0a8f41da22fe3b88b6f4811b58b0fec6d09d8e Mon Sep 17 00:00:00 2001
+From 83831de11704d0f48ab56fec1f434ae9396e9cc1 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:10:31 +0200
 Subject: Add x86_64 machine types
@@ -7,40 +7,40 @@ Adding changes to add RHEL machine types for x86_64 architecture.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 
-Rebase changes (weekly-190111):
+Rebase changes (qemu-4.0.0):
 - Use upstream compat handling
 
 Rebase notes (3.1.0):
 - Removed xsave changes
 
-Merged patches (weekly-190104):
+Rebase notes (4.1.0-rc2):
+- Updated format for compat structures
+
+Merged patches (4.1.0-rc0):
 - f4dc802 pc: 7.5 compat entries
 - 456ed3e pc: PC_RHEL7_6_COMPAT
 - 04119ee pc: Add compat for pc-i440fx-rhel7.6.0 machine type
 - b3b3687 pc: Add pc-q35-8.0.0 machine type
 - 8d46fc6 pc: Add x-migrate-smi-count=off to PC_RHEL7_6_COMPAT
 - 1de7949 kvm: clear out KVM_ASYNC_PF_DELIVERY_AS_PF_VMEXIT for older machine types
-
-Merged patches (weekly-190301):
 - 18cf0d7 target/i386: Disable MPX support on named CPU models (partialy)
-
-Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+- 2660667 rhel: Set host-phys-bits-limit=48 on rhel machine-types
 ---
  hw/i386/acpi-build.c |   3 +
- hw/i386/pc.c         | 645 ++++++++++++++++++++++++++++++++++++++++++-
- hw/i386/pc_piix.c    | 200 +++++++++++++-
- hw/i386/pc_q35.c     | 114 +++++++-
+ hw/i386/pc.c         | 226 ++++++++++++++++++++++++++++++++++++++++++++++++++-
+ hw/i386/pc_piix.c    | 200 ++++++++++++++++++++++++++++++++++++++++++++-
+ hw/i386/pc_q35.c     | 114 +++++++++++++++++++++++++-
  include/hw/boards.h  |   2 +
- include/hw/i386/pc.h |  27 ++
+ include/hw/i386/pc.h |  27 ++++++
  target/i386/cpu.c    |   9 +-
  target/i386/kvm.c    |   4 +
- 8 files changed, 997 insertions(+), 7 deletions(-)
+ 8 files changed, 578 insertions(+), 7 deletions(-)
 
 diff --git a/hw/i386/acpi-build.c b/hw/i386/acpi-build.c
-index 416da318ae..4cad5645b2 100644
+index f3fdfef..1d64f0b 100644
 --- a/hw/i386/acpi-build.c
 +++ b/hw/i386/acpi-build.c
-@@ -190,6 +190,9 @@ static void acpi_get_pm_info(AcpiPmInfo *pm)
+@@ -203,6 +203,9 @@ static void acpi_get_pm_info(MachineState *machine, AcpiPmInfo *pm)
          pm->fadt.reset_reg = r;
          pm->fadt.reset_val = 0xf;
          pm->fadt.flags |= 1 << ACPI_FADT_F_RESET_REG_SUP;
@@ -49,12 +49,12 @@ index 416da318ae..4cad5645b2 100644
 +            pm->fadt.rev = 1;
          pm->cpu_hp_io_base = ICH9_CPU_HOTPLUG_IO_BASE;
      }
-     assert(obj);
+ 
 diff --git a/hw/i386/pc.c b/hw/i386/pc.c
-index f2c15bf1f2..03497eed9a 100644
+index 549c437..9ded0db 100644
 --- a/hw/i386/pc.c
 +++ b/hw/i386/pc.c
-@@ -350,6 +350,643 @@ GlobalProperty pc_compat_1_4[] = {
+@@ -354,6 +354,224 @@ GlobalProperty pc_compat_1_4[] = {
  };
  const size_t pc_compat_1_4_len = G_N_ELEMENTS(pc_compat_1_4);
  
@@ -63,16 +63,10 @@ index f2c15bf1f2..03497eed9a 100644
 + * machine type.
 + */
 +GlobalProperty pc_rhel_compat[] = {
-+        { /* PC_RHEL_COMPAT */ 
-+            .driver = TYPE_X86_CPU,
-+            .property = "host-phys-bits",
-+            .value = "on",
-+        },
-+        { /* PC_RHEL_COMPAT bz 1508330 */ 
-+            .driver = "vfio-pci",
-+            .property = "x-no-geforce-quirks",
-+            .value = "on",
-+        },
++    { TYPE_X86_CPU, "host-phys-bits", "on" },
++    { TYPE_X86_CPU, "host-phys-bits-limit", "48" },
++    /* bz 1508330 */ 
++    { "vfio-pci", "x-no-geforce-quirks", "on" },
 +};
 +const size_t pc_rhel_compat_len = G_N_ELEMENTS(pc_rhel_compat);
 +
@@ -83,51 +77,28 @@ index f2c15bf1f2..03497eed9a 100644
 + * machine types irrespective of host.
 + */
 +GlobalProperty pc_rhel_7_6_compat[] = {
-+        { /* PC_RHEL7_6_COMPAT from PC_COMPAT_3_0 */ 
-+            .driver   = TYPE_X86_CPU,
-+            .property = "x-hv-synic-kvm-only",
-+            .value    = "on",
-+        },{ /* PC_RHEL7_6_COMPAT from PC_COMPAT_3_0 */ 
-+            .driver   = "Skylake-Server" "-" TYPE_X86_CPU,
-+            .property = "pku",
-+            .value    = "off",
-+        },{ /* PC_RHEL7_6_COMPAT from PC_COMPAT_3_0 */ 
-+            .driver   = "Skylake-Server-IBRS" "-" TYPE_X86_CPU,
-+            .property = "pku",
-+            .value    = "off",
-+        },{ /* PC_RHEL7_6_COMPAT from PC_COMPAT_2_11 */ 
-+            .driver   = TYPE_X86_CPU,
-+            .property = "x-migrate-smi-count",
-+            .value    = "off",
-+        },{ /* PC_RHEL7_6_COMPAT from pc_compat_3_1 */ 
-+            .driver   = "Skylake-Client" "-" TYPE_X86_CPU,
-+            .property = "mpx",
-+            .value    = "on",
-+        },{ /* PC_RHEL7_6_COMPAT from pc_compat_3_1 */ 
-+            .driver   = "Skylake-Client-IBRS" "-" TYPE_X86_CPU,
-+            .property = "mpx",
-+            .value    = "on",
-+        },{ /* PC_RHEL7_6_COMPAT from pc_compat_3_1 */ 
-+            .driver   = "Skylake-Server" "-" TYPE_X86_CPU,
-+            .property = "mpx",
-+            .value    = "on",
-+        },{ /* PC_RHEL7_6_COMPAT from pc_compat_3_1 */ 
-+            .driver   = "Skylake-Server-IBRS" "-" TYPE_X86_CPU,
-+            .property = "mpx",
-+            .value    = "on",
-+        },{ /* PC_RHEL7_6_COMPAT from pc_compat_3_1 */ 
-+            .driver   = "Cascadelake-Server" "-" TYPE_X86_CPU,
-+            .property = "mpx",
-+            .value    = "on",
-+        },{ /* PC_RHEL7_6_COMPAT from pc_compat_3_1 */ 
-+            .driver   = "Icelake-Client" "-" TYPE_X86_CPU,
-+            .property = "mpx",
-+            .value    = "on",
-+        },{ /* PC_RHEL7_6_COMPAT from pc_compat_3_1 */ 
-+            .driver   = "Icelake-Server" "-" TYPE_X86_CPU,
-+            .property = "mpx",
-+            .value    = "on",
-+        },
++    /* pc_rhel_7_6_compat from pc_compat_3_0 */ 
++    { TYPE_X86_CPU, "x-hv-synic-kvm-only", "on" },
++    /* pc_rhel_7_6_compat from pc_compat_3_0 */ 
++    { "Skylake-Server" "-" TYPE_X86_CPU, "pku", "off" },
++    /* pc_rhel_7_6_compat from pc_compat_3_0 */ 
++    { "Skylake-Server-IBRS" "-" TYPE_X86_CPU, "pku", "off" },
++    /* pc_rhel_7_6_compat from pc_compat_2_11 */ 
++    { TYPE_X86_CPU, "x-migrate-smi-count", "off" },
++    /* pc_rhel_7_6_compat from pc_compat_2_11 */ 
++    { "Skylake-Client" "-" TYPE_X86_CPU, "mpx", "on" },
++    /* pc_rhel_7_6_compat from pc_compat_2_11 */ 
++    { "Skylake-Client-IBRS" "-" TYPE_X86_CPU, "mpx", "on" },
++    /* pc_rhel_7_6_compat from pc_compat_2_11 */ 
++    { "Skylake-Server" "-" TYPE_X86_CPU, "mpx", "on" },
++    /* pc_rhel_7_6_compat from pc_compat_2_11 */ 
++    { "Skylake-Server-IBRS" "-" TYPE_X86_CPU, "mpx", "on" },
++    /* pc_rhel_7_6_compat from pc_compat_2_11 */ 
++    { "Cascadelake-Server" "-" TYPE_X86_CPU, "mpx", "on" },
++    /* pc_rhel_7_6_compat from pc_compat_2_11 */ 
++    { "Icelake-Client" "-" TYPE_X86_CPU, "mpx", "on" },
++    /* pc_rhel_7_6_compat from pc_compat_2_11 */ 
++    { "Icelake-Server" "-" TYPE_X86_CPU, "mpx", "on" },
 +};
 +const size_t pc_rhel_7_6_compat_len = G_N_ELEMENTS(pc_rhel_7_6_compat);
 +
@@ -136,437 +107,131 @@ index f2c15bf1f2..03497eed9a 100644
 + * - x-pci-hole64-fix was backported to 7.5
 + */
 +GlobalProperty pc_rhel_7_5_compat[] = {
-+        { /* PC_RHEL7_5_COMPAT from PC_COMPAT_2_11 */ 
-+            .driver   = "Skylake-Server" "-" TYPE_X86_CPU,
-+            .property = "clflushopt",
-+            .value    = "off",
-+        },{ /* PC_RHEL7_5_COMPAT from PC_COMPAT_2_12 */ 
-+            .driver   = TYPE_X86_CPU,
-+            .property = "legacy-cache",
-+            .value    = "on",
-+        },{ /* PC_RHEL7_5_COMPAT from PC_COMPAT_2_12 */ 
-+            .driver   = TYPE_X86_CPU,
-+            .property = "topoext",
-+            .value    = "off",
-+        },{ /* PC_RHEL7_5_COMPAT from PC_COMPAT_2_12 */ 
-+            .driver   = "EPYC-" TYPE_X86_CPU,
-+            .property = "xlevel",
-+            .value    = stringify(0x8000000a),
-+        },{ /* PC_RHEL7_5_COMPAT from PC_COMPAT_2_12 */ 
-+            .driver   = "EPYC-IBPB-" TYPE_X86_CPU,
-+            .property = "xlevel",
-+            .value    = stringify(0x8000000a),
-+        },
++    /* pc_rhel_7_5_compat from pc_compat_2_11 */  
++    { "Skylake-Server" "-" TYPE_X86_CPU, "clflushopt", "off" },
++    /* pc_rhel_7_5_compat from pc_compat_2_12 */  
++    { TYPE_X86_CPU, "legacy-cache", "on" },
++    /* pc_rhel_7_5_compat from pc_compat_2_12 */  
++    { TYPE_X86_CPU, "topoext", "off" },
++    /* pc_rhel_7_5_compat from pc_compat_2_12 */  
++    { "EPYC-" TYPE_X86_CPU, "xlevel", stringify(0x8000000a) },
++    /* pc_rhel_7_5_compat from pc_compat_2_12 */  
++    { "EPYC-IBPB-" TYPE_X86_CPU, "xlevel", stringify(0x8000000a) },
 +};
 +const size_t pc_rhel_7_5_compat_len = G_N_ELEMENTS(pc_rhel_7_5_compat);
 +
-+
 +GlobalProperty pc_rhel_7_4_compat[] = {
-+        { /* PC_RHEL7_4_COMPAT from PC_COMPAT_2_9 */ 
-+            .driver   = "mch",
-+            .property = "extended-tseg-mbytes",
-+            .value    = stringify(0),
-+        },
-+        { /* PC_RHEL7_4_COMPAT bz 1489800 */ 
-+            .driver   = "ICH9-LPC",
-+            .property = "__com.redhat_force-rev1-fadt",
-+            .value    = "on",
-+        },
-+        { /* PC_RHEL7_4_COMPAT from PC_COMPAT_2_10 */ 
-+            .driver   = "i440FX-pcihost",
-+            .property = "x-pci-hole64-fix",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_4_COMPAT from PC_COMPAT_2_10 */ 
-+            .driver   = "q35-pcihost",
-+            .property = "x-pci-hole64-fix",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_4_COMPAT from PC_COMPAT_2_10 */ 
-+             .driver   = TYPE_X86_CPU,
-+             .property = "x-hv-max-vps",
-+             .value    = "0x40",
-+        },
++    /* pc_rhel_7_4_compat from pc_compat_2_9 */ 
++    { "mch", "extended-tseg-mbytes", stringify(0) },
++    /* bz 1489800 */ 
++    { "ICH9-LPC", "__com.redhat_force-rev1-fadt", "on" },
++    /* pc_rhel_7_4_compat from pc_compat_2_10 */ 
++    { "i440FX-pcihost", "x-pci-hole64-fix", "off" },
++    /* pc_rhel_7_4_compat from pc_compat_2_10 */ 
++    { "q35-pcihost", "x-pci-hole64-fix", "off" },
++    /* pc_rhel_7_4_compat from pc_compat_2_10 */ 
++    { TYPE_X86_CPU, "x-hv-max-vps", "0x40" },
 +};
 +const size_t pc_rhel_7_4_compat_len = G_N_ELEMENTS(pc_rhel_7_4_compat);
 +
 +GlobalProperty pc_rhel_7_3_compat[] = {
-+        { /* PC_RHEL7_3_COMPAT from PC_COMPAT_2_8 */ 
-+             .driver   = "kvmclock",
-+             .property = "x-mach-use-reliable-get-clock",
-+             .value    = "off",
-+        },
-+        { /* PC_RHEL7_3_COMPAT from PC_COMPAT_2_7 */ 
-+            .driver   = TYPE_X86_CPU,
-+            .property = "l3-cache",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_3_COMPAT from PC_COMPAT_2_7 */ 
-+            .driver   = TYPE_X86_CPU,
-+            .property = "full-cpuid-auto-level",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_3_COMPAT from PC_COMPAT_2_7 */ 
-+            .driver   = "Opteron_G3" "-" TYPE_X86_CPU,
-+            .property = "family",
-+            .value    = "15",
-+        },
-+        { /* PC_RHEL7_3_COMPAT from PC_COMPAT_2_7 */ 
-+            .driver   = "Opteron_G3" "-" TYPE_X86_CPU,
-+            .property = "model",
-+            .value    = "6",
-+        },
-+        { /* PC_RHEL7_3_COMPAT from PC_COMPAT_2_7 */ 
-+            .driver   = "Opteron_G3" "-" TYPE_X86_CPU,
-+            .property = "stepping",
-+            .value    = "1",
-+        },
-+        { /* PC_RHEL7_3_COMPAT from PC_COMPAT_2_7 */ 
-+            .driver   = "isa-pcspk",
-+            .property = "migrate",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_3_COMPAT from PC_COMPAT_2_6 */ 
-+            .driver   = TYPE_X86_CPU,
-+            .property = "cpuid-0xb",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_3_COMPAT from PC_COMPAT_2_8 */ 
-+            .driver   = "ICH9-LPC",
-+            .property = "x-smi-broadcast",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_3_COMPAT from PC_COMPAT_2_8 */ 
-+            .driver   = TYPE_X86_CPU,
-+            .property = "vmware-cpuid-freq",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_3_COMPAT from PC_COMPAT_2_8 */ 
-+            .driver   = "Haswell-" TYPE_X86_CPU,
-+            .property = "stepping",
-+            .value    = "1",
-+        },
-+        {/* PC_RHEL7_3_COMPAT from PC_COMPAT_2_3 added in 2.9 */ 
-+            .driver = TYPE_X86_CPU,
-+            .property = "kvm-no-smi-migration",
-+            .value    = "on",
-+        },
++    /* pc_rhel_7_3_compat from pc_compat_2_8 */ 
++    { "kvmclock", "x-mach-use-reliable-get-clock", "off" },
++    /* pc_rhel_7_3_compat from pc_compat_2_7 */ 
++    { TYPE_X86_CPU, "l3-cache", "off" },
++    /* pc_rhel_7_3_compat from pc_compat_2_7 */ 
++    { TYPE_X86_CPU, "full-cpuid-auto-level", "off" },
++    /* pc_rhel_7_3_compat from pc_compat_2_7 */ 
++    { "Opteron_G3" "-" TYPE_X86_CPU, "family", "15" },
++    /* pc_rhel_7_3_compat from pc_compat_2_7 */ 
++    { "Opteron_G3" "-" TYPE_X86_CPU, "model", "6" },
++    /* pc_rhel_7_3_compat from pc_compat_2_7 */ 
++    { "Opteron_G3" "-" TYPE_X86_CPU, "stepping", "1" },
++    /* pc_rhel_7_3_compat from pc_compat_2_7 */ 
++    { "isa-pcspk", "migrate", "off" },
++    /* pc_rhel_7_3_compat from pc_compat_2_6 */ 
++    { TYPE_X86_CPU, "cpuid-0xb", "off" },
++    /* pc_rhel_7_3_compat from pc_compat_2_8 */ 
++    { "ICH9-LPC", "x-smi-broadcast", "off" },
++    /* pc_rhel_7_3_compat from pc_compat_2_8 */ 
++    { TYPE_X86_CPU, "vmware-cpuid-freq", "off" },
++    /* pc_rhel_7_3_compat from pc_compat_2_8 */ 
++    { "Haswell-" TYPE_X86_CPU, "stepping", "1" },
++    /* pc_rhel_7_3_compat from pc_compat_2_3 added in 2.9*/ 
++    { TYPE_X86_CPU, "kvm-no-smi-migration", "on" },
 +};
 +const size_t pc_rhel_7_3_compat_len = G_N_ELEMENTS(pc_rhel_7_3_compat);
 +
 +GlobalProperty pc_rhel_7_2_compat[] = {
-+	{
-+		.driver = "phenom" "-" TYPE_X86_CPU,
-+		.property = "rdtscp",
-+		.value = "off",
-+	},
-+        { /* PC_RHEL7_2_COMPAT */ 
-+            .driver   = "qemu64" "-" TYPE_X86_CPU,
-+            .property = "sse4a",
-+            .value    = "on",
-+        },
-+        { /* PC_RHEL7_2_COMPAT */ 
-+            .driver   = "qemu64" "-" TYPE_X86_CPU,
-+            .property = "abm",
-+            .value    = "on",
-+        },
-+        { /* PC_RHEL7_2_COMPAT */ 
-+            .driver   = "Haswell-" TYPE_X86_CPU,
-+            .property = "abm",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_2_COMPAT (copied from the entry above) */ 
-+            .driver   = "Haswell-IBRS" "-" TYPE_X86_CPU,
-+            .property = "abm",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_2_COMPAT */ 
-+            .driver   = "Haswell-noTSX-" TYPE_X86_CPU,
-+            .property = "abm",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_2_COMPAT (copied from the entry above) */ 
-+            .driver   = "Haswell-noTSX-IBRS" "-" TYPE_X86_CPU,
-+            .property = "abm",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_2_COMPAT */ 
-+            .driver   = "Broadwell-" TYPE_X86_CPU,
-+            .property = "abm",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_2_COMPAT (copied from the entry above) */ 
-+            .driver   = "Broadwell-IBRS" "-" TYPE_X86_CPU,
-+            .property = "abm",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_2_COMPAT */ 
-+            .driver   = "Broadwell-noTSX-" TYPE_X86_CPU,
-+            .property = "abm",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_2_COMPAT (copied from the entry above) */ 
-+            .driver   = "Broadwell-noTSX-IBRS" "-" TYPE_X86_CPU,
-+            .property = "abm",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_2_COMPAT */ 
-+            .driver   = "host" "-" TYPE_X86_CPU,
-+            .property = "host-cache-info",
-+            .value    = "on",
-+        },
-+        { /* PC_RHEL7_2_COMPAT */ 
-+            .driver   = TYPE_X86_CPU,
-+            .property = "check",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_2_COMPAT */ 
-+            .driver   = "qemu32" "-" TYPE_X86_CPU,
-+            .property = "popcnt",
-+            .value    = "on",
-+        },
-+        { /* PC_RHEL7_2_COMPAT */ 
-+            .driver   = TYPE_X86_CPU,
-+            .property = "arat",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_2_COMPAT */ 
-+            .driver   = "usb-redir",
-+            .property = "streams",
-+            .value    = "off",
-+        },
-+        { /* PC_RHEL7_2_COMPAT */ 
-+            .driver = TYPE_X86_CPU,
-+            .property = "fill-mtrr-mask",
-+            .value = "off",
-+        },
-+        { /* PC_RHEL7_2_COMPAT */ 
-+            .driver   = "apic-common",
-+            .property = "legacy-instance-id",
-+            .value    = "on",
-+        },
++    { "phenom" "-" TYPE_X86_CPU, "rdtscp", "off"},
++    { "qemu64" "-" TYPE_X86_CPU, "sse4a", "on" },
++    { "qemu64" "-" TYPE_X86_CPU, "abm", "on" },
++    { "Haswell-" TYPE_X86_CPU, "abm", "off" },
++    { "Haswell-IBRS" "-" TYPE_X86_CPU, "abm", "off" },
++    { "Haswell-noTSX-" TYPE_X86_CPU, "abm", "off" },
++    { "Haswell-noTSX-IBRS" "-" TYPE_X86_CPU, "abm", "off" },
++    { "Broadwell-" TYPE_X86_CPU, "abm", "off" },
++    { "Broadwell-IBRS" "-" TYPE_X86_CPU, "abm", "off" },
++    { "Broadwell-noTSX-" TYPE_X86_CPU, "abm", "off" },
++    { "Broadwell-noTSX-IBRS" "-" TYPE_X86_CPU, "abm", "off" },
++    { "host" "-" TYPE_X86_CPU, "host-cache-info", "on" },
++    { TYPE_X86_CPU, "check", "off" },
++    { "qemu32" "-" TYPE_X86_CPU, "popcnt", "on" },
++    { TYPE_X86_CPU, "arat", "off" },
++    { "usb-redir", "streams", "off" },
++    { TYPE_X86_CPU, "fill-mtrr-mask", "off" },
++    { "apic-common", "legacy-instance-id", "on" },
 +};
 +const size_t pc_rhel_7_2_compat_len = G_N_ELEMENTS(pc_rhel_7_2_compat);
 +
 +GlobalProperty pc_rhel_7_1_compat[] = {
-+	{
-+		.driver = "kvm64" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "kvm32" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Conroe" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Penryn" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Nehalem" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{ /* PC_RHEL7_1_COMPAT (copied from the entry above) */ 
-+		.driver = "Nehalem-IBRS" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Westmere" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{ /* PC_RHEL7_1_COMPAT (copied from the entry above) */ 
-+		.driver = "Westmere-IBRS" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "SandyBridge" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{ /* PC_RHEL7_1_COMPAT (copied from the entry above) */ 
-+		.driver = "SandyBridge-IBRS" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Haswell" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{ /* PC_RHEL7_1_COMPAT (copied from the entry above) */ 
-+		.driver = "Haswell-IBRS" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Broadwell" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{ /* PC_RHEL7_1_COMPAT (copied from the entry above) */ 
-+		.driver = "Broadwell-IBRS" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Opteron_G1" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Opteron_G2" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Opteron_G3" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Opteron_G4" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Opteron_G5" "-" TYPE_X86_CPU,
-+		.property = "vme",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Haswell" "-" TYPE_X86_CPU,
-+		.property = "f16c",
-+		.value = "off",
-+	},
-+	{ /* PC_RHEL7_1_COMPAT (copied from the entry above) */ 
-+		.driver = "Haswell-IBRS" "-" TYPE_X86_CPU,
-+		.property = "f16c",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Haswell" "-" TYPE_X86_CPU,
-+		.property = "rdrand",
-+		.value = "off",
-+	},
-+	{ /* PC_RHEL7_1_COMPAT (copied from the entry above) */ 
-+		.driver = "Haswell-IBRS" "-" TYPE_X86_CPU,
-+		.property = "rdrand",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Broadwell" "-" TYPE_X86_CPU,
-+		.property = "f16c",
-+		.value = "off",
-+	},
-+	{ /* PC_RHEL7_1_COMPAT (copied from the entry above) */ 
-+		.driver = "Broadwell-IBRS" "-" TYPE_X86_CPU,
-+		.property = "f16c",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "Broadwell" "-" TYPE_X86_CPU,
-+		.property = "rdrand",
-+		.value = "off",
-+	},
-+	{ /* PC_RHEL7_1_COMPAT (copied from the entry above) */ 
-+		.driver = "Broadwell-IBRS" "-" TYPE_X86_CPU,
-+		.property = "rdrand",
-+		.value = "off",
-+	},
-+	{
-+		.driver = "coreduo" "-" TYPE_X86_CPU,
-+		.property = "vmx",
-+		.value = "on",
-+	},
-+	{
-+		.driver = "core2duo" "-" TYPE_X86_CPU,
-+		.property = "vmx",
-+		.value = "on",
-+	},
-+        { /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "qemu64" "-" TYPE_X86_CPU,
-+            .property = "min-level",
-+            .value    = stringify(4),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "kvm64" "-" TYPE_X86_CPU,
-+            .property = "min-level",
-+            .value    = stringify(5),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "pentium3" "-" TYPE_X86_CPU,
-+            .property = "min-level",
-+            .value    = stringify(2),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "n270" "-" TYPE_X86_CPU,
-+            .property = "min-level",
-+            .value    = stringify(5),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "Conroe" "-" TYPE_X86_CPU,
-+            .property = "min-level",
-+            .value    = stringify(4),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "Penryn" "-" TYPE_X86_CPU,
-+            .property = "min-level",
-+            .value    = stringify(4),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "Nehalem" "-" TYPE_X86_CPU,
-+            .property = "min-level",
-+            .value    = stringify(4),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "n270" "-" TYPE_X86_CPU,
-+            .property = "min-xlevel",
-+            .value    = stringify(0x8000000a),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "Penryn" "-" TYPE_X86_CPU,
-+            .property = "min-xlevel",
-+            .value    = stringify(0x8000000a),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "Conroe" "-" TYPE_X86_CPU,
-+            .property = "min-xlevel",
-+            .value    = stringify(0x8000000a),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "Nehalem" "-" TYPE_X86_CPU,
-+            .property = "min-xlevel",
-+            .value    = stringify(0x8000000a),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "Westmere" "-" TYPE_X86_CPU,
-+            .property = "min-xlevel",
-+            .value    = stringify(0x8000000a),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "SandyBridge" "-" TYPE_X86_CPU,
-+            .property = "min-xlevel",
-+            .value    = stringify(0x8000000a),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "IvyBridge" "-" TYPE_X86_CPU,
-+            .property = "min-xlevel",
-+            .value    = stringify(0x8000000a),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "Haswell" "-" TYPE_X86_CPU,
-+            .property = "min-xlevel",
-+            .value    = stringify(0x8000000a),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "Haswell-noTSX" "-" TYPE_X86_CPU,
-+            .property = "min-xlevel",
-+            .value    = stringify(0x8000000a),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "Broadwell" "-" TYPE_X86_CPU,
-+            .property = "min-xlevel",
-+            .value    = stringify(0x8000000a),
-+        },{ /* PC_RHEL7_1_COMPAT */ 
-+            .driver   = "Broadwell-noTSX" "-" TYPE_X86_CPU,
-+            .property = "min-xlevel",
-+            .value    = stringify(0x8000000a),
-+        },
++    { "kvm64" "-" TYPE_X86_CPU, "vme", "off" },
++    { "kvm32" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Conroe" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Penryn" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Nehalem" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Nehalem-IBRS" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Westmere" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Westmere-IBRS" "-" TYPE_X86_CPU, "vme", "off" },
++    { "SandyBridge" "-" TYPE_X86_CPU, "vme", "off" },
++    { "SandyBridge-IBRS" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Haswell" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Haswell-IBRS" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Broadwell" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Broadwell-IBRS" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Opteron_G1" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Opteron_G2" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Opteron_G3" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Opteron_G4" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Opteron_G5" "-" TYPE_X86_CPU, "vme", "off" },
++    { "Haswell" "-" TYPE_X86_CPU,  "f16c", "off" },
++    { "Haswell-IBRS" "-" TYPE_X86_CPU, "f16c", "off" },
++    { "Haswell" "-" TYPE_X86_CPU, "rdrand", "off" },
++    { "Haswell-IBRS" "-" TYPE_X86_CPU, "rdrand", "off" },
++    { "Broadwell" "-" TYPE_X86_CPU, "f16c", "off" },
++    { "Broadwell-IBRS" "-" TYPE_X86_CPU, "f16c", "off" },
++    { "Broadwell" "-" TYPE_X86_CPU, "rdrand", "off" },
++    { "Broadwell-IBRS" "-" TYPE_X86_CPU, "rdrand", "off" },
++    { "coreduo" "-" TYPE_X86_CPU, "vmx", "on" },
++    { "core2duo" "-" TYPE_X86_CPU, "vmx", "on" },
++    { "qemu64" "-" TYPE_X86_CPU, "min-level", stringify(4) },
++    { "kvm64" "-" TYPE_X86_CPU, "min-level", stringify(5) },
++    { "pentium3" "-" TYPE_X86_CPU, "min-level", stringify(2) },
++    { "n270" "-" TYPE_X86_CPU, "min-level", stringify(5) },
++    { "Conroe" "-" TYPE_X86_CPU, "min-level", stringify(4) },
++    { "Penryn" "-" TYPE_X86_CPU, "min-level", stringify(4) },
++    { "Nehalem" "-" TYPE_X86_CPU, "min-level", stringify(4) },
++    { "n270" "-" TYPE_X86_CPU, "min-xlevel", stringify(0x8000000a) },
++    { "Penryn" "-" TYPE_X86_CPU, "min-xlevel", stringify(0x8000000a) },
++    { "Conroe" "-" TYPE_X86_CPU, "min-xlevel", stringify(0x8000000a) },
++    { "Nehalem" "-" TYPE_X86_CPU, "min-xlevel", stringify(0x8000000a) },
++    { "Westmere" "-" TYPE_X86_CPU, "min-xlevel", stringify(0x8000000a) },
++    { "SandyBridge" "-" TYPE_X86_CPU, "min-xlevel", stringify(0x8000000a) },
++    { "IvyBridge" "-" TYPE_X86_CPU, "min-xlevel", stringify(0x8000000a) },
++    { "Haswell" "-" TYPE_X86_CPU, "min-xlevel", stringify(0x8000000a) },
++    { "Haswell-noTSX" "-" TYPE_X86_CPU, "min-xlevel", stringify(0x8000000a) },
++    { "Broadwell" "-" TYPE_X86_CPU, "min-xlevel", stringify(0x8000000a) },
++    { "Broadwell-noTSX" "-" TYPE_X86_CPU, "min-xlevel", stringify(0x8000000a) },
 +};
 +const size_t pc_rhel_7_1_compat_len = G_N_ELEMENTS(pc_rhel_7_1_compat);
 +
@@ -584,121 +249,37 @@ index f2c15bf1f2..03497eed9a 100644
 + * pci-serial-4x) in 7.0.
 + */
 +GlobalProperty pc_rhel_7_0_compat[] = {
-+        {
-+            .driver   = "virtio-scsi-pci",
-+            .property = "any_layout",
-+            .value    = "off",
-+        },{
-+            .driver   = "PIIX4_PM",
-+            .property = "memory-hotplug-support",
-+            .value    = "off",
-+        },{
-+            .driver   = "apic",
-+            .property = "version",
-+            .value    = stringify(0x11),
-+        },{
-+            .driver   = "nec-usb-xhci",
-+            .property = "superspeed-ports-first",
-+            .value    = "off",
-+        },{
-+            .driver   = "nec-usb-xhci",
-+            .property = "force-pcie-endcap",
-+            .value    = "on",
-+        },{
-+            .driver   = "pci-serial",
-+            .property = "prog_if",
-+            .value    = stringify(0),
-+        },{
-+            .driver   = "virtio-net-pci",
-+            .property = "guest_announce",
-+            .value    = "off",
-+        },{
-+            .driver   = "ICH9-LPC",
-+            .property = "memory-hotplug-support",
-+            .value    = "off",
-+        },{
-+            .driver   = "xio3130-downstream",
-+            .property = COMPAT_PROP_PCP,
-+            .value    = "off",
-+        },{
-+            .driver   = "ioh3420",
-+            .property = COMPAT_PROP_PCP,
-+            .value    = "off",
-+        },{
-+            .driver   = "PIIX4_PM",
-+            .property = "acpi-pci-hotplug-with-bridge-support",
-+            .value    = "off",
-+        },{
-+            .driver   = "e1000",
-+            .property = "mitigation",
-+            .value    = "off",
-+        },{
-+            .driver   = "virtio-net-pci",
-+            .property = "ctrl_guest_offloads",
-+            .value    = "off",
-+        },
-+	{
-+		.driver = "Conroe" "-" TYPE_X86_CPU,
-+		.property = "x2apic",
-+		.value = "on",
-+	},
-+	{
-+		.driver = "Penryn" "-" TYPE_X86_CPU,
-+		.property = "x2apic",
-+		.value = "on",
-+	},
-+	{
-+		.driver = "Nehalem" "-" TYPE_X86_CPU,
-+		.property = "x2apic",
-+		.value = "on",
-+	},
-+	{ /* PC_RHEL7_0_COMPAT (copied from the entry above) */ 
-+		.driver = "Nehalem-IBRS" "-" TYPE_X86_CPU,
-+		.property = "x2apic",
-+		.value = "on",
-+	},
-+	{
-+		.driver = "Westmere" "-" TYPE_X86_CPU,
-+		.property = "x2apic",
-+		.value = "on",
-+	},
-+	{ /* PC_RHEL7_0_COMPAT (copied from the entry above) */ 
-+		.driver = "Westmere-IBRS" "-" TYPE_X86_CPU,
-+		.property = "x2apic",
-+		.value = "on",
-+	},
-+	{
-+		.driver = "Opteron_G1" "-" TYPE_X86_CPU,
-+		.property = "x2apic",
-+		.value = "on",
-+	},
-+	{
-+		.driver = "Opteron_G2" "-" TYPE_X86_CPU,
-+		.property = "x2apic",
-+		.value = "on",
-+	},
-+	{
-+		.driver = "Opteron_G3" "-" TYPE_X86_CPU,
-+		.property = "x2apic",
-+		.value = "on",
-+	},
-+	{
-+		.driver = "Opteron_G4" "-" TYPE_X86_CPU,
-+		.property = "x2apic",
-+		.value = "on",
-+	},
-+	{
-+		.driver = "Opteron_G5" "-" TYPE_X86_CPU,
-+		.property = "x2apic",
-+		.value = "on",
-+	}
++    { "virtio-scsi-pci", "any_layout", "off" },
++    { "PIIX4_PM", "memory-hotplug-support", "off" },
++    { "apic", "version", stringify(0x11) },
++    { "nec-usb-xhci", "superspeed-ports-first", "off" },
++    { "nec-usb-xhci", "force-pcie-endcap", "on" },
++    { "pci-serial", "prog_if", stringify(0) },
++    { "virtio-net-pci", "guest_announce", "off" },
++    { "ICH9-LPC", "memory-hotplug-support", "off" },
++    { "xio3130-downstream", COMPAT_PROP_PCP, "off" },
++    { "ioh3420", COMPAT_PROP_PCP, "off" },
++    { "PIIX4_PM", "acpi-pci-hotplug-with-bridge-support", "off" },
++    { "e1000", "mitigation", "off" },
++    { "virtio-net-pci", "ctrl_guest_offloads", "off" },
++    { "Conroe" "-" TYPE_X86_CPU, "x2apic", "on" },
++    { "Penryn" "-" TYPE_X86_CPU, "x2apic", "on" },
++    { "Nehalem" "-" TYPE_X86_CPU, "x2apic", "on" },
++    { "Nehalem-IBRS" "-" TYPE_X86_CPU, "x2apic", "on" },
++    { "Westmere" "-" TYPE_X86_CPU, "x2apic", "on" },
++    { "Westmere-IBRS" "-" TYPE_X86_CPU, "x2apic", "on" },
++    { "Opteron_G1" "-" TYPE_X86_CPU, "x2apic", "on" },
++    { "Opteron_G2" "-" TYPE_X86_CPU, "x2apic", "on" },
++    { "Opteron_G3" "-" TYPE_X86_CPU, "x2apic", "on" },
++    { "Opteron_G4" "-" TYPE_X86_CPU, "x2apic", "on" },
++    { "Opteron_G5" "-" TYPE_X86_CPU, "x2apic", "on" },
 +};
 +const size_t pc_rhel_7_0_compat_len = G_N_ELEMENTS(pc_rhel_7_0_compat);
 +
  void gsi_handler(void *opaque, int n, int level)
  {
      GSIState *s = opaque;
-@@ -1814,7 +2451,8 @@ void pc_memory_init(PCMachineState *pcms,
+@@ -1901,7 +2119,8 @@ void pc_memory_init(PCMachineState *pcms,
      option_rom_mr = g_malloc(sizeof(*option_rom_mr));
      memory_region_init_ram(option_rom_mr, NULL, "pc.rom", PC_ROM_SIZE,
                             &error_fatal);
@@ -708,7 +289,7 @@ index f2c15bf1f2..03497eed9a 100644
          memory_region_set_readonly(option_rom_mr, true);
      }
      memory_region_add_subregion_overlap(rom_memory,
-@@ -2731,6 +3369,8 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
+@@ -2928,6 +3147,8 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
      pcmc->linuxboot_dma_enabled = true;
      pcmc->pvh_enabled = true;
      assert(!mc->get_hotplug_handler);
@@ -717,9 +298,9 @@ index f2c15bf1f2..03497eed9a 100644
      mc->get_hotplug_handler = pc_get_hotplug_handler;
      mc->cpu_index_to_instance_props = pc_cpu_index_to_props;
      mc->get_default_cpu_node_id = pc_get_default_cpu_node_id;
-@@ -2740,7 +3380,8 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
-     mc->default_boot_order = "cad";
+@@ -2938,7 +3159,8 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
      mc->hot_add_cpu = pc_hot_add_cpu;
+     mc->smp_parse = pc_smp_parse;
      mc->block_default_type = IF_IDE;
 -    mc->max_cpus = 255;
 +    /* 240: max CPU count for RHEL */
@@ -728,10 +309,10 @@ index f2c15bf1f2..03497eed9a 100644
      hc->pre_plug = pc_machine_device_pre_plug_cb;
      hc->plug = pc_machine_device_plug_cb;
 diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
-index 8ad8e885c6..37907fe76a 100644
+index c2280c7..c86c48c 100644
 --- a/hw/i386/pc_piix.c
 +++ b/hw/i386/pc_piix.c
-@@ -50,6 +50,7 @@
+@@ -51,6 +51,7 @@
  #include "cpu.h"
  #include "qapi/error.h"
  #include "qemu/error-report.h"
@@ -739,7 +320,7 @@ index 8ad8e885c6..37907fe76a 100644
  #ifdef CONFIG_XEN
  #include <xen/hvm/hvm_info_table.h>
  #include "hw/xen/xen_pt.h"
-@@ -170,8 +171,8 @@ static void pc_init1(MachineState *machine,
+@@ -173,8 +174,8 @@ static void pc_init1(MachineState *machine,
      if (pcmc->smbios_defaults) {
          MachineClass *mc = MACHINE_GET_CLASS(machine);
          /* These values are guest ABI, do not change */
@@ -750,7 +331,7 @@ index 8ad8e885c6..37907fe76a 100644
                              pcmc->smbios_uuid_encoded,
                              SMBIOS_ENTRY_POINT_21);
      }
-@@ -310,6 +311,7 @@ static void pc_init1(MachineState *machine,
+@@ -316,6 +317,7 @@ else {
   * HW_COMPAT_*, PC_COMPAT_*, or * pc_*_machine_options().
   */
  
@@ -758,7 +339,7 @@ index 8ad8e885c6..37907fe76a 100644
  static void pc_compat_2_3_fn(MachineState *machine)
  {
      PCMachineState *pcms = PC_MACHINE(machine);
-@@ -998,3 +1000,197 @@ static void xenfv_machine_options(MachineClass *m)
+@@ -1022,3 +1024,197 @@ static void xenfv_machine_options(MachineClass *m)
  DEFINE_PC_MACHINE(xenfv, "xenfv", pc_xen_hvm_init,
                    xenfv_machine_options);
  #endif
@@ -957,7 +538,7 @@ index 8ad8e885c6..37907fe76a 100644
 +DEFINE_PC_MACHINE(rhel700, "pc-i440fx-rhel7.0.0", pc_init_rhel700,
 +                  pc_machine_rhel700_options);
 diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
-index 372c6b73be..4b7df48919 100644
+index 397e1fd..4959ed3 100644
 --- a/hw/i386/pc_q35.c
 +++ b/hw/i386/pc_q35.c
 @@ -198,8 +198,8 @@ static void pc_q35_init(MachineState *machine)
@@ -979,7 +560,7 @@ index 372c6b73be..4b7df48919 100644
  static void pc_q35_machine_options(MachineClass *m)
  {
      PCMachineClass *pcmc = PC_MACHINE_CLASS(m);
-@@ -507,3 +508,112 @@ static void pc_q35_2_4_machine_options(MachineClass *m)
+@@ -538,3 +539,112 @@ static void pc_q35_2_4_machine_options(MachineClass *m)
  
  DEFINE_Q35_MACHINE(v2_4, "pc-q35-2.4", NULL,
                     pc_q35_2_4_machine_options);
@@ -1093,10 +674,10 @@ index 372c6b73be..4b7df48919 100644
 +DEFINE_PC_MACHINE(q35_rhel730, "pc-q35-rhel7.3.0", pc_q35_init_rhel730,
 +                  pc_q35_machine_rhel730_options);
 diff --git a/include/hw/boards.h b/include/hw/boards.h
-index 456e4a944c..b292365bfa 100644
+index 521c625..b4a8c4a 100644
 --- a/include/hw/boards.h
 +++ b/include/hw/boards.h
-@@ -206,6 +206,8 @@ struct MachineClass {
+@@ -214,6 +214,8 @@ struct MachineClass {
      const char **valid_cpu_types;
      strList *allowed_dynamic_sysbus_devices;
      bool auto_enable_numa_with_memhp;
@@ -1106,20 +687,20 @@ index 456e4a944c..b292365bfa 100644
                                   int nb_nodes, ram_addr_t size);
      bool ignore_boot_device_suffixes;
 diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
-index ca65ef18af..b066f0a539 100644
+index 859b64c..605cc71 100644
 --- a/include/hw/i386/pc.h
 +++ b/include/hw/i386/pc.h
-@@ -134,6 +134,9 @@ typedef struct PCMachineClass {
+@@ -142,6 +142,9 @@ typedef struct PCMachineClass {
  
-     /* use PVH to load kernels that support this feature */
-     bool pvh_enabled;
-+
+     /* Enables contiguous-apic-ID mode */
+     bool compat_apic_id_mode;
++   
 +    /* RH only, see bz 1489800 */
 +    bool pc_rom_ro;
  } PCMachineClass;
  
  #define TYPE_PC_MACHINE "generic-pc-machine"
-@@ -350,6 +353,30 @@ extern const size_t pc_compat_1_5_len;
+@@ -362,6 +365,30 @@ extern const size_t pc_compat_1_5_len;
  extern GlobalProperty pc_compat_1_4[];
  extern const size_t pc_compat_1_4_len;
  
@@ -1151,10 +732,10 @@ index ca65ef18af..b066f0a539 100644
   * depending on QEMU versions up to QEMU 2.4.
   */
 diff --git a/target/i386/cpu.c b/target/i386/cpu.c
-index 6616303782..6472cd21f8 100644
+index 47a1236..cd71a09 100644
 --- a/target/i386/cpu.c
 +++ b/target/i386/cpu.c
-@@ -1474,11 +1474,17 @@ static CPUCaches epyc_cache_info = {
+@@ -1548,11 +1548,17 @@ static CPUCaches epyc_cache_info = {
  
  static X86CPUDefinition builtin_x86_defs[] = {
      {
@@ -1173,7 +754,7 @@ index 6616303782..6472cd21f8 100644
          .stepping = 3,
          .features[FEAT_1_EDX] = CPUID_SSE2 | CPUID_SSE | CPUID_FXSR |
              CPUID_MMX | CPUID_CLFLUSH | CPUID_PSE36 | CPUID_PAT | CPUID_CMOV |
-@@ -2973,6 +2979,7 @@ static PropValue kvm_default_props[] = {
+@@ -2861,6 +2867,7 @@ static PropValue kvm_default_props[] = {
      { "acpi", "off" },
      { "monitor", "off" },
      { "svm", "off" },
@@ -1182,10 +763,10 @@ index 6616303782..6472cd21f8 100644
  };
  
 diff --git a/target/i386/kvm.c b/target/i386/kvm.c
-index 3b29ce5c0d..478942187a 100644
+index dbbb137..da5a5ef 100644
 --- a/target/i386/kvm.c
 +++ b/target/i386/kvm.c
-@@ -2373,6 +2373,7 @@ static int kvm_get_msrs(X86CPU *cpu)
+@@ -2805,6 +2805,7 @@ static int kvm_get_msrs(X86CPU *cpu)
      struct kvm_msr_entry *msrs = cpu->kvm_msr_buf->entries;
      int ret, i;
      uint64_t mtrr_top_bits;
@@ -1193,7 +774,7 @@ index 3b29ce5c0d..478942187a 100644
  
      kvm_msr_buf_reset(cpu);
  
-@@ -2670,6 +2671,9 @@ static int kvm_get_msrs(X86CPU *cpu)
+@@ -3102,6 +3103,9 @@ static int kvm_get_msrs(X86CPU *cpu)
              break;
          case MSR_KVM_ASYNC_PF_EN:
              env->async_pf_en_msr = msrs[i].data;
@@ -1204,5 +785,5 @@ index 3b29ce5c0d..478942187a 100644
          case MSR_KVM_PV_EOI_EN:
              env->pv_eoi_en_msr = msrs[i].data;
 -- 
-2.20.1
+1.8.3.1
 
