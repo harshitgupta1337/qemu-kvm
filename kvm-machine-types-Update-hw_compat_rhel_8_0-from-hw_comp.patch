@@ -1,0 +1,59 @@
+From 9f2bfaaa73a8fb2790ebc4fb16f5d3a629b39898 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Wed, 31 Jul 2019 15:08:14 +0100
+Subject: [PATCH 5/6] machine types: Update hw_compat_rhel_8_0 from
+ hw_compat_4_0
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20190731150814.29571-6-dgilbert@redhat.com>
+Patchwork-id: 89817
+O-Subject: [RHEL-AV-8.1.0 qemu-kvm PATCH v3 5/5] machine types: Update hw_compat_rhel_8_0 from hw_compat_4_0
+Bugzilla: 1719649
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+RH-Acked-by: Markus Armbruster <armbru@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+
+Pull in the 4_0 compat entries into hw_compat_rhel_8_0
+
+We don't need pl031's migrate-tick-offset because it's an ARM only
+device and we don't have compatible types for Aarch yet.
+
+We don't have to copy virtio-balloon-device.qemu-4-0-config-size=false from
+hw_compat_3_1[], since it immediately got reverted in hw_compat_4_0[].
+
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/core/machine.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/hw/core/machine.c b/hw/core/machine.c
+index f30afe0..e2f812a 100644
+--- a/hw/core/machine.c
++++ b/hw/core/machine.c
+@@ -54,6 +54,20 @@ GlobalProperty hw_compat_rhel_8_0[] = {
+     { "virtio-blk-device", "discard", "false" },
+     /* hw_compat_rhel_8_0 from hw_compat_3_1 */
+     { "virtio-blk-device", "write-zeroes", "false" },
++    /* hw_compat_rhel_8_0 from hw_compat_4_0 */
++    { "VGA",            "edid", "false" },
++    /* hw_compat_rhel_8_0 from hw_compat_4_0 */
++    { "secondary-vga",  "edid", "false" },
++    /* hw_compat_rhel_8_0 from hw_compat_4_0 */
++    { "bochs-display",  "edid", "false" },
++    /* hw_compat_rhel_8_0 from hw_compat_4_0 */
++    { "virtio-vga",     "edid", "false" },
++    /* hw_compat_rhel_8_0 from hw_compat_4_0 */
++    { "virtio-gpu-pci", "edid", "false" },
++    /* hw_compat_rhel_8_0 from hw_compat_4_0 */
++    { "virtio-device", "use-started", "false" },
++    /* hw_compat_rhel_8_0 from hw_compat_3_1 - that was added in 4.1 */
++    { "pcie-root-port-base", "disable-acs", "true" },
+ };
+ const size_t hw_compat_rhel_8_0_len = G_N_ELEMENTS(hw_compat_rhel_8_0);
+ 
+-- 
+1.8.3.1
+

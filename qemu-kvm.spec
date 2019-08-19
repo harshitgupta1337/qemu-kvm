@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.1.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -121,6 +121,18 @@ Patch0017: 0017-usb-xhci-Fix-PCI-capability-order.patch
 Patch0018: 0018-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0019: 0019-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0020: 0020-pc-Don-t-make-die-id-mandatory-unless-necessary.patch
+# For bz#1719649 - 8.1 machine type for x86
+Patch21: kvm-x86-machine-types-pc_rhel_8_0_compat.patch
+# For bz#1719649 - 8.1 machine type for x86
+Patch22: kvm-x86-machine-types-q35-Fixup-units_per_default_bus.patch
+# For bz#1719649 - 8.1 machine type for x86
+Patch23: kvm-x86-machine-types-Fixup-dynamic-sysbus-entries.patch
+# For bz#1719649 - 8.1 machine type for x86
+Patch24: kvm-x86-machine-types-add-pc-q35-rhel8.1.0.patch
+# For bz#1719649 - 8.1 machine type for x86
+Patch25: kvm-machine-types-Update-hw_compat_rhel_8_0-from-hw_comp.patch
+# For bz#1719649 - 8.1 machine type for x86
+Patch26: kvm-virtio-Make-disable-legacy-disable-modern-compat-pro.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1062,6 +1074,16 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Aug 19 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-3.el8
+- kvm-x86-machine-types-pc_rhel_8_0_compat.patch [bz#1719649]
+- kvm-x86-machine-types-q35-Fixup-units_per_default_bus.patch [bz#1719649]
+- kvm-x86-machine-types-Fixup-dynamic-sysbus-entries.patch [bz#1719649]
+- kvm-x86-machine-types-add-pc-q35-rhel8.1.0.patch [bz#1719649]
+- kvm-machine-types-Update-hw_compat_rhel_8_0-from-hw_comp.patch [bz#1719649]
+- kvm-virtio-Make-disable-legacy-disable-modern-compat-pro.patch [bz#1719649]
+- Resolves: bz#1719649
+  (8.1 machine type for x86)
+
 * Mon Aug 19 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-2.el8
 - kvm-spec-Update-seavgabios-dependency.patch [bz#1725664]
 - kvm-pc-Don-t-make-die-id-mandatory-unless-necessary.patch [bz#1741451]

@@ -1,0 +1,48 @@
+From ca4a5e85de406a495512d544c3b2187ac3654e97 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Thu, 1 Aug 2019 10:26:47 +0100
+Subject: [PATCH 6/6] virtio: Make disable-legacy/disable-modern compat
+ properties optional
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20190801102647.14173-1-dgilbert@redhat.com>
+Patchwork-id: 89849
+O-Subject: [RHEL-AV-8.1.0 qemu-kvm PATCH v3 6/5] virtio: Make disable-legacy/disable-modern compat properties optional
+Bugzilla: 1719649
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Markus Armbruster <armbru@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+RH-Acked-by: Eduardo Habkost <ehabkost@redhat.com>
+
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+
+Upstream 53921bfdce3 by Eduardo made some hw_compat_2_6 entries optional
+to fix a bug where non-transitional devices failed to be created on
+old upstream machine types.  Do the same fix to our old downstream
+machines.
+
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/core/machine.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/hw/core/machine.c b/hw/core/machine.c
+index e2f812a..c796b54 100644
+--- a/hw/core/machine.c
++++ b/hw/core/machine.c
+@@ -152,8 +152,9 @@ GlobalProperty hw_compat_rhel_7_2[] = {
+         { "fw_cfg_mem", "dma_enabled", "off" },
+         { "fw_cfg_io", "dma_enabled", "off" },
+         { "isa-fdc", "fallback", "144" },
+-        { "virtio-pci", "disable-modern", "on" },
+-        { "virtio-pci", "disable-legacy", "off" },
++        /* Optional because not all virtio-pci devices support legacy mode */
++        { "virtio-pci", "disable-modern", "on", .optional = true },
++        { "virtio-pci", "disable-legacy", "off", .optional = true },
+         { TYPE_PCI_DEVICE, "x-pcie-lnksta-dllla", "off" },
+         { "virtio-pci", "page-per-vq", "on" },
+         /* hw_compat_rhel_7_2 - introduced with 2.10.0 */
+-- 
+1.8.3.1
+
