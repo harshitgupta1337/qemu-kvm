@@ -1,0 +1,42 @@
+From cf5e1c094d045cbbb9fd58fd9ec9c8fe8342eb4f Mon Sep 17 00:00:00 2001
+From: Miroslav Rezanina <mrezanin@redhat.com>
+Date: Mon, 19 Aug 2019 08:54:19 +0100
+Subject: [PATCH 7/7] Update version for v4.1.0 release
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+Message-id: <7fdfb1e847814fc97d2ef85172e75e2af70b5cae.1566204425.git.mrezanin@redhat.com>
+Patchwork-id: 90055
+O-Subject: [RHEL-AV-8.1 qemu-kvm PATCH 5/5] Update version for v4.1.0 release
+Bugzilla: 1733977 1740692
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Yash Mankad <ymankad@redhat.com>
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+
+From: Peter Maydell <peter.maydell@linaro.org>
+
+Signed-off-by: Peter Maydell <peter.maydell@linaro.org>
+(cherry picked from commit 9e06029aea3b2eca1d5261352e695edc1e7d7b8b)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+
+Conflicts:
+	VERSION - we do not backport rc5 version change
+
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ VERSION | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/VERSION b/VERSION
+index 8048f65..ee74734 100644
+--- a/VERSION
++++ b/VERSION
+@@ -1 +1 @@
+-4.0.94
++4.1.0
+-- 
+1.8.3.1
+

@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.1.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -120,6 +120,21 @@ Patch0016: 0016-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
 Patch0017: 0017-usb-xhci-Fix-PCI-capability-order.patch
 Patch0018: 0018-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0019: 0019-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
+# For bz#1741451 - Failed to hot-plug vcpus
+Patch21: kvm-pc-Don-t-make-die-id-mandatory-unless-necessary.patch
+# For bz#1733977 - Qemu core dumped: /home/ngu/qemu/hw/intc/xics_kvm.c:321: ics_kvm_set_irq: Assertion `kernel_xics_fd != -1' failed
+# For bz#1740692 - Backport QEMU 4.1.0 rc5 & ga patches
+Patch22: kvm-display-bochs-fix-pcie-support.patch
+# For bz#1733977 - Qemu core dumped: /home/ngu/qemu/hw/intc/xics_kvm.c:321: ics_kvm_set_irq: Assertion `kernel_xics_fd != -1' failed
+Patch23: kvm-spapr-Reset-CAS-IRQ-subsystem-after-devices.patch
+# For bz#1733977 - Qemu core dumped: /home/ngu/qemu/hw/intc/xics_kvm.c:321: ics_kvm_set_irq: Assertion `kernel_xics_fd != -1' failed
+Patch24: kvm-spapr-xive-Fix-migration-of-hot-plugged-CPUs.patch
+# For bz#1733977 - Qemu core dumped: /home/ngu/qemu/hw/intc/xics_kvm.c:321: ics_kvm_set_irq: Assertion `kernel_xics_fd != -1' failed
+# For bz#1740692 - Backport QEMU 4.1.0 rc5 & ga patches
+Patch25: kvm-riscv-roms-Fix-make-rules-for-building-sifive_u-bios.patch
+# For bz#1733977 - Qemu core dumped: /home/ngu/qemu/hw/intc/xics_kvm.c:321: ics_kvm_set_irq: Assertion `kernel_xics_fd != -1' failed
+# For bz#1740692 - Backport QEMU 4.1.0 rc5 & ga patches
+Patch26: kvm-Update-version-for-v4.1.0-release.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -259,7 +274,7 @@ Requires: edk2-aarch64
 %endif
 
 %ifnarch aarch64 s390x
-Requires: seavgabios-bin >= 1.10.2-1
+Requires: seavgabios-bin >= 1.12.0-3
 Requires: ipxe-roms-qemu >= 20170123-1
 %endif
 %ifarch %{power64}
@@ -1061,6 +1076,23 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Aug 19 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-2.el8
+- kvm-spec-Update-seavgabios-dependency.patch [bz#1725664]
+- kvm-pc-Don-t-make-die-id-mandatory-unless-necessary.patch [bz#1741451]
+- kvm-display-bochs-fix-pcie-support.patch [bz#1733977 bz#1740692]
+- kvm-spapr-Reset-CAS-IRQ-subsystem-after-devices.patch [bz#1733977]
+- kvm-spapr-xive-Fix-migration-of-hot-plugged-CPUs.patch [bz#1733977]
+- kvm-riscv-roms-Fix-make-rules-for-building-sifive_u-bios.patch [bz#1733977 bz#1740692]
+- kvm-Update-version-for-v4.1.0-release.patch [bz#1733977 bz#1740692]
+- Resolves: bz#1725664
+  (Update seabios dependency)
+- Resolves: bz#1733977
+  (Qemu core dumped: /home/ngu/qemu/hw/intc/xics_kvm.c:321: ics_kvm_set_irq: Assertion `kernel_xics_fd != -1' failed)
+- Resolves: bz#1740692
+  (Backport QEMU 4.1.0 rc5 & ga patches)
+- Resolves: bz#1741451
+  (Failed to hot-plug vcpus)
+
 * Wed Aug 14 2019 Miroslav Rezanina <mrezanin@redhat.com> - 4.1.0-1.el8
 - Rebase to qemu 4.1.0 rc4 [bz#1705235]
 - Resolves: bz#1705235
