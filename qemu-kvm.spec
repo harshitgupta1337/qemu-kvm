@@ -76,7 +76,7 @@ URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
 
-Source0: http://wiki.qemu.org/download/qemu-4.1.0-rc4.tar.xz
+Source0: http://wiki.qemu.org/download/qemu-4.1.0.tar.xz
 
 # KSM control scripts
 Source4: ksm.service
@@ -120,21 +120,7 @@ Patch0016: 0016-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
 Patch0017: 0017-usb-xhci-Fix-PCI-capability-order.patch
 Patch0018: 0018-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0019: 0019-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
-# For bz#1741451 - Failed to hot-plug vcpus
-Patch21: kvm-pc-Don-t-make-die-id-mandatory-unless-necessary.patch
-# For bz#1733977 - Qemu core dumped: /home/ngu/qemu/hw/intc/xics_kvm.c:321: ics_kvm_set_irq: Assertion `kernel_xics_fd != -1' failed
-# For bz#1740692 - Backport QEMU 4.1.0 rc5 & ga patches
-Patch22: kvm-display-bochs-fix-pcie-support.patch
-# For bz#1733977 - Qemu core dumped: /home/ngu/qemu/hw/intc/xics_kvm.c:321: ics_kvm_set_irq: Assertion `kernel_xics_fd != -1' failed
-Patch23: kvm-spapr-Reset-CAS-IRQ-subsystem-after-devices.patch
-# For bz#1733977 - Qemu core dumped: /home/ngu/qemu/hw/intc/xics_kvm.c:321: ics_kvm_set_irq: Assertion `kernel_xics_fd != -1' failed
-Patch24: kvm-spapr-xive-Fix-migration-of-hot-plugged-CPUs.patch
-# For bz#1733977 - Qemu core dumped: /home/ngu/qemu/hw/intc/xics_kvm.c:321: ics_kvm_set_irq: Assertion `kernel_xics_fd != -1' failed
-# For bz#1740692 - Backport QEMU 4.1.0 rc5 & ga patches
-Patch25: kvm-riscv-roms-Fix-make-rules-for-building-sifive_u-bios.patch
-# For bz#1733977 - Qemu core dumped: /home/ngu/qemu/hw/intc/xics_kvm.c:321: ics_kvm_set_irq: Assertion `kernel_xics_fd != -1' failed
-# For bz#1740692 - Backport QEMU 4.1.0 rc5 & ga patches
-Patch26: kvm-Update-version-for-v4.1.0-release.patch
+Patch0020: 0020-pc-Don-t-make-die-id-mandatory-unless-necessary.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -419,7 +405,7 @@ the Secure Shell (SSH) protocol.
 
 
 %prep
-%setup -n qemu-%{version}-rc4
+%setup -n qemu-%{version}
 %autopatch -p1
 
 %build

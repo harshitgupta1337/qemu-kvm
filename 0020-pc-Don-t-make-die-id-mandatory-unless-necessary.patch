@@ -1,7 +1,7 @@
-From 7909ad1654df63be6321af36f1ef436a990ab6df Mon Sep 17 00:00:00 2001
+From 7d5c2ef35d0bd7eb90fac2f40225bcfb4a46421d Mon Sep 17 00:00:00 2001
 From: Eduardo Habkost <ehabkost@redhat.com>
 Date: Fri, 16 Aug 2019 17:16:33 +0100
-Subject: [PATCH 2/7] pc: Don't make die-id mandatory unless necessary
+Subject: pc: Don't make die-id mandatory unless necessary
 
 RH-Author: Eduardo Habkost <ehabkost@redhat.com>
 Message-id: <20190816171633.26797-2-ehabkost@redhat.com>
@@ -45,13 +45,13 @@ Changes v1 -> v2:
 
 Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/i386/pc.c                             |  8 ++++++++
- tests/acceptance/pc_cpu_hotplug_props.py | 35 ++++++++++++++++++++++++++++++++
+ hw/i386/pc.c                             |  8 ++++++
+ tests/acceptance/pc_cpu_hotplug_props.py | 35 ++++++++++++++++++++++++
  2 files changed, 43 insertions(+)
  create mode 100644 tests/acceptance/pc_cpu_hotplug_props.py
 
 diff --git a/hw/i386/pc.c b/hw/i386/pc.c
-index 9ded0db..b3d2d1e 100644
+index 9ded0db80d..b3d2d1e88a 100644
 --- a/hw/i386/pc.c
 +++ b/hw/i386/pc.c
 @@ -2622,6 +2622,14 @@ static void pc_cpu_pre_plug(HotplugHandler *hotplug_dev,
@@ -71,7 +71,7 @@ index 9ded0db..b3d2d1e 100644
              return;
 diff --git a/tests/acceptance/pc_cpu_hotplug_props.py b/tests/acceptance/pc_cpu_hotplug_props.py
 new file mode 100644
-index 0000000..08b7e63
+index 0000000000..08b7e632c6
 --- /dev/null
 +++ b/tests/acceptance/pc_cpu_hotplug_props.py
 @@ -0,0 +1,35 @@
@@ -111,5 +111,5 @@ index 0000000..08b7e63
 +        self.vm.launch()
 +        self.assertEquals(len(self.vm.command('query-cpus')), 2)
 -- 
-1.8.3.1
+2.20.1
 

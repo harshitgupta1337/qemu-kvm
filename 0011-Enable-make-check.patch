@@ -1,4 +1,4 @@
-From c1635c2c93f0efe82a6ab1dc973402882882382c Mon Sep 17 00:00:00 2001
+From 70e14e50ec8652a4243111dc293fe09ebcef8de1 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:48:41 +0200
 Subject: Enable make check
@@ -27,6 +27,8 @@ Merged patches (4.1.0-rc0):
 
 Conflicts:
 	tests/qemu-iotests/group
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  redhat/qemu-kvm.spec.template |  8 +++++++-
  tests/Makefile.include        | 10 +++++-----
@@ -41,7 +43,7 @@ Conflicts:
  10 files changed, 39 insertions(+), 17 deletions(-)
 
 diff --git a/tests/Makefile.include b/tests/Makefile.include
-index fd7fdb8..d3da940 100644
+index fd7fdb8658..d3da940f8c 100644
 --- a/tests/Makefile.include
 +++ b/tests/Makefile.include
 @@ -164,7 +164,7 @@ check-qtest-i386-y += tests/ide-test$(EXESUF)
@@ -83,7 +85,7 @@ index fd7fdb8..d3da940 100644
  check-qtest-s390x-y += tests/cpu-plug-test$(EXESUF)
  check-qtest-s390x-y += tests/migration-test$(EXESUF)
 diff --git a/tests/boot-serial-test.c b/tests/boot-serial-test.c
-index 24852d4..dce5860 100644
+index 24852d4c7d..dce5860d99 100644
 --- a/tests/boot-serial-test.c
 +++ b/tests/boot-serial-test.c
 @@ -97,18 +97,22 @@ static testdef_t tests[] = {
@@ -111,7 +113,7 @@ index 24852d4..dce5860 100644
      { "sparc", "LX", "", "TMS390S10" },
      { "sparc", "SS-4", "", "MB86904" },
 diff --git a/tests/cpu-plug-test.c b/tests/cpu-plug-test.c
-index 668f001..453ca8e 100644
+index 668f00144e..453ca8e583 100644
 --- a/tests/cpu-plug-test.c
 +++ b/tests/cpu-plug-test.c
 @@ -190,8 +190,8 @@ static void add_pseries_test_case(const char *mname)
@@ -126,7 +128,7 @@ index 668f001..453ca8e 100644
      }
      data = g_new(PlugTestData, 1);
 diff --git a/tests/e1000-test.c b/tests/e1000-test.c
-index c387984..c89112d 100644
+index c387984ef6..c89112d6f8 100644
 --- a/tests/e1000-test.c
 +++ b/tests/e1000-test.c
 @@ -22,9 +22,11 @@ struct QE1000 {
@@ -142,7 +144,7 @@ index c387984..c89112d 100644
  
  static void *e1000_get_driver(void *obj, const char *interface)
 diff --git a/tests/prom-env-test.c b/tests/prom-env-test.c
-index 61bc1d1..028d45c 100644
+index 61bc1d1e7b..028d45c7d7 100644
 --- a/tests/prom-env-test.c
 +++ b/tests/prom-env-test.c
 @@ -88,10 +88,14 @@ int main(int argc, char *argv[])
@@ -161,7 +163,7 @@ index 61bc1d1..028d45c 100644
          add_tests(sparc_machines);
      } else if (!strcmp(arch, "sparc64")) {
 diff --git a/tests/qemu-iotests/051 b/tests/qemu-iotests/051
-index ce942a5..f64429e 100755
+index ce942a5444..f64429e21f 100755
 --- a/tests/qemu-iotests/051
 +++ b/tests/qemu-iotests/051
 @@ -181,11 +181,11 @@ run_qemu -drive if=virtio
@@ -195,7 +197,7 @@ index ce942a5..f64429e 100755
       *)
          ;;
 diff --git a/tests/qemu-iotests/group b/tests/qemu-iotests/group
-index f13e5f2..813db25 100644
+index f13e5f2e23..813db2565b 100644
 --- a/tests/qemu-iotests/group
 +++ b/tests/qemu-iotests/group
 @@ -92,7 +92,7 @@
@@ -217,7 +219,7 @@ index f13e5f2..813db25 100644
  101 rw quick
  102 rw quick
 diff --git a/tests/test-x86-cpuid-compat.c b/tests/test-x86-cpuid-compat.c
-index e75b959..6b46b73 100644
+index e75b959950..6b46b73dd0 100644
 --- a/tests/test-x86-cpuid-compat.c
 +++ b/tests/test-x86-cpuid-compat.c
 @@ -300,6 +300,7 @@ int main(int argc, char **argv)
@@ -237,7 +239,7 @@ index e75b959..6b46b73 100644
      /* Test feature parsing */
      add_feature_test("x86/cpuid/features/plus",
 diff --git a/tests/usb-hcd-xhci-test.c b/tests/usb-hcd-xhci-test.c
-index 9eb24b0..465ed26 100644
+index 9eb24b00e4..465ed26dfc 100644
 --- a/tests/usb-hcd-xhci-test.c
 +++ b/tests/usb-hcd-xhci-test.c
 @@ -21,6 +21,7 @@ static void test_xhci_hotplug(void)
@@ -267,5 +269,5 @@ index 9eb24b0..465ed26 100644
  
      qtest_start("-device nec-usb-xhci,id=xhci"
 -- 
-1.8.3.1
+2.20.1
 

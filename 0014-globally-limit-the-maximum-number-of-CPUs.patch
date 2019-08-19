@@ -1,4 +1,4 @@
-From 29def10374e810c82ef7e01bcdac0c0e77b42aec Mon Sep 17 00:00:00 2001
+From 11b7001f3eb0c4de20695821eaee5589c4c3ac32 Mon Sep 17 00:00:00 2001
 From: Andrew Jones <drjones@redhat.com>
 Date: Tue, 21 Jan 2014 10:46:52 +0100
 Subject: globally limit the maximum number of CPUs
@@ -74,13 +74,15 @@ The recommended vcpu max limit (KVM_CAP_NR_VCPUS) should be used instead
 of the actual max vcpu limit (KVM_CAP_MAX_VCPUS) to give an error.
 
 This commit matches the limit to current KVM_CAP_NR_VCPUS value.
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  accel/kvm/kvm-all.c | 12 ++++++++++++
  vl.c                | 18 ++++++++++++++++++
  2 files changed, 30 insertions(+)
 
 diff --git a/accel/kvm/kvm-all.c b/accel/kvm/kvm-all.c
-index f450f25..2d850df 100644
+index f450f25295..2d850df9e0 100644
 --- a/accel/kvm/kvm-all.c
 +++ b/accel/kvm/kvm-all.c
 @@ -1869,6 +1869,18 @@ static int kvm_init(MachineState *ms)
@@ -103,7 +105,7 @@ index f450f25..2d850df 100644
          if (nc->num > soft_vcpus_limit) {
              warn_report("Number of %s cpus requested (%d) exceeds "
 diff --git a/vl.c b/vl.c
-index dd1fadf..7c52255 100644
+index dd1fadfe08..7c52255141 100644
 --- a/vl.c
 +++ b/vl.c
 @@ -132,6 +132,8 @@ int main(int argc, char **argv)
@@ -146,5 +148,5 @@ index dd1fadf..7c52255 100644
      configure_rtc(qemu_find_opts_singleton("rtc"));
  
 -- 
-1.8.3.1
+2.20.1
 

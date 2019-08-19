@@ -1,4 +1,4 @@
-From 9c73e7109477fecb0477bd6d53e94080eca30e64 Mon Sep 17 00:00:00 2001
+From 765586a71ea9b01f414e4662d11ea77288976f31 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:27:13 +0200
 Subject: Add ppc64 machine types
@@ -25,8 +25,10 @@ Merged patches (4.1.0-rc0):
 - f21757edc target/ppc/spapr: Enable mitigations by default for pseries-4.0 machine type
 - 2511c63 redhat: sync pseries-rhel7.6.0 with rhel-av-8.0.1
 - 89f01da redhat: define pseries-rhel8.1.0 machine type
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/ppc/spapr.c          | 243 ++++++++++++++++++++++++++++++++++++++++++++++++
+ hw/ppc/spapr.c          | 243 ++++++++++++++++++++++++++++++++++++++++
  hw/ppc/spapr_cpu_core.c |  13 +++
  include/hw/ppc/spapr.h  |   1 +
  target/ppc/compat.c     |  13 ++-
@@ -34,7 +36,7 @@ Merged patches (4.1.0-rc0):
  5 files changed, 270 insertions(+), 1 deletion(-)
 
 diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
-index 821f0d4..ab64d43 100644
+index 12ed4b065c..669eae100e 100644
 --- a/hw/ppc/spapr.c
 +++ b/hw/ppc/spapr.c
 @@ -4382,6 +4382,7 @@ static void spapr_machine_class_init(ObjectClass *oc, void *data)
@@ -316,7 +318,7 @@ index 821f0d4..ab64d43 100644
  static void spapr_machine_register_types(void)
  {
 diff --git a/hw/ppc/spapr_cpu_core.c b/hw/ppc/spapr_cpu_core.c
-index b91a106..29a3c7d 100644
+index b91a106074..29a3c7d8ee 100644
 --- a/hw/ppc/spapr_cpu_core.c
 +++ b/hw/ppc/spapr_cpu_core.c
 @@ -21,6 +21,7 @@
@@ -354,7 +356,7 @@ index b91a106..29a3c7d 100644
      spapr_cpu_reset(cpu);
  
 diff --git a/include/hw/ppc/spapr.h b/include/hw/ppc/spapr.h
-index 60553d3..b0ba32e 100644
+index 60553d32c4..b0ba32e6dd 100644
 --- a/include/hw/ppc/spapr.h
 +++ b/include/hw/ppc/spapr.h
 @@ -121,6 +121,7 @@ struct SpaprMachineClass {
@@ -366,7 +368,7 @@ index 60553d3..b0ba32e 100644
                            uint64_t *buid, hwaddr *pio, 
                            hwaddr *mmio32, hwaddr *mmio64,
 diff --git a/target/ppc/compat.c b/target/ppc/compat.c
-index 7de4bf3..3e2e353 100644
+index 7de4bf3122..3e2e35342d 100644
 --- a/target/ppc/compat.c
 +++ b/target/ppc/compat.c
 @@ -105,8 +105,19 @@ static const CompatInfo *compat_by_pvr(uint32_t pvr)
@@ -391,7 +393,7 @@ index 7de4bf3..3e2e353 100644
      const CompatInfo *compat = compat_by_pvr(compat_pvr);
      const CompatInfo *min = compat_by_pvr(min_compat_pvr);
 diff --git a/target/ppc/cpu.h b/target/ppc/cpu.h
-index c9beba2..76cb7c2 100644
+index c9beba2a5c..76cb7c2e37 100644
 --- a/target/ppc/cpu.h
 +++ b/target/ppc/cpu.h
 @@ -1350,6 +1350,7 @@ static inline int cpu_mmu_index(CPUPPCState *env, bool ifetch)
@@ -403,5 +405,5 @@ index c9beba2..76cb7c2 100644
                        uint32_t min_compat_pvr, uint32_t max_compat_pvr);
  bool ppc_type_check_compat(const char *cputype, uint32_t compat_pvr,
 -- 
-1.8.3.1
+2.20.1
 

@@ -1,4 +1,4 @@
-From 83831de11704d0f48ab56fec1f434ae9396e9cc1 Mon Sep 17 00:00:00 2001
+From 728953bda3fcd8bc06026b59b3b86191fb7787c0 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:10:31 +0200
 Subject: Add x86_64 machine types
@@ -25,11 +25,13 @@ Merged patches (4.1.0-rc0):
 - 1de7949 kvm: clear out KVM_ASYNC_PF_DELIVERY_AS_PF_VMEXIT for older machine types
 - 18cf0d7 target/i386: Disable MPX support on named CPU models (partialy)
 - 2660667 rhel: Set host-phys-bits-limit=48 on rhel machine-types
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  hw/i386/acpi-build.c |   3 +
- hw/i386/pc.c         | 226 ++++++++++++++++++++++++++++++++++++++++++++++++++-
- hw/i386/pc_piix.c    | 200 ++++++++++++++++++++++++++++++++++++++++++++-
- hw/i386/pc_q35.c     | 114 +++++++++++++++++++++++++-
+ hw/i386/pc.c         | 226 ++++++++++++++++++++++++++++++++++++++++++-
+ hw/i386/pc_piix.c    | 200 +++++++++++++++++++++++++++++++++++++-
+ hw/i386/pc_q35.c     | 114 +++++++++++++++++++++-
  include/hw/boards.h  |   2 +
  include/hw/i386/pc.h |  27 ++++++
  target/i386/cpu.c    |   9 +-
@@ -37,7 +39,7 @@ Merged patches (4.1.0-rc0):
  8 files changed, 578 insertions(+), 7 deletions(-)
 
 diff --git a/hw/i386/acpi-build.c b/hw/i386/acpi-build.c
-index f3fdfef..1d64f0b 100644
+index f3fdfefcd5..1d64f0bad2 100644
 --- a/hw/i386/acpi-build.c
 +++ b/hw/i386/acpi-build.c
 @@ -203,6 +203,9 @@ static void acpi_get_pm_info(MachineState *machine, AcpiPmInfo *pm)
@@ -51,7 +53,7 @@ index f3fdfef..1d64f0b 100644
      }
  
 diff --git a/hw/i386/pc.c b/hw/i386/pc.c
-index 549c437..9ded0db 100644
+index 549c437050..9ded0db80d 100644
 --- a/hw/i386/pc.c
 +++ b/hw/i386/pc.c
 @@ -354,6 +354,224 @@ GlobalProperty pc_compat_1_4[] = {
@@ -309,7 +311,7 @@ index 549c437..9ded0db 100644
      hc->pre_plug = pc_machine_device_pre_plug_cb;
      hc->plug = pc_machine_device_plug_cb;
 diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
-index c2280c7..c86c48c 100644
+index c2280c72ef..c86c48c092 100644
 --- a/hw/i386/pc_piix.c
 +++ b/hw/i386/pc_piix.c
 @@ -51,6 +51,7 @@
@@ -538,7 +540,7 @@ index c2280c7..c86c48c 100644
 +DEFINE_PC_MACHINE(rhel700, "pc-i440fx-rhel7.0.0", pc_init_rhel700,
 +                  pc_machine_rhel700_options);
 diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
-index 397e1fd..4959ed3 100644
+index 397e1fdd2f..4959ed329f 100644
 --- a/hw/i386/pc_q35.c
 +++ b/hw/i386/pc_q35.c
 @@ -198,8 +198,8 @@ static void pc_q35_init(MachineState *machine)
@@ -674,7 +676,7 @@ index 397e1fd..4959ed3 100644
 +DEFINE_PC_MACHINE(q35_rhel730, "pc-q35-rhel7.3.0", pc_q35_init_rhel730,
 +                  pc_q35_machine_rhel730_options);
 diff --git a/include/hw/boards.h b/include/hw/boards.h
-index 521c625..b4a8c4a 100644
+index 521c6252bf..b4a8c4ab10 100644
 --- a/include/hw/boards.h
 +++ b/include/hw/boards.h
 @@ -214,6 +214,8 @@ struct MachineClass {
@@ -687,7 +689,7 @@ index 521c625..b4a8c4a 100644
                                   int nb_nodes, ram_addr_t size);
      bool ignore_boot_device_suffixes;
 diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
-index 859b64c..605cc71 100644
+index 859b64c51d..605cc714d3 100644
 --- a/include/hw/i386/pc.h
 +++ b/include/hw/i386/pc.h
 @@ -142,6 +142,9 @@ typedef struct PCMachineClass {
@@ -732,7 +734,7 @@ index 859b64c..605cc71 100644
   * depending on QEMU versions up to QEMU 2.4.
   */
 diff --git a/target/i386/cpu.c b/target/i386/cpu.c
-index 47a1236..cd71a09 100644
+index 47a1236e9f..cd71a09b33 100644
 --- a/target/i386/cpu.c
 +++ b/target/i386/cpu.c
 @@ -1548,11 +1548,17 @@ static CPUCaches epyc_cache_info = {
@@ -763,7 +765,7 @@ index 47a1236..cd71a09 100644
  };
  
 diff --git a/target/i386/kvm.c b/target/i386/kvm.c
-index dbbb137..da5a5ef 100644
+index dbbb13772a..da5a5ef5f3 100644
 --- a/target/i386/kvm.c
 +++ b/target/i386/kvm.c
 @@ -2805,6 +2805,7 @@ static int kvm_get_msrs(X86CPU *cpu)
@@ -785,5 +787,5 @@ index dbbb137..da5a5ef 100644
          case MSR_KVM_PV_EOI_EN:
              env->pv_eoi_en_msr = msrs[i].data;
 -- 
-1.8.3.1
+2.20.1
 

@@ -1,4 +1,4 @@
-From c219069712b16be5664bfa6a4fcec4aa261d21c8 Mon Sep 17 00:00:00 2001
+From 9176ac2bc13e273deab798ec95fc2a01f35db43d Mon Sep 17 00:00:00 2001
 From: Eduardo Habkost <ehabkost@redhat.com>
 Date: Wed, 4 Dec 2013 18:53:17 +0100
 Subject: Add support statement to -help output
@@ -18,12 +18,13 @@ as unsupported by Red Hat, and advising users to use libvirt instead.
 Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
 (cherry picked from commit 2a07700936e39856cc9f149c6a6517f0715536a6)
 (cherry picked from commit 5dd2f4706e2fef945771949e59a8fcc1b5452de9)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  vl.c | 9 +++++++++
  1 file changed, 9 insertions(+)
 
 diff --git a/vl.c b/vl.c
-index f9166f5..dd1fadf 100644
+index f9166f509b..dd1fadfe08 100644
 --- a/vl.c
 +++ b/vl.c
 @@ -1803,9 +1803,17 @@ static void version(void)
@@ -53,5 +54,5 @@ index f9166f5..dd1fadf 100644
  }
  
 -- 
-1.8.3.1
+2.20.1
 

@@ -1,4 +1,4 @@
-From 6653aed7b06fd81e60633f7ff81d2d2cd35777fd Mon Sep 17 00:00:00 2001
+From 70a20c03876ba38ba94a5e8e6e1d848e60ef42eb Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 30 Nov 2018 09:11:03 +0100
 Subject: Use qemu-kvm in documentation instead of qemu-system-<arch>
@@ -16,15 +16,16 @@ We change the name and location of qemu-kvm binaries. Update documentation
 to reflect this change. Only architectures available in RHEL are updated.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- docs/qemu-block-drivers.texi |  70 +++++++++++-----------
- docs/qemu-cpu-models.texi    |   8 +--
- qemu-doc.texi                |  70 +++++++++++-----------
- qemu-options.hx              | 140 ++++++++++++++++++++++---------------------
+ docs/qemu-block-drivers.texi |  70 +++++++++---------
+ docs/qemu-cpu-models.texi    |   8 +-
+ qemu-doc.texi                |  70 +++++++++---------
+ qemu-options.hx              | 140 ++++++++++++++++++-----------------
  4 files changed, 146 insertions(+), 142 deletions(-)
 
 diff --git a/docs/qemu-block-drivers.texi b/docs/qemu-block-drivers.texi
-index 91ab0ec..35cc3d8 100644
+index 91ab0eceae..35cc3d838c 100644
 --- a/docs/qemu-block-drivers.texi
 +++ b/docs/qemu-block-drivers.texi
 @@ -405,7 +405,7 @@ QEMU can automatically create a virtual FAT disk image from a
@@ -235,7 +236,7 @@ index 91ab0ec..35cc3d8 100644
  
  @var{host}:@var{bus}:@var{slot}.@var{func} is the NVMe controller's PCI device
 diff --git a/docs/qemu-cpu-models.texi b/docs/qemu-cpu-models.texi
-index ad040cf..0de3229 100644
+index ad040cfc98..0de3229e43 100644
 --- a/docs/qemu-cpu-models.texi
 +++ b/docs/qemu-cpu-models.texi
 @@ -578,25 +578,25 @@ CPU models / features in QEMU and libvirt
@@ -269,7 +270,7 @@ index ad040cf..0de3229 100644
  
  @end table
 diff --git a/qemu-doc.texi b/qemu-doc.texi
-index 577d1e8..44427bb 100644
+index 577d1e8376..44427bb0e1 100644
 --- a/qemu-doc.texi
 +++ b/qemu-doc.texi
 @@ -207,12 +207,12 @@ Note that, by default, GUS shares IRQ(7) with parallel ports and so
@@ -561,7 +562,7 @@ index 577d1e8..44427bb 100644
   -prom-env 'boot-args=conf=hd:2,\yaboot.conf'
  @end example
 diff --git a/qemu-options.hx b/qemu-options.hx
-index 6873f9e..9f323ec 100644
+index 6873f9e674..9f323ec2a2 100644
 --- a/qemu-options.hx
 +++ b/qemu-options.hx
 @@ -254,7 +254,7 @@ This option defines a free-form string that can be used to describe @var{fd}.
@@ -953,5 +954,5 @@ index 6873f9e..9f323ec 100644
         -chardev socket,id=chardev0,path=/path/to/socket \
         -object cryptodev-vhost-user,id=cryptodev0,chardev=chardev0 \
 -- 
-1.8.3.1
+2.20.1
 
