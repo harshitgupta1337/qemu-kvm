@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.1.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -133,6 +133,9 @@ Patch24: kvm-x86-machine-types-add-pc-q35-rhel8.1.0.patch
 Patch25: kvm-machine-types-Update-hw_compat_rhel_8_0-from-hw_comp.patch
 # For bz#1719649 - 8.1 machine type for x86
 Patch26: kvm-virtio-Make-disable-legacy-disable-modern-compat-pro.patch
+# For bz#1738626 - Disable memfd in QEMU
+# For bz#1740797 - Disable memfd in QEMU
+Patch27: kvm-RHEL-disable-hostmem-memfd.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1074,6 +1077,13 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Aug 20 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-4.el8
+- kvm-RHEL-disable-hostmem-memfd.patch [bz#1738626 bz#1740797]
+- Resolves: bz#1738626
+  (Disable memfd in QEMU)
+- Resolves: bz#1740797
+  (Disable memfd in QEMU)
+
 * Mon Aug 19 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-3.el8
 - kvm-x86-machine-types-pc_rhel_8_0_compat.patch [bz#1719649]
 - kvm-x86-machine-types-q35-Fixup-units_per_default_bus.patch [bz#1719649]

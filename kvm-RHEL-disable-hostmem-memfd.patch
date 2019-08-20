@@ -1,0 +1,56 @@
+From f7587ddb9a2731bf678a24156b6285dda79a4b2b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marc-Andr=C3=A9=20Lureau?= <marcandre.lureau@redhat.com>
+Date: Mon, 19 Aug 2019 21:18:27 -0300
+Subject: [PATCH] RHEL: disable hostmem-memfd
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Marc-André Lureau <marcandre.lureau@redhat.com>
+Message-id: <20190814085210.18462-1-marcandre.lureau@redhat.com>
+Patchwork-id: 89974
+O-Subject: [RHEL-8.1.0 qemu-kvm PATCH] RHEL: disable hostmem-memfd
+Bugzilla: 1738626 1740797
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: John Snow <jsnow@redhat.com>
+
+BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1740797
+BRANCH: rhel8/rhel-8.1.0
+UPSTREAM: n/a (downstream only)
+BREW: 23060214
+
+Signed-off-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ backends/Makefile.objs | 3 ++-
+ util/memfd.c           | 2 +-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/backends/Makefile.objs b/backends/Makefile.objs
+index 981e8e1..ad54cd6 100644
+--- a/backends/Makefile.objs
++++ b/backends/Makefile.objs
+@@ -16,4 +16,5 @@ endif
+ 
+ common-obj-$(call land,$(CONFIG_VHOST_USER),$(CONFIG_VIRTIO)) += vhost-user.o
+ 
+-common-obj-$(CONFIG_LINUX) += hostmem-memfd.o
++# RHEL: disable memfd
++# common-obj-$(CONFIG_LINUX) += hostmem-memfd.o
+diff --git a/util/memfd.c b/util/memfd.c
+index 00334e5..e2320af 100644
+--- a/util/memfd.c
++++ b/util/memfd.c
+@@ -193,7 +193,7 @@ bool qemu_memfd_alloc_check(void)
+  */
+ bool qemu_memfd_check(unsigned int flags)
+ {
+-#ifdef CONFIG_LINUX
++#if 0 /* RHEL: memfd support disabled */
+     int mfd = memfd_create("test", flags | MFD_CLOEXEC);
+ 
+     if (mfd >= 0) {
+-- 
+1.8.3.1
+
