@@ -1,0 +1,64 @@
+From a9b22e8663f190e4a845815864e78ef61b68f2a4 Mon Sep 17 00:00:00 2001
+From: Thomas Huth <thuth@redhat.com>
+Date: Tue, 20 Aug 2019 09:24:41 +0100
+Subject: [PATCH 2/5] redhat: s390x: Add proper compatibility options for the
+ -rhel7.6.0 machine
+
+RH-Author: Thomas Huth <thuth@redhat.com>
+Message-id: <20190820092441.28201-3-thuth@redhat.com>
+Patchwork-id: 90078
+O-Subject: [RHEL-AV-8.1.0 qemu-kvm PATCH 2/2] redhat: s390x: Add proper compatibility options for the -rhel7.6.0 machine
+Bugzilla: 1693772
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: David Hildenbrand <david@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+
+Bugzilla: 1693772
+Upstream: n/a (downstream only)
+
+Since we skipped the -rhel8.0.0 machine on s390x, we have to add the
+related compatibility properties now to the -rhel7.6.0 machine type
+instead.
+
+Also the "multiple epoch" facility was disabled on the z14GA1 CPU
+in 7.6, so we also have to adjust our machine type here accordingly.
+
+Signed-off-by: Thomas Huth <thuth@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/s390x/s390-virtio-ccw.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/hw/s390x/s390-virtio-ccw.c b/hw/s390x/s390-virtio-ccw.c
+index 2f4cd14..ebbde05 100644
+--- a/hw/s390x/s390-virtio-ccw.c
++++ b/hw/s390x/s390-virtio-ccw.c
+@@ -905,12 +905,25 @@ DEFINE_CCW_MACHINE(rhel810, "rhel8.1.0", true);
+ 
+ static void ccw_machine_rhel760_instance_options(MachineState *machine)
+ {
++    static const S390FeatInit qemu_cpu_feat = { S390_FEAT_LIST_QEMU_V3_1 };
++
+     ccw_machine_rhel810_instance_options(machine);
++
++    s390_set_qemu_cpu_model(0x2827, 12, 2, qemu_cpu_feat);
++
++    /* The multiple-epoch facility was not available with rhel7.6.0 on z14GA1 */
++    s390_cpudef_featoff(14, 1, S390_FEAT_MULTIPLE_EPOCH);
++    s390_cpudef_featoff(14, 1, S390_FEAT_PTFF_QSIE);
++    s390_cpudef_featoff(14, 1, S390_FEAT_PTFF_QTOUE);
++    s390_cpudef_featoff(14, 1, S390_FEAT_PTFF_STOE);
++    s390_cpudef_featoff(14, 1, S390_FEAT_PTFF_STOUE);
+ }
+ 
+ static void ccw_machine_rhel760_class_options(MachineClass *mc)
+ {
+     ccw_machine_rhel810_class_options(mc);
++    /* We never published the s390x version of RHEL8.0 AV, so add this here */
++    compat_props_add(mc->compat_props, hw_compat_rhel_8_0, hw_compat_rhel_8_0_len);
+     compat_props_add(mc->compat_props, hw_compat_rhel_7_6, hw_compat_rhel_7_6_len);
+     compat_props_add(mc->compat_props, ccw_compat_rhel_7_6, ccw_compat_rhel_7_6_len);
+ }
+-- 
+1.8.3.1
+

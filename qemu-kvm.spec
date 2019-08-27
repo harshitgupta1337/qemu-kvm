@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.1.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -136,6 +136,12 @@ Patch26: kvm-virtio-Make-disable-legacy-disable-modern-compat-pro.patch
 # For bz#1738626 - Disable memfd in QEMU
 # For bz#1740797 - Disable memfd in QEMU
 Patch27: kvm-RHEL-disable-hostmem-memfd.patch
+# For bz#1693772 - [IBM zKVM] RHEL AV 8.1.0 machine type update for s390x
+Patch28: kvm-redhat-s390x-Rename-s390-ccw-virtio-rhel8.0.0-to-s39.patch
+# For bz#1693772 - [IBM zKVM] RHEL AV 8.1.0 machine type update for s390x
+Patch29: kvm-redhat-s390x-Add-proper-compatibility-options-for-th.patch
+# For bz#1744170 - [IBM Power] New 8.1.0 machine type for pseries
+Patch31: kvm-redhat-update-pseries-rhel8.1.0-machine-type.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -162,6 +168,7 @@ BuildRequires: python3-sphinx
 BuildRequires: spice-protocol >= 0.12.12
 BuildRequires: spice-server-devel >= 0.12.8
 BuildRequires: libcacard-devel
+BuildRequires: virglrenderer-devel
 # For smartcard NSS support
 BuildRequires: nss-devel
 %endif
@@ -475,9 +482,11 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
 %if 0%{have_spice}
   --enable-spice \
   --enable-smartcard \
+  --enable-virglrenderer \
 %else
   --disable-spice \
   --disable-smartcard \
+  --disable-virglrenderer \
 %endif
 %if 0%{have_opengl}
   --enable-opengl \
@@ -882,12 +891,6 @@ rm -rf $RPM_BUILD_ROOT%{qemudocdir}/specs
 
 %check
 export DIFF=diff; make check V=1
-pushd tests/qemu-iotests
-./check -v -raw 001 002 003 004 005 008 009 010 011 012 021 025 032 033 045 048 052 063 077 086 101 104 106 120 132 140 143 145 147 150 152 157 159 160 162 170 171 175 181 184 194 208 218 221 222 226 227 232
-./check -v -qcow2 001 002 003 004 005 007 008 009 010 011 012 017 018 019 020 021 022 024 025 027 028 029 031 032 033 034 035 036 037 038 039 042 043 046 047 048 049 050 052 053 054 056 057 058 062 063 065 066 069 072 073 074 080 085 086 087 089 090 091 095 096 097 098 102 103 104 105 107 108 110 111 114 117 120 126 127 130 132 133 134 137 138 140 141 142 143 144 145 147 150 151 152 156 157 158 159 162 165 170 174 177 179 181 184 187 188 189 190 191 194 195 196 198 201 202 203 204 206 208 209 214 216 217 218 222 226 227 232
-./check -v -luks 001 002 003 004 005 008 009 010 011 012 021 032 033 052 140 143 145 157 162 174 181 184 208 218 227
-./check -v -nbd 001 002 003 004 005 008 009 010 011 021 032 033 045 077 094 104 119 123 132 143 145 147 151 152 162 181 184 194 208 218 222
-popd
 
 %post -n qemu-kvm-core
 # load kvm modules now, so we can make sure no reboot is needed.
@@ -1077,6 +1080,23 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Aug 27 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-5.el8
+- kvm-redhat-s390x-Rename-s390-ccw-virtio-rhel8.0.0-to-s39.patch [bz#1693772]
+- kvm-redhat-s390x-Add-proper-compatibility-options-for-th.patch [bz#1693772]
+- kvm-enable-virgl.patch [bz#1559740]
+- kvm-redhat-update-pseries-rhel8.1.0-machine-type.patch [bz#1744170]
+- kvm-Do-not-run-iotests-on-brew-build.patch [bz#1742197 bz#1742819]
+- Resolves: bz#1559740
+  ([RFE] Enable virgl as TechPreview (qemu))
+- Resolves: bz#1693772
+  ([IBM zKVM] RHEL AV 8.1.0 machine type update for s390x)
+- Resolves: bz#1742197
+  (Remove iotests from qemu-kvm builds [RHEL AV 8.1.0])
+- Resolves: bz#1742819
+  (Remove iotests from qemu-kvm builds [RHEL 8.1.0])
+- Resolves: bz#1744170
+  ([IBM Power] New 8.1.0 machine type for pseries)
+
 * Tue Aug 20 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-4.el8
 - kvm-RHEL-disable-hostmem-memfd.patch [bz#1738626 bz#1740797]
 - Resolves: bz#1738626
