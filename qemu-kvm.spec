@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.1.0
-Release: 5%{?dist}
+Release: 6%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -142,6 +142,14 @@ Patch28: kvm-redhat-s390x-Rename-s390-ccw-virtio-rhel8.0.0-to-s39.patch
 Patch29: kvm-redhat-s390x-Add-proper-compatibility-options-for-th.patch
 # For bz#1744170 - [IBM Power] New 8.1.0 machine type for pseries
 Patch31: kvm-redhat-update-pseries-rhel8.1.0-machine-type.patch
+# For bz#1743142 - Boot guest with multiple e1000 devices, qemu will crash after several guest reboots: kvm_mem_ioeventfd_add: error adding ioeventfd: No space left on device (28)
+Patch32: kvm-memory-Refactor-memory_region_clear_coalescing.patch
+# For bz#1743142 - Boot guest with multiple e1000 devices, qemu will crash after several guest reboots: kvm_mem_ioeventfd_add: error adding ioeventfd: No space left on device (28)
+Patch33: kvm-memory-Split-zones-when-do-coalesced_io_del.patch
+# For bz#1743142 - Boot guest with multiple e1000 devices, qemu will crash after several guest reboots: kvm_mem_ioeventfd_add: error adding ioeventfd: No space left on device (28)
+Patch34: kvm-memory-Remove-has_coalesced_range-counter.patch
+# For bz#1743142 - Boot guest with multiple e1000 devices, qemu will crash after several guest reboots: kvm_mem_ioeventfd_add: error adding ioeventfd: No space left on device (28)
+Patch35: kvm-memory-Fix-up-memory_region_-add-del-_coalescing.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -575,7 +583,6 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --enable-vhost-vsock \
   --enable-vnc \
   --enable-mpath \
-  --disable-virglrenderer \
   --disable-xen-pci-passthrough \
   --enable-tcg \
   --with-git=git \
@@ -1037,6 +1044,10 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %if 0%{have_memlock_limits}
     %{_sysconfdir}/security/limits.d/95-kvm-memlock.conf
 %endif
+%if %{have_spice}
+%{_libexecdir}/vhost-user-gpu
+%{_datadir}/%{name}/vhost-user/50-qemu-gpu.json
+%endif
 
 %files -n qemu-img
 %defattr(-,root,root)
@@ -1080,6 +1091,17 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Wed Sep 04 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-6.el8
+- kvm-memory-Refactor-memory_region_clear_coalescing.patch [bz#1743142]
+- kvm-memory-Split-zones-when-do-coalesced_io_del.patch [bz#1743142]
+- kvm-memory-Remove-has_coalesced_range-counter.patch [bz#1743142]
+- kvm-memory-Fix-up-memory_region_-add-del-_coalescing.patch [bz#1743142]
+- kvm-enable-virgl-for-real-this-time.patch [bz#1559740]
+- Resolves: bz#1559740
+  ([RFE] Enable virgl as TechPreview (qemu))
+- Resolves: bz#1743142
+  (Boot guest with multiple e1000 devices, qemu will crash after several guest reboots: kvm_mem_ioeventfd_add: error adding ioeventfd: No space left on device (28))
+
 * Tue Aug 27 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-5.el8
 - kvm-redhat-s390x-Rename-s390-ccw-virtio-rhel8.0.0-to-s39.patch [bz#1693772]
 - kvm-redhat-s390x-Add-proper-compatibility-options-for-th.patch [bz#1693772]

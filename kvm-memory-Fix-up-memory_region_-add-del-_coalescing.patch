@@ -1,0 +1,118 @@
+From b9b48ed46d2b0a3dd6e8406946eb0516ec75a004 Mon Sep 17 00:00:00 2001
+From: Peter Xu <peterx@redhat.com>
+Date: Fri, 23 Aug 2019 06:14:31 +0100
+Subject: [PATCH 4/5] memory: Fix up memory_region_{add|del}_coalescing
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Peter Xu <peterx@redhat.com>
+Message-id: <20190823061431.31759-5-peterx@redhat.com>
+Patchwork-id: 90136
+O-Subject: [RHEL-AV-8.1 qemu-kvm PATCH 4/4] memory: Fix up memory_region_{add|del}_coalescing
+Bugzilla: 1743142
+RH-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
+RH-Acked-by: Auger Eric <eric.auger@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+
+The old memory_region_{add|clear}_coalescing() has some defects
+because they both changed mr->coalesced before updating the regions
+using memory_region_update_coalesced_range_as().  Then when the
+regions were updated in memory_region_update_coalesced_range_as() the
+mr->coalesced will always be either one more or one less.  So:
+
+- For memory_region_add_coalescing: it'll always trying to remove the
+  newly added coalesced region while it shouldn't, and,
+
+- For memory_region_clear_coalescing: when it calls the update there
+  will be no coalesced ranges on mr->coalesced because they were all
+  removed before hand so the update will probably do nothing for real.
+
+Let's fix this.  Now we've got flat_range_coalesced_io_notify() to
+notify a single CoalescedMemoryRange instance change, so use it in the
+existing memory_region_update_coalesced_range() logic by only notify
+either an addition or deletion.  Then we hammer both the
+memory_region_{add|clear}_coalescing() to use it.
+
+Fixes: 3ac7d43a6fbb5d4a3
+Signed-off-by: Peter Xu <peterx@redhat.com>
+Message-Id: <20190820141328.10009-5-peterx@redhat.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+(cherry picked from commit b960fc1796fb078c21121abf01499603b66b3f57)
+Signed-off-by: Peter Xu <peterx@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ memory.c | 36 +++++++++++++++++-------------------
+ 1 file changed, 17 insertions(+), 19 deletions(-)
+
+diff --git a/memory.c b/memory.c
+index c7cd43f..2f15180 100644
+--- a/memory.c
++++ b/memory.c
+@@ -2238,27 +2238,26 @@ void memory_region_ram_resize(MemoryRegion *mr, ram_addr_t newsize, Error **errp
+     qemu_ram_resize(mr->ram_block, newsize, errp);
+ }
+ 
+-static void memory_region_update_coalesced_range_as(MemoryRegion *mr, AddressSpace *as)
++/*
++ * Call proper memory listeners about the change on the newly
++ * added/removed CoalescedMemoryRange.
++ */
++static void memory_region_update_coalesced_range(MemoryRegion *mr,
++                                                 CoalescedMemoryRange *cmr,
++                                                 bool add)
+ {
++    AddressSpace *as;
+     FlatView *view;
+     FlatRange *fr;
+ 
+-    view = address_space_get_flatview(as);
+-    FOR_EACH_FLAT_RANGE(fr, view) {
+-        if (fr->mr == mr) {
+-            flat_range_coalesced_io_del(fr, as);
+-            flat_range_coalesced_io_add(fr, as);
+-        }
+-    }
+-    flatview_unref(view);
+-}
+-
+-static void memory_region_update_coalesced_range(MemoryRegion *mr)
+-{
+-    AddressSpace *as;
+-
+     QTAILQ_FOREACH(as, &address_spaces, address_spaces_link) {
+-        memory_region_update_coalesced_range_as(mr, as);
++        view = address_space_get_flatview(as);
++        FOR_EACH_FLAT_RANGE(fr, view) {
++            if (fr->mr == mr) {
++                flat_range_coalesced_io_notify(fr, as, cmr, add);
++            }
++        }
++        flatview_unref(view);
+     }
+ }
+ 
+@@ -2276,7 +2275,7 @@ void memory_region_add_coalescing(MemoryRegion *mr,
+ 
+     cmr->addr = addrrange_make(int128_make64(offset), int128_make64(size));
+     QTAILQ_INSERT_TAIL(&mr->coalesced, cmr, link);
+-    memory_region_update_coalesced_range(mr);
++    memory_region_update_coalesced_range(mr, cmr, true);
+     memory_region_set_flush_coalesced(mr);
+ }
+ 
+@@ -2294,10 +2293,9 @@ void memory_region_clear_coalescing(MemoryRegion *mr)
+     while (!QTAILQ_EMPTY(&mr->coalesced)) {
+         cmr = QTAILQ_FIRST(&mr->coalesced);
+         QTAILQ_REMOVE(&mr->coalesced, cmr, link);
++        memory_region_update_coalesced_range(mr, cmr, false);
+         g_free(cmr);
+     }
+-
+-    memory_region_update_coalesced_range(mr);
+ }
+ 
+ void memory_region_set_flush_coalesced(MemoryRegion *mr)
+-- 
+1.8.3.1
+
