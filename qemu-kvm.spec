@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.1.0
-Release: 6%{?dist}
+Release: 7%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -150,6 +150,22 @@ Patch33: kvm-memory-Split-zones-when-do-coalesced_io_del.patch
 Patch34: kvm-memory-Remove-has_coalesced_range-counter.patch
 # For bz#1743142 - Boot guest with multiple e1000 devices, qemu will crash after several guest reboots: kvm_mem_ioeventfd_add: error adding ioeventfd: No space left on device (28)
 Patch35: kvm-memory-Fix-up-memory_region_-add-del-_coalescing.patch
+# For bz#1516220 - -trace help prints an incomplete list of trace events
+Patch36: kvm-trace-Clarify-DTrace-SystemTap-help-message.patch
+# For bz#1726898 - Parallel migration fails with error "Unable to write to socket: Connection reset by peer" now and then
+Patch37: kvm-socket-Add-backlog-parameter-to-socket_listen.patch
+# For bz#1726898 - Parallel migration fails with error "Unable to write to socket: Connection reset by peer" now and then
+Patch38: kvm-socket-Add-num-connections-to-qio_channel_socket_syn.patch
+# For bz#1726898 - Parallel migration fails with error "Unable to write to socket: Connection reset by peer" now and then
+Patch39: kvm-socket-Add-num-connections-to-qio_channel_socket_asy.patch
+# For bz#1726898 - Parallel migration fails with error "Unable to write to socket: Connection reset by peer" now and then
+Patch40: kvm-socket-Add-num-connections-to-qio_net_listener_open_.patch
+# For bz#1726898 - Parallel migration fails with error "Unable to write to socket: Connection reset by peer" now and then
+Patch41: kvm-multifd-Use-number-of-channels-as-listen-backlog.patch
+# For bz#1744107 - Migration from P8(qemu4.1) to P9(qemu4.1), after migration, qemu crash on destination with error message "qemu-kvm: error while loading state for instance 0x1 of device 'cpu'"
+Patch42: kvm-pseries-Fix-compat_pvr-on-reset.patch
+# For bz#1744107 - Migration from P8(qemu4.1) to P9(qemu4.1), after migration, qemu crash on destination with error message "qemu-kvm: error while loading state for instance 0x1 of device 'cpu'"
+Patch43: kvm-spapr-Set-compat-mode-in-spapr_core_plug.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1091,6 +1107,22 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Sep 06 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-7.el8
+- kvm-trace-Clarify-DTrace-SystemTap-help-message.patch [bz#1516220]
+- kvm-socket-Add-backlog-parameter-to-socket_listen.patch [bz#1726898]
+- kvm-socket-Add-num-connections-to-qio_channel_socket_syn.patch [bz#1726898]
+- kvm-socket-Add-num-connections-to-qio_channel_socket_asy.patch [bz#1726898]
+- kvm-socket-Add-num-connections-to-qio_net_listener_open_.patch [bz#1726898]
+- kvm-multifd-Use-number-of-channels-as-listen-backlog.patch [bz#1726898]
+- kvm-pseries-Fix-compat_pvr-on-reset.patch [bz#1744107]
+- kvm-spapr-Set-compat-mode-in-spapr_core_plug.patch [bz#1744107]
+- Resolves: bz#1516220
+  (-trace help prints an incomplete list of trace events)
+- Resolves: bz#1726898
+  (Parallel migration fails with error "Unable to write to socket: Connection reset by peer" now and then)
+- Resolves: bz#1744107
+  (Migration from P8(qemu4.1) to P9(qemu4.1), after migration, qemu crash on destination with error message "qemu-kvm: error while loading state for instance 0x1 of device 'cpu'")
+
 * Wed Sep 04 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-6.el8
 - kvm-memory-Refactor-memory_region_clear_coalescing.patch [bz#1743142]
 - kvm-memory-Split-zones-when-do-coalesced_io_del.patch [bz#1743142]

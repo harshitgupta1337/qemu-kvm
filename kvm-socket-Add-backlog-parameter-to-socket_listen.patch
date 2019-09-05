@@ -1,0 +1,295 @@
+From fce683618bc605eaedfdcea0db974734c111a2e9 Mon Sep 17 00:00:00 2001
+From: Juan Quintela <quintela@redhat.com>
+Date: Wed, 4 Sep 2019 10:26:02 +0100
+Subject: [PATCH 2/8] socket: Add backlog parameter to socket_listen
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Juan Quintela <quintela@redhat.com>
+Message-id: <20190904102606.15744-2-quintela@redhat.com>
+Patchwork-id: 90270
+O-Subject: [RHEL-AV-8.1 qemu-kvm PATCH 1/5] socket: Add backlog parameter to socket_listen
+Bugzilla: 1726898
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+
+Current parameter was always one.  We continue with that value for now
+in all callers.
+
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+---
+Moved trace to socket_listen
+(cherry picked from commit e5b6353cf25c99c3f08bf51e29933352f7140e8f)
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ include/qemu/sockets.h    |  2 +-
+ io/channel-socket.c       |  2 +-
+ qga/channel-posix.c       |  2 +-
+ tests/test-util-sockets.c | 12 ++++++------
+ util/qemu-sockets.c       | 33 ++++++++++++++++++++++-----------
+ util/trace-events         |  3 +++
+ 6 files changed, 34 insertions(+), 20 deletions(-)
+
+diff --git a/include/qemu/sockets.h b/include/qemu/sockets.h
+index 8140fea..57cd049 100644
+--- a/include/qemu/sockets.h
++++ b/include/qemu/sockets.h
+@@ -41,7 +41,7 @@ int unix_connect(const char *path, Error **errp);
+ 
+ SocketAddress *socket_parse(const char *str, Error **errp);
+ int socket_connect(SocketAddress *addr, Error **errp);
+-int socket_listen(SocketAddress *addr, Error **errp);
++int socket_listen(SocketAddress *addr, int num, Error **errp);
+ void socket_listen_cleanup(int fd, Error **errp);
+ int socket_dgram(SocketAddress *remote, SocketAddress *local, Error **errp);
+ 
+diff --git a/io/channel-socket.c b/io/channel-socket.c
+index bec3d93..a533c8b 100644
+--- a/io/channel-socket.c
++++ b/io/channel-socket.c
+@@ -202,7 +202,7 @@ int qio_channel_socket_listen_sync(QIOChannelSocket *ioc,
+     int fd;
+ 
+     trace_qio_channel_socket_listen_sync(ioc, addr);
+-    fd = socket_listen(addr, errp);
++    fd = socket_listen(addr, 1, errp);
+     if (fd < 0) {
+         trace_qio_channel_socket_listen_fail(ioc);
+         return -1;
+diff --git a/qga/channel-posix.c b/qga/channel-posix.c
+index 5a925a9..8fc205a 100644
+--- a/qga/channel-posix.c
++++ b/qga/channel-posix.c
+@@ -215,7 +215,7 @@ static gboolean ga_channel_open(GAChannel *c, const gchar *path,
+                 return false;
+             }
+ 
+-            fd = socket_listen(addr, &local_err);
++            fd = socket_listen(addr, 1, &local_err);
+             qapi_free_SocketAddress(addr);
+             if (local_err != NULL) {
+                 g_critical("%s", error_get_pretty(local_err));
+diff --git a/tests/test-util-sockets.c b/tests/test-util-sockets.c
+index f1ebffe..c8e1893 100644
+--- a/tests/test-util-sockets.c
++++ b/tests/test-util-sockets.c
+@@ -93,7 +93,7 @@ static void test_socket_fd_pass_name_good(void)
+     g_assert_cmpint(fd, !=, mon_fd);
+     close(fd);
+ 
+-    fd = socket_listen(&addr, &error_abort);
++    fd = socket_listen(&addr, 1, &error_abort);
+     g_assert_cmpint(fd, !=, -1);
+     g_assert_cmpint(fd, !=, mon_fd);
+     close(fd);
+@@ -124,7 +124,7 @@ static void test_socket_fd_pass_name_bad(void)
+     g_assert_cmpint(fd, ==, -1);
+     error_free_or_abort(&err);
+ 
+-    fd = socket_listen(&addr, &err);
++    fd = socket_listen(&addr, 1, &err);
+     g_assert_cmpint(fd, ==, -1);
+     error_free_or_abort(&err);
+ 
+@@ -151,7 +151,7 @@ static void test_socket_fd_pass_name_nomon(void)
+     g_assert_cmpint(fd, ==, -1);
+     error_free_or_abort(&err);
+ 
+-    fd = socket_listen(&addr, &err);
++    fd = socket_listen(&addr, 1, &err);
+     g_assert_cmpint(fd, ==, -1);
+     error_free_or_abort(&err);
+ 
+@@ -174,7 +174,7 @@ static void test_socket_fd_pass_num_good(void)
+     fd = socket_connect(&addr, &error_abort);
+     g_assert_cmpint(fd, ==, sfd);
+ 
+-    fd = socket_listen(&addr, &error_abort);
++    fd = socket_listen(&addr, 1, &error_abort);
+     g_assert_cmpint(fd, ==, sfd);
+ 
+     g_free(addr.u.fd.str);
+@@ -197,7 +197,7 @@ static void test_socket_fd_pass_num_bad(void)
+     g_assert_cmpint(fd, ==, -1);
+     error_free_or_abort(&err);
+ 
+-    fd = socket_listen(&addr, &err);
++    fd = socket_listen(&addr, 1, &err);
+     g_assert_cmpint(fd, ==, -1);
+     error_free_or_abort(&err);
+ 
+@@ -220,7 +220,7 @@ static void test_socket_fd_pass_num_nocli(void)
+     g_assert_cmpint(fd, ==, -1);
+     error_free_or_abort(&err);
+ 
+-    fd = socket_listen(&addr, &err);
++    fd = socket_listen(&addr, 1, &err);
+     g_assert_cmpint(fd, ==, -1);
+     error_free_or_abort(&err);
+ 
+diff --git a/util/qemu-sockets.c b/util/qemu-sockets.c
+index a5092db..a39ada4 100644
+--- a/util/qemu-sockets.c
++++ b/util/qemu-sockets.c
+@@ -31,6 +31,7 @@
+ #include "qapi/qobject-input-visitor.h"
+ #include "qapi/qobject-output-visitor.h"
+ #include "qemu/cutils.h"
++#include "trace.h"
+ 
+ #ifndef AI_ADDRCONFIG
+ # define AI_ADDRCONFIG 0
+@@ -207,6 +208,7 @@ static int try_bind(int socket, InetSocketAddress *saddr, struct addrinfo *e)
+ 
+ static int inet_listen_saddr(InetSocketAddress *saddr,
+                              int port_offset,
++                             int num,
+                              Error **errp)
+ {
+     struct addrinfo ai,*res,*e;
+@@ -303,7 +305,7 @@ static int inet_listen_saddr(InetSocketAddress *saddr,
+                     goto listen_failed;
+                 }
+             } else {
+-                if (!listen(slisten, 1)) {
++                if (!listen(slisten, num)) {
+                     goto listen_ok;
+                 }
+                 if (errno != EADDRINUSE) {
+@@ -746,6 +748,7 @@ static int vsock_connect_saddr(VsockSocketAddress *vaddr, Error **errp)
+ }
+ 
+ static int vsock_listen_saddr(VsockSocketAddress *vaddr,
++                              int num,
+                               Error **errp)
+ {
+     struct sockaddr_vm svm;
+@@ -767,7 +770,7 @@ static int vsock_listen_saddr(VsockSocketAddress *vaddr,
+         return -1;
+     }
+ 
+-    if (listen(slisten, 1) != 0) {
++    if (listen(slisten, num) != 0) {
+         error_setg_errno(errp, errno, "Failed to listen on socket");
+         closesocket(slisten);
+         return -1;
+@@ -808,6 +811,7 @@ static int vsock_connect_saddr(VsockSocketAddress *vaddr, Error **errp)
+ }
+ 
+ static int vsock_listen_saddr(VsockSocketAddress *vaddr,
++                              int num,
+                               Error **errp)
+ {
+     vsock_unsupported(errp);
+@@ -825,6 +829,7 @@ static int vsock_parse(VsockSocketAddress *addr, const char *str,
+ #ifndef _WIN32
+ 
+ static int unix_listen_saddr(UnixSocketAddress *saddr,
++                             int num,
+                              Error **errp)
+ {
+     struct sockaddr_un un;
+@@ -886,7 +891,7 @@ static int unix_listen_saddr(UnixSocketAddress *saddr,
+         error_setg_errno(errp, errno, "Failed to bind socket to %s", path);
+         goto err;
+     }
+-    if (listen(sock, 1) < 0) {
++    if (listen(sock, num) < 0) {
+         error_setg_errno(errp, errno, "Failed to listen on socket");
+         goto err;
+     }
+@@ -953,6 +958,7 @@ static int unix_connect_saddr(UnixSocketAddress *saddr, Error **errp)
+ #else
+ 
+ static int unix_listen_saddr(UnixSocketAddress *saddr,
++                             int num,
+                              Error **errp)
+ {
+     error_setg(errp, "unix sockets are not available on windows");
+@@ -976,7 +982,7 @@ int unix_listen(const char *str, Error **errp)
+ 
+     saddr = g_new0(UnixSocketAddress, 1);
+     saddr->path = g_strdup(str);
+-    sock = unix_listen_saddr(saddr, errp);
++    sock = unix_listen_saddr(saddr, 1, errp);
+     qapi_free_UnixSocketAddress(saddr);
+     return sock;
+ }
+@@ -1033,9 +1039,13 @@ fail:
+     return NULL;
+ }
+ 
+-static int socket_get_fd(const char *fdstr, Error **errp)
++static int socket_get_fd(const char *fdstr, int num, Error **errp)
+ {
+     int fd;
++    if (num != 1) {
++        error_setg_errno(errp, EINVAL, "socket_get_fd: too many connections");
++        return -1;
++    }
+     if (cur_mon) {
+         fd = monitor_get_fd(cur_mon, fdstr, errp);
+         if (fd < 0) {
+@@ -1071,7 +1081,7 @@ int socket_connect(SocketAddress *addr, Error **errp)
+         break;
+ 
+     case SOCKET_ADDRESS_TYPE_FD:
+-        fd = socket_get_fd(addr->u.fd.str, errp);
++        fd = socket_get_fd(addr->u.fd.str, 1, errp);
+         break;
+ 
+     case SOCKET_ADDRESS_TYPE_VSOCK:
+@@ -1084,25 +1094,26 @@ int socket_connect(SocketAddress *addr, Error **errp)
+     return fd;
+ }
+ 
+-int socket_listen(SocketAddress *addr, Error **errp)
++int socket_listen(SocketAddress *addr, int num, Error **errp)
+ {
+     int fd;
+ 
++    trace_socket_listen(num);
+     switch (addr->type) {
+     case SOCKET_ADDRESS_TYPE_INET:
+-        fd = inet_listen_saddr(&addr->u.inet, 0, errp);
++        fd = inet_listen_saddr(&addr->u.inet, 0, num, errp);
+         break;
+ 
+     case SOCKET_ADDRESS_TYPE_UNIX:
+-        fd = unix_listen_saddr(&addr->u.q_unix, errp);
++        fd = unix_listen_saddr(&addr->u.q_unix, num, errp);
+         break;
+ 
+     case SOCKET_ADDRESS_TYPE_FD:
+-        fd = socket_get_fd(addr->u.fd.str, errp);
++        fd = socket_get_fd(addr->u.fd.str, num, errp);
+         break;
+ 
+     case SOCKET_ADDRESS_TYPE_VSOCK:
+-        fd = vsock_listen_saddr(&addr->u.vsock, errp);
++        fd = vsock_listen_saddr(&addr->u.vsock, num, errp);
+         break;
+ 
+     default:
+diff --git a/util/trace-events b/util/trace-events
+index 9dbd237..83b6639 100644
+--- a/util/trace-events
++++ b/util/trace-events
+@@ -64,6 +64,9 @@ lockcnt_futex_wait(const void *lockcnt, int val) "lockcnt %p waiting on %d"
+ lockcnt_futex_wait_resume(const void *lockcnt, int new) "lockcnt %p after wait: %d"
+ lockcnt_futex_wake(const void *lockcnt) "lockcnt %p waking up one waiter"
+ 
++# qemu-sockets.c
++socket_listen(int num) "backlog: %d"
++
+ # qemu-thread-common.h
+ qemu_mutex_lock(void *mutex, const char *file, const int line) "waiting on mutex %p (%s:%d)"
+ qemu_mutex_locked(void *mutex, const char *file, const int line) "taken mutex %p (%s:%d)"
+-- 
+1.8.3.1
+

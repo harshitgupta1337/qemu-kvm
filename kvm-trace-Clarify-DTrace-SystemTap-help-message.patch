@@ -1,0 +1,80 @@
+From 5d45e3a5d2e2d929095489a37579c3b7fc059450 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Philippe=20Mathieu-Daud=C3=A9?= <philmd@redhat.com>
+Date: Tue, 3 Sep 2019 14:21:10 +0100
+Subject: [PATCH 1/8] trace: Clarify DTrace/SystemTap help message
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Philippe Mathieu-Daudé <philmd@redhat.com>
+Message-id: <20190903142110.25673-2-philmd@redhat.com>
+Patchwork-id: 90255
+O-Subject: [RHEL-AV-8.1.0 qemu-kvm PATCH 1/1] trace: Clarify DTrace/SystemTap help message
+Bugzilla: 1516220
+RH-Acked-by: John Snow <jsnow@redhat.com>
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+
+Most tracing backends are implemented within QEMU, except the
+DTrace/SystemTap backends.
+
+One side effect is when running 'qemu -trace help', an incomplete
+list of trace events is displayed when using the DTrace/SystemTap
+backends.
+
+This is partly due to trace events registered as modules with
+trace_init(), and since the events are not used within QEMU,
+the linker optimize and remove the unused modules (which is
+OK in this particular case).
+Currently only the events compiled in trace-root.o and in the
+last trace.o member of libqemuutil.a are linked, resulting in
+an incomplete list of events.
+
+To avoid confusion, improve the help message, recommending to
+use the proper systemtap script to display the events list.
+
+Before:
+
+  $ lm32-softmmu/qemu-system-lm32 -trace help 2>&1 | wc -l
+  70
+
+After:
+
+  $ lm32-softmmu/qemu-system-lm32 -trace help
+  Run 'qemu-trace-stap list qemu-system-lm32' to print a list
+  of names of trace points with the DTrace/SystemTap backends.
+
+  $ qemu-trace-stap list qemu-system-lm32 | wc -l
+  1136
+
+Signed-off-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Message-id: 20190823142203.5210-1-philmd@redhat.com
+Message-Id: <20190823142203.5210-1-philmd@redhat.com>
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+(cherry picked from commit 9f591a5d95e1969969632ab44cf35e505c8ddc3b)
+Signed-off-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ trace/control.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/trace/control.c b/trace/control.c
+index 43fb786..d9cafc1 100644
+--- a/trace/control.c
++++ b/trace/control.c
+@@ -165,6 +165,12 @@ void trace_list_events(void)
+     while ((ev = trace_event_iter_next(&iter)) != NULL) {
+         fprintf(stderr, "%s\n", trace_event_get_name(ev));
+     }
++#ifdef CONFIG_TRACE_DTRACE
++    fprintf(stderr, "This list of names of trace points may be incomplete "
++                    "when using the DTrace/SystemTap backends.\n"
++                    "Run 'qemu-trace-stap list %s' to print the full list.\n",
++            error_get_progname());
++#endif
+ }
+ 
+ static void do_trace_enable_events(const char *line_buf)
+-- 
+1.8.3.1
+

@@ -1,0 +1,127 @@
+From 50cee68ce9dc31033969905cf0358d0f641d056a Mon Sep 17 00:00:00 2001
+From: Laurent Vivier <lvivier@redhat.com>
+Date: Wed, 4 Sep 2019 10:31:39 +0100
+Subject: [PATCH 8/8] spapr: Set compat mode in spapr_core_plug()
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+Message-id: <20190904103139.29870-3-lvivier@redhat.com>
+Patchwork-id: 90276
+O-Subject: [RHEL-AV-8.1.0 qemu-kvm PATCH 2/2] spapr: Set compat mode in spapr_core_plug()
+Bugzilla: 1744107
+RH-Acked-by: John Snow <jsnow@redhat.com>
+RH-Acked-by: David Gibson <dgibson@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+
+From: Greg Kurz <groug@kaod.org>
+
+A recent change in spapr_machine_reset() showed that resetting the compat
+mode in spapr_machine_reset() for the boot vCPU and in spapr_cpu_reset()
+for all other vCPUs was fragile. The fix was thus to reset the compat mode
+for all vCPUs in spapr_machine_reset(), but we still have to propagate
+it to hot-plugged CPUs. This is still performed from spapr_cpu_reset(),
+hence resulting in ppc_set_compat() being called twice for every vCPU at
+machine reset. Apart from wasting cycles, which isn't really an issue
+during machine reset, this seems to indicate that spapr_cpu_reset() isn't
+the best place to set the compat mode.
+
+A natural candidate for CPU-hotplug specific code is spapr_core_plug().
+Also, it sits in the same file as spapr_machine_reset() : this makes
+it easier for someone who wants to know when the compat PVR is set.
+
+Call ppc_set_compat() from there. This doesn't need to be done for
+initial vCPUs since the compat PVR is 0 and spapr_machine_reset() sets
+the appropriate value later. No need to do this on manually added vCPUS
+on the destination QEMU during migration since the compat PVR is
+part of the migrated vCPU state. Both conditions can be checked with
+spapr_drc_hotplugged().
+
+Signed-off-by: Greg Kurz <groug@kaod.org>
+Message-Id: <156701285312.499757.7807417667750711711.stgit@bahia.lan>
+Signed-off-by: David Gibson <david@gibson.dropbear.id.au>
+(cherry picked from commit b1e815674343a171e51ce447495957e289091e9f)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+
+BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1744107
+BRANCH: rhel-av-8.1.0/master-4.1.0
+UPSTREAM: Merged
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/ppc/spapr.c          | 24 ++++++++++++++++--------
+ hw/ppc/spapr_cpu_core.c |  7 -------
+ 2 files changed, 16 insertions(+), 15 deletions(-)
+
+diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
+index 30bf7bb..41a6070 100644
+--- a/hw/ppc/spapr.c
++++ b/hw/ppc/spapr.c
+@@ -1746,12 +1746,6 @@ static void spapr_machine_reset(MachineState *machine)
+         spapr_ovec_cleanup(spapr->ov5_cas);
+         spapr->ov5_cas = spapr_ovec_new();
+ 
+-        /*
+-         * reset compat_pvr for all CPUs
+-         * as qemu_devices_reset() is called before this,
+-         * it can't be propagated by spapr_cpu_reset()
+-         * from the first CPU to all the others
+-         */
+         ppc_set_compat_all(spapr->max_compat_pvr, &error_fatal);
+     }
+ 
+@@ -3826,6 +3820,7 @@ static void spapr_core_plug(HotplugHandler *hotplug_dev, DeviceState *dev,
+     CPUArchId *core_slot;
+     int index;
+     bool hotplugged = spapr_drc_hotplugged(dev);
++    int i;
+ 
+     core_slot = spapr_find_cpu_slot(MACHINE(hotplug_dev), cc->core_id, &index);
+     if (!core_slot) {
+@@ -3859,13 +3854,26 @@ static void spapr_core_plug(HotplugHandler *hotplug_dev, DeviceState *dev,
+     core_slot->cpu = OBJECT(dev);
+ 
+     if (smc->pre_2_10_has_unused_icps) {
+-        int i;
+-
+         for (i = 0; i < cc->nr_threads; i++) {
+             cs = CPU(core->threads[i]);
+             pre_2_10_vmstate_unregister_dummy_icp(cs->cpu_index);
+         }
+     }
++
++    /*
++     * Set compatibility mode to match the boot CPU, which was either set
++     * by the machine reset code or by CAS.
++     */
++    if (hotplugged) {
++        for (i = 0; i < cc->nr_threads; i++) {
++            ppc_set_compat(core->threads[i], POWERPC_CPU(first_cpu)->compat_pvr,
++                           &local_err);
++            if (local_err) {
++                error_propagate(errp, local_err);
++                return;
++            }
++        }
++    }
+ }
+ 
+ static void spapr_core_pre_plug(HotplugHandler *hotplug_dev, DeviceState *dev,
+diff --git a/hw/ppc/spapr_cpu_core.c b/hw/ppc/spapr_cpu_core.c
+index ae43c57..85f2746 100644
+--- a/hw/ppc/spapr_cpu_core.c
++++ b/hw/ppc/spapr_cpu_core.c
+@@ -39,13 +39,6 @@ static void spapr_cpu_reset(void *opaque)
+      * using an RTAS call */
+     cs->halted = 1;
+ 
+-    /* Set compatibility mode to match the boot CPU, which was either set
+-     * by the machine reset code or by CAS. This should never fail.
+-     * At startup the value is already set for all the CPUs
+-     * but we need this when we hotplug a new CPU
+-     */
+-    ppc_set_compat(cpu, POWERPC_CPU(first_cpu)->compat_pvr, &error_abort);
+-
+     env->spr[SPR_HIOR] = 0;
+ 
+     lpcr = env->spr[SPR_LPCR];
+-- 
+1.8.3.1
+

@@ -1,0 +1,50 @@
+From 8c93ef106ecf2aa0604ffe7fee3d628b88c2b015 Mon Sep 17 00:00:00 2001
+From: Juan Quintela <quintela@redhat.com>
+Date: Wed, 4 Sep 2019 10:26:06 +0100
+Subject: [PATCH 6/8] multifd: Use number of channels as listen backlog
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Juan Quintela <quintela@redhat.com>
+Message-id: <20190904102606.15744-6-quintela@redhat.com>
+Patchwork-id: 90273
+O-Subject: [RHEL-AV-8.1 qemu-kvm PATCH 5/5] multifd: Use number of channels as listen backlog
+Bugzilla: 1726898
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+(cherry picked from commit 0705e56496d2b155b5796c6b28d4110e5bcbd5d8)
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ migration/socket.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/migration/socket.c b/migration/socket.c
+index e63f5e1..97c9efd 100644
+--- a/migration/socket.c
++++ b/migration/socket.c
+@@ -178,10 +178,15 @@ static void socket_start_incoming_migration(SocketAddress *saddr,
+ {
+     QIONetListener *listener = qio_net_listener_new();
+     size_t i;
++    int num = 1;
+ 
+     qio_net_listener_set_name(listener, "migration-socket-listener");
+ 
+-    if (qio_net_listener_open_sync(listener, saddr, 1, errp) < 0) {
++    if (migrate_use_multifd()) {
++        num = migrate_multifd_channels();
++    }
++
++    if (qio_net_listener_open_sync(listener, saddr, num, errp) < 0) {
+         object_unref(OBJECT(listener));
+         return;
+     }
+-- 
+1.8.3.1
+
