@@ -1,0 +1,60 @@
+From c8d3479746b17fcdf56b8afb3eccdba2c14578e8 Mon Sep 17 00:00:00 2001
+From: David Gibson <dgibson@redhat.com>
+Date: Fri, 6 Sep 2019 03:58:36 +0100
+Subject: [PATCH 3/6] spapr: Use SHUTDOWN_CAUSE_SUBSYSTEM_RESET for CAS reboots
+
+RH-Author: David Gibson <dgibson@redhat.com>
+Message-id: <20190906035836.23689-1-dgibson@redhat.com>
+Patchwork-id: 90293
+O-Subject: [RHEL-AV-8.1.0 qemu-kvm PATCH] spapr: Use SHUTDOWN_CAUSE_SUBSYSTEM_RESET for CAS reboots
+Bugzilla: 1743477
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+
+From: David Gibson <david@gibson.dropbear.id.au>
+
+The sPAPR platform includes feature negotiation between the guest and
+platform.  That sometimes requires reconfiguring the virtual hardware, and
+in some cases that is a complex enough process that we trigger a system
+reset to handle it.  That interacts badly with -no-reboot - we trigger the
+reboot, -no-reboot means we exit and so the guest never gets to try again.
+
+Eventually we want to get rid of CAS reboots entirely, since they're odd
+and irritating for the user.  But in the meantime we can fix the -no-reboot
+problem by using SHUTDOWN_CAUSE_SUBSYSTEM_RESET which ignores -no-reboot
+and seems to be designed for this sort of faux-reset for internal purposes
+only.
+
+Signed-off-by: David Gibson <david@gibson.dropbear.id.au>
+(cherry picked from commit 9146206eb26c1436c80a7c2ca1e4c5f86b27179d)
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1743477
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=23395494
+Branch: rhel-av-8.1.0/master-4.1.0
+Testing: Started a guest and verified that -no-reboot no longer
+          prevents the CAS reboot to negotiate XIVE support from
+          completing
+
+Signed-off-by: David Gibson <dgibson@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/ppc/spapr_hcall.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/hw/ppc/spapr_hcall.c b/hw/ppc/spapr_hcall.c
+index 6808d4c..687bb7b 100644
+--- a/hw/ppc/spapr_hcall.c
++++ b/hw/ppc/spapr_hcall.c
+@@ -1672,7 +1672,7 @@ static target_ulong h_client_architecture_support(PowerPCCPU *cpu,
+     spapr_ovec_cleanup(ov5_updates);
+ 
+     if (spapr->cas_reboot) {
+-        qemu_system_reset_request(SHUTDOWN_CAUSE_GUEST_RESET);
++        qemu_system_reset_request(SHUTDOWN_CAUSE_SUBSYSTEM_RESET);
+     }
+ 
+     return H_SUCCESS;
+-- 
+1.8.3.1
+

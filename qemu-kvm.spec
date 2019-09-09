@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.1.0
-Release: 7%{?dist}
+Release: 8%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -166,6 +166,18 @@ Patch41: kvm-multifd-Use-number-of-channels-as-listen-backlog.patch
 Patch42: kvm-pseries-Fix-compat_pvr-on-reset.patch
 # For bz#1744107 - Migration from P8(qemu4.1) to P9(qemu4.1), after migration, qemu crash on destination with error message "qemu-kvm: error while loading state for instance 0x1 of device 'cpu'"
 Patch43: kvm-spapr-Set-compat-mode-in-spapr_core_plug.patch
+# For bz#1747836 - Call traces after guest migration due to incorrect handling of the timebase
+Patch44: kvm-migration-Do-not-re-read-the-clock-on-pre_save-in-ca.patch
+# For bz#1746790 - qemu core dump while migrate from RHEL7.6 to RHEL8.1
+Patch45: kvm-ehci-fix-queue-dev-null-ptr-dereference.patch
+# For bz#1743477 - Since bd94bc06479a "spapr: change default interrupt mode to 'dual'", QEMU resets the machine to select the appropriate interrupt controller. And -no-reboot prevents that.
+Patch46: kvm-spapr-Use-SHUTDOWN_CAUSE_SUBSYSTEM_RESET-for-CAS-reb.patch
+# For bz#1749134 - I/O error when virtio-blk disk is backed by a raw image on 4k disk
+Patch47: kvm-file-posix-Handle-undetectable-alignment.patch
+# For bz#1749134 - I/O error when virtio-blk disk is backed by a raw image on 4k disk
+Patch48: kvm-block-posix-Always-allocate-the-first-block.patch
+# For bz#1749134 - I/O error when virtio-blk disk is backed by a raw image on 4k disk
+Patch49: kvm-iotests-Test-allocate_first_block-with-O_DIRECT.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1107,6 +1119,22 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Sep 09 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-8.el8
+- kvm-migration-Do-not-re-read-the-clock-on-pre_save-in-ca.patch [bz#1747836]
+- kvm-ehci-fix-queue-dev-null-ptr-dereference.patch [bz#1746790]
+- kvm-spapr-Use-SHUTDOWN_CAUSE_SUBSYSTEM_RESET-for-CAS-reb.patch [bz#1743477]
+- kvm-file-posix-Handle-undetectable-alignment.patch [bz#1749134]
+- kvm-block-posix-Always-allocate-the-first-block.patch [bz#1749134]
+- kvm-iotests-Test-allocate_first_block-with-O_DIRECT.patch [bz#1749134]
+- Resolves: bz#1743477
+  (Since bd94bc06479a "spapr: change default interrupt mode to 'dual'", QEMU resets the machine to select the appropriate interrupt controller. And -no-reboot prevents that.)
+- Resolves: bz#1746790
+  (qemu core dump while migrate from RHEL7.6 to RHEL8.1)
+- Resolves: bz#1747836
+  (Call traces after guest migration due to incorrect handling of the timebase)
+- Resolves: bz#1749134
+  (I/O error when virtio-blk disk is backed by a raw image on 4k disk)
+
 * Fri Sep 06 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-7.el8
 - kvm-trace-Clarify-DTrace-SystemTap-help-message.patch [bz#1516220]
 - kvm-socket-Add-backlog-parameter-to-socket_listen.patch [bz#1726898]

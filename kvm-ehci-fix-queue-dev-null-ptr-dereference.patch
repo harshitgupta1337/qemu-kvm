@@ -1,0 +1,50 @@
+From 0b38614471dbc44b87a1d2449e602df50c3ff535 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Thu, 5 Sep 2019 08:50:37 +0100
+Subject: [PATCH 2/6] ehci: fix queue->dev null ptr dereference
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20190905085037.5648-2-dgilbert@redhat.com>
+Patchwork-id: 90288
+O-Subject: [RHEL-AV-8.1 qemu-kvm PATCH 1/1] ehci: fix queue->dev null ptr dereference
+Bugzilla: 1746790
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Juan Quintela <quintela@redhat.com>
+
+From: Gerd Hoffmann <kraxel@redhat.com>
+
+In case we don't have a device for an active queue, just skip
+processing the queue (same we do for inactive queues) and log
+a guest bug.
+
+Reported-by: Guenter Roeck <linux@roeck-us.net>
+Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+Tested-by: Guenter Roeck <linux@roeck-us.net>
+Message-id: 20190821085319.13711-1-kraxel@redhat.com
+(cherry picked from commit 1be344b7ad25d572dadeee46d80f0103354352b2)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/usb/hcd-ehci.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/hw/usb/hcd-ehci.c b/hw/usb/hcd-ehci.c
+index 62dab05..5f089f3 100644
+--- a/hw/usb/hcd-ehci.c
++++ b/hw/usb/hcd-ehci.c
+@@ -1834,6 +1834,9 @@ static int ehci_state_fetchqtd(EHCIQueue *q)
+             ehci_set_state(q->ehci, q->async, EST_EXECUTING);
+             break;
+         }
++    } else if (q->dev == NULL) {
++        ehci_trace_guest_bug(q->ehci, "no device attached to queue");
++        ehci_set_state(q->ehci, q->async, EST_HORIZONTALQH);
+     } else {
+         p = ehci_alloc_packet(q);
+         p->qtdaddr = q->qtdaddr;
+-- 
+1.8.3.1
+
