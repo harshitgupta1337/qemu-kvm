@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.1.0
-Release: 8%{?dist}
+Release: 9%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -178,6 +178,18 @@ Patch47: kvm-file-posix-Handle-undetectable-alignment.patch
 Patch48: kvm-block-posix-Always-allocate-the-first-block.patch
 # For bz#1749134 - I/O error when virtio-blk disk is backed by a raw image on 4k disk
 Patch49: kvm-iotests-Test-allocate_first_block-with-O_DIRECT.patch
+# For bz#1734316 - multifd migration does not honour speed limits, consumes entire bandwidth of NIC
+Patch50: kvm-migration-always-initialise-ram_counters-for-a-new-m.patch
+# For bz#1734316 - multifd migration does not honour speed limits, consumes entire bandwidth of NIC
+Patch51: kvm-migration-add-qemu_file_update_transfer-interface.patch
+# For bz#1734316 - multifd migration does not honour speed limits, consumes entire bandwidth of NIC
+Patch52: kvm-migration-add-speed-limit-for-multifd-migration.patch
+# For bz#1734316 - multifd migration does not honour speed limits, consumes entire bandwidth of NIC
+Patch53: kvm-migration-update-ram_counters-for-multifd-sync-packe.patch
+# For bz#1750200 - [RHEL8.1][QEMU4.1]boot up guest with vf device,then system_reset guest,error prompt(qemu-kvm: Can't allocate MSIs for device 2800: IRQ 4904 is not free)
+Patch54: kvm-spapr-pci-Consolidate-de-allocation-of-MSIs.patch
+# For bz#1750200 - [RHEL8.1][QEMU4.1]boot up guest with vf device,then system_reset guest,error prompt(qemu-kvm: Can't allocate MSIs for device 2800: IRQ 4904 is not free)
+Patch55: kvm-spapr-pci-Free-MSIs-during-reset.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1119,6 +1131,18 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Sep 10 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-9.el8
+- kvm-migration-always-initialise-ram_counters-for-a-new-m.patch [bz#1734316]
+- kvm-migration-add-qemu_file_update_transfer-interface.patch [bz#1734316]
+- kvm-migration-add-speed-limit-for-multifd-migration.patch [bz#1734316]
+- kvm-migration-update-ram_counters-for-multifd-sync-packe.patch [bz#1734316]
+- kvm-spapr-pci-Consolidate-de-allocation-of-MSIs.patch [bz#1750200]
+- kvm-spapr-pci-Free-MSIs-during-reset.patch [bz#1750200]
+- Resolves: bz#1734316
+  (multifd migration does not honour speed limits, consumes entire bandwidth of NIC)
+- Resolves: bz#1750200
+  ([RHEL8.1][QEMU4.1]boot up guest with vf device,then system_reset guest,error prompt(qemu-kvm: Can't allocate MSIs for device 2800: IRQ 4904 is not free))
+
 * Mon Sep 09 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-8.el8
 - kvm-migration-Do-not-re-read-the-clock-on-pre_save-in-ca.patch [bz#1747836]
 - kvm-ehci-fix-queue-dev-null-ptr-dereference.patch [bz#1746790]
