@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.1.0
-Release: 9%{?dist}
+Release: 10%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -190,6 +190,14 @@ Patch53: kvm-migration-update-ram_counters-for-multifd-sync-packe.patch
 Patch54: kvm-spapr-pci-Consolidate-de-allocation-of-MSIs.patch
 # For bz#1750200 - [RHEL8.1][QEMU4.1]boot up guest with vf device,then system_reset guest,error prompt(qemu-kvm: Can't allocate MSIs for device 2800: IRQ 4904 is not free)
 Patch55: kvm-spapr-pci-Free-MSIs-during-reset.patch
+# For bz#1748725 - [ppc][migration][v6.3-rc1-p1ce8930]basic migration failed with "qemu-kvm: KVM_SET_DEVICE_ATTR failed: Group 3 attr 0x0000000000001309: Device or resource busy"
+Patch56: kvm-spapr-xive-Mask-the-EAS-when-allocating-an-IRQ.patch
+# For bz#1746267 - qemu coredump: qemu-kvm: block/create.c:68: qmp_blockdev_create: Assertion `drv' failed
+Patch57: kvm-block-create-Do-not-abort-if-a-block-driver-is-not-a.patch
+# For bz#1717321 - qemu-kvm core dumped when repeat "system_reset" multiple times during guest boot
+Patch58: kvm-virtio-blk-Cancel-the-pending-BH-when-the-dataplane-.patch
+# For bz#1749737 - CVE-2019-15890 qemu-kvm: QEMU: Slirp: use-after-free during packet reassembly [rhel-av-8]
+Patch59: kvm-Using-ip_deq-after-m_free-might-read-pointers-from-a.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1131,6 +1139,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Sep 16 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-10.el8
+- kvm-spapr-xive-Mask-the-EAS-when-allocating-an-IRQ.patch [bz#1748725]
+- kvm-block-create-Do-not-abort-if-a-block-driver-is-not-a.patch [bz#1746267]
+- kvm-virtio-blk-Cancel-the-pending-BH-when-the-dataplane-.patch [bz#1717321]
+- kvm-Using-ip_deq-after-m_free-might-read-pointers-from-a.patch [bz#1749737]
+- Resolves: bz#1717321
+  (qemu-kvm core dumped when repeat "system_reset" multiple times during guest boot)
+- Resolves: bz#1746267
+  (qemu coredump: qemu-kvm: block/create.c:68: qmp_blockdev_create: Assertion `drv' failed)
+- Resolves: bz#1748725
+  ([ppc][migration][v6.3-rc1-p1ce8930]basic migration failed with "qemu-kvm: KVM_SET_DEVICE_ATTR failed: Group 3 attr 0x0000000000001309: Device or resource busy")
+- Resolves: bz#1749737
+  (CVE-2019-15890 qemu-kvm: QEMU: Slirp: use-after-free during packet reassembly [rhel-av-8])
+
 * Tue Sep 10 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-9.el8
 - kvm-migration-always-initialise-ram_counters-for-a-new-m.patch [bz#1734316]
 - kvm-migration-add-qemu_file_update_transfer-interface.patch [bz#1734316]

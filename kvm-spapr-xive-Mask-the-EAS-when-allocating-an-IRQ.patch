@@ -1,0 +1,63 @@
+From 6a7245ed7802dff5479228376a4119e095db33b2 Mon Sep 17 00:00:00 2001
+From: Laurent Vivier <lvivier@redhat.com>
+Date: Wed, 11 Sep 2019 09:43:17 +0100
+Subject: [PATCH 1/4] spapr/xive: Mask the EAS when allocating an IRQ
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+Message-id: <20190911094317.21266-1-lvivier@redhat.com>
+Patchwork-id: 90392
+O-Subject: [RHEL-AV-8.1.0 qemu-kvm PATCH] spapr/xive: Mask the EAS when allocating an IRQ
+Bugzilla: 1748725
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+
+From: Cédric Le Goater <clg@kaod.org>
+
+If an IRQ is allocated and not configured, such as a MSI requested by
+a PCI driver, it can be saved in its default state and possibly later
+on restored using the same state. If not initially MASKED, KVM will
+try to find a matching priority/target tuple for the interrupt and
+fail to restore the VM because 0/0 is not a valid target.
+
+When allocating a IRQ number, the EAS should be set to a sane default :
+VALID and MASKED.
+
+Reported-by: Satheesh Rajendran <sathnaga@linux.vnet.ibm.com>
+Signed-off-by: Cédric Le Goater <clg@kaod.org>
+Message-Id: <20190813164420.9829-1-clg@kaod.org>
+Signed-off-by: David Gibson <david@gibson.dropbear.id.au>
+(cherry picked from commit f55750e4e4fb35b6a12c81c485f16494e2c61ad2)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+
+BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1748725
+BRANCH: rhel-av-8.1.0/master-4.1.0
+UPSTREAM: merged
+BREW: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=23451934
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/intc/spapr_xive.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/hw/intc/spapr_xive.c b/hw/intc/spapr_xive.c
+index 3ae311d..1f9c624 100644
+--- a/hw/intc/spapr_xive.c
++++ b/hw/intc/spapr_xive.c
+@@ -534,7 +534,10 @@ bool spapr_xive_irq_claim(SpaprXive *xive, uint32_t lisn, bool lsi)
+         return false;
+     }
+ 
+-    xive->eat[lisn].w |= cpu_to_be64(EAS_VALID);
++    /*
++     * Set default values when allocating an IRQ number
++     */
++    xive->eat[lisn].w |= cpu_to_be64(EAS_VALID | EAS_MASKED);
+     if (lsi) {
+         xive_source_irq_set_lsi(xsrc, lisn);
+     }
+-- 
+1.8.3.1
+
