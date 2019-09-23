@@ -1,0 +1,254 @@
+From 9d6d365abaea5e068f060b8a70d5b8fab43a9f7f Mon Sep 17 00:00:00 2001
+From: Stefan Hajnoczi <stefanha@redhat.com>
+Date: Wed, 18 Sep 2019 15:10:07 +0100
+Subject: [PATCH 3/4] memory: fetch pmem size in get_file_size()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Stefan Hajnoczi <stefanha@redhat.com>
+Message-id: <20190918151007.27973-3-stefanha@redhat.com>
+Patchwork-id: 90762
+O-Subject: [RHEL-AV-8.1.0 qemu-kvm PATCH 2/2] memory: fetch pmem size in get_file_size()
+Bugzilla: 1724008 1736788
+RH-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+RH-Acked-by: Eduardo Habkost <ehabkost@redhat.com>
+
+Neither stat(2) nor lseek(2) report the size of Linux devdax pmem
+character device nodes.  Commit 314aec4a6e06844937f1677f6cba21981005f389
+("hostmem-file: reject invalid pmem file sizes") added code to
+hostmem-file.c to fetch the size from sysfs and compare against the
+user-provided size=NUM parameter:
+
+  if (backend->size > size) {
+      error_setg(errp, "size property %" PRIu64 " is larger than "
+                 "pmem file \"%s\" size %" PRIu64, backend->size,
+                 fb->mem_path, size);
+      return;
+  }
+
+It turns out that exec.c:qemu_ram_alloc_from_fd() already has an
+equivalent size check but it skips devdax pmem character devices because
+lseek(2) returns 0:
+
+  if (file_size > 0 && file_size < size) {
+      error_setg(errp, "backing store %s size 0x%" PRIx64
+                 " does not match 'size' option 0x" RAM_ADDR_FMT,
+                 mem_path, file_size, size);
+      return NULL;
+  }
+
+This patch moves the devdax pmem file size code into get_file_size() so
+that we check the memory size in a single place:
+qemu_ram_alloc_from_fd().  This simplifies the code and makes it more
+general.
+
+This also fixes the problem that hostmem-file only checks the devdax
+pmem file size when the pmem=on parameter is given.  An unchecked
+size=NUM parameter can lead to SIGBUS in QEMU so we must always fetch
+the file size for Linux devdax pmem character device nodes.
+
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Message-Id: <20190830093056.12572-1-stefanha@redhat.com>
+Reviewed-by: Eduardo Habkost <ehabkost@redhat.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+(cherry picked from commit 72d41eb4b8f923de91e8f06dc20aa86b0a9155fb)
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ backends/hostmem-file.c | 22 --------------------
+ exec.c                  | 34 ++++++++++++++++++++++++++++++-
+ include/qemu/osdep.h    | 13 ------------
+ util/oslib-posix.c      | 54 -------------------------------------------------
+ util/oslib-win32.c      |  6 ------
+ 5 files changed, 33 insertions(+), 96 deletions(-)
+
+diff --git a/backends/hostmem-file.c b/backends/hostmem-file.c
+index ecc15e3..be64020 100644
+--- a/backends/hostmem-file.c
++++ b/backends/hostmem-file.c
+@@ -58,28 +58,6 @@ file_backend_memory_alloc(HostMemoryBackend *backend, Error **errp)
+         return;
+     }
+ 
+-    /*
+-     * Verify pmem file size since starting a guest with an incorrect size
+-     * leads to confusing failures inside the guest.
+-     */
+-    if (fb->is_pmem) {
+-        Error *local_err = NULL;
+-        uint64_t size;
+-
+-        size = qemu_get_pmem_size(fb->mem_path, &local_err);
+-        if (local_err) {
+-            error_propagate(errp, local_err);
+-            return;
+-        }
+-
+-        if (size && backend->size > size) {
+-            error_setg(errp, "size property %" PRIu64 " is larger than "
+-                       "pmem file \"%s\" size %" PRIu64, backend->size,
+-                       fb->mem_path, size);
+-            return;
+-        }
+-    }
+-
+     backend->force_prealloc = mem_prealloc;
+     name = host_memory_backend_get_name(backend);
+     memory_region_init_ram_from_file(&backend->mr, OBJECT(backend),
+diff --git a/exec.c b/exec.c
+index 3e78de3..3c03edf 100644
+--- a/exec.c
++++ b/exec.c
+@@ -1813,7 +1813,39 @@ long qemu_maxrampagesize(void)
+ #ifdef CONFIG_POSIX
+ static int64_t get_file_size(int fd)
+ {
+-    int64_t size = lseek(fd, 0, SEEK_END);
++    int64_t size;
++#if defined(__linux__)
++    struct stat st;
++
++    if (fstat(fd, &st) < 0) {
++        return -errno;
++    }
++
++    /* Special handling for devdax character devices */
++    if (S_ISCHR(st.st_mode)) {
++        g_autofree char *subsystem_path = NULL;
++        g_autofree char *subsystem = NULL;
++
++        subsystem_path = g_strdup_printf("/sys/dev/char/%d:%d/subsystem",
++                                         major(st.st_rdev), minor(st.st_rdev));
++        subsystem = g_file_read_link(subsystem_path, NULL);
++
++        if (subsystem && g_str_has_suffix(subsystem, "/dax")) {
++            g_autofree char *size_path = NULL;
++            g_autofree char *size_str = NULL;
++
++            size_path = g_strdup_printf("/sys/dev/char/%d:%d/size",
++                                    major(st.st_rdev), minor(st.st_rdev));
++
++            if (g_file_get_contents(size_path, &size_str, NULL, NULL)) {
++                return g_ascii_strtoll(size_str, NULL, 0);
++            }
++        }
++    }
++#endif /* defined(__linux__) */
++
++    /* st.st_size may be zero for special files yet lseek(2) works */
++    size = lseek(fd, 0, SEEK_END);
+     if (size < 0) {
+         return -errno;
+     }
+diff --git a/include/qemu/osdep.h b/include/qemu/osdep.h
+index af2b91f..c7d242f 100644
+--- a/include/qemu/osdep.h
++++ b/include/qemu/osdep.h
+@@ -571,19 +571,6 @@ void os_mem_prealloc(int fd, char *area, size_t sz, int smp_cpus,
+                      Error **errp);
+ 
+ /**
+- * qemu_get_pmem_size:
+- * @filename: path to a pmem file
+- * @errp: pointer to a NULL-initialized error object
+- *
+- * Determine the size of a persistent memory file.  Besides supporting files on
+- * DAX file systems, this function also supports Linux devdax character
+- * devices.
+- *
+- * Returns: the size or 0 on failure
+- */
+-uint64_t qemu_get_pmem_size(const char *filename, Error **errp);
+-
+-/**
+  * qemu_get_pid_name:
+  * @pid: pid of a process
+  *
+diff --git a/util/oslib-posix.c b/util/oslib-posix.c
+index fe0309c..d772da8 100644
+--- a/util/oslib-posix.c
++++ b/util/oslib-posix.c
+@@ -513,60 +513,6 @@ void os_mem_prealloc(int fd, char *area, size_t memory, int smp_cpus,
+     }
+ }
+ 
+-uint64_t qemu_get_pmem_size(const char *filename, Error **errp)
+-{
+-    struct stat st;
+-
+-    if (stat(filename, &st) < 0) {
+-        error_setg(errp, "unable to stat pmem file \"%s\"", filename);
+-        return 0;
+-    }
+-
+-#if defined(__linux__)
+-    /* Special handling for devdax character devices */
+-    if (S_ISCHR(st.st_mode)) {
+-        char *subsystem_path = NULL;
+-        char *subsystem = NULL;
+-        char *size_path = NULL;
+-        char *size_str = NULL;
+-        uint64_t ret = 0;
+-
+-        subsystem_path = g_strdup_printf("/sys/dev/char/%d:%d/subsystem",
+-                                         major(st.st_rdev), minor(st.st_rdev));
+-        subsystem = g_file_read_link(subsystem_path, NULL);
+-        if (!subsystem) {
+-            error_setg(errp, "unable to read subsystem for pmem file \"%s\"",
+-                       filename);
+-            goto devdax_err;
+-        }
+-
+-        if (!g_str_has_suffix(subsystem, "/dax")) {
+-            error_setg(errp, "pmem file \"%s\" is not a dax device", filename);
+-            goto devdax_err;
+-        }
+-
+-        size_path = g_strdup_printf("/sys/dev/char/%d:%d/size",
+-                                    major(st.st_rdev), minor(st.st_rdev));
+-        if (!g_file_get_contents(size_path, &size_str, NULL, NULL)) {
+-            error_setg(errp, "unable to read size for pmem file \"%s\"",
+-                       size_path);
+-            goto devdax_err;
+-        }
+-
+-        ret = g_ascii_strtoull(size_str, NULL, 0);
+-
+-devdax_err:
+-        g_free(size_str);
+-        g_free(size_path);
+-        g_free(subsystem);
+-        g_free(subsystem_path);
+-        return ret;
+-    }
+-#endif /* defined(__linux__) */
+-
+-    return st.st_size;
+-}
+-
+ char *qemu_get_pid_name(pid_t pid)
+ {
+     char *name = NULL;
+diff --git a/util/oslib-win32.c b/util/oslib-win32.c
+index 9583fb4..c62cd43 100644
+--- a/util/oslib-win32.c
++++ b/util/oslib-win32.c
+@@ -562,12 +562,6 @@ void os_mem_prealloc(int fd, char *area, size_t memory, int smp_cpus,
+     }
+ }
+ 
+-uint64_t qemu_get_pmem_size(const char *filename, Error **errp)
+-{
+-    error_setg(errp, "pmem support not available");
+-    return 0;
+-}
+-
+ char *qemu_get_pid_name(pid_t pid)
+ {
+     /* XXX Implement me */
+-- 
+1.8.3.1
+

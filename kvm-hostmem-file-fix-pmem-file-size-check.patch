@@ -1,0 +1,70 @@
+From c7c95a2f14d94eb8213ce7cab03acdef40fed093 Mon Sep 17 00:00:00 2001
+From: Stefan Hajnoczi <stefanha@redhat.com>
+Date: Wed, 18 Sep 2019 15:10:06 +0100
+Subject: [PATCH 2/4] hostmem-file: fix pmem file size check
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Stefan Hajnoczi <stefanha@redhat.com>
+Message-id: <20190918151007.27973-2-stefanha@redhat.com>
+Patchwork-id: 90763
+O-Subject: [RHEL-AV-8.1.0 qemu-kvm PATCH 1/2] hostmem-file: fix pmem file size check
+Bugzilla: 1724008 1736788
+RH-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+RH-Acked-by: Eduardo Habkost <ehabkost@redhat.com>
+
+Commit 314aec4a6e06844937f1677f6cba21981005f389 ("hostmem-file: reject
+invalid pmem file sizes") added a file size check that verifies the
+hostmem object's size parameter against the actual devdax pmem file.
+This is useful because getting the size wrong results in confusing
+errors inside the guest.
+
+However, the code doesn't work properly for files where struct
+stat::st_size is zero.  Hostmem-file's ->alloc() function returns early
+without setting an Error, causing the following assertion failure:
+
+  qemu/memory.c:2215: memory_region_get_ram_ptr: Assertion `mr->ram_block' failed.
+
+This patch handles the case where qemu_get_pmem_size() returns 0 but
+there is no error.
+
+Fixes: 314aec4a6e06844937f1677f6cba21981005f389
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Message-Id: <20190823135632.25010-1-stefanha@redhat.com>
+Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
+(cherry picked from commit 7faae95ebc966c2981b78cf7c25009dfa32d4b72)
+
+Note that this commit will be effectively reverted by the next one but I
+backported it to avoid conflicts.
+
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ backends/hostmem-file.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/backends/hostmem-file.c b/backends/hostmem-file.c
+index 29e55c9..ecc15e3 100644
+--- a/backends/hostmem-file.c
++++ b/backends/hostmem-file.c
+@@ -67,12 +67,12 @@ file_backend_memory_alloc(HostMemoryBackend *backend, Error **errp)
+         uint64_t size;
+ 
+         size = qemu_get_pmem_size(fb->mem_path, &local_err);
+-        if (!size) {
++        if (local_err) {
+             error_propagate(errp, local_err);
+             return;
+         }
+ 
+-        if (backend->size > size) {
++        if (size && backend->size > size) {
+             error_setg(errp, "size property %" PRIu64 " is larger than "
+                        "pmem file \"%s\" size %" PRIu64, backend->size,
+                        fb->mem_path, size);
+-- 
+1.8.3.1
+

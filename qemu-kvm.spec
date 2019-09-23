@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.1.0
-Release: 10%{?dist}
+Release: 11%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -198,6 +198,16 @@ Patch57: kvm-block-create-Do-not-abort-if-a-block-driver-is-not-a.patch
 Patch58: kvm-virtio-blk-Cancel-the-pending-BH-when-the-dataplane-.patch
 # For bz#1749737 - CVE-2019-15890 qemu-kvm: QEMU: Slirp: use-after-free during packet reassembly [rhel-av-8]
 Patch59: kvm-Using-ip_deq-after-m_free-might-read-pointers-from-a.patch
+# For bz#1746631 - Qemu core dump when do block commit under stress
+Patch60: kvm-blockjob-update-nodes-head-while-removing-all-bdrv.patch
+# For bz#1724008 - QEMU core dumped "memory_region_get_ram_ptr: Assertion `mr->ram_block' failed"
+# For bz#1736788 - QEMU core dumped if boot guest with nvdimm backed by /dev/dax0.0 and option pmem=off
+Patch61: kvm-hostmem-file-fix-pmem-file-size-check.patch
+# For bz#1724008 - QEMU core dumped "memory_region_get_ram_ptr: Assertion `mr->ram_block' failed"
+# For bz#1736788 - QEMU core dumped if boot guest with nvdimm backed by /dev/dax0.0 and option pmem=off
+Patch62: kvm-memory-fetch-pmem-size-in-get_file_size.patch
+# For bz#1753992 - core dump when testing persistent reservation in guest
+Patch63: kvm-pr-manager-Fix-invalid-g_free-crash-bug.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1139,6 +1149,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Sep 23 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-11.el8
+- kvm-blockjob-update-nodes-head-while-removing-all-bdrv.patch [bz#1746631]
+- kvm-hostmem-file-fix-pmem-file-size-check.patch [bz#1724008 bz#1736788]
+- kvm-memory-fetch-pmem-size-in-get_file_size.patch [bz#1724008 bz#1736788]
+- kvm-pr-manager-Fix-invalid-g_free-crash-bug.patch [bz#1753992]
+- Resolves: bz#1724008
+  (QEMU core dumped "memory_region_get_ram_ptr: Assertion `mr->ram_block' failed")
+- Resolves: bz#1736788
+  (QEMU core dumped if boot guest with nvdimm backed by /dev/dax0.0 and option pmem=off)
+- Resolves: bz#1746631
+  (Qemu core dump when do block commit under stress)
+- Resolves: bz#1753992
+  (core dump when testing persistent reservation in guest)
+
 * Mon Sep 16 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-10.el8
 - kvm-spapr-xive-Mask-the-EAS-when-allocating-an-IRQ.patch [bz#1748725]
 - kvm-block-create-Do-not-abort-if-a-block-driver-is-not-a.patch [bz#1746267]
