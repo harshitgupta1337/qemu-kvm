@@ -1,0 +1,192 @@
+From 1eb1c45037b1e1084ab601ac8461fabca162b479 Mon Sep 17 00:00:00 2001
+From: Maxim Levitsky <mlevitsk@redhat.com>
+Date: Tue, 24 Sep 2019 21:11:49 +0100
+Subject: [PATCH 1/4] block: Use QEMU_IS_ALIGNED
+
+RH-Author: Maxim Levitsky <mlevitsk@redhat.com>
+Message-id: <20190924211152.13461-2-mlevitsk@redhat.com>
+Patchwork-id: 90874
+O-Subject: [RHEL-AV-8.1.0 qemu-kvm PATCH v2 1/4] block: Use QEMU_IS_ALIGNED
+Bugzilla: 1745922
+RH-Acked-by: John Snow <jsnow@redhat.com>
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+
+From: Nir Soffer <nirsof@gmail.com>
+
+Replace instances of:
+
+    (n & (BDRV_SECTOR_SIZE - 1)) == 0
+
+And:
+
+   (n & ~BDRV_SECTOR_MASK) == 0
+
+With:
+
+    QEMU_IS_ALIGNED(n, BDRV_SECTOR_SIZE)
+
+Which reveals the intent of the code better, and makes it easier to
+locate the code checking alignment.
+
+Signed-off-by: Nir Soffer <nsoffer@redhat.com>
+Message-id: 20190827185913.27427-2-nsoffer@redhat.com
+Reviewed-by: John Snow <jsnow@redhat.com>
+Signed-off-by: Max Reitz <mreitz@redhat.com>
+(cherry picked from commit 1bbbf32d5fffe334531c315d7bd865fdfb67b6c5)
+Signed-off-by: Maxim Levitsky <mlevitsk@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ block/bochs.c         | 4 ++--
+ block/cloop.c         | 4 ++--
+ block/dmg.c           | 4 ++--
+ block/io.c            | 8 ++++----
+ block/qcow2-cluster.c | 4 ++--
+ block/qcow2.c         | 4 ++--
+ block/vvfat.c         | 8 ++++----
+ qemu-img.c            | 2 +-
+ 8 files changed, 19 insertions(+), 19 deletions(-)
+
+diff --git a/block/bochs.c b/block/bochs.c
+index 962f185..32bb83b 100644
+--- a/block/bochs.c
++++ b/block/bochs.c
+@@ -248,8 +248,8 @@ bochs_co_preadv(BlockDriverState *bs, uint64_t offset, uint64_t bytes,
+     QEMUIOVector local_qiov;
+     int ret;
+ 
+-    assert((offset & (BDRV_SECTOR_SIZE - 1)) == 0);
+-    assert((bytes & (BDRV_SECTOR_SIZE - 1)) == 0);
++    assert(QEMU_IS_ALIGNED(offset, BDRV_SECTOR_SIZE));
++    assert(QEMU_IS_ALIGNED(bytes, BDRV_SECTOR_SIZE));
+ 
+     qemu_iovec_init(&local_qiov, qiov->niov);
+     qemu_co_mutex_lock(&s->lock);
+diff --git a/block/cloop.c b/block/cloop.c
+index 384c973..4de9487 100644
+--- a/block/cloop.c
++++ b/block/cloop.c
+@@ -253,8 +253,8 @@ cloop_co_preadv(BlockDriverState *bs, uint64_t offset, uint64_t bytes,
+     int nb_sectors = bytes >> BDRV_SECTOR_BITS;
+     int ret, i;
+ 
+-    assert((offset & (BDRV_SECTOR_SIZE - 1)) == 0);
+-    assert((bytes & (BDRV_SECTOR_SIZE - 1)) == 0);
++    assert(QEMU_IS_ALIGNED(offset, BDRV_SECTOR_SIZE));
++    assert(QEMU_IS_ALIGNED(bytes, BDRV_SECTOR_SIZE));
+ 
+     qemu_co_mutex_lock(&s->lock);
+ 
+diff --git a/block/dmg.c b/block/dmg.c
+index 45f6b28..4a045f2 100644
+--- a/block/dmg.c
++++ b/block/dmg.c
+@@ -697,8 +697,8 @@ dmg_co_preadv(BlockDriverState *bs, uint64_t offset, uint64_t bytes,
+     int nb_sectors = bytes >> BDRV_SECTOR_BITS;
+     int ret, i;
+ 
+-    assert((offset & (BDRV_SECTOR_SIZE - 1)) == 0);
+-    assert((bytes & (BDRV_SECTOR_SIZE - 1)) == 0);
++    assert(QEMU_IS_ALIGNED(offset, BDRV_SECTOR_SIZE));
++    assert(QEMU_IS_ALIGNED(bytes, BDRV_SECTOR_SIZE));
+ 
+     qemu_co_mutex_lock(&s->lock);
+ 
+diff --git a/block/io.c b/block/io.c
+index 06305c6..54093fc 100644
+--- a/block/io.c
++++ b/block/io.c
+@@ -1079,8 +1079,8 @@ static int coroutine_fn bdrv_driver_preadv(BlockDriverState *bs,
+     sector_num = offset >> BDRV_SECTOR_BITS;
+     nb_sectors = bytes >> BDRV_SECTOR_BITS;
+ 
+-    assert((offset & (BDRV_SECTOR_SIZE - 1)) == 0);
+-    assert((bytes & (BDRV_SECTOR_SIZE - 1)) == 0);
++    assert(QEMU_IS_ALIGNED(offset, BDRV_SECTOR_SIZE));
++    assert(QEMU_IS_ALIGNED(bytes, BDRV_SECTOR_SIZE));
+     assert(bytes <= BDRV_REQUEST_MAX_BYTES);
+     assert(drv->bdrv_co_readv);
+ 
+@@ -1132,8 +1132,8 @@ static int coroutine_fn bdrv_driver_pwritev(BlockDriverState *bs,
+     sector_num = offset >> BDRV_SECTOR_BITS;
+     nb_sectors = bytes >> BDRV_SECTOR_BITS;
+ 
+-    assert((offset & (BDRV_SECTOR_SIZE - 1)) == 0);
+-    assert((bytes & (BDRV_SECTOR_SIZE - 1)) == 0);
++    assert(QEMU_IS_ALIGNED(offset, BDRV_SECTOR_SIZE));
++    assert(QEMU_IS_ALIGNED(bytes, BDRV_SECTOR_SIZE));
+     assert(bytes <= BDRV_REQUEST_MAX_BYTES);
+ 
+     assert(drv->bdrv_co_writev);
+diff --git a/block/qcow2-cluster.c b/block/qcow2-cluster.c
+index cc5609e..f2de746 100644
+--- a/block/qcow2-cluster.c
++++ b/block/qcow2-cluster.c
+@@ -470,8 +470,8 @@ static bool coroutine_fn do_perform_cow_encrypt(BlockDriverState *bs,
+ {
+     if (bytes && bs->encrypted) {
+         BDRVQcow2State *s = bs->opaque;
+-        assert((offset_in_cluster & ~BDRV_SECTOR_MASK) == 0);
+-        assert((bytes & ~BDRV_SECTOR_MASK) == 0);
++        assert(QEMU_IS_ALIGNED(offset_in_cluster, BDRV_SECTOR_SIZE));
++        assert(QEMU_IS_ALIGNED(bytes, BDRV_SECTOR_SIZE));
+         assert(s->crypto);
+         if (qcow2_co_encrypt(bs, cluster_offset,
+                              src_cluster_offset + offset_in_cluster,
+diff --git a/block/qcow2.c b/block/qcow2.c
+index 039bdc2..dc4302f 100644
+--- a/block/qcow2.c
++++ b/block/qcow2.c
+@@ -2071,8 +2071,8 @@ static coroutine_fn int qcow2_co_preadv(BlockDriverState *bs, uint64_t offset,
+             }
+             if (bs->encrypted) {
+                 assert(s->crypto);
+-                assert((offset & (BDRV_SECTOR_SIZE - 1)) == 0);
+-                assert((cur_bytes & (BDRV_SECTOR_SIZE - 1)) == 0);
++                assert(QEMU_IS_ALIGNED(offset, BDRV_SECTOR_SIZE));
++                assert(QEMU_IS_ALIGNED(cur_bytes, BDRV_SECTOR_SIZE));
+                 if (qcow2_co_decrypt(bs, cluster_offset, offset,
+                                      cluster_data, cur_bytes) < 0) {
+                     ret = -EIO;
+diff --git a/block/vvfat.c b/block/vvfat.c
+index f6c2880..019b8f1 100644
+--- a/block/vvfat.c
++++ b/block/vvfat.c
+@@ -1547,8 +1547,8 @@ vvfat_co_preadv(BlockDriverState *bs, uint64_t offset, uint64_t bytes,
+     int nb_sectors = bytes >> BDRV_SECTOR_BITS;
+     void *buf;
+ 
+-    assert((offset & (BDRV_SECTOR_SIZE - 1)) == 0);
+-    assert((bytes & (BDRV_SECTOR_SIZE - 1)) == 0);
++    assert(QEMU_IS_ALIGNED(offset, BDRV_SECTOR_SIZE));
++    assert(QEMU_IS_ALIGNED(bytes, BDRV_SECTOR_SIZE));
+ 
+     buf = g_try_malloc(bytes);
+     if (bytes && buf == NULL) {
+@@ -3082,8 +3082,8 @@ vvfat_co_pwritev(BlockDriverState *bs, uint64_t offset, uint64_t bytes,
+     int nb_sectors = bytes >> BDRV_SECTOR_BITS;
+     void *buf;
+ 
+-    assert((offset & (BDRV_SECTOR_SIZE - 1)) == 0);
+-    assert((bytes & (BDRV_SECTOR_SIZE - 1)) == 0);
++    assert(QEMU_IS_ALIGNED(offset, BDRV_SECTOR_SIZE));
++    assert(QEMU_IS_ALIGNED(bytes, BDRV_SECTOR_SIZE));
+ 
+     buf = g_try_malloc(bytes);
+     if (bytes && buf == NULL) {
+diff --git a/qemu-img.c b/qemu-img.c
+index 7998377..940ae94 100644
+--- a/qemu-img.c
++++ b/qemu-img.c
+@@ -2138,7 +2138,7 @@ static int img_convert(int argc, char **argv)
+             int64_t sval;
+ 
+             sval = cvtnum(optarg);
+-            if (sval < 0 || sval & (BDRV_SECTOR_SIZE - 1) ||
++            if (sval < 0 || !QEMU_IS_ALIGNED(sval, BDRV_SECTOR_SIZE) ||
+                 sval / BDRV_SECTOR_SIZE > MAX_BUF_SECTORS) {
+                 error_report("Invalid buffer size for sparse output specified. "
+                     "Valid sizes are multiples of %llu up to %llu. Select "
+-- 
+1.8.3.1
+

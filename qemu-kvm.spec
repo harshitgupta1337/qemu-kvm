@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.1.0
-Release: 11%{?dist}
+Release: 12%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -208,6 +208,14 @@ Patch61: kvm-hostmem-file-fix-pmem-file-size-check.patch
 Patch62: kvm-memory-fetch-pmem-size-in-get_file_size.patch
 # For bz#1753992 - core dump when testing persistent reservation in guest
 Patch63: kvm-pr-manager-Fix-invalid-g_free-crash-bug.patch
+# For bz#1745922 - Luks-inside-qcow2 snapshot cannot boot after 'qemu-img rebase'
+Patch64: kvm-block-Use-QEMU_IS_ALIGNED.patch
+# For bz#1745922 - Luks-inside-qcow2 snapshot cannot boot after 'qemu-img rebase'
+Patch65: kvm-block-qcow2-Fix-corruption-introduced-by-commit-8ac0.patch
+# For bz#1745922 - Luks-inside-qcow2 snapshot cannot boot after 'qemu-img rebase'
+Patch66: kvm-block-qcow2-refactor-encryption-code.patch
+# For bz#1745922 - Luks-inside-qcow2 snapshot cannot boot after 'qemu-img rebase'
+Patch67: kvm-qemu-iotests-Add-test-for-bz-1745922.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1149,6 +1157,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Sep 26 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-12.el8
+- kvm-block-Use-QEMU_IS_ALIGNED.patch [bz#1745922]
+- kvm-block-qcow2-Fix-corruption-introduced-by-commit-8ac0.patch [bz#1745922]
+- kvm-block-qcow2-refactor-encryption-code.patch [bz#1745922]
+- kvm-qemu-iotests-Add-test-for-bz-1745922.patch [bz#1745922]
+- Resolves: bz#1745922
+  (Luks-inside-qcow2 snapshot cannot boot after 'qemu-img rebase')
+
 * Mon Sep 23 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-11.el8
 - kvm-blockjob-update-nodes-head-while-removing-all-bdrv.patch [bz#1746631]
 - kvm-hostmem-file-fix-pmem-file-size-check.patch [bz#1724008 bz#1736788]
