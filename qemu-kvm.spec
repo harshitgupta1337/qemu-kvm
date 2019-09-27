@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.1.0
-Release: 12%{?dist}
+Release: 13%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -216,6 +216,10 @@ Patch65: kvm-block-qcow2-Fix-corruption-introduced-by-commit-8ac0.patch
 Patch66: kvm-block-qcow2-refactor-encryption-code.patch
 # For bz#1745922 - Luks-inside-qcow2 snapshot cannot boot after 'qemu-img rebase'
 Patch67: kvm-qemu-iotests-Add-test-for-bz-1745922.patch
+# For bz#1748253 - QEMU crashes (core dump) when using the integrated NDB server with data-plane
+Patch68: kvm-nbd-server-attach-client-channel-to-the-export-s-Aio.patch
+# For bz#1744955 - Qemu hang when block resize a qcow2 image
+Patch69: kvm-virtio-blk-schedule-virtio_notify_config-to-run-on-m.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1157,6 +1161,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Sep 27 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-13.el8
+- kvm-nbd-server-attach-client-channel-to-the-export-s-Aio.patch [bz#1748253]
+- kvm-virtio-blk-schedule-virtio_notify_config-to-run-on-m.patch [bz#1744955]
+- Resolves: bz#1744955
+  (Qemu hang when block resize a qcow2 image)
+- Resolves: bz#1748253
+  (QEMU crashes (core dump) when using the integrated NDB server with data-plane)
+
 * Thu Sep 26 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-12.el8
 - kvm-block-Use-QEMU_IS_ALIGNED.patch [bz#1745922]
 - kvm-block-qcow2-Fix-corruption-introduced-by-commit-8ac0.patch [bz#1745922]
