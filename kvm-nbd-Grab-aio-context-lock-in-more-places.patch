@@ -1,0 +1,200 @@
+From 7cf87a669fa0dd580013b0ca5e4510f12aff2319 Mon Sep 17 00:00:00 2001
+From: Eric Blake <eblake@redhat.com>
+Date: Wed, 9 Oct 2019 14:10:07 +0100
+Subject: [PATCH 5/6] nbd: Grab aio context lock in more places
+
+RH-Author: Eric Blake <eblake@redhat.com>
+Message-id: <20191009141008.24439-2-eblake@redhat.com>
+Patchwork-id: 91353
+O-Subject: [RHEL-AV-8.1.1 qemu-kvm PATCH 1/2] nbd: Grab aio context lock in more places
+Bugzilla: 1741094
+RH-Acked-by: John Snow <jsnow@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+
+When iothreads are in use, the failure to grab the aio context results
+in an assertion failure when trying to unlock things during blk_unref,
+when trying to unlock a mutex that was not locked.  In short, all
+calls to nbd_export_put need to done while within the correct aio
+context.  But since nbd_export_put can recursively reach itself via
+nbd_export_close, and recursively grabbing the context would deadlock,
+we can't do the context grab directly in those functions, but must do
+so in their callers.
+
+Hoist the use of the correct aio_context from nbd_export_new() to its
+caller qmp_nbd_server_add().  Then tweak qmp_nbd_server_remove(),
+nbd_eject_notifier(), and nbd_esport_close_all() to grab the right
+context, so that all callers during qemu now own the context before
+nbd_export_put() can call blk_unref().
+
+Remaining uses in qemu-nbd don't matter (since that use case does not
+support iothreads).
+
+Suggested-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Eric Blake <eblake@redhat.com>
+Message-Id: <20190917023917.32226-1-eblake@redhat.com>
+Reviewed-by: Sergio Lopez <slp@redhat.com>
+(cherry picked from commit 61bc846d8c58535af6884b637a4005dd6111ea95)
+Signed-off-by: Eric Blake <eblake@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ blockdev-nbd.c      | 14 ++++++++++++--
+ include/block/nbd.h |  1 +
+ nbd/server.c        | 22 ++++++++++++++++++----
+ 3 files changed, 31 insertions(+), 6 deletions(-)
+
+diff --git a/blockdev-nbd.c b/blockdev-nbd.c
+index 06041a2..bed9370 100644
+--- a/blockdev-nbd.c
++++ b/blockdev-nbd.c
+@@ -152,6 +152,7 @@ void qmp_nbd_server_add(const char *device, bool has_name, const char *name,
+     BlockBackend *on_eject_blk;
+     NBDExport *exp;
+     int64_t len;
++    AioContext *aio_context;
+ 
+     if (!nbd_server) {
+         error_setg(errp, "NBD server not running");
+@@ -174,11 +175,13 @@ void qmp_nbd_server_add(const char *device, bool has_name, const char *name,
+         return;
+     }
+ 
++    aio_context = bdrv_get_aio_context(bs);
++    aio_context_acquire(aio_context);
+     len = bdrv_getlength(bs);
+     if (len < 0) {
+         error_setg_errno(errp, -len,
+                          "Failed to determine the NBD export's length");
+-        return;
++        goto out;
+     }
+ 
+     if (!has_writable) {
+@@ -192,13 +195,16 @@ void qmp_nbd_server_add(const char *device, bool has_name, const char *name,
+                          writable ? 0 : NBD_FLAG_READ_ONLY,
+                          NULL, false, on_eject_blk, errp);
+     if (!exp) {
+-        return;
++        goto out;
+     }
+ 
+     /* The list of named exports has a strong reference to this export now and
+      * our only way of accessing it is through nbd_export_find(), so we can drop
+      * the strong reference that is @exp. */
+     nbd_export_put(exp);
++
++ out:
++    aio_context_release(aio_context);
+ }
+ 
+ void qmp_nbd_server_remove(const char *name,
+@@ -206,6 +212,7 @@ void qmp_nbd_server_remove(const char *name,
+                            Error **errp)
+ {
+     NBDExport *exp;
++    AioContext *aio_context;
+ 
+     if (!nbd_server) {
+         error_setg(errp, "NBD server not running");
+@@ -222,7 +229,10 @@ void qmp_nbd_server_remove(const char *name,
+         mode = NBD_SERVER_REMOVE_MODE_SAFE;
+     }
+ 
++    aio_context = nbd_export_aio_context(exp);
++    aio_context_acquire(aio_context);
+     nbd_export_remove(exp, mode, errp);
++    aio_context_release(aio_context);
+ }
+ 
+ void qmp_nbd_server_stop(Error **errp)
+diff --git a/include/block/nbd.h b/include/block/nbd.h
+index bb9f5bc..82f9b9e 100644
+--- a/include/block/nbd.h
++++ b/include/block/nbd.h
+@@ -335,6 +335,7 @@ void nbd_export_put(NBDExport *exp);
+ 
+ BlockBackend *nbd_export_get_blockdev(NBDExport *exp);
+ 
++AioContext *nbd_export_aio_context(NBDExport *exp);
+ NBDExport *nbd_export_find(const char *name);
+ void nbd_export_close_all(void);
+ 
+diff --git a/nbd/server.c b/nbd/server.c
+index ea0353a..81f8217 100644
+--- a/nbd/server.c
++++ b/nbd/server.c
+@@ -1460,7 +1460,12 @@ static void blk_aio_detach(void *opaque)
+ static void nbd_eject_notifier(Notifier *n, void *data)
+ {
+     NBDExport *exp = container_of(n, NBDExport, eject_notifier);
++    AioContext *aio_context;
++
++    aio_context = exp->ctx;
++    aio_context_acquire(aio_context);
+     nbd_export_close(exp);
++    aio_context_release(aio_context);
+ }
+ 
+ NBDExport *nbd_export_new(BlockDriverState *bs, uint64_t dev_offset,
+@@ -1479,12 +1484,11 @@ NBDExport *nbd_export_new(BlockDriverState *bs, uint64_t dev_offset,
+      * NBD exports are used for non-shared storage migration.  Make sure
+      * that BDRV_O_INACTIVE is cleared and the image is ready for write
+      * access since the export could be available before migration handover.
++     * ctx was acquired in the caller.
+      */
+     assert(name);
+     ctx = bdrv_get_aio_context(bs);
+-    aio_context_acquire(ctx);
+     bdrv_invalidate_cache(bs, NULL);
+-    aio_context_release(ctx);
+ 
+     /* Don't allow resize while the NBD server is running, otherwise we don't
+      * care what happens with the node. */
+@@ -1492,7 +1496,7 @@ NBDExport *nbd_export_new(BlockDriverState *bs, uint64_t dev_offset,
+     if ((nbdflags & NBD_FLAG_READ_ONLY) == 0) {
+         perm |= BLK_PERM_WRITE;
+     }
+-    blk = blk_new(bdrv_get_aio_context(bs), perm,
++    blk = blk_new(ctx, perm,
+                   BLK_PERM_CONSISTENT_READ | BLK_PERM_WRITE_UNCHANGED |
+                   BLK_PERM_WRITE | BLK_PERM_GRAPH_MOD);
+     ret = blk_insert_bs(blk, bs, errp);
+@@ -1549,7 +1553,7 @@ NBDExport *nbd_export_new(BlockDriverState *bs, uint64_t dev_offset,
+     }
+ 
+     exp->close = close;
+-    exp->ctx = blk_get_aio_context(blk);
++    exp->ctx = ctx;
+     blk_add_aio_context_notifier(blk, blk_aio_attached, blk_aio_detach, exp);
+ 
+     if (on_eject_blk) {
+@@ -1582,6 +1586,12 @@ NBDExport *nbd_export_find(const char *name)
+     return NULL;
+ }
+ 
++AioContext *
++nbd_export_aio_context(NBDExport *exp)
++{
++    return exp->ctx;
++}
++
+ void nbd_export_close(NBDExport *exp)
+ {
+     NBDClient *client, *next;
+@@ -1676,9 +1686,13 @@ BlockBackend *nbd_export_get_blockdev(NBDExport *exp)
+ void nbd_export_close_all(void)
+ {
+     NBDExport *exp, *next;
++    AioContext *aio_context;
+ 
+     QTAILQ_FOREACH_SAFE(exp, &exports, next, next) {
++        aio_context = exp->ctx;
++        aio_context_acquire(aio_context);
+         nbd_export_close(exp);
++        aio_context_release(aio_context);
+     }
+ }
+ 
+-- 
+1.8.3.1
+

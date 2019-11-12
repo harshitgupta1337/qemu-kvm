@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.1.0
-Release: 13%{?dist}
+Release: 14%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -220,6 +220,18 @@ Patch67: kvm-qemu-iotests-Add-test-for-bz-1745922.patch
 Patch68: kvm-nbd-server-attach-client-channel-to-the-export-s-Aio.patch
 # For bz#1744955 - Qemu hang when block resize a qcow2 image
 Patch69: kvm-virtio-blk-schedule-virtio_notify_config-to-run-on-m.patch
+# For bz#1756413 - backport support for transactionable block-dirty-bitmap-remove for incremental backup support
+Patch70: kvm-blockdev-reduce-aio_context-locked-sections-in-bitma.patch
+# For bz#1756413 - backport support for transactionable block-dirty-bitmap-remove for incremental backup support
+Patch71: kvm-qapi-implement-block-dirty-bitmap-remove-transaction.patch
+# For bz#1756413 - backport support for transactionable block-dirty-bitmap-remove for incremental backup support
+Patch72: kvm-iotests-test-bitmap-moving-inside-254.patch
+# For bz#1754710 - qemu core dumped when hotpluging vcpus
+Patch73: kvm-spapr-xive-skip-partially-initialized-vCPUs-in-prese.patch
+# For bz#1741094 - [Upstream]Incremental backup: Qemu coredump when expose an active bitmap via pull mode(data plane enable)
+Patch74: kvm-nbd-Grab-aio-context-lock-in-more-places.patch
+# For bz#1741094 - [Upstream]Incremental backup: Qemu coredump when expose an active bitmap via pull mode(data plane enable)
+Patch75: kvm-tests-Use-iothreads-during-iotest-223.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1161,6 +1173,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Nov 12 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-14.el8
+- kvm-blockdev-reduce-aio_context-locked-sections-in-bitma.patch [bz#1756413]
+- kvm-qapi-implement-block-dirty-bitmap-remove-transaction.patch [bz#1756413]
+- kvm-iotests-test-bitmap-moving-inside-254.patch [bz#1756413]
+- kvm-spapr-xive-skip-partially-initialized-vCPUs-in-prese.patch [bz#1754710]
+- kvm-nbd-Grab-aio-context-lock-in-more-places.patch [bz#1741094]
+- kvm-tests-Use-iothreads-during-iotest-223.patch [bz#1741094]
+- Resolves: bz#1741094
+  ([Upstream]Incremental backup: Qemu coredump when expose an active bitmap via pull mode(data plane enable))
+- Resolves: bz#1754710
+  (qemu core dumped when hotpluging vcpus)
+- Resolves: bz#1756413
+  (backport support for transactionable block-dirty-bitmap-remove for incremental backup support)
+
 * Fri Sep 27 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-13.el8
 - kvm-nbd-server-attach-client-channel-to-the-export-s-Aio.patch [bz#1748253]
 - kvm-virtio-blk-schedule-virtio_notify_config-to-run-on-m.patch [bz#1744955]
