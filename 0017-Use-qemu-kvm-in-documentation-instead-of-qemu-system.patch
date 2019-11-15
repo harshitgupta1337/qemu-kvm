@@ -1,0 +1,118 @@
+From dce5c0db33a1f7420254944c78962ca1887d3c08 Mon Sep 17 00:00:00 2001
+From: Miroslav Rezanina <mrezanin@redhat.com>
+Date: Fri, 30 Nov 2018 09:11:03 +0100
+Subject: Use qemu-kvm in documentation instead of qemu-system-<arch>
+
+Patchwork-id: 62380
+O-Subject: [RHEV-7.1 qemu-kvm-rhev PATCHv4] Use qemu-kvm in documentation instead of qemu-system-i386
+Bugzilla: 1140620
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+RH-Acked-by: Markus Armbruster <armbru@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+
+From: Miroslav Rezanina <mrezanin@redhat.com>
+
+We change the name and location of qemu-kvm binaries. Update documentation
+to reflect this change. Only architectures available in RHEL are updated.
+
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ docs/qemu-block-drivers.texi |  2 +-
+ docs/qemu-cpu-models.texi    |  2 +-
+ qemu-doc.texi                |  6 +++---
+ qemu-options.hx              | 16 ++++++++--------
+ 4 files changed, 13 insertions(+), 13 deletions(-)
+
+diff --git a/docs/qemu-block-drivers.texi b/docs/qemu-block-drivers.texi
+index 2c7ea49c32..5d0afb3dee 100644
+--- a/docs/qemu-block-drivers.texi
++++ b/docs/qemu-block-drivers.texi
+@@ -2,7 +2,7 @@
+ QEMU block driver reference manual
+ @c man end
+ 
+-@set qemu_system qemu-system-x86_64
++@set qemu_system qemu-kvm
+ 
+ @c man begin DESCRIPTION
+ 
+diff --git a/docs/qemu-cpu-models.texi b/docs/qemu-cpu-models.texi
+index f88a1def0d..c82cf8fab7 100644
+--- a/docs/qemu-cpu-models.texi
++++ b/docs/qemu-cpu-models.texi
+@@ -2,7 +2,7 @@
+ QEMU / KVM CPU model configuration
+ @c man end
+ 
+-@set qemu_system_x86 qemu-system-x86_64
++@set qemu_system_x86 qemu-kvm
+ 
+ @c man begin DESCRIPTION
+ 
+diff --git a/qemu-doc.texi b/qemu-doc.texi
+index 3c5022050f..f770e86a90 100644
+--- a/qemu-doc.texi
++++ b/qemu-doc.texi
+@@ -11,8 +11,8 @@
+ @paragraphindent 0
+ @c %**end of header
+ 
+-@set qemu_system qemu-system-x86_64
+-@set qemu_system_x86 qemu-system-x86_64
++@set qemu_system qemu-kvm
++@set qemu_system_x86 qemu-kvm
+ 
+ @ifinfo
+ @direntry
+@@ -1826,7 +1826,7 @@ Set the initial VGA graphic mode. The default is 800x600x32.
+ Set OpenBIOS variables in NVRAM, for example:
+ 
+ @example
+-qemu-system-ppc -prom-env 'auto-boot?=false' \
++qemu-kvm -prom-env 'auto-boot?=false' \
+  -prom-env 'boot-device=hd:2,\yaboot' \
+  -prom-env 'boot-args=conf=hd:2,\yaboot.conf'
+ @end example
+diff --git a/qemu-options.hx b/qemu-options.hx
+index fc17aca631..df1d27b6f2 100644
+--- a/qemu-options.hx
++++ b/qemu-options.hx
+@@ -2737,11 +2737,11 @@ be created for multiqueue vhost-user.
+ 
+ Example:
+ @example
+-qemu -m 512 -object memory-backend-file,id=mem,size=512M,mem-path=/hugetlbfs,share=on \
+-     -numa node,memdev=mem \
+-     -chardev socket,id=chr0,path=/path/to/socket \
+-     -netdev type=vhost-user,id=net0,chardev=chr0 \
+-     -device virtio-net-pci,netdev=net0
++qemu-kvm -m 512 -object memory-backend-file,id=mem,size=512M,mem-path=/hugetlbfs,share=on \
++         -numa node,memdev=mem \
++         -chardev socket,id=chr0,path=/path/to/socket \
++         -netdev type=vhost-user,id=net0,chardev=chr0 \
++         -device virtio-net-pci,netdev=net0
+ @end example
+ 
+ @item -netdev hubport,id=@var{id},hubid=@var{hubid}[,netdev=@var{nd}]
+@@ -3631,14 +3631,14 @@ ETEXI
+ 
+ DEF("realtime", HAS_ARG, QEMU_OPTION_realtime,
+     "-realtime [mlock=on|off]\n"
+-    "                run qemu with realtime features\n"
++    "                run qemu-kvm with realtime features\n"
+     "                mlock=on|off controls mlock support (default: on)\n",
+     QEMU_ARCH_ALL)
+ STEXI
+ @item -realtime mlock=on|off
+ @findex -realtime
+-Run qemu with realtime features.
+-mlocking qemu and guest memory can be enabled via @option{mlock=on}
++Run qemu-kvm with realtime features.
++mlocking qemu-kvm and guest memory can be enabled via @option{mlock=on}
+ (enabled by default).
+ ETEXI
+ 
+-- 
+2.21.0
+

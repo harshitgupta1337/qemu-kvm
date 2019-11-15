@@ -1,5 +1,6 @@
 %global SLOF_gittagdate 20170724
 %global SLOF_gittagcommit 89f519f
+%global rcversion -rc1
 
 %global have_usbredir 1
 %global have_spice    1
@@ -66,8 +67,8 @@ Obsoletes: %1-rhev
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
-Version: 4.1.0
-Release: 14%{?dist}
+Version: 4.2.0
+Release: 0%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -76,7 +77,7 @@ URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
 
-Source0: http://wiki.qemu.org/download/qemu-4.1.0.tar.xz
+Source0: http://wiki.qemu.org/download/qemu-4.2.0-rc1.tar.xz
 
 # KSM control scripts
 Source4: ksm.service
@@ -104,134 +105,23 @@ Source35: udev-kvm-check.c
 Source36: README.tests
 
 
-Patch0004: 0004-Initial-redhat-build.patch
-Patch0005: 0005-Enable-disable-devices-for-RHEL.patch
-Patch0006: 0006-Machine-type-related-general-changes.patch
-Patch0007: 0007-Add-aarch64-machine-types.patch
-Patch0008: 0008-Add-ppc64-machine-types.patch
-Patch0009: 0009-Add-s390x-machine-types.patch
-Patch0010: 0010-Add-x86_64-machine-types.patch
-Patch0011: 0011-Enable-make-check.patch
-Patch0012: 0012-vfio-cap-number-of-devices-that-can-be-assigned.patch
-Patch0013: 0013-Add-support-statement-to-help-output.patch
-Patch0014: 0014-globally-limit-the-maximum-number-of-CPUs.patch
-Patch0015: 0015-Add-support-for-simpletrace.patch
-Patch0016: 0016-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
-Patch0017: 0017-usb-xhci-Fix-PCI-capability-order.patch
-Patch0018: 0018-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
-Patch0019: 0019-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
-Patch0020: 0020-pc-Don-t-make-die-id-mandatory-unless-necessary.patch
-# For bz#1719649 - 8.1 machine type for x86
-Patch21: kvm-x86-machine-types-pc_rhel_8_0_compat.patch
-# For bz#1719649 - 8.1 machine type for x86
-Patch22: kvm-x86-machine-types-q35-Fixup-units_per_default_bus.patch
-# For bz#1719649 - 8.1 machine type for x86
-Patch23: kvm-x86-machine-types-Fixup-dynamic-sysbus-entries.patch
-# For bz#1719649 - 8.1 machine type for x86
-Patch24: kvm-x86-machine-types-add-pc-q35-rhel8.1.0.patch
-# For bz#1719649 - 8.1 machine type for x86
-Patch25: kvm-machine-types-Update-hw_compat_rhel_8_0-from-hw_comp.patch
-# For bz#1719649 - 8.1 machine type for x86
-Patch26: kvm-virtio-Make-disable-legacy-disable-modern-compat-pro.patch
-# For bz#1738626 - Disable memfd in QEMU
-# For bz#1740797 - Disable memfd in QEMU
-Patch27: kvm-RHEL-disable-hostmem-memfd.patch
-# For bz#1693772 - [IBM zKVM] RHEL AV 8.1.0 machine type update for s390x
-Patch28: kvm-redhat-s390x-Rename-s390-ccw-virtio-rhel8.0.0-to-s39.patch
-# For bz#1693772 - [IBM zKVM] RHEL AV 8.1.0 machine type update for s390x
-Patch29: kvm-redhat-s390x-Add-proper-compatibility-options-for-th.patch
-# For bz#1744170 - [IBM Power] New 8.1.0 machine type for pseries
-Patch31: kvm-redhat-update-pseries-rhel8.1.0-machine-type.patch
-# For bz#1743142 - Boot guest with multiple e1000 devices, qemu will crash after several guest reboots: kvm_mem_ioeventfd_add: error adding ioeventfd: No space left on device (28)
-Patch32: kvm-memory-Refactor-memory_region_clear_coalescing.patch
-# For bz#1743142 - Boot guest with multiple e1000 devices, qemu will crash after several guest reboots: kvm_mem_ioeventfd_add: error adding ioeventfd: No space left on device (28)
-Patch33: kvm-memory-Split-zones-when-do-coalesced_io_del.patch
-# For bz#1743142 - Boot guest with multiple e1000 devices, qemu will crash after several guest reboots: kvm_mem_ioeventfd_add: error adding ioeventfd: No space left on device (28)
-Patch34: kvm-memory-Remove-has_coalesced_range-counter.patch
-# For bz#1743142 - Boot guest with multiple e1000 devices, qemu will crash after several guest reboots: kvm_mem_ioeventfd_add: error adding ioeventfd: No space left on device (28)
-Patch35: kvm-memory-Fix-up-memory_region_-add-del-_coalescing.patch
-# For bz#1516220 - -trace help prints an incomplete list of trace events
-Patch36: kvm-trace-Clarify-DTrace-SystemTap-help-message.patch
-# For bz#1726898 - Parallel migration fails with error "Unable to write to socket: Connection reset by peer" now and then
-Patch37: kvm-socket-Add-backlog-parameter-to-socket_listen.patch
-# For bz#1726898 - Parallel migration fails with error "Unable to write to socket: Connection reset by peer" now and then
-Patch38: kvm-socket-Add-num-connections-to-qio_channel_socket_syn.patch
-# For bz#1726898 - Parallel migration fails with error "Unable to write to socket: Connection reset by peer" now and then
-Patch39: kvm-socket-Add-num-connections-to-qio_channel_socket_asy.patch
-# For bz#1726898 - Parallel migration fails with error "Unable to write to socket: Connection reset by peer" now and then
-Patch40: kvm-socket-Add-num-connections-to-qio_net_listener_open_.patch
-# For bz#1726898 - Parallel migration fails with error "Unable to write to socket: Connection reset by peer" now and then
-Patch41: kvm-multifd-Use-number-of-channels-as-listen-backlog.patch
-# For bz#1744107 - Migration from P8(qemu4.1) to P9(qemu4.1), after migration, qemu crash on destination with error message "qemu-kvm: error while loading state for instance 0x1 of device 'cpu'"
-Patch42: kvm-pseries-Fix-compat_pvr-on-reset.patch
-# For bz#1744107 - Migration from P8(qemu4.1) to P9(qemu4.1), after migration, qemu crash on destination with error message "qemu-kvm: error while loading state for instance 0x1 of device 'cpu'"
-Patch43: kvm-spapr-Set-compat-mode-in-spapr_core_plug.patch
-# For bz#1747836 - Call traces after guest migration due to incorrect handling of the timebase
-Patch44: kvm-migration-Do-not-re-read-the-clock-on-pre_save-in-ca.patch
-# For bz#1746790 - qemu core dump while migrate from RHEL7.6 to RHEL8.1
-Patch45: kvm-ehci-fix-queue-dev-null-ptr-dereference.patch
-# For bz#1743477 - Since bd94bc06479a "spapr: change default interrupt mode to 'dual'", QEMU resets the machine to select the appropriate interrupt controller. And -no-reboot prevents that.
-Patch46: kvm-spapr-Use-SHUTDOWN_CAUSE_SUBSYSTEM_RESET-for-CAS-reb.patch
-# For bz#1749134 - I/O error when virtio-blk disk is backed by a raw image on 4k disk
-Patch47: kvm-file-posix-Handle-undetectable-alignment.patch
-# For bz#1749134 - I/O error when virtio-blk disk is backed by a raw image on 4k disk
-Patch48: kvm-block-posix-Always-allocate-the-first-block.patch
-# For bz#1749134 - I/O error when virtio-blk disk is backed by a raw image on 4k disk
-Patch49: kvm-iotests-Test-allocate_first_block-with-O_DIRECT.patch
-# For bz#1734316 - multifd migration does not honour speed limits, consumes entire bandwidth of NIC
-Patch50: kvm-migration-always-initialise-ram_counters-for-a-new-m.patch
-# For bz#1734316 - multifd migration does not honour speed limits, consumes entire bandwidth of NIC
-Patch51: kvm-migration-add-qemu_file_update_transfer-interface.patch
-# For bz#1734316 - multifd migration does not honour speed limits, consumes entire bandwidth of NIC
-Patch52: kvm-migration-add-speed-limit-for-multifd-migration.patch
-# For bz#1734316 - multifd migration does not honour speed limits, consumes entire bandwidth of NIC
-Patch53: kvm-migration-update-ram_counters-for-multifd-sync-packe.patch
-# For bz#1750200 - [RHEL8.1][QEMU4.1]boot up guest with vf device,then system_reset guest,error prompt(qemu-kvm: Can't allocate MSIs for device 2800: IRQ 4904 is not free)
-Patch54: kvm-spapr-pci-Consolidate-de-allocation-of-MSIs.patch
-# For bz#1750200 - [RHEL8.1][QEMU4.1]boot up guest with vf device,then system_reset guest,error prompt(qemu-kvm: Can't allocate MSIs for device 2800: IRQ 4904 is not free)
-Patch55: kvm-spapr-pci-Free-MSIs-during-reset.patch
-# For bz#1748725 - [ppc][migration][v6.3-rc1-p1ce8930]basic migration failed with "qemu-kvm: KVM_SET_DEVICE_ATTR failed: Group 3 attr 0x0000000000001309: Device or resource busy"
-Patch56: kvm-spapr-xive-Mask-the-EAS-when-allocating-an-IRQ.patch
-# For bz#1746267 - qemu coredump: qemu-kvm: block/create.c:68: qmp_blockdev_create: Assertion `drv' failed
-Patch57: kvm-block-create-Do-not-abort-if-a-block-driver-is-not-a.patch
-# For bz#1717321 - qemu-kvm core dumped when repeat "system_reset" multiple times during guest boot
-Patch58: kvm-virtio-blk-Cancel-the-pending-BH-when-the-dataplane-.patch
-# For bz#1749737 - CVE-2019-15890 qemu-kvm: QEMU: Slirp: use-after-free during packet reassembly [rhel-av-8]
-Patch59: kvm-Using-ip_deq-after-m_free-might-read-pointers-from-a.patch
-# For bz#1746631 - Qemu core dump when do block commit under stress
-Patch60: kvm-blockjob-update-nodes-head-while-removing-all-bdrv.patch
-# For bz#1724008 - QEMU core dumped "memory_region_get_ram_ptr: Assertion `mr->ram_block' failed"
-# For bz#1736788 - QEMU core dumped if boot guest with nvdimm backed by /dev/dax0.0 and option pmem=off
-Patch61: kvm-hostmem-file-fix-pmem-file-size-check.patch
-# For bz#1724008 - QEMU core dumped "memory_region_get_ram_ptr: Assertion `mr->ram_block' failed"
-# For bz#1736788 - QEMU core dumped if boot guest with nvdimm backed by /dev/dax0.0 and option pmem=off
-Patch62: kvm-memory-fetch-pmem-size-in-get_file_size.patch
-# For bz#1753992 - core dump when testing persistent reservation in guest
-Patch63: kvm-pr-manager-Fix-invalid-g_free-crash-bug.patch
-# For bz#1745922 - Luks-inside-qcow2 snapshot cannot boot after 'qemu-img rebase'
-Patch64: kvm-block-Use-QEMU_IS_ALIGNED.patch
-# For bz#1745922 - Luks-inside-qcow2 snapshot cannot boot after 'qemu-img rebase'
-Patch65: kvm-block-qcow2-Fix-corruption-introduced-by-commit-8ac0.patch
-# For bz#1745922 - Luks-inside-qcow2 snapshot cannot boot after 'qemu-img rebase'
-Patch66: kvm-block-qcow2-refactor-encryption-code.patch
-# For bz#1745922 - Luks-inside-qcow2 snapshot cannot boot after 'qemu-img rebase'
-Patch67: kvm-qemu-iotests-Add-test-for-bz-1745922.patch
-# For bz#1748253 - QEMU crashes (core dump) when using the integrated NDB server with data-plane
-Patch68: kvm-nbd-server-attach-client-channel-to-the-export-s-Aio.patch
-# For bz#1744955 - Qemu hang when block resize a qcow2 image
-Patch69: kvm-virtio-blk-schedule-virtio_notify_config-to-run-on-m.patch
-# For bz#1756413 - backport support for transactionable block-dirty-bitmap-remove for incremental backup support
-Patch70: kvm-blockdev-reduce-aio_context-locked-sections-in-bitma.patch
-# For bz#1756413 - backport support for transactionable block-dirty-bitmap-remove for incremental backup support
-Patch71: kvm-qapi-implement-block-dirty-bitmap-remove-transaction.patch
-# For bz#1756413 - backport support for transactionable block-dirty-bitmap-remove for incremental backup support
-Patch72: kvm-iotests-test-bitmap-moving-inside-254.patch
-# For bz#1754710 - qemu core dumped when hotpluging vcpus
-Patch73: kvm-spapr-xive-skip-partially-initialized-vCPUs-in-prese.patch
-# For bz#1741094 - [Upstream]Incremental backup: Qemu coredump when expose an active bitmap via pull mode(data plane enable)
-Patch74: kvm-nbd-Grab-aio-context-lock-in-more-places.patch
-# For bz#1741094 - [Upstream]Incremental backup: Qemu coredump when expose an active bitmap via pull mode(data plane enable)
-Patch75: kvm-tests-Use-iothreads-during-iotest-223.patch
+Patch0005: 0005-Initial-redhat-build.patch
+Patch0006: 0006-Enable-disable-devices-for-RHEL.patch
+Patch0007: 0007-Machine-type-related-general-changes.patch
+Patch0008: 0008-Add-aarch64-machine-types.patch
+Patch0009: 0009-Add-ppc64-machine-types.patch
+Patch0010: 0010-Add-s390x-machine-types.patch
+Patch0011: 0011-Add-x86_64-machine-types.patch
+Patch0012: 0012-Enable-make-check.patch
+Patch0013: 0013-vfio-cap-number-of-devices-that-can-be-assigned.patch
+Patch0014: 0014-Add-support-statement-to-help-output.patch
+Patch0015: 0015-globally-limit-the-maximum-number-of-CPUs.patch
+Patch0016: 0016-Add-support-for-simpletrace.patch
+Patch0017: 0017-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
+Patch0018: 0018-usb-xhci-Fix-PCI-capability-order.patch
+Patch0019: 0019-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
+Patch0020: 0020-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
+Patch0021: 0021-Using-ip_deq-after-m_free-might-read-pointers-from-a.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -517,7 +407,7 @@ the Secure Shell (SSH) protocol.
 
 
 %prep
-%setup -n qemu-%{version}
+%setup -n qemu-%{version}%{rcversion}
 %autopatch -p1
 
 %build
@@ -808,8 +698,6 @@ mkdir -p $RPM_BUILD_ROOT%{_bindir}
 install -c -m 0755  qemu-ga ${RPM_BUILD_ROOT}%{_bindir}/qemu-ga
 
 mkdir -p $RPM_BUILD_ROOT%{_mandir}/man8
-install -m 0644  qemu-ga.8 ${RPM_BUILD_ROOT}%{_mandir}/man8/
-
 
 install -m 0755 qemu-kvm $RPM_BUILD_ROOT%{_libexecdir}/
 install -m 0644 qemu-kvm.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
@@ -838,7 +726,7 @@ mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/format
 install -m 0644 -t $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/format scripts/tracetool/format/*.py
 
 mkdir -p $RPM_BUILD_ROOT%{qemudocdir}
-install -p -m 0644 -t ${RPM_BUILD_ROOT}%{qemudocdir} Changelog README README.systemtap COPYING COPYING.LIB LICENSE docs/interop/qmp-spec.txt
+install -p -m 0644 -t ${RPM_BUILD_ROOT}%{qemudocdir} Changelog README.rst README.systemtap COPYING COPYING.LIB LICENSE docs/interop/qmp-spec.txt
 chmod -x ${RPM_BUILD_ROOT}%{_mandir}/man1/*
 chmod -x ${RPM_BUILD_ROOT}%{_mandir}/man8/*
 
@@ -875,15 +763,13 @@ rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv64-sifive_u-fw_jump.bin
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv64-virt-fw_jump.bin
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/qemu-nsis.bmp
 
+rm -rf ${RPM_BUILD_ROOT}%{_libdir}/qemu-kvm/ui-spice-app.so
+
 %ifarch s390x
     # Use the s390-ccw.img that we've just built, not the pre-built one
     install -m 0644 pc-bios/s390-ccw/s390-ccw.img $RPM_BUILD_ROOT%{_datadir}/%{name}/
 %else
     rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/s390-netboot.img
-%endif
-
-%ifnarch %{power64}
-    rm -f ${RPM_BUILD_ROOT}%{_datadir}/%{name}/spapr-rtas.bin
 %endif
 
 %ifnarch x86_64
@@ -1026,7 +912,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %defattr(-,root,root)
 %dir %{qemudocdir}
 %doc %{qemudocdir}/Changelog
-%doc %{qemudocdir}/README
+%doc %{qemudocdir}/README.rst
 %doc %{qemudocdir}/qemu-doc.html
 %doc %{qemudocdir}/COPYING
 %doc %{qemudocdir}/COPYING.LIB
@@ -1108,9 +994,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_datadir}/icons/*
 %{_datadir}/%{name}/linuxboot_dma.bin
 %{_datadir}/%{name}/dump-guest-memory.py*
-%ifarch %{power64}
-    %{_datadir}/%{name}/spapr-rtas.bin
-%endif
 %{_libexecdir}/qemu-kvm
 %{_datadir}/systemtap/tapset/qemu-kvm.stp
 %{_datadir}/systemtap/tapset/qemu-kvm-log.stp
@@ -1141,7 +1024,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 %files -n qemu-guest-agent
 %defattr(-,root,root,-)
-%doc COPYING README
+%doc COPYING README.rst
 %{_bindir}/qemu-ga
 %{_mandir}/man8/qemu-ga.8*
 %{_unitdir}/qemu-guest-agent.service
@@ -1173,19 +1056,17 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
-* Tue Nov 12 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-14.el8
-- kvm-blockdev-reduce-aio_context-locked-sections-in-bitma.patch [bz#1756413]
-- kvm-qapi-implement-block-dirty-bitmap-remove-transaction.patch [bz#1756413]
-- kvm-iotests-test-bitmap-moving-inside-254.patch [bz#1756413]
-- kvm-spapr-xive-skip-partially-initialized-vCPUs-in-prese.patch [bz#1754710]
-- kvm-nbd-Grab-aio-context-lock-in-more-places.patch [bz#1741094]
-- kvm-tests-Use-iothreads-during-iotest-223.patch [bz#1741094]
-- Resolves: bz#1741094
-  ([Upstream]Incremental backup: Qemu coredump when expose an active bitmap via pull mode(data plane enable))
-- Resolves: bz#1754710
-  (qemu core dumped when hotpluging vcpus)
-- Resolves: bz#1756413
-  (backport support for transactionable block-dirty-bitmap-remove for incremental backup support)
+* Fri Nov 15 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-0.el8
+- Rebase to 4.2
+
+* Tue Oct 29 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-14.el8
+- kvm-Revert-qcow2-skip-writing-zero-buffers-to-empty-COW-.patch [bz#1751934]
+- kvm-coroutine-Add-qemu_co_mutex_assert_locked.patch [bz#1764721]
+- kvm-qcow2-Fix-corruption-bug-in-qcow2_detect_metadata_pr.patch [bz#1764721]
+- Resolves: bz#1751934
+  (Fail to install guest when xfs is the host filesystem)
+- Resolves: bz#1764721
+  (qcow2 image corruption due to incorrect locking in preallocation detection)
 
 * Fri Sep 27 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-13.el8
 - kvm-nbd-server-attach-client-channel-to-the-export-s-Aio.patch [bz#1748253]
