@@ -1,0 +1,25 @@
+From 1afa318b8a37aa999221ad4afa01e14a242f7476 Mon Sep 17 00:00:00 2001
+From: "Danilo C. L. de Paula" <ddepaula@redhat.com>
+Date: Tue, 19 Nov 2019 08:41:33 -0300
+Subject: Temporarily update VERSION to 8.2.0
+
+rhbz#1773397
+
+This will change when the official release appears.
+But, to make qemu-kvm --version happy, we need to fix this now.
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ VERSION | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/VERSION b/VERSION
+index cfcbdd75dd..6aba2b245a 100644
+--- a/VERSION
++++ b/VERSION
+@@ -1 +1 @@
+-4.1.91
++4.2.0
+-- 
+2.21.0
+

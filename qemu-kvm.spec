@@ -1,5 +1,5 @@
-%global SLOF_gittagdate 20170724
-%global SLOF_gittagcommit 89f519f
+%global SLOF_gittagdate 20191022
+%global SLOF_gittagcommit 899d9883
 %global rcversion -rc1
 
 %global have_usbredir 1
@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 0%{?dist}
+Release: 1%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -122,6 +122,7 @@ Patch0018: 0018-usb-xhci-Fix-PCI-capability-order.patch
 Patch0019: 0019-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0020: 0020-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0021: 0021-Using-ip_deq-after-m_free-might-read-pointers-from-a.patch
+Patch0023: 0023-Temporarily-update-VERSION-to-8.2.0.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1056,6 +1057,13 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Nov 19 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-1.el8
+- 0023-Temporarily-update-VERSION-to-8.2.0.patch [bz#1773397]
+- Resolves: bz#1773397
+  (QEMU emulator version is "4.1.91" for qemu-kvm-4.2.0-0.module+el8.2.0+471)
+- Resoves: bz#1773392
+  ([ppc] Need to rebase SLOF image for qemu-kvm-4.2)
+
 * Fri Nov 15 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-0.el8
 - Rebase to 4.2
 
