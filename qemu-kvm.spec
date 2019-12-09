@@ -1,6 +1,6 @@
 %global SLOF_gittagdate 20191022
 %global SLOF_gittagcommit 899d9883
-%global rcversion -rc1
+%global rcversion -rc4
 
 %global have_usbredir 1
 %global have_spice    1
@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -77,7 +77,7 @@ URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
 
-Source0: http://wiki.qemu.org/download/qemu-4.2.0-rc1.tar.xz
+Source0: http://wiki.qemu.org/download/qemu-4.2.0-rc4.tar.xz
 
 # KSM control scripts
 Source4: ksm.service
@@ -105,6 +105,7 @@ Source35: udev-kvm-check.c
 Source36: README.tests
 
 
+Patch0001: 0001-redhat-Adding-slirp-to-the-exploded-tree.patch
 Patch0005: 0005-Initial-redhat-build.patch
 Patch0006: 0006-Enable-disable-devices-for-RHEL.patch
 Patch0007: 0007-Machine-type-related-general-changes.patch
@@ -409,6 +410,9 @@ the Secure Shell (SSH) protocol.
 
 %prep
 %setup -n qemu-%{version}%{rcversion}
+# Remove slirp content in scratchbuilds because it's being applyed as a patch
+rm -fr slirp
+mkdir slirp
 %autopatch -p1
 
 %build
@@ -1057,15 +1061,13 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
-* Tue Nov 19 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-1.el8
+
+* Tue Nov 19 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-2.el8
 - 0023-Temporarily-update-VERSION-to-8.2.0.patch [bz#1773397]
 - Resolves: bz#1773397
-  (QEMU emulator version is "4.1.91" for qemu-kvm-4.2.0-0.module+el8.2.0+471)
+  (QEMU emulator version is "4.1.91" for qemu-kvm-4.2.0-0.module+el8.2.0+471
 - Resoves: bz#1773392
   ([ppc] Need to rebase SLOF image for qemu-kvm-4.2)
-
-* Fri Nov 15 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-0.el8
-- Rebase to 4.2
 
 * Tue Oct 29 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-14.el8
 - kvm-Revert-qcow2-skip-writing-zero-buffers-to-empty-COW-.patch [bz#1751934]

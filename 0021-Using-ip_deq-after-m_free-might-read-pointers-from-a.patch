@@ -1,4 +1,4 @@
-From 9c91fc25dd4edd7447a342dd37b2fd8d3e2301f6 Mon Sep 17 00:00:00 2001
+From a0059f1ef0bfd6852f838491120adf1be20857cc Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Philippe=20Mathieu-Daud=C3=A9?= <philmd@redhat.com>
 Date: Mon, 16 Sep 2019 17:07:00 +0100
 Subject: Using ip_deq after m_free might read pointers from an allocation
@@ -31,7 +31,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/slirp/src/ip_input.c b/slirp/src/ip_input.c
-index 8c75d91495..df1c846ade 100644
+index 8c75d91..df1c846 100644
 --- a/slirp/src/ip_input.c
 +++ b/slirp/src/ip_input.c
 @@ -292,6 +292,7 @@ static struct ip *ip_reass(Slirp *slirp, struct ip *ip, struct ipq *fp)
@@ -57,5 +57,5 @@ index 8c75d91495..df1c846ade 100644
  
  insert:
 -- 
-2.21.0
+1.8.3.1
 

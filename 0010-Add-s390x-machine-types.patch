@@ -1,4 +1,4 @@
-From 18847aab397e7480af49e3a5cd4f6e3b7deae361 Mon Sep 17 00:00:00 2001
+From 88abdedad4c594c86eb2b92d490b676fa7494d6c Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:47:32 +0200
 Subject: Add s390x machine types
@@ -22,11 +22,11 @@ Merged patches (weekly-190830):
 
 Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/s390x/s390-virtio-ccw.c | 80 +++++++++++++++++++++++++++++++++++++-
+ hw/s390x/s390-virtio-ccw.c | 80 +++++++++++++++++++++++++++++++++++++++++++++-
  1 file changed, 79 insertions(+), 1 deletion(-)
 
 diff --git a/hw/s390x/s390-virtio-ccw.c b/hw/s390x/s390-virtio-ccw.c
-index d3edeef0ad..7bca634666 100644
+index d3edeef..7bca634 100644
 --- a/hw/s390x/s390-virtio-ccw.c
 +++ b/hw/s390x/s390-virtio-ccw.c
 @@ -615,7 +615,7 @@ bool css_migration_enabled(void)
@@ -131,5 +131,5 @@ index d3edeef0ad..7bca634666 100644
  static void ccw_machine_register_types(void)
  {
 -- 
-2.21.0
+1.8.3.1
 

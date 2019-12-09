@@ -1,4 +1,4 @@
-From 9fe2902d4c8f5cd5ad72af06c6bc54813e642e27 Mon Sep 17 00:00:00 2001
+From eba5ef4e161aeb71df26b1c43577945ae3093f2b Mon Sep 17 00:00:00 2001
 From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
 Date: Fri, 5 May 2017 19:06:14 +0200
 Subject: usb-xhci: Fix PCI capability order
@@ -62,7 +62,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/hw/usb/hcd-xhci.c b/hw/usb/hcd-xhci.c
-index 8fed2eedd6..d2b9744030 100644
+index 8fed2ee..d2b9744 100644
 --- a/hw/usb/hcd-xhci.c
 +++ b/hw/usb/hcd-xhci.c
 @@ -3403,6 +3403,12 @@ static void usb_xhci_realize(struct PCIDevice *dev, Error **errp)
@@ -92,5 +92,5 @@ index 8fed2eedd6..d2b9744030 100644
          /* TODO check for errors, and should fail when msix=on */
          msix_init(dev, xhci->numintrs,
 -- 
-2.21.0
+1.8.3.1
 

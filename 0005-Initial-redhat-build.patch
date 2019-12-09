@@ -1,4 +1,4 @@
-From 8b38b3cb83404f47ba268958cec8121c674b8153 Mon Sep 17 00:00:00 2001
+From 1285db562351e2233413d163bfef3ed002b10259 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 12 Oct 2018 07:31:11 +0200
 Subject: Initial redhat build
@@ -40,21 +40,14 @@ Rebase notes (4.1.0):
 - Removed new unpacked files
 - Update configure line to use new options
 
-Rebase notes (weekly-190823):
+Rebase notes (4.2.0):
 - Disable iotest run during make check
-
-Rebase notes (weekly-190906):
 - README renamed to README.rst (upstream)
 - Removed ui-spice-app.so
-
-Rebase notes (weekly-190913):
 - Added relevant changes from "505f7f4 redhat: Adding slirp to the exploded tree"
-
-Rebase notes (weekly-190927):
 - Removed qemu-ga.8 install from spec file - installed by make
-
-Rebase notes (weekly-191011):
 - Removed spapr-rtas.bin (upstream)
+- Require newer SLOF (20191022)
 
 Merged patches (3.1.0):
 - 01f0c9f RHEL8: Add disable configure options to qemu spec file
@@ -86,10 +79,10 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  Makefile                          |    3 +-
  configure                         |    1 +
  os-posix.c                        |    2 +-
- redhat/Makefile                   |   82 +
+ redhat/Makefile                   |   82 ++
  redhat/Makefile.common            |   51 +
  redhat/README.tests               |   39 +
- redhat/qemu-kvm.spec.template     | 2369 +++++++++++++++++++++++++++++
+ redhat/qemu-kvm.spec.template     | 2369 +++++++++++++++++++++++++++++++++++++
  redhat/scripts/process-patches.sh |    7 +-
  tests/Makefile.include            |    2 +-
  ui/vnc.c                          |    2 +-
@@ -100,7 +93,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  create mode 100644 redhat/qemu-kvm.spec.template
 
 diff --git a/Makefile b/Makefile
-index b437a346d7..086727dbb9 100644
+index b437a34..086727d 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -512,6 +512,7 @@ CAP_CFLAGS += -DCAPSTONE_HAS_ARM
@@ -121,7 +114,7 @@ index b437a346d7..086727dbb9 100644
  	$(INSTALL_DATA) docs/interop/qemu-qmp-ref.7 "$(DESTDIR)$(mandir)/man7"
  	$(INSTALL_DATA) docs/qemu-block-drivers.7 "$(DESTDIR)$(mandir)/man7"
 diff --git a/configure b/configure
-index 6099be1d84..16564f8ccc 100755
+index 6099be1..16564f8 100755
 --- a/configure
 +++ b/configure
 @@ -2424,6 +2424,7 @@ if test "$seccomp" != "no" ; then
@@ -133,7 +126,7 @@ index 6099be1d84..16564f8ccc 100755
  # xen probe
  
 diff --git a/os-posix.c b/os-posix.c
-index 86cffd2c7d..1c9f86768d 100644
+index 86cffd2..1c9f867 100644
 --- a/os-posix.c
 +++ b/os-posix.c
 @@ -83,7 +83,7 @@ void os_setup_signal_handling(void)
@@ -146,7 +139,7 @@ index 86cffd2c7d..1c9f86768d 100644
  char *os_find_datadir(void)
  {
 diff --git a/tests/Makefile.include b/tests/Makefile.include
-index 8566f5f119..b483790cf3 100644
+index 8566f5f..b483790 100644
 --- a/tests/Makefile.include
 +++ b/tests/Makefile.include
 @@ -1194,7 +1194,7 @@ check-acceptance: check-venv $(TESTS_RESULTS_DIR)
@@ -159,7 +152,7 @@ index 8566f5f119..b483790cf3 100644
  	rm -rf $(check-unit-y) tests/*.o $(QEMU_IOTESTS_HELPERS-y)
  	rm -rf $(sort $(foreach target,$(SYSEMU_TARGET_LIST), $(check-qtest-$(target)-y)) $(check-qtest-generic-y))
 diff --git a/ui/vnc.c b/ui/vnc.c
-index 87b8045afe..ecf6276f5b 100644
+index 87b8045..ecf6276 100644
 --- a/ui/vnc.c
 +++ b/ui/vnc.c
 @@ -3987,7 +3987,7 @@ void vnc_display_open(const char *id, Error **errp)
@@ -172,5 +165,5 @@ index 87b8045afe..ecf6276f5b 100644
          if (saslErr != SASL_OK) {
              error_setg(errp, "Failed to initialize SASL auth: %s",
 -- 
-2.21.0
+1.8.3.1
 

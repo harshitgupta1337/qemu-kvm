@@ -1,4 +1,4 @@
-From dbf2123f930a53e949cbeea7a272e453f3efe124 Mon Sep 17 00:00:00 2001
+From 4a62a0bf849ff8f533d3fc5bd3faec6bd09cf562 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:27:13 +0200
 Subject: Add ppc64 machine types
@@ -31,7 +31,7 @@ Merged patches (weekly-190830):
 
 Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/ppc/spapr.c          | 251 ++++++++++++++++++++++++++++++++++++++++
+ hw/ppc/spapr.c          | 251 ++++++++++++++++++++++++++++++++++++++++++++++++
  hw/ppc/spapr_cpu_core.c |  13 +++
  include/hw/ppc/spapr.h  |   1 +
  target/ppc/compat.c     |  13 ++-
@@ -39,10 +39,10 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  5 files changed, 278 insertions(+), 1 deletion(-)
 
 diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
-index 94f9d27096..59ccd182d4 100644
+index e076f60..f3652ed 100644
 --- a/hw/ppc/spapr.c
 +++ b/hw/ppc/spapr.c
-@@ -4442,6 +4442,7 @@ static void spapr_machine_class_init(ObjectClass *oc, void *data)
+@@ -4447,6 +4447,7 @@ static void spapr_machine_class_init(ObjectClass *oc, void *data)
      smc->linux_pci_probe = true;
      smc->smp_threads_vsmt = true;
      smc->nr_xirqs = SPAPR_NR_XIRQS;
@@ -50,7 +50,7 @@ index 94f9d27096..59ccd182d4 100644
  }
  
  static const TypeInfo spapr_machine_info = {
-@@ -4486,6 +4487,7 @@ static const TypeInfo spapr_machine_info = {
+@@ -4491,6 +4492,7 @@ static const TypeInfo spapr_machine_info = {
      }                                                                \
      type_init(spapr_machine_register_##suffix)
  
@@ -58,7 +58,7 @@ index 94f9d27096..59ccd182d4 100644
  /*
   * pseries-4.2
   */
-@@ -4515,6 +4517,7 @@ static void spapr_machine_4_1_class_options(MachineClass *mc)
+@@ -4520,6 +4522,7 @@ static void spapr_machine_4_1_class_options(MachineClass *mc)
  }
  
  DEFINE_SPAPR_MACHINE(4_1, "4.1", false);
@@ -66,7 +66,7 @@ index 94f9d27096..59ccd182d4 100644
  
  /*
   * pseries-4.0
-@@ -4531,6 +4534,7 @@ static void phb_placement_4_0(SpaprMachineState *spapr, uint32_t index,
+@@ -4536,6 +4539,7 @@ static void phb_placement_4_0(SpaprMachineState *spapr, uint32_t index,
      *nv2atsd = 0;
  }
  
@@ -74,7 +74,7 @@ index 94f9d27096..59ccd182d4 100644
  static void spapr_machine_4_0_class_options(MachineClass *mc)
  {
      SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
-@@ -4690,6 +4694,7 @@ DEFINE_SPAPR_MACHINE(2_8, "2.8", false);
+@@ -4695,6 +4699,7 @@ DEFINE_SPAPR_MACHINE(2_8, "2.8", false);
  /*
   * pseries-2.7
   */
@@ -82,7 +82,7 @@ index 94f9d27096..59ccd182d4 100644
  
  static void phb_placement_2_7(SpaprMachineState *spapr, uint32_t index,
                                uint64_t *buid, hwaddr *pio,
-@@ -4744,6 +4749,7 @@ static void phb_placement_2_7(SpaprMachineState *spapr, uint32_t index,
+@@ -4749,6 +4754,7 @@ static void phb_placement_2_7(SpaprMachineState *spapr, uint32_t index,
      *nv2atsd = 0;
  }
  
@@ -90,7 +90,7 @@ index 94f9d27096..59ccd182d4 100644
  static void spapr_machine_2_7_class_options(MachineClass *mc)
  {
      SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
-@@ -4858,6 +4864,251 @@ static void spapr_machine_2_1_class_options(MachineClass *mc)
+@@ -4863,6 +4869,251 @@ static void spapr_machine_2_1_class_options(MachineClass *mc)
      compat_props_add(mc->compat_props, hw_compat_2_1, hw_compat_2_1_len);
  }
  DEFINE_SPAPR_MACHINE(2_1, "2.1", false);
@@ -343,7 +343,7 @@ index 94f9d27096..59ccd182d4 100644
  static void spapr_machine_register_types(void)
  {
 diff --git a/hw/ppc/spapr_cpu_core.c b/hw/ppc/spapr_cpu_core.c
-index ef034a1279..05f0a83128 100644
+index 301cd7b..ba5a8fb 100644
 --- a/hw/ppc/spapr_cpu_core.c
 +++ b/hw/ppc/spapr_cpu_core.c
 @@ -24,6 +24,7 @@
@@ -354,7 +354,7 @@ index ef034a1279..05f0a83128 100644
  
  static void spapr_reset_vcpu(PowerPCCPU *cpu)
  {
-@@ -247,6 +248,7 @@ static void spapr_realize_vcpu(PowerPCCPU *cpu, SpaprMachineState *spapr,
+@@ -242,6 +243,7 @@ static void spapr_realize_vcpu(PowerPCCPU *cpu, SpaprMachineState *spapr,
      CPUPPCState *env = &cpu->env;
      CPUState *cs = CPU(cpu);
      Error *local_err = NULL;
@@ -362,7 +362,7 @@ index ef034a1279..05f0a83128 100644
  
      object_property_set_bool(OBJECT(cpu), true, "realized", &local_err);
      if (local_err) {
-@@ -259,6 +261,17 @@ static void spapr_realize_vcpu(PowerPCCPU *cpu, SpaprMachineState *spapr,
+@@ -254,6 +256,17 @@ static void spapr_realize_vcpu(PowerPCCPU *cpu, SpaprMachineState *spapr,
      cpu_ppc_set_vhyp(cpu, PPC_VIRTUAL_HYPERVISOR(spapr));
      kvmppc_set_papr(cpu);
  
@@ -381,7 +381,7 @@ index ef034a1279..05f0a83128 100644
          goto error_intc_create;
      }
 diff --git a/include/hw/ppc/spapr.h b/include/hw/ppc/spapr.h
-index d5ab5ea7b2..aa89cc4a95 100644
+index d5ab5ea..aa89cc4 100644
 --- a/include/hw/ppc/spapr.h
 +++ b/include/hw/ppc/spapr.h
 @@ -125,6 +125,7 @@ struct SpaprMachineClass {
@@ -393,7 +393,7 @@ index d5ab5ea7b2..aa89cc4a95 100644
                            uint64_t *buid, hwaddr *pio, 
                            hwaddr *mmio32, hwaddr *mmio64,
 diff --git a/target/ppc/compat.c b/target/ppc/compat.c
-index 7de4bf3122..3e2e35342d 100644
+index 7de4bf3..3e2e353 100644
 --- a/target/ppc/compat.c
 +++ b/target/ppc/compat.c
 @@ -105,8 +105,19 @@ static const CompatInfo *compat_by_pvr(uint32_t pvr)
@@ -418,7 +418,7 @@ index 7de4bf3122..3e2e35342d 100644
      const CompatInfo *compat = compat_by_pvr(compat_pvr);
      const CompatInfo *min = compat_by_pvr(min_compat_pvr);
 diff --git a/target/ppc/cpu.h b/target/ppc/cpu.h
-index e3e82327b7..5c53801cfd 100644
+index e3e8232..5c53801 100644
 --- a/target/ppc/cpu.h
 +++ b/target/ppc/cpu.h
 @@ -1367,6 +1367,7 @@ static inline int cpu_mmu_index(CPUPPCState *env, bool ifetch)
@@ -430,5 +430,5 @@ index e3e82327b7..5c53801cfd 100644
                        uint32_t min_compat_pvr, uint32_t max_compat_pvr);
  bool ppc_type_check_compat(const char *cputype, uint32_t compat_pvr,
 -- 
-2.21.0
+1.8.3.1
 

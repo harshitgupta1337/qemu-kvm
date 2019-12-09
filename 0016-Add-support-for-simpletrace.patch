@@ -1,4 +1,4 @@
-From 850e66fc482eb897babd9e1f3d1216fd0f7c6382 Mon Sep 17 00:00:00 2001
+From d78f2713725382c792154ce482a1b03b749b909f Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Thu, 8 Oct 2015 09:50:17 +0200
 Subject: Add support for simpletrace
@@ -26,8 +26,8 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  .gitignore                              |  2 ++
  Makefile                                |  4 +++
- README.systemtap                        | 43 +++++++++++++++++++++++++
- redhat/qemu-kvm.spec.template           | 26 ++++++++++++++-
+ README.systemtap                        | 43 +++++++++++++++++++++++++++++++++
+ redhat/qemu-kvm.spec.template           | 26 +++++++++++++++++++-
  scripts/systemtap/conf.d/qemu_kvm.conf  |  4 +++
  scripts/systemtap/script.d/qemu_kvm.stp |  1 +
  6 files changed, 79 insertions(+), 1 deletion(-)
@@ -36,7 +36,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  create mode 100644 scripts/systemtap/script.d/qemu_kvm.stp
 
 diff --git a/Makefile b/Makefile
-index 086727dbb9..4254950f7f 100644
+index 086727d..4254950 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -939,6 +939,10 @@ endif
@@ -52,7 +52,7 @@ index 086727dbb9..4254950f7f 100644
  ctags:
 diff --git a/README.systemtap b/README.systemtap
 new file mode 100644
-index 0000000000..ad913fc990
+index 0000000..ad913fc
 --- /dev/null
 +++ b/README.systemtap
 @@ -0,0 +1,43 @@
@@ -101,7 +101,7 @@ index 0000000000..ad913fc990
 +  # /usr/share/qemu-kvm/simpletrace.py --no-header /usr/share/qemu-kvm/trace-events /tmp/trace.log
 diff --git a/scripts/systemtap/conf.d/qemu_kvm.conf b/scripts/systemtap/conf.d/qemu_kvm.conf
 new file mode 100644
-index 0000000000..372d8160a4
+index 0000000..372d816
 --- /dev/null
 +++ b/scripts/systemtap/conf.d/qemu_kvm.conf
 @@ -0,0 +1,4 @@
@@ -111,11 +111,11 @@ index 0000000000..372d8160a4
 +qemu_kvm_OPT="-s4" # per-CPU buffer size, in megabytes
 diff --git a/scripts/systemtap/script.d/qemu_kvm.stp b/scripts/systemtap/script.d/qemu_kvm.stp
 new file mode 100644
-index 0000000000..c04abf9449
+index 0000000..c04abf9
 --- /dev/null
 +++ b/scripts/systemtap/script.d/qemu_kvm.stp
 @@ -0,0 +1 @@
 +probe qemu.kvm.simpletrace.handle_qmp_command,qemu.kvm.simpletrace.monitor_protocol_*,qemu.kvm.simpletrace.migrate_set_state {}
 -- 
-2.21.0
+1.8.3.1
 
