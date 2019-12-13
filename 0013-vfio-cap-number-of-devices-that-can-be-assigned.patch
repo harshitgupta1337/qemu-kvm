@@ -1,4 +1,4 @@
-From 58e199b5cb9364f46b68d8cf618dff7564d427bb Mon Sep 17 00:00:00 2001
+From de433da59448eaad4ac1b902d07d57b57f922aff Mon Sep 17 00:00:00 2001
 From: Bandan Das <bsd@redhat.com>
 Date: Tue, 3 Dec 2013 20:05:13 +0100
 Subject: vfio: cap number of devices that can be assigned
@@ -42,7 +42,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  2 files changed, 29 insertions(+), 1 deletion(-)
 
 diff --git a/hw/vfio/pci.c b/hw/vfio/pci.c
-index c8534d3..309535f 100644
+index c8534d3035..309535f306 100644
 --- a/hw/vfio/pci.c
 +++ b/hw/vfio/pci.c
 @@ -47,6 +47,9 @@
@@ -98,7 +98,7 @@ index c8534d3..309535f 100644
                       false),
      DEFINE_PROP_BOOL("x-no-vfio-ioeventfd", VFIOPCIDevice, no_vfio_ioeventfd,
 diff --git a/hw/vfio/pci.h b/hw/vfio/pci.h
-index 35626cd..0cd4803 100644
+index 35626cd63e..0cd4803aee 100644
 --- a/hw/vfio/pci.h
 +++ b/hw/vfio/pci.h
 @@ -135,6 +135,7 @@ typedef struct VFIOPCIDevice {
@@ -110,5 +110,5 @@ index 35626cd..0cd4803 100644
      uint32_t device_id;
      uint32_t sub_vendor_id;
 -- 
-1.8.3.1
+2.21.0
 

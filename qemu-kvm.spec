@@ -1,6 +1,5 @@
 %global SLOF_gittagdate 20191022
 %global SLOF_gittagcommit 899d9883
-%global rcversion -rc4
 
 %global have_usbredir 1
 %global have_spice    1
@@ -68,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 2%{?dist}
+Release: 4%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -77,7 +76,7 @@ URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
 
-Source0: http://wiki.qemu.org/download/qemu-4.2.0-rc4.tar.xz
+Source0: http://wiki.qemu.org/download/qemu-4.2.0.tar.xz
 
 # KSM control scripts
 Source4: ksm.service
@@ -105,7 +104,6 @@ Source35: udev-kvm-check.c
 Source36: README.tests
 
 
-Patch0001: 0001-redhat-Adding-slirp-to-the-exploded-tree.patch
 Patch0005: 0005-Initial-redhat-build.patch
 Patch0006: 0006-Enable-disable-devices-for-RHEL.patch
 Patch0007: 0007-Machine-type-related-general-changes.patch
@@ -123,7 +121,6 @@ Patch0018: 0018-usb-xhci-Fix-PCI-capability-order.patch
 Patch0019: 0019-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0020: 0020-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0021: 0021-Using-ip_deq-after-m_free-might-read-pointers-from-a.patch
-Patch0023: 0023-Temporarily-update-VERSION-to-8.2.0.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -409,10 +406,7 @@ the Secure Shell (SSH) protocol.
 
 
 %prep
-%setup -n qemu-%{version}%{rcversion}
-# Remove slirp content in scratchbuilds because it's being applyed as a patch
-rm -fr slirp
-mkdir slirp
+%setup -n qemu-%{version}
 %autopatch -p1
 
 %build
@@ -1061,13 +1055,76 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Dec 13 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-4.el8
+- Rebase to qemu-4.2
+- Resolves: bz#1783250
+  (rebase qemu-kvm to 4.2)
 
-* Tue Nov 19 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-2.el8
-- 0023-Temporarily-update-VERSION-to-8.2.0.patch [bz#1773397]
-- Resolves: bz#1773397
-  (QEMU emulator version is "4.1.91" for qemu-kvm-4.2.0-0.module+el8.2.0+471
-- Resoves: bz#1773392
-  ([ppc] Need to rebase SLOF image for qemu-kvm-4.2)
+* Tue Dec 10 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-18.el8
+- kvm-LUKS-support-preallocation.patch [bz#1534951]
+- kvm-nbd-add-empty-.bdrv_reopen_prepare.patch [bz#1718727]
+- kvm-qdev-qbus-add-hidden-device-support.patch [bz#1757796]
+- kvm-pci-add-option-for-net-failover.patch [bz#1757796]
+- kvm-pci-mark-devices-partially-unplugged.patch [bz#1757796]
+- kvm-pci-mark-device-having-guest-unplug-request-pending.patch [bz#1757796]
+- kvm-qapi-add-unplug-primary-event.patch [bz#1757796]
+- kvm-qapi-add-failover-negotiated-event.patch [bz#1757796]
+- kvm-migration-allow-unplug-during-migration-for-failover.patch [bz#1757796]
+- kvm-migration-add-new-migration-state-wait-unplug.patch [bz#1757796]
+- kvm-libqos-tolerate-wait-unplug-migration-state.patch [bz#1757796]
+- kvm-net-virtio-add-failover-support.patch [bz#1757796]
+- kvm-vfio-unplug-failover-primary-device-before-migration.patch [bz#1757796]
+- kvm-net-virtio-fix-dev_unplug_pending.patch [bz#1757796]
+- kvm-net-virtio-return-early-when-failover-primary-alread.patch [bz#1757796]
+- kvm-net-virtio-fix-re-plugging-of-primary-device.patch [bz#1757796]
+- kvm-net-virtio-return-error-when-device_opts-arg-is-NULL.patch [bz#1757796]
+- kvm-vfio-don-t-ignore-return-value-of-migrate_add_blocke.patch [bz#1757796]
+- kvm-hw-vfio-pci-Fix-double-free-of-migration_blocker.patch [bz#1757796]
+- Resolves: bz#1534951
+  (RFE: Support preallocation mode for luks format)
+- Resolves: bz#1718727
+  (Committing changes to the backing file over NBD fails with reopening files not supported)
+- Resolves: bz#1757796
+  (RFE: support for net failover devices in qemu)
+
+* Mon Dec 02 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-17.el8
+- kvm-qemu-pr-helper-fix-crash-in-mpath_reconstruct_sense.patch [bz#1772322]
+- Resolves: bz#1772322
+  (qemu-pr-helper: fix crash in mpath_reconstruct_sense)
+
+* Wed Nov 27 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-16.el8
+- kvm-curl-Keep-pointer-to-the-CURLState-in-CURLSocket.patch [bz#1745209]
+- kvm-curl-Keep-socket-until-the-end-of-curl_sock_cb.patch [bz#1745209]
+- kvm-curl-Check-completion-in-curl_multi_do.patch [bz#1745209]
+- kvm-curl-Pass-CURLSocket-to-curl_multi_do.patch [bz#1745209]
+- kvm-curl-Report-only-ready-sockets.patch [bz#1745209]
+- kvm-curl-Handle-success-in-multi_check_completion.patch [bz#1745209]
+- kvm-curl-Check-curl_multi_add_handle-s-return-code.patch [bz#1745209]
+- kvm-vhost-user-save-features-if-the-char-dev-is-closed.patch [bz#1738768]
+- kvm-block-snapshot-Restrict-set-of-snapshot-nodes.patch [bz#1658981]
+- kvm-iotests-Test-internal-snapshots-with-blockdev.patch [bz#1658981]
+- kvm-qapi-Add-feature-flags-to-commands-in-qapi-introspec.patch [bz#1658981]
+- kvm-qapi-Allow-introspecting-fix-for-savevm-s-cooperatio.patch [bz#1658981]
+- kvm-block-Remove-backing-null-from-bs-explicit_-options.patch [bz#1773925]
+- kvm-iotests-Test-multiple-blockdev-snapshot-calls.patch [bz#1773925]
+- Resolves: bz#1658981
+  (qemu failed to create internal snapshot via 'savevm' when using blockdev)
+- Resolves: bz#1738768
+  (Guest fails to recover receiving packets after vhost-user reconnect)
+- Resolves: bz#1745209
+  (qemu-img gets stuck when stream-converting from http)
+- Resolves: bz#1773925
+  (Fail to do blockcommit with more than one snapshots)
+
+* Thu Nov 14 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-15.el8
+- kvm-virtio-blk-Add-blk_drain-to-virtio_blk_device_unreal.patch [bz#1706759]
+- kvm-Revert-qcow2-skip-writing-zero-buffers-to-empty-COW-.patch [bz#1772473]
+- kvm-coroutine-Add-qemu_co_mutex_assert_locked.patch [bz#1772473]
+- kvm-qcow2-Fix-corruption-bug-in-qcow2_detect_metadata_pr.patch [bz#1772473]
+- Resolves: bz#1706759
+  (qemu core dump when unplug a 16T GPT type disk from win2019 guest)
+- Resolves: bz#1772473
+  (Import fixes from 8.1.0 into 8.1.1 branch)
 
 * Tue Oct 29 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.1.0-14.el8
 - kvm-Revert-qcow2-skip-writing-zero-buffers-to-empty-COW-.patch [bz#1751934]

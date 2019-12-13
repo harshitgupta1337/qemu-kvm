@@ -1,4 +1,4 @@
-From 88d09fe5c46c80214f883bd097ca86a99ca1ca41 Mon Sep 17 00:00:00 2001
+From 154215041df085271a780a2989f4f481226e3e34 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:48:41 +0200
 Subject: Enable make check
@@ -44,7 +44,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  11 files changed, 37 insertions(+), 17 deletions(-)
 
 diff --git a/tests/Makefile.include b/tests/Makefile.include
-index b483790..53bdbdf 100644
+index b483790cf3..53bdbdfee0 100644
 --- a/tests/Makefile.include
 +++ b/tests/Makefile.include
 @@ -172,7 +172,7 @@ check-qtest-i386-y += tests/ide-test$(EXESUF)
@@ -86,7 +86,7 @@ index b483790..53bdbdf 100644
  check-qtest-s390x-y += tests/cpu-plug-test$(EXESUF)
  check-qtest-s390x-y += tests/migration-test$(EXESUF)
 diff --git a/tests/boot-serial-test.c b/tests/boot-serial-test.c
-index d3a54a0..33ce72b 100644
+index d3a54a0ba5..33ce72b89c 100644
 --- a/tests/boot-serial-test.c
 +++ b/tests/boot-serial-test.c
 @@ -108,19 +108,23 @@ static testdef_t tests[] = {
@@ -115,7 +115,7 @@ index d3a54a0..33ce72b 100644
      { "sparc", "LX", "", "TMS390S10" },
      { "sparc", "SS-4", "", "MB86904" },
 diff --git a/tests/cpu-plug-test.c b/tests/cpu-plug-test.c
-index 30e514b..a04beae 100644
+index 30e514bbfb..a04beae1c6 100644
 --- a/tests/cpu-plug-test.c
 +++ b/tests/cpu-plug-test.c
 @@ -185,8 +185,8 @@ static void add_pseries_test_case(const char *mname)
@@ -130,7 +130,7 @@ index 30e514b..a04beae 100644
      }
      data = g_new(PlugTestData, 1);
 diff --git a/tests/e1000-test.c b/tests/e1000-test.c
-index c387984..c89112d 100644
+index c387984ef6..c89112d6f8 100644
 --- a/tests/e1000-test.c
 +++ b/tests/e1000-test.c
 @@ -22,9 +22,11 @@ struct QE1000 {
@@ -146,7 +146,7 @@ index c387984..c89112d 100644
  
  static void *e1000_get_driver(void *obj, const char *interface)
 diff --git a/tests/hd-geo-test.c b/tests/hd-geo-test.c
-index 7e86c54..cc068ba 100644
+index 7e86c5416c..cc068bad87 100644
 --- a/tests/hd-geo-test.c
 +++ b/tests/hd-geo-test.c
 @@ -732,6 +732,7 @@ static void test_override_ide(void)
@@ -178,7 +178,7 @@ index 7e86c54..cc068ba 100644
          qtest_add_func("hd-geo/override/zero_chs", test_override_zero_chs);
          qtest_add_func("hd-geo/override/scsi_hot_unplug",
 diff --git a/tests/prom-env-test.c b/tests/prom-env-test.c
-index 61bc1d1..028d45c 100644
+index 61bc1d1e7b..028d45c7d7 100644
 --- a/tests/prom-env-test.c
 +++ b/tests/prom-env-test.c
 @@ -88,10 +88,14 @@ int main(int argc, char *argv[])
@@ -197,7 +197,7 @@ index 61bc1d1..028d45c 100644
          add_tests(sparc_machines);
      } else if (!strcmp(arch, "sparc64")) {
 diff --git a/tests/qemu-iotests/051 b/tests/qemu-iotests/051
-index 53bcdbc..b387e0c 100755
+index 53bcdbc911..b387e0c233 100755
 --- a/tests/qemu-iotests/051
 +++ b/tests/qemu-iotests/051
 @@ -181,11 +181,11 @@ run_qemu -drive if=virtio
@@ -231,7 +231,7 @@ index 53bcdbc..b387e0c 100755
       *)
          ;;
 diff --git a/tests/qemu-iotests/group b/tests/qemu-iotests/group
-index 6b10a6a..06cc734 100644
+index 6b10a6a762..06cc734b26 100644
 --- a/tests/qemu-iotests/group
 +++ b/tests/qemu-iotests/group
 @@ -92,7 +92,7 @@
@@ -253,7 +253,7 @@ index 6b10a6a..06cc734 100644
  101 rw quick
  102 rw quick
 diff --git a/tests/test-x86-cpuid-compat.c b/tests/test-x86-cpuid-compat.c
-index 772287b..e7c075e 100644
+index 772287bdb4..e7c075ed98 100644
 --- a/tests/test-x86-cpuid-compat.c
 +++ b/tests/test-x86-cpuid-compat.c
 @@ -300,6 +300,7 @@ int main(int argc, char **argv)
@@ -273,7 +273,7 @@ index 772287b..e7c075e 100644
      /* Test feature parsing */
      add_feature_test("x86/cpuid/features/plus",
 diff --git a/tests/usb-hcd-xhci-test.c b/tests/usb-hcd-xhci-test.c
-index 10ef9d2..3855873 100644
+index 10ef9d2a91..3855873050 100644
 --- a/tests/usb-hcd-xhci-test.c
 +++ b/tests/usb-hcd-xhci-test.c
 @@ -21,6 +21,7 @@ static void test_xhci_hotplug(void)
@@ -303,5 +303,5 @@ index 10ef9d2..3855873 100644
  
      qtest_start("-device nec-usb-xhci,id=xhci"
 -- 
-1.8.3.1
+2.21.0
 

@@ -1,4 +1,4 @@
-From 9647d94ec17c7fa645336a881147a7e841cb78c2 Mon Sep 17 00:00:00 2001
+From c9c3cf721b0e9e359418f64c2a5121c3f8b5d27a Mon Sep 17 00:00:00 2001
 From: Andrew Jones <drjones@redhat.com>
 Date: Tue, 21 Jan 2014 10:46:52 +0100
 Subject: globally limit the maximum number of CPUs
@@ -82,7 +82,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  2 files changed, 30 insertions(+)
 
 diff --git a/accel/kvm/kvm-all.c b/accel/kvm/kvm-all.c
-index ca00daa..dc3ed7f 100644
+index ca00daa2f5..dc3ed7f04e 100644
 --- a/accel/kvm/kvm-all.c
 +++ b/accel/kvm/kvm-all.c
 @@ -1943,6 +1943,18 @@ static int kvm_init(MachineState *ms)
@@ -105,7 +105,7 @@ index ca00daa..dc3ed7f 100644
          if (nc->num > soft_vcpus_limit) {
              warn_report("Number of %s cpus requested (%d) exceeds "
 diff --git a/vl.c b/vl.c
-index 9f3e7e7..1550aa2 100644
+index 9f3e7e7733..1550aa2aaa 100644
 --- a/vl.c
 +++ b/vl.c
 @@ -134,6 +134,8 @@ int main(int argc, char **argv)
@@ -148,5 +148,5 @@ index 9f3e7e7..1550aa2 100644
      configure_rtc(qemu_find_opts_singleton("rtc"));
  
 -- 
-1.8.3.1
+2.21.0
 

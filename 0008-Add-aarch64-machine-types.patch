@@ -1,4 +1,4 @@
-From e9fbad8d9e530189a029533f738bac62559e4d52 Mon Sep 17 00:00:00 2001
+From 49164264d9928f73961acbbe4d56d8dfa23d8099 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 12:53:31 +0200
 Subject: Add aarch64 machine types
@@ -34,12 +34,12 @@ Merged patches (4.1.0):
 
 Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/arm/virt.c         | 161 +++++++++++++++++++++++++++++++++++++++++++++++++-
- include/hw/arm/virt.h |  11 ++++
+ hw/arm/virt.c         | 161 +++++++++++++++++++++++++++++++++++++++++-
+ include/hw/arm/virt.h |  11 +++
  2 files changed, 171 insertions(+), 1 deletion(-)
 
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index d4bedc2..e108391 100644
+index d4bedc2607..e10839100e 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
 @@ -72,6 +72,7 @@
@@ -243,7 +243,7 @@ index d4bedc2..e108391 100644
 +}
 +DEFINE_RHEL_MACHINE_AS_LATEST(8, 2, 0)
 diff --git a/include/hw/arm/virt.h b/include/hw/arm/virt.h
-index 0b41083..53fdf16 100644
+index 0b41083e9d..53fdf16563 100644
 --- a/include/hw/arm/virt.h
 +++ b/include/hw/arm/virt.h
 @@ -142,6 +142,7 @@ typedef struct {
@@ -272,5 +272,5 @@ index 0b41083..53fdf16 100644
  
  /* Return the number of used redistributor regions  */
 -- 
-1.8.3.1
+2.21.0
 

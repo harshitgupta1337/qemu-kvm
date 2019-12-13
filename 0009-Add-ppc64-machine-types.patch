@@ -1,4 +1,4 @@
-From 4a62a0bf849ff8f533d3fc5bd3faec6bd09cf562 Mon Sep 17 00:00:00 2001
+From 136eae41007e2e5b0d693cc656f3ec36cbabf16f Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:27:13 +0200
 Subject: Add ppc64 machine types
@@ -26,20 +26,22 @@ Merged patches (4.1.0):
 - 2511c63 redhat: sync pseries-rhel7.6.0 with rhel-av-8.0.1
 - 89f01da redhat: define pseries-rhel8.1.0 machine type
 
-Merged patches (weekly-190830):
+Merged patches (4.2.0):
 - bcba728 redhat: update pseries-rhel8.1.0 machine type
+- redhat: update pseries-rhel-7.6.0 machine type (patch 93039)
+- redhat: define pseries-rhel8.2.0 machine type (patch 93041)
 
 Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/ppc/spapr.c          | 251 ++++++++++++++++++++++++++++++++++++++++++++++++
- hw/ppc/spapr_cpu_core.c |  13 +++
+ hw/ppc/spapr.c          | 278 ++++++++++++++++++++++++++++++++++++++++
+ hw/ppc/spapr_cpu_core.c |  13 ++
  include/hw/ppc/spapr.h  |   1 +
- target/ppc/compat.c     |  13 ++-
+ target/ppc/compat.c     |  13 +-
  target/ppc/cpu.h        |   1 +
- 5 files changed, 278 insertions(+), 1 deletion(-)
+ 5 files changed, 305 insertions(+), 1 deletion(-)
 
 diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
-index e076f60..f3652ed 100644
+index e076f6023c..8749c72066 100644
 --- a/hw/ppc/spapr.c
 +++ b/hw/ppc/spapr.c
 @@ -4447,6 +4447,7 @@ static void spapr_machine_class_init(ObjectClass *oc, void *data)
@@ -90,22 +92,48 @@ index e076f60..f3652ed 100644
  static void spapr_machine_2_7_class_options(MachineClass *mc)
  {
      SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
-@@ -4863,6 +4869,251 @@ static void spapr_machine_2_1_class_options(MachineClass *mc)
+@@ -4863,6 +4869,278 @@ static void spapr_machine_2_1_class_options(MachineClass *mc)
      compat_props_add(mc->compat_props, hw_compat_2_1, hw_compat_2_1_len);
  }
  DEFINE_SPAPR_MACHINE(2_1, "2.1", false);
 +#endif
 +
 +/*
-+ * pseries-rhel8.1.0
++ * pseries-rhel8.2.0
 + */
 +
-+static void spapr_machine_rhel810_class_options(MachineClass *mc)
++static void spapr_machine_rhel820_class_options(MachineClass *mc)
 +{
 +    /* Defaults for the latest behaviour inherited from the base class */
 +}
 +
-+DEFINE_SPAPR_MACHINE(rhel810, "rhel8.1.0", true);
++DEFINE_SPAPR_MACHINE(rhel820, "rhel8.2.0", true);
++
++/*
++ * pseries-rhel8.1.0
++ * like pseries-4.1
++ */
++
++static void spapr_machine_rhel810_class_options(MachineClass *mc)
++{
++    SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
++    static GlobalProperty compat[] = {
++        /* Only allow 4kiB and 64kiB IOMMU pagesizes */
++        { TYPE_SPAPR_PCI_HOST_BRIDGE, "pgsz", "0x11000" },
++    };
++
++    spapr_machine_rhel820_class_options(mc);
++
++    /* from pseries-4.1 */
++    smc->linux_pci_probe = false;
++    smc->smp_threads_vsmt = false;
++    compat_props_add(mc->compat_props, hw_compat_rhel_8_1,
++                     hw_compat_rhel_8_1_len);
++    compat_props_add(mc->compat_props, compat, G_N_ELEMENTS(compat));
++
++}
++
++DEFINE_SPAPR_MACHINE(rhel810, "rhel8.1.0", false);
 +
 +/*
 + * pseries-rhel8.0.0
@@ -159,6 +187,7 @@ index e076f60..f3652ed 100644
 +
 +    /* from spapr_machine_3_0_class_options() */
 +    smc->legacy_irq_allocation = true;
++    smc->nr_xirqs = 0x400;
 +    smc->irq = &spapr_irq_xics_legacy;
 +
 +    /* from spapr_machine_2_12_class_options() */
@@ -343,7 +372,7 @@ index e076f60..f3652ed 100644
  static void spapr_machine_register_types(void)
  {
 diff --git a/hw/ppc/spapr_cpu_core.c b/hw/ppc/spapr_cpu_core.c
-index 301cd7b..ba5a8fb 100644
+index 301cd7b4e4..ba5a8fb82b 100644
 --- a/hw/ppc/spapr_cpu_core.c
 +++ b/hw/ppc/spapr_cpu_core.c
 @@ -24,6 +24,7 @@
@@ -381,7 +410,7 @@ index 301cd7b..ba5a8fb 100644
          goto error_intc_create;
      }
 diff --git a/include/hw/ppc/spapr.h b/include/hw/ppc/spapr.h
-index d5ab5ea..aa89cc4 100644
+index d5ab5ea7b2..aa89cc4a95 100644
 --- a/include/hw/ppc/spapr.h
 +++ b/include/hw/ppc/spapr.h
 @@ -125,6 +125,7 @@ struct SpaprMachineClass {
@@ -393,7 +422,7 @@ index d5ab5ea..aa89cc4 100644
                            uint64_t *buid, hwaddr *pio, 
                            hwaddr *mmio32, hwaddr *mmio64,
 diff --git a/target/ppc/compat.c b/target/ppc/compat.c
-index 7de4bf3..3e2e353 100644
+index 7de4bf3122..3e2e35342d 100644
 --- a/target/ppc/compat.c
 +++ b/target/ppc/compat.c
 @@ -105,8 +105,19 @@ static const CompatInfo *compat_by_pvr(uint32_t pvr)
@@ -418,7 +447,7 @@ index 7de4bf3..3e2e353 100644
      const CompatInfo *compat = compat_by_pvr(compat_pvr);
      const CompatInfo *min = compat_by_pvr(min_compat_pvr);
 diff --git a/target/ppc/cpu.h b/target/ppc/cpu.h
-index e3e8232..5c53801 100644
+index e3e82327b7..5c53801cfd 100644
 --- a/target/ppc/cpu.h
 +++ b/target/ppc/cpu.h
 @@ -1367,6 +1367,7 @@ static inline int cpu_mmu_index(CPUPPCState *env, bool ifetch)
@@ -430,5 +459,5 @@ index e3e8232..5c53801 100644
                        uint32_t min_compat_pvr, uint32_t max_compat_pvr);
  bool ppc_type_check_compat(const char *cputype, uint32_t compat_pvr,
 -- 
-1.8.3.1
+2.21.0
 

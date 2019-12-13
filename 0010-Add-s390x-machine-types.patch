@@ -1,4 +1,4 @@
-From 88abdedad4c594c86eb2b92d490b676fa7494d6c Mon Sep 17 00:00:00 2001
+From 0842700b3a01891c316e9169fa651f26714cafa5 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:47:32 +0200
 Subject: Add s390x machine types
@@ -7,7 +7,7 @@ Adding changes to add RHEL machine types for s390x architecture.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 
-Rebase changes (weekly-190111):
+Rebase changes (weekly-4.1.0):
 - Use upstream compat handling
 
 Merged patches (3.1.0):
@@ -16,17 +16,18 @@ Merged patches (3.1.0):
 Merged patches (4.1.0):
 - 6c200d665b hw/s390x/s390-virtio-ccw: Add machine types for RHEL8.0.0
 
-Merged patches (weekly-190830):
+Merged patches (4.2.0):
 - fb192e5 redhat: s390x: Rename s390-ccw-virtio-rhel8.0.0 to s390-ccw-virtio-rhel8.1.0
 - a9b22e8 redhat: s390x: Add proper compatibility options for the -rhel7.6.0 machine
+- hw/s390x: Add the s390-ccw-virtio-rhel8.2.0 machine types (patch 92954)
 
 Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/s390x/s390-virtio-ccw.c | 80 +++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 79 insertions(+), 1 deletion(-)
+ hw/s390x/s390-virtio-ccw.c | 70 +++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 69 insertions(+), 1 deletion(-)
 
 diff --git a/hw/s390x/s390-virtio-ccw.c b/hw/s390x/s390-virtio-ccw.c
-index d3edeef..7bca634 100644
+index d3edeef0ad..c2c83d2fce 100644
 --- a/hw/s390x/s390-virtio-ccw.c
 +++ b/hw/s390x/s390-virtio-ccw.c
 @@ -615,7 +615,7 @@ bool css_migration_enabled(void)
@@ -46,44 +47,26 @@ index d3edeef..7bca634 100644
  static void ccw_machine_4_2_instance_options(MachineState *machine)
  {
  }
-@@ -866,6 +867,83 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
+@@ -866,6 +867,73 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
      compat_props_add(mc->compat_props, compat, G_N_ELEMENTS(compat));
  }
  DEFINE_CCW_MACHINE(2_4, "2.4", false);
 +#endif
-+/*
-+ * like CCW_COMPAT_2_12 + CCW_COMPAT_3_0 (which are empty), but includes
-+ * HW_COMPAT_RHEL7_6 instead of HW_COMPAT_2_11 and HW_COMPAT_3_0
-+ */
 +
-+GlobalProperty ccw_compat_rhel_7_6[] =
-+{
-+};
-+const size_t ccw_compat_rhel_7_6_len = G_N_ELEMENTS(ccw_compat_rhel_7_6);
-+
-+GlobalProperty ccw_compat_rhel_7_5[] = {
-+        {
-+            .driver   = TYPE_SCLP_EVENT_FACILITY,
-+            .property = "allow_all_mask_sizes",
-+            .value    = "off",
-+        },
-+};
-+const size_t ccw_compat_rhel_7_5_len = G_N_ELEMENTS(ccw_compat_rhel_7_5);
-+
-+static void ccw_machine_rhel810_instance_options(MachineState *machine)
++static void ccw_machine_rhel820_instance_options(MachineState *machine)
 +{
 +}
 +
-+static void ccw_machine_rhel810_class_options(MachineClass *mc)
++static void ccw_machine_rhel820_class_options(MachineClass *mc)
 +{
 +}
-+DEFINE_CCW_MACHINE(rhel810, "rhel8.1.0", true);
++DEFINE_CCW_MACHINE(rhel820, "rhel8.2.0", true);
 +
 +static void ccw_machine_rhel760_instance_options(MachineState *machine)
 +{
 +    static const S390FeatInit qemu_cpu_feat = { S390_FEAT_LIST_QEMU_V3_1 };
 +
-+    ccw_machine_rhel810_instance_options(machine);
++    ccw_machine_rhel820_instance_options(machine);
 +
 +    s390_set_qemu_cpu_model(0x2827, 12, 2, qemu_cpu_feat);
 +
@@ -97,11 +80,10 @@ index d3edeef..7bca634 100644
 +
 +static void ccw_machine_rhel760_class_options(MachineClass *mc)
 +{
-+    ccw_machine_rhel810_class_options(mc);
-+    /* We never published the s390x version of RHEL8.0 AV, so add this here */
++    ccw_machine_rhel820_class_options(mc);
++    /* We never published the s390x version of RHEL-AV 8.0 and 8.1, so add this here */
 +    compat_props_add(mc->compat_props, hw_compat_rhel_8_0, hw_compat_rhel_8_0_len);
 +    compat_props_add(mc->compat_props, hw_compat_rhel_7_6, hw_compat_rhel_7_6_len);
-+    compat_props_add(mc->compat_props, ccw_compat_rhel_7_6, ccw_compat_rhel_7_6_len);
 +}
 +DEFINE_CCW_MACHINE(rhel760, "rhel7.6.0", false);
 +
@@ -119,6 +101,15 @@ index d3edeef..7bca634 100644
 +    s390_cpudef_featoff_greater(11, 1, S390_FEAT_BPB);
 +}
 +
++GlobalProperty ccw_compat_rhel_7_5[] = {
++        {
++            .driver   = TYPE_SCLP_EVENT_FACILITY,
++            .property = "allow_all_mask_sizes",
++            .value    = "off",
++        },
++};
++const size_t ccw_compat_rhel_7_5_len = G_N_ELEMENTS(ccw_compat_rhel_7_5);
++
 +static void ccw_machine_rhel750_class_options(MachineClass *mc)
 +{
 +    ccw_machine_rhel760_class_options(mc);
@@ -131,5 +122,5 @@ index d3edeef..7bca634 100644
  static void ccw_machine_register_types(void)
  {
 -- 
-1.8.3.1
+2.21.0
 

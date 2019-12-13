@@ -1,4 +1,4 @@
-From c47eea7192e103a6cc57cd7d07421b8e684d3db5 Mon Sep 17 00:00:00 2001
+From 113078b23a4747b07eb363719d7cbc0af403dd2a Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 11 Jan 2019 09:54:45 +0100
 Subject: Machine type related general changes
@@ -28,34 +28,35 @@ Merged patches (4.1.0):
 - 479ad30 redhat: fix cut'n'paste garbage in hw_compat comments
 - f19738e compat: Generic hw_compat_rhel_8_0
 
-Merged patches (weekly-190823):
+Merged patches (4.2.0):
 - 9f2bfaa machine types: Update hw_compat_rhel_8_0 from hw_compat_4_0
 - ca4a5e8 virtio: Make disable-legacy/disable-modern compat properties optional
+- compat: Generic hw_compat_rhel_8_1 (patch 93040/92956)
 
 Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/acpi/ich9.c          |  16 +++++
+ hw/acpi/ich9.c          |  16 ++++
  hw/acpi/piix4.c         |   5 +-
- hw/char/serial.c        |  16 +++++
- hw/core/machine.c       | 161 ++++++++++++++++++++++++++++++++++++++++++++++++
+ hw/char/serial.c        |  16 ++++
+ hw/core/machine.c       | 170 ++++++++++++++++++++++++++++++++++++++++
  hw/display/vga-isa.c    |   2 +-
- hw/net/e1000e.c         |  21 +++++++
+ hw/net/e1000e.c         |  21 +++++
  hw/net/rtl8139.c        |   4 +-
  hw/rtc/mc146818rtc.c    |   6 ++
  hw/smbios/smbios.c      |   1 +
  hw/timer/i8254_common.c |   2 +-
  hw/usb/hcd-uhci.c       |   4 +-
- hw/usb/hcd-xhci.c       |  20 ++++++
+ hw/usb/hcd-xhci.c       |  20 +++++
  hw/usb/hcd-xhci.h       |   2 +
  include/hw/acpi/ich9.h  |   3 +
- include/hw/boards.h     |  21 +++++++
- include/hw/usb.h        |   4 ++
+ include/hw/boards.h     |  24 ++++++
+ include/hw/usb.h        |   4 +
  migration/migration.c   |   2 +
  migration/migration.h   |   5 ++
- 18 files changed, 289 insertions(+), 6 deletions(-)
+ 18 files changed, 301 insertions(+), 6 deletions(-)
 
 diff --git a/hw/acpi/ich9.c b/hw/acpi/ich9.c
-index ab203ad..7ec2688 100644
+index ab203ad448..7ec26884e8 100644
 --- a/hw/acpi/ich9.c
 +++ b/hw/acpi/ich9.c
 @@ -444,6 +444,18 @@ static void ich9_pm_set_enable_tco(Object *obj, bool value, Error **errp)
@@ -89,7 +90,7 @@ index ab203ad..7ec2688 100644
                          ich9_pm_get_disable_s3,
                          ich9_pm_set_disable_s3,
 diff --git a/hw/acpi/piix4.c b/hw/acpi/piix4.c
-index 93aec2d..3a26193 100644
+index 93aec2dd2c..3a26193cbe 100644
 --- a/hw/acpi/piix4.c
 +++ b/hw/acpi/piix4.c
 @@ -274,6 +274,7 @@ static const VMStateDescription vmstate_acpi = {
@@ -112,7 +113,7 @@ index 93aec2d..3a26193 100644
      DEFINE_PROP_BOOL("acpi-pci-hotplug-with-bridge-support", PIIX4PMState,
                       use_acpi_pci_hotplug, true),
 diff --git a/hw/char/serial.c b/hw/char/serial.c
-index b4aa250..0012f0e 100644
+index b4aa250950..0012f0e44d 100644
 --- a/hw/char/serial.c
 +++ b/hw/char/serial.c
 @@ -34,6 +34,7 @@
@@ -167,13 +168,22 @@ index b4aa250..0012f0e 100644
  }
  
 diff --git a/hw/core/machine.c b/hw/core/machine.c
-index 1689ad3..2b130bb 100644
+index 1689ad3bf8..e0e0eec8bf 100644
 --- a/hw/core/machine.c
 +++ b/hw/core/machine.c
-@@ -27,6 +27,167 @@
+@@ -27,6 +27,176 @@
  #include "hw/pci/pci.h"
  #include "hw/mem/nvdimm.h"
  
++/*
++ * The same as hw_compat_4_1
++ */
++GlobalProperty hw_compat_rhel_8_1[] = {
++    /* hw_compat_rhel_8_1 from hw_compat_4_1 */
++    { "virtio-pci", "x-pcie-flr-init", "off" },
++};
++const size_t hw_compat_rhel_8_1_len = G_N_ELEMENTS(hw_compat_rhel_8_1);
++
 +/* The same as hw_compat_3_1
 + * format of array has been changed by:
 + *     6c36bddf5340 ("machine: Use shorter format for GlobalProperty arrays")
@@ -339,7 +349,7 @@ index 1689ad3..2b130bb 100644
      { "virtio-pci", "x-pcie-flr-init", "off" },
  };
 diff --git a/hw/display/vga-isa.c b/hw/display/vga-isa.c
-index 873e5e9..d1a2efe 100644
+index 873e5e9706..d1a2efe47e 100644
 --- a/hw/display/vga-isa.c
 +++ b/hw/display/vga-isa.c
 @@ -82,7 +82,7 @@ static void vga_isa_realizefn(DeviceState *dev, Error **errp)
@@ -352,7 +362,7 @@ index 873e5e9..d1a2efe 100644
  };
  
 diff --git a/hw/net/e1000e.c b/hw/net/e1000e.c
-index b69fd7d..d8be50a 100644
+index b69fd7d8ad..d8be50a1ce 100644
 --- a/hw/net/e1000e.c
 +++ b/hw/net/e1000e.c
 @@ -79,6 +79,11 @@ typedef struct E1000EState {
@@ -426,7 +436,7 @@ index b69fd7d..d8be50a 100644
                          e1000e_prop_disable_vnet, bool),
      DEFINE_PROP_SIGNED("subsys_ven", E1000EState, subsys_ven,
 diff --git a/hw/net/rtl8139.c b/hw/net/rtl8139.c
-index 88a97d7..21d80e9 100644
+index 88a97d756d..21d80e96cf 100644
 --- a/hw/net/rtl8139.c
 +++ b/hw/net/rtl8139.c
 @@ -3177,7 +3177,7 @@ static int rtl8139_pre_save(void *opaque)
@@ -449,7 +459,7 @@ index 88a97d7..21d80e9 100644
          VMSTATE_UINT16(tally_counters.TxUndrn, RTL8139State),
  
 diff --git a/hw/rtc/mc146818rtc.c b/hw/rtc/mc146818rtc.c
-index 74ae74b..7382051 100644
+index 74ae74bc5c..73820517df 100644
 --- a/hw/rtc/mc146818rtc.c
 +++ b/hw/rtc/mc146818rtc.c
 @@ -42,6 +42,7 @@
@@ -473,7 +483,7 @@ index 74ae74b..7382051 100644
  }
  
 diff --git a/hw/smbios/smbios.c b/hw/smbios/smbios.c
-index 11d476c..e6e9355 100644
+index 11d476c4a2..e6e9355384 100644
 --- a/hw/smbios/smbios.c
 +++ b/hw/smbios/smbios.c
 @@ -777,6 +777,7 @@ void smbios_set_defaults(const char *manufacturer, const char *product,
@@ -485,7 +495,7 @@ index 11d476c..e6e9355 100644
      SMBIOS_SET_DEFAULT(type2.product, product);
      SMBIOS_SET_DEFAULT(type2.version, version);
 diff --git a/hw/timer/i8254_common.c b/hw/timer/i8254_common.c
-index 050875b..32935da 100644
+index 050875b497..32935da46c 100644
 --- a/hw/timer/i8254_common.c
 +++ b/hw/timer/i8254_common.c
 @@ -231,7 +231,7 @@ static const VMStateDescription vmstate_pit_common = {
@@ -498,7 +508,7 @@ index 050875b..32935da 100644
                               vmstate_pit_channel, PITChannelState),
          VMSTATE_INT64(channels[0].next_transition_time,
 diff --git a/hw/usb/hcd-uhci.c b/hw/usb/hcd-uhci.c
-index 23507ad..9fd87a7 100644
+index 23507ad3b5..9fd87a7ad9 100644
 --- a/hw/usb/hcd-uhci.c
 +++ b/hw/usb/hcd-uhci.c
 @@ -1219,12 +1219,14 @@ static void usb_uhci_common_realize(PCIDevice *dev, Error **errp)
@@ -518,7 +528,7 @@ index 23507ad..9fd87a7 100644
      if (s->masterbus) {
          USBPort *ports[NB_PORTS];
 diff --git a/hw/usb/hcd-xhci.c b/hw/usb/hcd-xhci.c
-index 80988bb..8fed2ee 100644
+index 80988bb305..8fed2eedd6 100644
 --- a/hw/usb/hcd-xhci.c
 +++ b/hw/usb/hcd-xhci.c
 @@ -3590,9 +3590,27 @@ static const VMStateDescription vmstate_xhci_slot = {
@@ -559,7 +569,7 @@ index 80988bb..8fed2ee 100644
      }
  };
 diff --git a/hw/usb/hcd-xhci.h b/hw/usb/hcd-xhci.h
-index 2fad4df..f554b67 100644
+index 2fad4df2a7..f554b671e3 100644
 --- a/hw/usb/hcd-xhci.h
 +++ b/hw/usb/hcd-xhci.h
 @@ -157,6 +157,8 @@ typedef struct XHCIEvent {
@@ -572,7 +582,7 @@ index 2fad4df..f554b67 100644
  
  typedef struct XHCIInterrupter {
 diff --git a/include/hw/acpi/ich9.h b/include/hw/acpi/ich9.h
-index 41568d1..1a23ccc 100644
+index 41568d1837..1a23ccc412 100644
 --- a/include/hw/acpi/ich9.h
 +++ b/include/hw/acpi/ich9.h
 @@ -61,6 +61,9 @@ typedef struct ICH9LPCPMRegs {
@@ -586,13 +596,16 @@ index 41568d1..1a23ccc 100644
  
  #define ACPI_PM_PROP_TCO_ENABLED "enable_tco"
 diff --git a/include/hw/boards.h b/include/hw/boards.h
-index de45087..cc11116 100644
+index de45087f34..6f85a0e032 100644
 --- a/include/hw/boards.h
 +++ b/include/hw/boards.h
-@@ -377,4 +377,25 @@ extern const size_t hw_compat_2_2_len;
+@@ -377,4 +377,28 @@ extern const size_t hw_compat_2_2_len;
  extern GlobalProperty hw_compat_2_1[];
  extern const size_t hw_compat_2_1_len;
  
++extern GlobalProperty hw_compat_rhel_8_1[];
++extern const size_t hw_compat_rhel_8_1_len;
++
 +extern GlobalProperty hw_compat_rhel_8_0[];
 +extern const size_t hw_compat_rhel_8_0_len;
 +
@@ -616,7 +629,7 @@ index de45087..cc11116 100644
 +
  #endif
 diff --git a/include/hw/usb.h b/include/hw/usb.h
-index c24d968..b353438 100644
+index c24d968a19..b353438ea0 100644
 --- a/include/hw/usb.h
 +++ b/include/hw/usb.h
 @@ -605,4 +605,8 @@ int usb_get_quirks(uint16_t vendor_id, uint16_t product_id,
@@ -629,7 +642,7 @@ index c24d968..b353438 100644
 +
  #endif
 diff --git a/migration/migration.c b/migration/migration.c
-index 354ad07..30c53c6 100644
+index 354ad072fa..30c53c623b 100644
 --- a/migration/migration.c
 +++ b/migration/migration.c
 @@ -121,6 +121,8 @@ enum mig_rp_message_type {
@@ -642,7 +655,7 @@ index 354ad07..30c53c6 100644
     migrations at once.  For now we don't need to add
     dynamic creation of migration */
 diff --git a/migration/migration.h b/migration/migration.h
-index 79b3dda..0b1b0d4 100644
+index 79b3dda146..0b1b0d4df5 100644
 --- a/migration/migration.h
 +++ b/migration/migration.h
 @@ -335,6 +335,11 @@ void init_dirty_bitmap_incoming_migration(void);
@@ -658,5 +671,5 @@ index 79b3dda..0b1b0d4 100644
  #define qemu_ram_foreach_block \
    #warning "Use foreach_not_ignored_block in migration code"
 -- 
-1.8.3.1
+2.21.0
 
