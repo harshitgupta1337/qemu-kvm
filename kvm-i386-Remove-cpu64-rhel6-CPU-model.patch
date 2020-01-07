@@ -1,0 +1,77 @@
+From 4543a3c19816bd07f27eb900f20ae609df03703c Mon Sep 17 00:00:00 2001
+From: Eduardo Habkost <ehabkost@redhat.com>
+Date: Mon, 23 Dec 2019 21:10:31 +0000
+Subject: [PATCH 1/2] i386: Remove cpu64-rhel6 CPU model
+
+RH-Author: Eduardo Habkost <ehabkost@redhat.com>
+Message-id: <20191223211031.26503-1-ehabkost@redhat.com>
+Patchwork-id: 93213
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH] i386: Remove cpu64-rhel6 CPU model
+Bugzilla: 1741345
+RH-Acked-by: Daniel P. Berrange <berrange@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1741345
+BRANCH: rhel-av-8.2.0
+Upstream: not applicable
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=25525975
+
+We don't provide rhel6 machine types anymore, so we don't need to
+provide compatibility with RHEl6.  cpu64-rhel6 was documented as
+deprecated and scheduled for removal in 8.2, so now it's time to
+remove it.
+
+Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ target/i386/cpu.c | 26 +-------------------------
+ 1 file changed, 1 insertion(+), 25 deletions(-)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index 790db77..6dce6f2 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -1829,12 +1829,7 @@ static CPUCaches epyc_cache_info = {
+ 
+ static X86CPUDefinition builtin_x86_defs[] = {
+     {
+-        /* qemu64 is the default CPU model for all *-rhel7.* machine-types.
+-         * The default on RHEL-6 was cpu64-rhel6.
+-         * libvirt assumes that qemu64 is the default for _all_ machine-types,
+-         * so we should try to keep qemu64 and cpu64-rhel6 as similar as
+-         * possible.
+-         */
++        /* qemu64 is the default CPU model for all machine-types */
+         .name = "qemu64",
+         .level = 0xd,
+         .vendor = CPUID_VENDOR_AMD,
+@@ -2135,25 +2130,6 @@ static X86CPUDefinition builtin_x86_defs[] = {
+         .model_id = "Intel(R) Atom(TM) CPU N270   @ 1.60GHz",
+     },
+     {
+-        .name = "cpu64-rhel6",
+-        .level = 4,
+-        .vendor = CPUID_VENDOR_AMD,
+-        .family = 6,
+-        .model = 13,
+-        .stepping = 3,
+-        .features[FEAT_1_EDX] = CPUID_SSE2 | CPUID_SSE | CPUID_FXSR |
+-             CPUID_MMX | CPUID_CLFLUSH | CPUID_PSE36 | CPUID_PAT | CPUID_CMOV |
+-             CPUID_MCA | CPUID_PGE | CPUID_MTRR | CPUID_SEP | CPUID_APIC |
+-             CPUID_CX8 | CPUID_MCE | CPUID_PAE | CPUID_MSR | CPUID_TSC |
+-             CPUID_PSE | CPUID_DE | CPUID_FP87,
+-        .features[FEAT_1_ECX] = CPUID_EXT_CX16 | CPUID_EXT_SSE3,
+-        .features[FEAT_8000_0001_EDX] = CPUID_EXT2_LM | CPUID_EXT2_NX | CPUID_EXT2_SYSCALL,
+-        .features[FEAT_8000_0001_ECX] = CPUID_EXT3_SSE4A | CPUID_EXT3_ABM |
+-             CPUID_EXT3_SVM | CPUID_EXT3_LAHF_LM,
+-        .xlevel = 0x8000000A,
+-        .model_id = "QEMU Virtual CPU version (cpu64-rhel6)",
+-    },
+-    {
+         .name = "Conroe",
+         .level = 10,
+         .vendor = CPUID_VENDOR_INTEL,
+-- 
+1.8.3.1
+

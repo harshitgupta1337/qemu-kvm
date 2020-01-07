@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -121,6 +121,10 @@ Patch0018: 0018-usb-xhci-Fix-PCI-capability-order.patch
 Patch0019: 0019-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0020: 0020-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0021: 0021-Using-ip_deq-after-m_free-might-read-pointers-from-a.patch
+# For bz#1741345 - Remove the "cpu64-rhel6" CPU from qemu-kvm
+Patch22: kvm-i386-Remove-cpu64-rhel6-CPU-model.patch
+# For bz#1772774 - qemu-kvm core dump during migration+reboot ( Assertion `mem->dirty_bmap' failed )
+Patch23: kvm-Reallocate-dirty_bmap-when-we-change-a-slot.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1055,6 +1059,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Jan 07 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-5.el8
+- kvm-i386-Remove-cpu64-rhel6-CPU-model.patch [bz#1741345]
+- kvm-Reallocate-dirty_bmap-when-we-change-a-slot.patch [bz#1772774]
+- Resolves: bz#1741345
+  (Remove the "cpu64-rhel6" CPU from qemu-kvm)
+- Resolves: bz#1772774
+  (qemu-kvm core dump during migration+reboot ( Assertion `mem->dirty_bmap' failed ))
+
 * Fri Dec 13 2019 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-4.el8
 - Rebase to qemu-4.2
 - Resolves: bz#1783250

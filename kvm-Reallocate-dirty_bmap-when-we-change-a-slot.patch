@@ -1,0 +1,115 @@
+From c477581ccc6962651d4d6c702a6c3e2fcc5e4205 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Thu, 2 Jan 2020 11:56:51 +0000
+Subject: [PATCH 2/2] kvm: Reallocate dirty_bmap when we change a slot
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200102115651.140177-1-dgilbert@redhat.com>
+Patchwork-id: 93256
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH 1/1] kvm: Reallocate dirty_bmap when we change a slot
+Bugzilla: 1772774
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+
+bz: https://bugzilla.redhat.com/show_bug.cgi?id=1772774
+brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=25575691
+branch: rhel-av-8.2.0
+
+kvm_set_phys_mem can be called to reallocate a slot by something the
+guest does (e.g. writing to PAM and other chipset registers).
+This can happen in the middle of a migration, and if we're unlucky
+it can now happen between the split 'sync' and 'clear'; the clear
+asserts if there's no bmap to clear.   Recreate the bmap whenever
+we change the slot, keeping the clear path happy.
+
+Typically this is triggered by the guest rebooting during a migrate.
+
+Corresponds to:
+https://bugzilla.redhat.com/show_bug.cgi?id=1772774
+https://bugzilla.redhat.com/show_bug.cgi?id=1771032
+
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Reviewed-by: Peter Xu <peterx@redhat.com>
+(cherry picked from commit 9b3a31c745b61758aaa5466a3a9fc0526d409188)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ accel/kvm/kvm-all.c | 44 +++++++++++++++++++++++++++++---------------
+ 1 file changed, 29 insertions(+), 15 deletions(-)
+
+diff --git a/accel/kvm/kvm-all.c b/accel/kvm/kvm-all.c
+index dc3ed7f..5007bda 100644
+--- a/accel/kvm/kvm-all.c
++++ b/accel/kvm/kvm-all.c
+@@ -518,6 +518,27 @@ static int kvm_get_dirty_pages_log_range(MemoryRegionSection *section,
+ 
+ #define ALIGN(x, y)  (((x)+(y)-1) & ~((y)-1))
+ 
++/* Allocate the dirty bitmap for a slot  */
++static void kvm_memslot_init_dirty_bitmap(KVMSlot *mem)
++{
++    /*
++     * XXX bad kernel interface alert
++     * For dirty bitmap, kernel allocates array of size aligned to
++     * bits-per-long.  But for case when the kernel is 64bits and
++     * the userspace is 32bits, userspace can't align to the same
++     * bits-per-long, since sizeof(long) is different between kernel
++     * and user space.  This way, userspace will provide buffer which
++     * may be 4 bytes less than the kernel will use, resulting in
++     * userspace memory corruption (which is not detectable by valgrind
++     * too, in most cases).
++     * So for now, let's align to 64 instead of HOST_LONG_BITS here, in
++     * a hope that sizeof(long) won't become >8 any time soon.
++     */
++    hwaddr bitmap_size = ALIGN(((mem->memory_size) >> TARGET_PAGE_BITS),
++                                        /*HOST_LONG_BITS*/ 64) / 8;
++    mem->dirty_bmap = g_malloc0(bitmap_size);
++}
++
+ /**
+  * kvm_physical_sync_dirty_bitmap - Sync dirty bitmap from kernel space
+  *
+@@ -550,23 +571,9 @@ static int kvm_physical_sync_dirty_bitmap(KVMMemoryListener *kml,
+             goto out;
+         }
+ 
+-        /* XXX bad kernel interface alert
+-         * For dirty bitmap, kernel allocates array of size aligned to
+-         * bits-per-long.  But for case when the kernel is 64bits and
+-         * the userspace is 32bits, userspace can't align to the same
+-         * bits-per-long, since sizeof(long) is different between kernel
+-         * and user space.  This way, userspace will provide buffer which
+-         * may be 4 bytes less than the kernel will use, resulting in
+-         * userspace memory corruption (which is not detectable by valgrind
+-         * too, in most cases).
+-         * So for now, let's align to 64 instead of HOST_LONG_BITS here, in
+-         * a hope that sizeof(long) won't become >8 any time soon.
+-         */
+         if (!mem->dirty_bmap) {
+-            hwaddr bitmap_size = ALIGN(((mem->memory_size) >> TARGET_PAGE_BITS),
+-                                        /*HOST_LONG_BITS*/ 64) / 8;
+             /* Allocate on the first log_sync, once and for all */
+-            mem->dirty_bmap = g_malloc0(bitmap_size);
++            kvm_memslot_init_dirty_bitmap(mem);
+         }
+ 
+         d.dirty_bitmap = mem->dirty_bmap;
+@@ -1067,6 +1074,13 @@ static void kvm_set_phys_mem(KVMMemoryListener *kml,
+         mem->ram = ram;
+         mem->flags = kvm_mem_flags(mr);
+ 
++        if (mem->flags & KVM_MEM_LOG_DIRTY_PAGES) {
++            /*
++             * Reallocate the bmap; it means it doesn't disappear in
++             * middle of a migrate.
++             */
++            kvm_memslot_init_dirty_bitmap(mem);
++        }
+         err = kvm_set_user_memory_region(kml, mem, true);
+         if (err) {
+             fprintf(stderr, "%s: error registering slot: %s\n", __func__,
+-- 
+1.8.3.1
+
