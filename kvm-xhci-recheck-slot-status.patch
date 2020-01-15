@@ -1,0 +1,77 @@
+From ab87c0ed2a8f0a626099261a3028bc34cfac3929 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Tue, 14 Jan 2020 20:23:31 +0000
+Subject: [PATCH 5/5] xhci: recheck slot status
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200114202331.51831-3-dgilbert@redhat.com>
+Patchwork-id: 93345
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH 2/2] xhci: recheck slot status
+Bugzilla: 1790844
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Gerd Hoffmann <kraxel@redhat.com>
+
+From: Gerd Hoffmann <kraxel@redhat.com>
+
+Factor out slot status check into a helper function.  Add an additional
+check after completing transfers.  This is needed in case a guest
+queues multiple transfers in a row and a device unplug happens while
+qemu processes them.
+
+Buglink: https://bugzilla.redhat.com/show_bug.cgi?id=1786413
+Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+Reviewed-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Message-id: 20200107083606.12393-1-kraxel@redhat.com
+(cherry picked from commit 236846a019c4f7aa3111026fc9a1fe09684c8978)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/usb/hcd-xhci.c | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
+
+diff --git a/hw/usb/hcd-xhci.c b/hw/usb/hcd-xhci.c
+index d2b9744..646c78c 100644
+--- a/hw/usb/hcd-xhci.c
++++ b/hw/usb/hcd-xhci.c
+@@ -1861,6 +1861,13 @@ static void xhci_kick_ep(XHCIState *xhci, unsigned int slotid,
+     xhci_kick_epctx(epctx, streamid);
+ }
+ 
++static bool xhci_slot_ok(XHCIState *xhci, int slotid)
++{
++    return (xhci->slots[slotid - 1].uport &&
++            xhci->slots[slotid - 1].uport->dev &&
++            xhci->slots[slotid - 1].uport->dev->attached);
++}
++
+ static void xhci_kick_epctx(XHCIEPContext *epctx, unsigned int streamid)
+ {
+     XHCIState *xhci = epctx->xhci;
+@@ -1878,9 +1885,7 @@ static void xhci_kick_epctx(XHCIEPContext *epctx, unsigned int streamid)
+ 
+     /* If the device has been detached, but the guest has not noticed this
+        yet the 2 above checks will succeed, but we must NOT continue */
+-    if (!xhci->slots[epctx->slotid - 1].uport ||
+-        !xhci->slots[epctx->slotid - 1].uport->dev ||
+-        !xhci->slots[epctx->slotid - 1].uport->dev->attached) {
++    if (!xhci_slot_ok(xhci, epctx->slotid)) {
+         return;
+     }
+ 
+@@ -1987,6 +1992,10 @@ static void xhci_kick_epctx(XHCIEPContext *epctx, unsigned int streamid)
+         } else {
+             xhci_fire_transfer(xhci, xfer, epctx);
+         }
++        if (!xhci_slot_ok(xhci, epctx->slotid)) {
++            /* surprise removal -> stop processing */
++            break;
++        }
+         if (xfer->complete) {
+             /* update ring dequeue ptr */
+             xhci_set_ep_state(xhci, epctx, stctx, epctx->state);
+-- 
+1.8.3.1
+

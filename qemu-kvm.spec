@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 5%{?dist}
+Release: 6%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -125,6 +125,16 @@ Patch0021: 0021-Using-ip_deq-after-m_free-might-read-pointers-from-a.patch
 Patch22: kvm-i386-Remove-cpu64-rhel6-CPU-model.patch
 # For bz#1772774 - qemu-kvm core dump during migration+reboot ( Assertion `mem->dirty_bmap' failed )
 Patch23: kvm-Reallocate-dirty_bmap-when-we-change-a-slot.patch
+# For bz#1733893 - Boot a guest with "-prom-env 'auto-boot?=false'", SLOF failed to enter the boot entry after input "boot" followed by "0 > " on VNC
+Patch24: kvm-spapr-Don-t-trigger-a-CAS-reboot-for-XICS-XIVE-mode-.patch
+# For bz#1782678 - qemu core dump after hot-unplugging the   XXV710/XL710 PF
+Patch25: kvm-vfio-pci-Don-t-remove-irqchip-notifier-if-not-regist.patch
+# For bz#1789301 - virtio-blk/scsi: fix notification suppression during AioContext polling
+Patch26: kvm-virtio-don-t-enable-notifications-during-polling.patch
+# For bz#1790844 - USB related fixes
+Patch27: kvm-usbredir-Prevent-recursion-in-usbredir_write.patch
+# For bz#1790844 - USB related fixes
+Patch28: kvm-xhci-recheck-slot-status.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1059,6 +1069,21 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Wed Jan 15 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-6.el8
+- kvm-spapr-Don-t-trigger-a-CAS-reboot-for-XICS-XIVE-mode-.patch [bz#1733893]
+- kvm-vfio-pci-Don-t-remove-irqchip-notifier-if-not-regist.patch [bz#1782678]
+- kvm-virtio-don-t-enable-notifications-during-polling.patch [bz#1789301]
+- kvm-usbredir-Prevent-recursion-in-usbredir_write.patch [bz#1790844]
+- kvm-xhci-recheck-slot-status.patch [bz#1790844]
+- Resolves: bz#1733893
+  (Boot a guest with "-prom-env 'auto-boot?=false'", SLOF failed to enter the boot entry after input "boot" followed by "0 > " on VNC)
+- Resolves: bz#1782678
+  (qemu core dump after hot-unplugging the   XXV710/XL710 PF)
+- Resolves: bz#1789301
+  (virtio-blk/scsi: fix notification suppression during AioContext polling)
+- Resolves: bz#1790844
+  (USB related fixes)
+
 * Tue Jan 07 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-5.el8
 - kvm-i386-Remove-cpu64-rhel6-CPU-model.patch [bz#1741345]
 - kvm-Reallocate-dirty_bmap-when-we-change-a-slot.patch [bz#1772774]
