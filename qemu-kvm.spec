@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 6%{?dist}
+Release: 7%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -135,6 +135,14 @@ Patch26: kvm-virtio-don-t-enable-notifications-during-polling.patch
 Patch27: kvm-usbredir-Prevent-recursion-in-usbredir_write.patch
 # For bz#1790844 - USB related fixes
 Patch28: kvm-xhci-recheck-slot-status.patch
+# For bz#1791568 - CVE-2020-7039 qemu-kvm: QEMU: slirp: OOB buffer access while emulating tcp protocols in tcp_emu() [rhel-av-8.2.0]
+Patch29: kvm-tcp_emu-Fix-oob-access.patch
+# For bz#1791568 - CVE-2020-7039 qemu-kvm: QEMU: slirp: OOB buffer access while emulating tcp protocols in tcp_emu() [rhel-av-8.2.0]
+Patch30: kvm-slirp-use-correct-size-while-emulating-IRC-commands.patch
+# For bz#1791568 - CVE-2020-7039 qemu-kvm: QEMU: slirp: OOB buffer access while emulating tcp protocols in tcp_emu() [rhel-av-8.2.0]
+Patch31: kvm-slirp-use-correct-size-while-emulating-commands.patch
+# For bz#1559846 - Nested KVM: limit VMX features according to CPU models - Fast Train
+Patch32: kvm-RHEL-hw-i386-disable-nested-PERF_GLOBAL_CTRL-MSR-sup.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1069,6 +1077,16 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Jan 21 2020 Miroslav Rezanina <mrezanin@redhat.com> - 4.2.0-7.el8
+- kvm-tcp_emu-Fix-oob-access.patch [bz#1791568]
+- kvm-slirp-use-correct-size-while-emulating-IRC-commands.patch [bz#1791568]
+- kvm-slirp-use-correct-size-while-emulating-commands.patch [bz#1791568]
+- kvm-RHEL-hw-i386-disable-nested-PERF_GLOBAL_CTRL-MSR-sup.patch [bz#1559846]
+- Resolves: bz#1559846
+  (Nested KVM: limit VMX features according to CPU models - Fast Train)
+- Resolves: bz#1791568
+  (CVE-2020-7039 qemu-kvm: QEMU: slirp: OOB buffer access while emulating tcp protocols in tcp_emu() [rhel-av-8.2.0])
+
 * Wed Jan 15 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-6.el8
 - kvm-spapr-Don-t-trigger-a-CAS-reboot-for-XICS-XIVE-mode-.patch [bz#1733893]
 - kvm-vfio-pci-Don-t-remove-irqchip-notifier-if-not-regist.patch [bz#1782678]

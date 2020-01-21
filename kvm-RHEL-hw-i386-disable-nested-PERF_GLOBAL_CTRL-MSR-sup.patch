@@ -1,0 +1,53 @@
+From 481357ea8ae32b6894860c296cf6a2898260195f Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Fri, 17 Jan 2020 13:18:27 +0100
+Subject: [PATCH 4/4] RHEL: hw/i386: disable nested PERF_GLOBAL_CTRL MSR
+ support
+
+RH-Author: Paolo Bonzini <pbonzini@redhat.com>
+Message-id: <20200117131827.20361-1-pbonzini@redhat.com>
+Patchwork-id: 93405
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH v3] RHEL: hw/i386: disable nested PERF_GLOBAL_CTRL MSR support
+Bugzilla: 1559846
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+BZ: 1559846
+BRANCH: rhel-av-8.2.0
+BREW: 25775160
+UPSTREAM: RHEL only
+
+Nested PERF_GLOBAL_CTRL support is not present in the 8.2 kernel.  Drop the
+features via compat properties, they will be moved to 8.2 machine type compat
+properties in the 8.3 timeframe.
+
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+---
+	No change, for v2 I mistakenly wrote "origin/rhel-av-8.2.0" as the
+	branch. :(
+
+ hw/i386/pc.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/i386/pc.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/hw/i386/pc.c b/hw/i386/pc.c
+index 61e70e4..73a0f11 100644
+--- a/hw/i386/pc.c
++++ b/hw/i386/pc.c
+@@ -351,6 +351,8 @@ const size_t pc_compat_1_4_len = G_N_ELEMENTS(pc_compat_1_4);
+ GlobalProperty pc_rhel_compat[] = {
+     { TYPE_X86_CPU, "host-phys-bits", "on" },
+     { TYPE_X86_CPU, "host-phys-bits-limit", "48" },
++    { TYPE_X86_CPU, "vmx-entry-load-perf-global-ctrl", "off" },
++    { TYPE_X86_CPU, "vmx-exit-load-perf-global-ctrl", "off" },
+     /* bz 1508330 */ 
+     { "vfio-pci", "x-no-geforce-quirks", "on" },
+ };
+-- 
+1.8.3.1
+
