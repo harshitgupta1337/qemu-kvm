@@ -1,0 +1,48 @@
+From d6abbdaeb2c35efe6793a599c98116e250b1f179 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:01:43 +0100
+Subject: [PATCH 072/116] vhost-user: Print unexpected slave message types
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-69-dgilbert@redhat.com>
+Patchwork-id: 93519
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 068/112] vhost-user: Print unexpected slave message types
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+
+When we receive an unexpected message type on the slave fd, print
+the type.
+
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Reviewed-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit 0fdc465d7d5aafeae127eba488f247ac6f58df4c)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/virtio/vhost-user.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/hw/virtio/vhost-user.c b/hw/virtio/vhost-user.c
+index 02a9b25..e4f46ec 100644
+--- a/hw/virtio/vhost-user.c
++++ b/hw/virtio/vhost-user.c
+@@ -1055,7 +1055,7 @@ static void slave_read(void *opaque)
+                                                           fd[0]);
+         break;
+     default:
+-        error_report("Received unexpected msg type.");
++        error_report("Received unexpected msg type: %d.", hdr.request);
+         ret = -EINVAL;
+     }
+ 
+-- 
+1.8.3.1
+

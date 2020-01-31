@@ -1,0 +1,73 @@
+From 77eb3258e76a1ac240503572d4f41d45cb832ba2 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:01:09 +0100
+Subject: [PATCH 038/116] virtiofsd: add vhost-user.json file
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-35-dgilbert@redhat.com>
+Patchwork-id: 93490
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 034/112] virtiofsd: add vhost-user.json file
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: Stefan Hajnoczi <stefanha@redhat.com>
+
+Install a vhost-user.json file describing virtiofsd.  This allows
+libvirt and other management tools to enumerate vhost-user backend
+programs.
+
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit 315616ed50ba15a5d7236ade8a402a93898202de)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ .gitignore                                | 1 +
+ Makefile                                  | 1 +
+ tools/virtiofsd/50-qemu-virtiofsd.json.in | 5 +++++
+ 3 files changed, 7 insertions(+)
+ create mode 100644 tools/virtiofsd/50-qemu-virtiofsd.json.in
+
+diff --git a/.gitignore b/.gitignore
+index aefad32..d7a4f99 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -6,6 +6,7 @@
+ /config-target.*
+ /config.status
+ /config-temp
++/tools/virtiofsd/50-qemu-virtiofsd.json
+ /elf2dmp
+ /trace-events-all
+ /trace/generated-events.h
+diff --git a/Makefile b/Makefile
+index 1526775..0e9755d 100644
+--- a/Makefile
++++ b/Makefile
+@@ -332,6 +332,7 @@ endif
+ 
+ ifdef CONFIG_LINUX
+ HELPERS-y += virtiofsd$(EXESUF)
++vhost-user-json-y += tools/virtiofsd/50-qemu-virtiofsd.json
+ endif
+ 
+ # Sphinx does not allow building manuals into the same directory as
+diff --git a/tools/virtiofsd/50-qemu-virtiofsd.json.in b/tools/virtiofsd/50-qemu-virtiofsd.json.in
+new file mode 100644
+index 0000000..9bcd86f
+--- /dev/null
++++ b/tools/virtiofsd/50-qemu-virtiofsd.json.in
+@@ -0,0 +1,5 @@
++{
++  "description": "QEMU virtiofsd vhost-user-fs",
++  "type": "fs",
++  "binary": "@libexecdir@/virtiofsd"
++}
+-- 
+1.8.3.1
+

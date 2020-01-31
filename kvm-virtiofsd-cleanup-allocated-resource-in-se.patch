@@ -1,0 +1,82 @@
+From 99ff67682ef7c5659bdc9836008541861ae313d5 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:01:56 +0100
+Subject: [PATCH 085/116] virtiofsd: cleanup allocated resource in se
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-82-dgilbert@redhat.com>
+Patchwork-id: 93533
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 081/112] virtiofsd: cleanup allocated resource in se
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: Liu Bo <bo.liu@linux.alibaba.com>
+
+This cleans up unfreed resources in se on quiting, including
+se->virtio_dev, se->vu_socket_path, se->vu_socketfd.
+
+Signed-off-by: Liu Bo <bo.liu@linux.alibaba.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit 61cfc44982e566c33b9d5df17858e4d5ae373873)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ tools/virtiofsd/fuse_lowlevel.c | 7 +++++++
+ tools/virtiofsd/fuse_virtio.c   | 7 +++++++
+ tools/virtiofsd/fuse_virtio.h   | 2 +-
+ 3 files changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/tools/virtiofsd/fuse_lowlevel.c b/tools/virtiofsd/fuse_lowlevel.c
+index 65f91da..440508a 100644
+--- a/tools/virtiofsd/fuse_lowlevel.c
++++ b/tools/virtiofsd/fuse_lowlevel.c
+@@ -2532,6 +2532,13 @@ void fuse_session_destroy(struct fuse_session *se)
+     if (se->fd != -1) {
+         close(se->fd);
+     }
++
++    if (se->vu_socket_path) {
++        virtio_session_close(se);
++        free(se->vu_socket_path);
++        se->vu_socket_path = NULL;
++    }
++
+     free(se);
+ }
+ 
+diff --git a/tools/virtiofsd/fuse_virtio.c b/tools/virtiofsd/fuse_virtio.c
+index 7a8774a..e7bd772 100644
+--- a/tools/virtiofsd/fuse_virtio.c
++++ b/tools/virtiofsd/fuse_virtio.c
+@@ -833,3 +833,10 @@ int virtio_session_mount(struct fuse_session *se)
+ 
+     return 0;
+ }
++
++void virtio_session_close(struct fuse_session *se)
++{
++    close(se->vu_socketfd);
++    free(se->virtio_dev);
++    se->virtio_dev = NULL;
++}
+diff --git a/tools/virtiofsd/fuse_virtio.h b/tools/virtiofsd/fuse_virtio.h
+index cc676b9..1116840 100644
+--- a/tools/virtiofsd/fuse_virtio.h
++++ b/tools/virtiofsd/fuse_virtio.h
+@@ -19,7 +19,7 @@
+ struct fuse_session;
+ 
+ int virtio_session_mount(struct fuse_session *se);
+-
++void virtio_session_close(struct fuse_session *se);
+ int virtio_loop(struct fuse_session *se);
+ 
+ 
+-- 
+1.8.3.1
+

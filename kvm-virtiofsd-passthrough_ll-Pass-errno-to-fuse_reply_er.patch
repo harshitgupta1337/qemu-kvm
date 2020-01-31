@@ -1,0 +1,54 @@
+From fe031dbbf5e287f64de9fcc9aec361e8ab492109 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:02:24 +0100
+Subject: [PATCH 113/116] virtiofsd/passthrough_ll: Pass errno to
+ fuse_reply_err()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-110-dgilbert@redhat.com>
+Patchwork-id: 93559
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 109/112] virtiofsd/passthrough_ll: Pass errno to fuse_reply_err()
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: Xiao Yang <yangx.jy@cn.fujitsu.com>
+
+lo_copy_file_range() passes -errno to fuse_reply_err() and then fuse_reply_err()
+changes it to errno again, so that subsequent fuse_send_reply_iov_nofree() catches
+the wrong errno.(i.e. reports "fuse: bad error value: ...").
+
+Make fuse_send_reply_iov_nofree() accept the correct -errno by passing errno
+directly in lo_copy_file_range().
+
+Signed-off-by: Xiao Yang <yangx.jy@cn.fujitsu.com>
+Reviewed-by: Eryu Guan <eguan@linux.alibaba.com>
+
+dgilbert: Sent upstream and now Merged as aa1185e153f774f1df65
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit a931b6861e59c78d861017e9c6a9c161ff49a163)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ tools/virtiofsd/passthrough_ll.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tools/virtiofsd/passthrough_ll.c b/tools/virtiofsd/passthrough_ll.c
+index fc15d61..e6f2399 100644
+--- a/tools/virtiofsd/passthrough_ll.c
++++ b/tools/virtiofsd/passthrough_ll.c
+@@ -2441,7 +2441,7 @@ static void lo_copy_file_range(fuse_req_t req, fuse_ino_t ino_in, off_t off_in,
+ 
+     res = copy_file_range(in_fd, &off_in, out_fd, &off_out, len, flags);
+     if (res < 0) {
+-        fuse_reply_err(req, -errno);
++        fuse_reply_err(req, errno);
+     } else {
+         fuse_reply_write(req, res);
+     }
+-- 
+1.8.3.1
+

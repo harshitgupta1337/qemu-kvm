@@ -1,0 +1,72 @@
+From 06a24b54c94345b436d888a48b92fafa967c3d58 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:02:25 +0100
+Subject: [PATCH 114/116] virtiofsd: stop all queue threads on exit in
+ virtio_loop()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-111-dgilbert@redhat.com>
+Patchwork-id: 93564
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 110/112] virtiofsd: stop all queue threads on exit in virtio_loop()
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: Eryu Guan <eguan@linux.alibaba.com>
+
+On guest graceful shutdown, virtiofsd receives VHOST_USER_GET_VRING_BASE
+request from VMM and shuts down virtqueues by calling fv_set_started(),
+which joins fv_queue_thread() threads. So when virtio_loop() returns,
+there should be no thread is still accessing data in fuse session and/or
+virtio dev.
+
+But on abnormal exit, e.g. guest got killed for whatever reason,
+vhost-user socket is closed and virtio_loop() breaks out the main loop
+and returns to main(). But it's possible fv_queue_worker()s are still
+working and accessing fuse session and virtio dev, which results in
+crash or use-after-free.
+
+Fix it by stopping fv_queue_thread()s before virtio_loop() returns,
+to make sure there's no-one could access fuse session and virtio dev.
+
+Reported-by: Qingming Su <qingming.su@linux.alibaba.com>
+Signed-off-by: Eryu Guan <eguan@linux.alibaba.com>
+Reviewed-by: Stefan Hajnoczi <stefanha@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit 9883df8ccae6d744a0c8d9cbf9d62b1797d70ebd)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ tools/virtiofsd/fuse_virtio.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/tools/virtiofsd/fuse_virtio.c b/tools/virtiofsd/fuse_virtio.c
+index 9f65823..80a6e92 100644
+--- a/tools/virtiofsd/fuse_virtio.c
++++ b/tools/virtiofsd/fuse_virtio.c
+@@ -815,6 +815,19 @@ int virtio_loop(struct fuse_session *se)
+         }
+     }
+ 
++    /*
++     * Make sure all fv_queue_thread()s quit on exit, as we're about to
++     * free virtio dev and fuse session, no one should access them anymore.
++     */
++    for (int i = 0; i < se->virtio_dev->nqueues; i++) {
++        if (!se->virtio_dev->qi[i]) {
++            continue;
++        }
++
++        fuse_log(FUSE_LOG_INFO, "%s: Stopping queue %d thread\n", __func__, i);
++        fv_queue_cleanup_thread(se->virtio_dev, i);
++    }
++
+     fuse_log(FUSE_LOG_INFO, "%s: Exit\n", __func__);
+ 
+     return 0;
+-- 
+1.8.3.1
+

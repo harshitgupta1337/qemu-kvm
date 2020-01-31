@@ -1,0 +1,46 @@
+From c55995c25f60168e3cb6b5bae1bf9a47813383d0 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:00:55 +0100
+Subject: [PATCH 024/116] virtiofsd: add -o source=PATH to help output
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-21-dgilbert@redhat.com>
+Patchwork-id: 93474
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 020/112] virtiofsd: add -o source=PATH to help output
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: Stefan Hajnoczi <stefanha@redhat.com>
+
+The -o source=PATH option will be used by most command-line invocations.
+Let's document it!
+
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit 4ff075f72be2f489c8998ae492ec5cdbbbd73e07)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ tools/virtiofsd/passthrough_ll.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/tools/virtiofsd/passthrough_ll.c b/tools/virtiofsd/passthrough_ll.c
+index 26ac870..fc9b264 100644
+--- a/tools/virtiofsd/passthrough_ll.c
++++ b/tools/virtiofsd/passthrough_ll.c
+@@ -1319,6 +1319,7 @@ int main(int argc, char *argv[])
+     if (opts.show_help) {
+         printf("usage: %s [options]\n\n", argv[0]);
+         fuse_cmdline_help();
++        printf("    -o source=PATH             shared directory tree\n");
+         fuse_lowlevel_help();
+         ret = 0;
+         goto err_out1;
+-- 
+1.8.3.1
+

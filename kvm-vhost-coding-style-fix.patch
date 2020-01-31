@@ -1,0 +1,56 @@
+From 624d96c456536e1471968a59fbeea206309cc33b Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Fri, 24 Jan 2020 19:46:13 +0100
+Subject: [PATCH 004/116] vhost: coding style fix
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200124194613.41119-4-dgilbert@redhat.com>
+Patchwork-id: 93453
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 3/3] vhost: coding style fix
+Bugzilla: 1779041
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+
+From: "Michael S. Tsirkin" <mst@redhat.com>
+
+Drop a trailing whitespace. Make line shorter.
+
+Fixes: 76525114736e8 ("vhost: Only align sections for vhost-user")
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit 8347505640238d3b80f9bb7510fdc1bb574bad19)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/virtio/vhost.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/hw/virtio/vhost.c b/hw/virtio/vhost.c
+index 25fd469..9edfadc 100644
+--- a/hw/virtio/vhost.c
++++ b/hw/virtio/vhost.c
+@@ -551,7 +551,7 @@ static void vhost_region_add_section(struct vhost_dev *dev,
+     trace_vhost_region_add_section(section->mr->name, mrs_gpa, mrs_size,
+                                    mrs_host);
+ 
+-    if (dev->vhost_ops->backend_type == VHOST_BACKEND_TYPE_USER) {   
++    if (dev->vhost_ops->backend_type == VHOST_BACKEND_TYPE_USER) {
+         /* Round the section to it's page size */
+         /* First align the start down to a page boundary */
+         size_t mrs_page = qemu_ram_pagesize(mrs_rb);
+@@ -566,8 +566,8 @@ static void vhost_region_add_section(struct vhost_dev *dev,
+         if (alignage) {
+             mrs_size += mrs_page - alignage;
+         }
+-        trace_vhost_region_add_section_aligned(section->mr->name, mrs_gpa, mrs_size,
+-                                               mrs_host);
++        trace_vhost_region_add_section_aligned(section->mr->name, mrs_gpa,
++                                               mrs_size, mrs_host);
+     }
+ 
+     if (dev->n_tmp_sections) {
+-- 
+1.8.3.1
+

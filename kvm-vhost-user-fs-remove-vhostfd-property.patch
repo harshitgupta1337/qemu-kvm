@@ -1,0 +1,59 @@
+From 912af6f7c270e2939a91c9b3f62b6ba1202edc43 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:00:37 +0100
+Subject: [PATCH 006/116] vhost-user-fs: remove "vhostfd" property
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-3-dgilbert@redhat.com>
+Patchwork-id: 93458
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 002/112] vhost-user-fs: remove "vhostfd" property
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: Marc-André Lureau <marcandre.lureau@redhat.com>
+
+The property doesn't make much sense for a vhost-user device.
+
+Signed-off-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+Message-Id: <20191116112016.14872-1-marcandre.lureau@redhat.com>
+Reviewed-by: Stefan Hajnoczi <stefanha@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit 703857348724319735d9be7b5b996e6445c6e6b9)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/virtio/vhost-user-fs.c         | 1 -
+ include/hw/virtio/vhost-user-fs.h | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git a/hw/virtio/vhost-user-fs.c b/hw/virtio/vhost-user-fs.c
+index f0df7f4..ca0b7fc 100644
+--- a/hw/virtio/vhost-user-fs.c
++++ b/hw/virtio/vhost-user-fs.c
+@@ -263,7 +263,6 @@ static Property vuf_properties[] = {
+     DEFINE_PROP_UINT16("num-request-queues", VHostUserFS,
+                        conf.num_request_queues, 1),
+     DEFINE_PROP_UINT16("queue-size", VHostUserFS, conf.queue_size, 128),
+-    DEFINE_PROP_STRING("vhostfd", VHostUserFS, conf.vhostfd),
+     DEFINE_PROP_END_OF_LIST(),
+ };
+ 
+diff --git a/include/hw/virtio/vhost-user-fs.h b/include/hw/virtio/vhost-user-fs.h
+index 539885b..9ff1bdb 100644
+--- a/include/hw/virtio/vhost-user-fs.h
++++ b/include/hw/virtio/vhost-user-fs.h
+@@ -28,7 +28,6 @@ typedef struct {
+     char *tag;
+     uint16_t num_request_queues;
+     uint16_t queue_size;
+-    char *vhostfd;
+ } VHostUserFSConf;
+ 
+ typedef struct {
+-- 
+1.8.3.1
+

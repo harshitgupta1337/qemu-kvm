@@ -1,0 +1,52 @@
+From f4144443eacceb04823ee72cb2d4f9f841f05495 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:01:11 +0100
+Subject: [PATCH 040/116] virtiofs: Add maintainers entry
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-37-dgilbert@redhat.com>
+Patchwork-id: 93491
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 036/112] virtiofs: Add maintainers entry
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Reviewed-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Tested-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit bad7d2c3ad1af9344df035aedaf8e0967a543070)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ MAINTAINERS | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 5e5e3e5..d1b3e26 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -1575,6 +1575,14 @@ T: git https://github.com/cohuck/qemu.git s390-next
+ T: git https://github.com/borntraeger/qemu.git s390-next
+ L: qemu-s390x@nongnu.org
+ 
++virtiofs
++M: Dr. David Alan Gilbert <dgilbert@redhat.com>
++M: Stefan Hajnoczi <stefanha@redhat.com>
++S: Supported
++F: tools/virtiofsd/*
++F: hw/virtio/vhost-user-fs*
++F: include/hw/virtio/vhost-user-fs.h
++
+ virtio-input
+ M: Gerd Hoffmann <kraxel@redhat.com>
+ S: Maintained
+-- 
+1.8.3.1
+

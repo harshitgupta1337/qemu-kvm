@@ -1,0 +1,63 @@
+From 0ea1c7375d6509367399c706eb9d1e8cf79a5830 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:01:55 +0100
+Subject: [PATCH 084/116] virtiofsd: fix error handling in main()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-81-dgilbert@redhat.com>
+Patchwork-id: 93534
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 080/112] virtiofsd: fix error handling in main()
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: Liu Bo <bo.liu@linux.alibaba.com>
+
+Neither fuse_parse_cmdline() nor fuse_opt_parse() goes to the right place
+to do cleanup.
+
+Signed-off-by: Liu Bo <bo.liu@linux.alibaba.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit c6de804670f2255ce776263124c37f3370dc5ac1)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ tools/virtiofsd/passthrough_ll.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/tools/virtiofsd/passthrough_ll.c b/tools/virtiofsd/passthrough_ll.c
+index 9ed77a1..af050c6 100644
+--- a/tools/virtiofsd/passthrough_ll.c
++++ b/tools/virtiofsd/passthrough_ll.c
+@@ -2443,13 +2443,14 @@ int main(int argc, char *argv[])
+     lo_map_init(&lo.fd_map);
+ 
+     if (fuse_parse_cmdline(&args, &opts) != 0) {
+-        return 1;
++        goto err_out1;
+     }
+     fuse_set_log_func(log_func);
+     use_syslog = opts.syslog;
+     if (use_syslog) {
+         openlog("virtiofsd", LOG_PID, LOG_DAEMON);
+     }
++
+     if (opts.show_help) {
+         printf("usage: %s [options]\n\n", argv[0]);
+         fuse_cmdline_help();
+@@ -2468,7 +2469,7 @@ int main(int argc, char *argv[])
+     }
+ 
+     if (fuse_opt_parse(&args, &lo, lo_opts, NULL) == -1) {
+-        return 1;
++        goto err_out1;
+     }
+ 
+     /*
+-- 
+1.8.3.1
+

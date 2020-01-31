@@ -1,0 +1,76 @@
+From ade3dcad8a907d281549b341a8908851e36ba458 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:01:31 +0100
+Subject: [PATCH 060/116] virtiofsd: Parse flag FUSE_WRITE_KILL_PRIV
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-57-dgilbert@redhat.com>
+Patchwork-id: 93505
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 056/112] virtiofsd: Parse flag FUSE_WRITE_KILL_PRIV
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: Vivek Goyal <vgoyal@redhat.com>
+
+Caller can set FUSE_WRITE_KILL_PRIV in write_flags. Parse it and pass it
+to the filesystem.
+
+Signed-off-by: Vivek Goyal <vgoyal@redhat.com>
+Reviewed-by: Misono Tomohiro <misono.tomohiro@jp.fujitsu.com>
+Reviewed-by: Sergio Lopez <slp@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit f779bc5265e7e7abb13a03d4bfbc74151afc15c2)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ tools/virtiofsd/fuse_common.h   | 6 +++++-
+ tools/virtiofsd/fuse_lowlevel.c | 4 +++-
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/tools/virtiofsd/fuse_common.h b/tools/virtiofsd/fuse_common.h
+index f8f6433..686c42c 100644
+--- a/tools/virtiofsd/fuse_common.h
++++ b/tools/virtiofsd/fuse_common.h
+@@ -93,8 +93,12 @@ struct fuse_file_info {
+      */
+     unsigned int cache_readdir:1;
+ 
++    /* Indicates that suid/sgid bits should be removed upon write */
++    unsigned int kill_priv:1;
++
++
+     /** Padding.  Reserved for future use*/
+-    unsigned int padding:25;
++    unsigned int padding:24;
+     unsigned int padding2:32;
+ 
+     /*
+diff --git a/tools/virtiofsd/fuse_lowlevel.c b/tools/virtiofsd/fuse_lowlevel.c
+index 02e1d83..2d6dc5a 100644
+--- a/tools/virtiofsd/fuse_lowlevel.c
++++ b/tools/virtiofsd/fuse_lowlevel.c
+@@ -1142,6 +1142,7 @@ static void do_write(fuse_req_t req, fuse_ino_t nodeid,
+     memset(&fi, 0, sizeof(fi));
+     fi.fh = arg->fh;
+     fi.writepage = (arg->write_flags & FUSE_WRITE_CACHE) != 0;
++    fi.kill_priv = !!(arg->write_flags & FUSE_WRITE_KILL_PRIV);
+ 
+     fi.lock_owner = arg->lock_owner;
+     fi.flags = arg->flags;
+@@ -1177,7 +1178,8 @@ static void do_write_buf(fuse_req_t req, fuse_ino_t nodeid,
+     fi.lock_owner = arg->lock_owner;
+     fi.flags = arg->flags;
+     fi.fh = arg->fh;
+-    fi.writepage = arg->write_flags & FUSE_WRITE_CACHE;
++    fi.writepage = !!(arg->write_flags & FUSE_WRITE_CACHE);
++    fi.kill_priv = !!(arg->write_flags & FUSE_WRITE_KILL_PRIV);
+ 
+     if (ibufv->count == 1) {
+         assert(!(tmpbufv.buf[0].flags & FUSE_BUF_IS_FD));
+-- 
+1.8.3.1
+

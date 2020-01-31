@@ -1,0 +1,83 @@
+From 1744329bcba4a3e1a82cec3b1a34b3fbf0a9d7cf Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:01:54 +0100
+Subject: [PATCH 083/116] virtiofsd: support nanosecond resolution for file
+ timestamp
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-80-dgilbert@redhat.com>
+Patchwork-id: 93535
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 079/112] virtiofsd: support nanosecond resolution for file timestamp
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: Jiufei Xue <jiufei.xue@linux.alibaba.com>
+
+Define HAVE_STRUCT_STAT_ST_ATIM to 1 if `st_atim' is member of `struct
+stat' which means support nanosecond resolution for the file timestamp
+fields.
+
+Signed-off-by: Jiufei Xue <jiufei.xue@linux.alibaba.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit 8a792b034d4b315251fd842bb4c73a133aa1368f)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ configure                   | 16 ++++++++++++++++
+ tools/virtiofsd/fuse_misc.h |  1 +
+ 2 files changed, 17 insertions(+)
+
+diff --git a/configure b/configure
+index 7831618..5120c14 100755
+--- a/configure
++++ b/configure
+@@ -5218,6 +5218,19 @@ if compile_prog "" "" ; then
+     strchrnul=yes
+ fi
+ 
++#########################################
++# check if we have st_atim
++
++st_atim=no
++cat > $TMPC << EOF
++#include <sys/stat.h>
++#include <stddef.h>
++int main(void) { return offsetof(struct stat, st_atim); }
++EOF
++if compile_prog "" "" ; then
++    st_atim=yes
++fi
++
+ ##########################################
+ # check if trace backend exists
+ 
+@@ -6919,6 +6932,9 @@ fi
+ if test "$strchrnul" = "yes" ; then
+   echo "HAVE_STRCHRNUL=y" >> $config_host_mak
+ fi
++if test "$st_atim" = "yes" ; then
++  echo "HAVE_STRUCT_STAT_ST_ATIM=y" >> $config_host_mak
++fi
+ if test "$byteswap_h" = "yes" ; then
+   echo "CONFIG_BYTESWAP_H=y" >> $config_host_mak
+ fi
+diff --git a/tools/virtiofsd/fuse_misc.h b/tools/virtiofsd/fuse_misc.h
+index f252baa..5c618ce 100644
+--- a/tools/virtiofsd/fuse_misc.h
++++ b/tools/virtiofsd/fuse_misc.h
+@@ -7,6 +7,7 @@
+  */
+ 
+ #include <pthread.h>
++#include "config-host.h"
+ 
+ /*
+  * Versioned symbols cannot be used in some cases because it
+-- 
+1.8.3.1
+

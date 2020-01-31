@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 7%{?dist}
+Release: 8%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -143,6 +143,236 @@ Patch30: kvm-slirp-use-correct-size-while-emulating-IRC-commands.patch
 Patch31: kvm-slirp-use-correct-size-while-emulating-commands.patch
 # For bz#1559846 - Nested KVM: limit VMX features according to CPU models - Fast Train
 Patch32: kvm-RHEL-hw-i386-disable-nested-PERF_GLOBAL_CTRL-MSR-sup.patch
+# For bz#1725084 - aarch64: support dumping SVE registers
+Patch33: kvm-target-arm-arch_dump-Add-SVE-notes.patch
+# For bz#1779041 - netkvm: no connectivity Windows guest with q35 + hugepages + vhost + hv_synic
+Patch34: kvm-vhost-Add-names-to-section-rounded-warning.patch
+# For bz#1779041 - netkvm: no connectivity Windows guest with q35 + hugepages + vhost + hv_synic
+Patch35: kvm-vhost-Only-align-sections-for-vhost-user.patch
+# For bz#1779041 - netkvm: no connectivity Windows guest with q35 + hugepages + vhost + hv_synic
+Patch36: kvm-vhost-coding-style-fix.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch37: kvm-virtio-fs-fix-MSI-X-nvectors-calculation.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch38: kvm-vhost-user-fs-remove-vhostfd-property.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch39: kvm-build-rename-CONFIG_LIBCAP-to-CONFIG_LIBCAP_NG.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch40: kvm-virtiofsd-Pull-in-upstream-headers.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch41: kvm-virtiofsd-Pull-in-kernel-s-fuse.h.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch42: kvm-virtiofsd-Add-auxiliary-.c-s.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch43: kvm-virtiofsd-Add-fuse_lowlevel.c.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch44: kvm-virtiofsd-Add-passthrough_ll.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch45: kvm-virtiofsd-Trim-down-imported-files.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch46: kvm-virtiofsd-Format-imported-files-to-qemu-style.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch47: kvm-virtiofsd-remove-mountpoint-dummy-argument.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch48: kvm-virtiofsd-remove-unused-notify-reply-support.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch49: kvm-virtiofsd-Remove-unused-enum-fuse_buf_copy_flags.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch50: kvm-virtiofsd-Fix-fuse_daemonize-ignored-return-values.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch51: kvm-virtiofsd-Fix-common-header-and-define-for-QEMU-buil.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch52: kvm-virtiofsd-Trim-out-compatibility-code.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch53: kvm-vitriofsd-passthrough_ll-fix-fallocate-ifdefs.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch54: kvm-virtiofsd-Make-fsync-work-even-if-only-inode-is-pass.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch55: kvm-virtiofsd-Add-options-for-virtio.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch56: kvm-virtiofsd-add-o-source-PATH-to-help-output.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch57: kvm-virtiofsd-Open-vhost-connection-instead-of-mounting.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch58: kvm-virtiofsd-Start-wiring-up-vhost-user.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch59: kvm-virtiofsd-Add-main-virtio-loop.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch60: kvm-virtiofsd-get-set-features-callbacks.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch61: kvm-virtiofsd-Start-queue-threads.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch62: kvm-virtiofsd-Poll-kick_fd-for-queue.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch63: kvm-virtiofsd-Start-reading-commands-from-queue.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch64: kvm-virtiofsd-Send-replies-to-messages.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch65: kvm-virtiofsd-Keep-track-of-replies.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch66: kvm-virtiofsd-Add-Makefile-wiring-for-virtiofsd-contrib.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch67: kvm-virtiofsd-Fast-path-for-virtio-read.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch68: kvm-virtiofsd-add-fd-FDNUM-fd-passing-option.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch69: kvm-virtiofsd-make-f-foreground-the-default.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch70: kvm-virtiofsd-add-vhost-user.json-file.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch71: kvm-virtiofsd-add-print-capabilities-option.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch72: kvm-virtiofs-Add-maintainers-entry.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch73: kvm-virtiofsd-passthrough_ll-create-new-files-in-caller-.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch74: kvm-virtiofsd-passthrough_ll-add-lo_map-for-ino-fh-indir.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch75: kvm-virtiofsd-passthrough_ll-add-ino_map-to-hide-lo_inod.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch76: kvm-virtiofsd-passthrough_ll-add-dirp_map-to-hide-lo_dir.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch77: kvm-virtiofsd-passthrough_ll-add-fd_map-to-hide-file-des.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch78: kvm-virtiofsd-passthrough_ll-add-fallback-for-racy-ops.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch79: kvm-virtiofsd-validate-path-components.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch80: kvm-virtiofsd-Plumb-fuse_bufvec-through-to-do_write_buf.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch81: kvm-virtiofsd-Pass-write-iov-s-all-the-way-through.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch82: kvm-virtiofsd-add-fuse_mbuf_iter-API.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch83: kvm-virtiofsd-validate-input-buffer-sizes-in-do_write_bu.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch84: kvm-virtiofsd-check-input-buffer-size-in-fuse_lowlevel.c.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch85: kvm-virtiofsd-prevent-.-escape-in-lo_do_lookup.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch86: kvm-virtiofsd-prevent-.-escape-in-lo_do_readdir.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch87: kvm-virtiofsd-use-proc-self-fd-O_PATH-file-descriptor.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch88: kvm-virtiofsd-sandbox-mount-namespace.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch89: kvm-virtiofsd-move-to-an-empty-network-namespace.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch90: kvm-virtiofsd-move-to-a-new-pid-namespace.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch91: kvm-virtiofsd-add-seccomp-whitelist.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch92: kvm-virtiofsd-Parse-flag-FUSE_WRITE_KILL_PRIV.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch93: kvm-virtiofsd-cap-ng-helpers.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch94: kvm-virtiofsd-Drop-CAP_FSETID-if-client-asked-for-it.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch95: kvm-virtiofsd-set-maximum-RLIMIT_NOFILE-limit.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch96: kvm-virtiofsd-fix-libfuse-information-leaks.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch97: kvm-virtiofsd-add-syslog-command-line-option.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch98: kvm-virtiofsd-print-log-only-when-priority-is-high-enoug.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch99: kvm-virtiofsd-Add-ID-to-the-log-with-FUSE_LOG_DEBUG-leve.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch100: kvm-virtiofsd-Add-timestamp-to-the-log-with-FUSE_LOG_DEB.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch101: kvm-virtiofsd-Handle-reinit.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch102: kvm-virtiofsd-Handle-hard-reboot.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch103: kvm-virtiofsd-Kill-threads-when-queues-are-stopped.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch104: kvm-vhost-user-Print-unexpected-slave-message-types.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch105: kvm-contrib-libvhost-user-Protect-slave-fd-with-mutex.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch106: kvm-virtiofsd-passthrough_ll-add-renameat2-support.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch107: kvm-virtiofsd-passthrough_ll-disable-readdirplus-on-cach.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch108: kvm-virtiofsd-passthrough_ll-control-readdirplus.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch109: kvm-virtiofsd-rename-unref_inode-to-unref_inode_lolocked.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch110: kvm-virtiofsd-fail-when-parent-inode-isn-t-known-in-lo_d.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch111: kvm-virtiofsd-extract-root-inode-init-into-setup_root.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch112: kvm-virtiofsd-passthrough_ll-clean-up-cache-related-opti.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch113: kvm-virtiofsd-passthrough_ll-use-hashtable.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch114: kvm-virtiofsd-Clean-up-inodes-on-destroy.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch115: kvm-virtiofsd-support-nanosecond-resolution-for-file-tim.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch116: kvm-virtiofsd-fix-error-handling-in-main.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch117: kvm-virtiofsd-cleanup-allocated-resource-in-se.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch118: kvm-virtiofsd-fix-memory-leak-on-lo.source.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch119: kvm-virtiofsd-add-helper-for-lo_data-cleanup.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch120: kvm-virtiofsd-Prevent-multiply-running-with-same-vhost_u.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch121: kvm-virtiofsd-enable-PARALLEL_DIROPS-during-INIT.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch122: kvm-virtiofsd-fix-incorrect-error-handling-in-lo_do_look.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch123: kvm-Virtiofsd-fix-memory-leak-on-fuse-queueinfo.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch124: kvm-virtiofsd-Support-remote-posix-locks.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch125: kvm-virtiofsd-use-fuse_lowlevel_is_virtio-in-fuse_sessio.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch126: kvm-virtiofsd-prevent-fv_queue_thread-vs-virtio_loop-rac.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch127: kvm-virtiofsd-make-lo_release-atomic.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch128: kvm-virtiofsd-prevent-races-with-lo_dirp_put.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch129: kvm-virtiofsd-rename-inode-refcount-to-inode-nlookup.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch130: kvm-libvhost-user-Fix-some-memtable-remap-cases.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch131: kvm-virtiofsd-passthrough_ll-fix-refcounting-on-remove-r.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch132: kvm-virtiofsd-introduce-inode-refcount-to-prevent-use-af.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch133: kvm-virtiofsd-do-not-always-set-FUSE_FLOCK_LOCKS.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch134: kvm-virtiofsd-convert-more-fprintf-and-perror-to-use-fus.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch135: kvm-virtiofsd-Reset-O_DIRECT-flag-during-file-open.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch136: kvm-virtiofsd-Fix-data-corruption-with-O_APPEND-write-in.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch137: kvm-virtiofsd-passthrough_ll-Use-cache_readdir-for-direc.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch138: kvm-virtiofsd-add-definition-of-fuse_buf_writev.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch139: kvm-virtiofsd-use-fuse_buf_writev-to-replace-fuse_buf_wr.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch140: kvm-virtiofsd-process-requests-in-a-thread-pool.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch141: kvm-virtiofsd-prevent-FUSE_INIT-FUSE_DESTROY-races.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch142: kvm-virtiofsd-fix-lo_destroy-resource-leaks.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch143: kvm-virtiofsd-add-thread-pool-size-NUM-option.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch144: kvm-virtiofsd-Convert-lo_destroy-to-take-the-lo-mutex-lo.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch145: kvm-virtiofsd-passthrough_ll-Pass-errno-to-fuse_reply_er.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch146: kvm-virtiofsd-stop-all-queue-threads-on-exit-in-virtio_l.patch
+# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
+Patch147: kvm-virtiofsd-add-some-options-to-the-help-message.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -197,8 +427,8 @@ BuildRequires: bluez-libs-devel
 BuildRequires: brlapi-devel
 # For test suite
 BuildRequires: check-devel
-# For virtfs
-BuildRequires: libcap-devel
+# For virtiofs
+BuildRequires: libcap-ng-devel
 # Hard requirement for version >= 1.3
 BuildRequires: pixman-devel
 # Documentation requirement
@@ -520,7 +750,7 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --tls-priority=NORMAL \
   --disable-bluez \
   --disable-brlapi \
-  --disable-cap-ng \
+  --enable-cap-ng \
   --enable-coroutine-pool \
   --enable-curl \
   --disable-curses \
@@ -1034,6 +1264,8 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_libexecdir}/vhost-user-gpu
 %{_datadir}/%{name}/vhost-user/50-qemu-gpu.json
 %endif
+%{_libexecdir}/virtiofsd
+%{_datadir}/%{name}/vhost-user/50-qemu-virtiofsd.json
 
 %files -n qemu-img
 %defattr(-,root,root)
@@ -1077,6 +1309,130 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Jan 31 2020 Miroslav Rezanina <mrezanin@redhat.com> - 4.2.0-8.el8
+- kvm-target-arm-arch_dump-Add-SVE-notes.patch [bz#1725084]
+- kvm-vhost-Add-names-to-section-rounded-warning.patch [bz#1779041]
+- kvm-vhost-Only-align-sections-for-vhost-user.patch [bz#1779041]
+- kvm-vhost-coding-style-fix.patch [bz#1779041]
+- kvm-virtio-fs-fix-MSI-X-nvectors-calculation.patch [bz#1694164]
+- kvm-vhost-user-fs-remove-vhostfd-property.patch [bz#1694164]
+- kvm-build-rename-CONFIG_LIBCAP-to-CONFIG_LIBCAP_NG.patch [bz#1694164]
+- kvm-virtiofsd-Pull-in-upstream-headers.patch [bz#1694164]
+- kvm-virtiofsd-Pull-in-kernel-s-fuse.h.patch [bz#1694164]
+- kvm-virtiofsd-Add-auxiliary-.c-s.patch [bz#1694164]
+- kvm-virtiofsd-Add-fuse_lowlevel.c.patch [bz#1694164]
+- kvm-virtiofsd-Add-passthrough_ll.patch [bz#1694164]
+- kvm-virtiofsd-Trim-down-imported-files.patch [bz#1694164]
+- kvm-virtiofsd-Format-imported-files-to-qemu-style.patch [bz#1694164]
+- kvm-virtiofsd-remove-mountpoint-dummy-argument.patch [bz#1694164]
+- kvm-virtiofsd-remove-unused-notify-reply-support.patch [bz#1694164]
+- kvm-virtiofsd-Remove-unused-enum-fuse_buf_copy_flags.patch [bz#1694164]
+- kvm-virtiofsd-Fix-fuse_daemonize-ignored-return-values.patch [bz#1694164]
+- kvm-virtiofsd-Fix-common-header-and-define-for-QEMU-buil.patch [bz#1694164]
+- kvm-virtiofsd-Trim-out-compatibility-code.patch [bz#1694164]
+- kvm-vitriofsd-passthrough_ll-fix-fallocate-ifdefs.patch [bz#1694164]
+- kvm-virtiofsd-Make-fsync-work-even-if-only-inode-is-pass.patch [bz#1694164]
+- kvm-virtiofsd-Add-options-for-virtio.patch [bz#1694164]
+- kvm-virtiofsd-add-o-source-PATH-to-help-output.patch [bz#1694164]
+- kvm-virtiofsd-Open-vhost-connection-instead-of-mounting.patch [bz#1694164]
+- kvm-virtiofsd-Start-wiring-up-vhost-user.patch [bz#1694164]
+- kvm-virtiofsd-Add-main-virtio-loop.patch [bz#1694164]
+- kvm-virtiofsd-get-set-features-callbacks.patch [bz#1694164]
+- kvm-virtiofsd-Start-queue-threads.patch [bz#1694164]
+- kvm-virtiofsd-Poll-kick_fd-for-queue.patch [bz#1694164]
+- kvm-virtiofsd-Start-reading-commands-from-queue.patch [bz#1694164]
+- kvm-virtiofsd-Send-replies-to-messages.patch [bz#1694164]
+- kvm-virtiofsd-Keep-track-of-replies.patch [bz#1694164]
+- kvm-virtiofsd-Add-Makefile-wiring-for-virtiofsd-contrib.patch [bz#1694164]
+- kvm-virtiofsd-Fast-path-for-virtio-read.patch [bz#1694164]
+- kvm-virtiofsd-add-fd-FDNUM-fd-passing-option.patch [bz#1694164]
+- kvm-virtiofsd-make-f-foreground-the-default.patch [bz#1694164]
+- kvm-virtiofsd-add-vhost-user.json-file.patch [bz#1694164]
+- kvm-virtiofsd-add-print-capabilities-option.patch [bz#1694164]
+- kvm-virtiofs-Add-maintainers-entry.patch [bz#1694164]
+- kvm-virtiofsd-passthrough_ll-create-new-files-in-caller-.patch [bz#1694164]
+- kvm-virtiofsd-passthrough_ll-add-lo_map-for-ino-fh-indir.patch [bz#1694164]
+- kvm-virtiofsd-passthrough_ll-add-ino_map-to-hide-lo_inod.patch [bz#1694164]
+- kvm-virtiofsd-passthrough_ll-add-dirp_map-to-hide-lo_dir.patch [bz#1694164]
+- kvm-virtiofsd-passthrough_ll-add-fd_map-to-hide-file-des.patch [bz#1694164]
+- kvm-virtiofsd-passthrough_ll-add-fallback-for-racy-ops.patch [bz#1694164]
+- kvm-virtiofsd-validate-path-components.patch [bz#1694164]
+- kvm-virtiofsd-Plumb-fuse_bufvec-through-to-do_write_buf.patch [bz#1694164]
+- kvm-virtiofsd-Pass-write-iov-s-all-the-way-through.patch [bz#1694164]
+- kvm-virtiofsd-add-fuse_mbuf_iter-API.patch [bz#1694164]
+- kvm-virtiofsd-validate-input-buffer-sizes-in-do_write_bu.patch [bz#1694164]
+- kvm-virtiofsd-check-input-buffer-size-in-fuse_lowlevel.c.patch [bz#1694164]
+- kvm-virtiofsd-prevent-.-escape-in-lo_do_lookup.patch [bz#1694164]
+- kvm-virtiofsd-prevent-.-escape-in-lo_do_readdir.patch [bz#1694164]
+- kvm-virtiofsd-use-proc-self-fd-O_PATH-file-descriptor.patch [bz#1694164]
+- kvm-virtiofsd-sandbox-mount-namespace.patch [bz#1694164]
+- kvm-virtiofsd-move-to-an-empty-network-namespace.patch [bz#1694164]
+- kvm-virtiofsd-move-to-a-new-pid-namespace.patch [bz#1694164]
+- kvm-virtiofsd-add-seccomp-whitelist.patch [bz#1694164]
+- kvm-virtiofsd-Parse-flag-FUSE_WRITE_KILL_PRIV.patch [bz#1694164]
+- kvm-virtiofsd-cap-ng-helpers.patch [bz#1694164]
+- kvm-virtiofsd-Drop-CAP_FSETID-if-client-asked-for-it.patch [bz#1694164]
+- kvm-virtiofsd-set-maximum-RLIMIT_NOFILE-limit.patch [bz#1694164]
+- kvm-virtiofsd-fix-libfuse-information-leaks.patch [bz#1694164]
+- kvm-virtiofsd-add-syslog-command-line-option.patch [bz#1694164]
+- kvm-virtiofsd-print-log-only-when-priority-is-high-enoug.patch [bz#1694164]
+- kvm-virtiofsd-Add-ID-to-the-log-with-FUSE_LOG_DEBUG-leve.patch [bz#1694164]
+- kvm-virtiofsd-Add-timestamp-to-the-log-with-FUSE_LOG_DEB.patch [bz#1694164]
+- kvm-virtiofsd-Handle-reinit.patch [bz#1694164]
+- kvm-virtiofsd-Handle-hard-reboot.patch [bz#1694164]
+- kvm-virtiofsd-Kill-threads-when-queues-are-stopped.patch [bz#1694164]
+- kvm-vhost-user-Print-unexpected-slave-message-types.patch [bz#1694164]
+- kvm-contrib-libvhost-user-Protect-slave-fd-with-mutex.patch [bz#1694164]
+- kvm-virtiofsd-passthrough_ll-add-renameat2-support.patch [bz#1694164]
+- kvm-virtiofsd-passthrough_ll-disable-readdirplus-on-cach.patch [bz#1694164]
+- kvm-virtiofsd-passthrough_ll-control-readdirplus.patch [bz#1694164]
+- kvm-virtiofsd-rename-unref_inode-to-unref_inode_lolocked.patch [bz#1694164]
+- kvm-virtiofsd-fail-when-parent-inode-isn-t-known-in-lo_d.patch [bz#1694164]
+- kvm-virtiofsd-extract-root-inode-init-into-setup_root.patch [bz#1694164]
+- kvm-virtiofsd-passthrough_ll-clean-up-cache-related-opti.patch [bz#1694164]
+- kvm-virtiofsd-passthrough_ll-use-hashtable.patch [bz#1694164]
+- kvm-virtiofsd-Clean-up-inodes-on-destroy.patch [bz#1694164]
+- kvm-virtiofsd-support-nanosecond-resolution-for-file-tim.patch [bz#1694164]
+- kvm-virtiofsd-fix-error-handling-in-main.patch [bz#1694164]
+- kvm-virtiofsd-cleanup-allocated-resource-in-se.patch [bz#1694164]
+- kvm-virtiofsd-fix-memory-leak-on-lo.source.patch [bz#1694164]
+- kvm-virtiofsd-add-helper-for-lo_data-cleanup.patch [bz#1694164]
+- kvm-virtiofsd-Prevent-multiply-running-with-same-vhost_u.patch [bz#1694164]
+- kvm-virtiofsd-enable-PARALLEL_DIROPS-during-INIT.patch [bz#1694164]
+- kvm-virtiofsd-fix-incorrect-error-handling-in-lo_do_look.patch [bz#1694164]
+- kvm-Virtiofsd-fix-memory-leak-on-fuse-queueinfo.patch [bz#1694164]
+- kvm-virtiofsd-Support-remote-posix-locks.patch [bz#1694164]
+- kvm-virtiofsd-use-fuse_lowlevel_is_virtio-in-fuse_sessio.patch [bz#1694164]
+- kvm-virtiofsd-prevent-fv_queue_thread-vs-virtio_loop-rac.patch [bz#1694164]
+- kvm-virtiofsd-make-lo_release-atomic.patch [bz#1694164]
+- kvm-virtiofsd-prevent-races-with-lo_dirp_put.patch [bz#1694164]
+- kvm-virtiofsd-rename-inode-refcount-to-inode-nlookup.patch [bz#1694164]
+- kvm-libvhost-user-Fix-some-memtable-remap-cases.patch [bz#1694164]
+- kvm-virtiofsd-passthrough_ll-fix-refcounting-on-remove-r.patch [bz#1694164]
+- kvm-virtiofsd-introduce-inode-refcount-to-prevent-use-af.patch [bz#1694164]
+- kvm-virtiofsd-do-not-always-set-FUSE_FLOCK_LOCKS.patch [bz#1694164]
+- kvm-virtiofsd-convert-more-fprintf-and-perror-to-use-fus.patch [bz#1694164]
+- kvm-virtiofsd-Reset-O_DIRECT-flag-during-file-open.patch [bz#1694164]
+- kvm-virtiofsd-Fix-data-corruption-with-O_APPEND-write-in.patch [bz#1694164]
+- kvm-virtiofsd-passthrough_ll-Use-cache_readdir-for-direc.patch [bz#1694164]
+- kvm-virtiofsd-add-definition-of-fuse_buf_writev.patch [bz#1694164]
+- kvm-virtiofsd-use-fuse_buf_writev-to-replace-fuse_buf_wr.patch [bz#1694164]
+- kvm-virtiofsd-process-requests-in-a-thread-pool.patch [bz#1694164]
+- kvm-virtiofsd-prevent-FUSE_INIT-FUSE_DESTROY-races.patch [bz#1694164]
+- kvm-virtiofsd-fix-lo_destroy-resource-leaks.patch [bz#1694164]
+- kvm-virtiofsd-add-thread-pool-size-NUM-option.patch [bz#1694164]
+- kvm-virtiofsd-Convert-lo_destroy-to-take-the-lo-mutex-lo.patch [bz#1694164]
+- kvm-virtiofsd-passthrough_ll-Pass-errno-to-fuse_reply_er.patch [bz#1694164]
+- kvm-virtiofsd-stop-all-queue-threads-on-exit-in-virtio_l.patch [bz#1694164]
+- kvm-virtiofsd-add-some-options-to-the-help-message.patch [bz#1694164]
+- kvm-redhat-ship-virtiofsd-vhost-user-device-backend.patch [bz#1694164]
+- Resolves: bz#1694164
+  (virtio-fs: host<->guest shared file system (qemu))
+- Resolves: bz#1725084
+  (aarch64: support dumping SVE registers)
+- Resolves: bz#1779041
+  (netkvm: no connectivity Windows guest with q35 + hugepages + vhost + hv_synic)
+
 * Tue Jan 21 2020 Miroslav Rezanina <mrezanin@redhat.com> - 4.2.0-7.el8
 - kvm-tcp_emu-Fix-oob-access.patch [bz#1791568]
 - kvm-slirp-use-correct-size-while-emulating-IRC-commands.patch [bz#1791568]

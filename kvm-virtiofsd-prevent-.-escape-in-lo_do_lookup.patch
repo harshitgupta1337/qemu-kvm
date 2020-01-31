@@ -1,0 +1,54 @@
+From feb005dfeb15dd5ac5156c994f323ab4c573b1fc Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:01:24 +0100
+Subject: [PATCH 053/116] virtiofsd: prevent ".." escape in lo_do_lookup()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-50-dgilbert@redhat.com>
+Patchwork-id: 93500
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 049/112] virtiofsd: prevent ".." escape in lo_do_lookup()
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: Stefan Hajnoczi <stefanha@redhat.com>
+
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Reviewed-by: Sergio Lopez <slp@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit 854684bc0b3d63eb90b3abdfe471c2e4271ef176)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ tools/virtiofsd/passthrough_ll.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/tools/virtiofsd/passthrough_ll.c b/tools/virtiofsd/passthrough_ll.c
+index e375406..79d5966 100644
+--- a/tools/virtiofsd/passthrough_ll.c
++++ b/tools/virtiofsd/passthrough_ll.c
+@@ -624,12 +624,17 @@ static int lo_do_lookup(fuse_req_t req, fuse_ino_t parent, const char *name,
+     int res;
+     int saverr;
+     struct lo_data *lo = lo_data(req);
+-    struct lo_inode *inode;
++    struct lo_inode *inode, *dir = lo_inode(req, parent);
+ 
+     memset(e, 0, sizeof(*e));
+     e->attr_timeout = lo->timeout;
+     e->entry_timeout = lo->timeout;
+ 
++    /* Do not allow escaping root directory */
++    if (dir == &lo->root && strcmp(name, "..") == 0) {
++        name = ".";
++    }
++
+     newfd = openat(lo_fd(req, parent), name, O_PATH | O_NOFOLLOW);
+     if (newfd == -1) {
+         goto out_err;
+-- 
+1.8.3.1
+

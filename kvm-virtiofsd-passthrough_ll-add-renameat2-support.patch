@@ -1,0 +1,52 @@
+From 86b4f2865f2ebd7e6b3d85beb66a9390eb46eb96 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:01:45 +0100
+Subject: [PATCH 074/116] virtiofsd: passthrough_ll: add renameat2 support
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-71-dgilbert@redhat.com>
+Patchwork-id: 93531
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 070/112] virtiofsd: passthrough_ll: add renameat2 support
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: Miklos Szeredi <mszeredi@redhat.com>
+
+Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit f0ab7d6f78a7d3c1c19fd81a91c9b1199f56c4f6)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ tools/virtiofsd/passthrough_ll.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/tools/virtiofsd/passthrough_ll.c b/tools/virtiofsd/passthrough_ll.c
+index 98114a3..18d69ab 100644
+--- a/tools/virtiofsd/passthrough_ll.c
++++ b/tools/virtiofsd/passthrough_ll.c
+@@ -1099,7 +1099,17 @@ static void lo_rename(fuse_req_t req, fuse_ino_t parent, const char *name,
+     }
+ 
+     if (flags) {
++#ifndef SYS_renameat2
+         fuse_reply_err(req, EINVAL);
++#else
++        res = syscall(SYS_renameat2, lo_fd(req, parent), name,
++                       lo_fd(req, newparent), newname, flags);
++        if (res == -1 && errno == ENOSYS) {
++            fuse_reply_err(req, EINVAL);
++        } else {
++            fuse_reply_err(req, res == -1 ? errno : 0);
++        }
++#endif
+         return;
+     }
+ 
+-- 
+1.8.3.1
+

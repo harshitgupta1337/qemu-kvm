@@ -1,0 +1,99 @@
+From e00543b0384fba61a9c7274c73e11a25e7ab2946 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:02:13 +0100
+Subject: [PATCH 102/116] virtiofsd: convert more fprintf and perror to use
+ fuse log infra
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-99-dgilbert@redhat.com>
+Patchwork-id: 93552
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 098/112] virtiofsd: convert more fprintf and perror to use fuse log infra
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: Eryu Guan <eguan@linux.alibaba.com>
+
+Signed-off-by: Eryu Guan <eguan@linux.alibaba.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Reviewed-by: Misono Tomohiro <misono.tomohiro@jp.fujitsu.com>
+Reviewed-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit fc1aed0bf96259d0b46b1cfea7497b7762c4ee3d)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ tools/virtiofsd/fuse_signals.c | 7 +++++--
+ tools/virtiofsd/helper.c       | 9 ++++++---
+ 2 files changed, 11 insertions(+), 5 deletions(-)
+
+diff --git a/tools/virtiofsd/fuse_signals.c b/tools/virtiofsd/fuse_signals.c
+index dc7c8ac..f18625b 100644
+--- a/tools/virtiofsd/fuse_signals.c
++++ b/tools/virtiofsd/fuse_signals.c
+@@ -12,6 +12,7 @@
+ #include "fuse_i.h"
+ #include "fuse_lowlevel.h"
+ 
++#include <errno.h>
+ #include <signal.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -47,13 +48,15 @@ static int set_one_signal_handler(int sig, void (*handler)(int), int remove)
+     sa.sa_flags = 0;
+ 
+     if (sigaction(sig, NULL, &old_sa) == -1) {
+-        perror("fuse: cannot get old signal handler");
++        fuse_log(FUSE_LOG_ERR, "fuse: cannot get old signal handler: %s\n",
++                 strerror(errno));
+         return -1;
+     }
+ 
+     if (old_sa.sa_handler == (remove ? handler : SIG_DFL) &&
+         sigaction(sig, &sa, NULL) == -1) {
+-        perror("fuse: cannot set signal handler");
++        fuse_log(FUSE_LOG_ERR, "fuse: cannot set signal handler: %s\n",
++                 strerror(errno));
+         return -1;
+     }
+     return 0;
+diff --git a/tools/virtiofsd/helper.c b/tools/virtiofsd/helper.c
+index 33749bf..f98d8f2 100644
+--- a/tools/virtiofsd/helper.c
++++ b/tools/virtiofsd/helper.c
+@@ -208,7 +208,8 @@ int fuse_daemonize(int foreground)
+         char completed;
+ 
+         if (pipe(waiter)) {
+-            perror("fuse_daemonize: pipe");
++            fuse_log(FUSE_LOG_ERR, "fuse_daemonize: pipe: %s\n",
++                     strerror(errno));
+             return -1;
+         }
+ 
+@@ -218,7 +219,8 @@ int fuse_daemonize(int foreground)
+          */
+         switch (fork()) {
+         case -1:
+-            perror("fuse_daemonize: fork");
++            fuse_log(FUSE_LOG_ERR, "fuse_daemonize: fork: %s\n",
++                     strerror(errno));
+             return -1;
+         case 0:
+             break;
+@@ -228,7 +230,8 @@ int fuse_daemonize(int foreground)
+         }
+ 
+         if (setsid() == -1) {
+-            perror("fuse_daemonize: setsid");
++            fuse_log(FUSE_LOG_ERR, "fuse_daemonize: setsid: %s\n",
++                     strerror(errno));
+             return -1;
+         }
+ 
+-- 
+1.8.3.1
+

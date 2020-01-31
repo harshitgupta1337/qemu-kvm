@@ -1,0 +1,97 @@
+From c35466c168e5219bf585aa65ac31fc9bdc7cbf36 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Fri, 24 Jan 2020 19:46:12 +0100
+Subject: [PATCH 003/116] vhost: Only align sections for vhost-user
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200124194613.41119-3-dgilbert@redhat.com>
+Patchwork-id: 93452
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 2/3] vhost: Only align sections for vhost-user
+Bugzilla: 1779041
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+
+I added hugepage alignment code in c1ece84e7c9 to deal with
+vhost-user + postcopy which needs aligned pages when using userfault.
+However, on x86 the lower 2MB of address space tends to be shotgun'd
+with small fragments around the 512-640k range - e.g. video RAM, and
+with HyperV synic pages tend to sit around there - again splitting
+it up.  The alignment code complains with a 'Section rounded to ...'
+error and gives up.
+
+Since vhost-user already filters out devices without an fd
+(see vhost-user.c vhost_user_mem_section_filter) it shouldn't be
+affected by those overlaps.
+
+Turn the alignment off on vhost-kernel so that it doesn't try
+and align, and thus won't hit the rounding issues.
+
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-Id: <20200116202414.157959-3-dgilbert@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+Reviewed-by: Paolo Bonzini <pbonzini@redhat.com>
+(cherry picked from commit 76525114736e8f669766e69b715fa59ce8648aae)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/virtio/vhost.c | 34 ++++++++++++++++++----------------
+ 1 file changed, 18 insertions(+), 16 deletions(-)
+
+diff --git a/hw/virtio/vhost.c b/hw/virtio/vhost.c
+index 774d87d..25fd469 100644
+--- a/hw/virtio/vhost.c
++++ b/hw/virtio/vhost.c
+@@ -547,26 +547,28 @@ static void vhost_region_add_section(struct vhost_dev *dev,
+     uintptr_t mrs_host = (uintptr_t)memory_region_get_ram_ptr(section->mr) +
+                          section->offset_within_region;
+     RAMBlock *mrs_rb = section->mr->ram_block;
+-    size_t mrs_page = qemu_ram_pagesize(mrs_rb);
+ 
+     trace_vhost_region_add_section(section->mr->name, mrs_gpa, mrs_size,
+                                    mrs_host);
+ 
+-    /* Round the section to it's page size */
+-    /* First align the start down to a page boundary */
+-    uint64_t alignage = mrs_host & (mrs_page - 1);
+-    if (alignage) {
+-        mrs_host -= alignage;
+-        mrs_size += alignage;
+-        mrs_gpa  -= alignage;
+-    }
+-    /* Now align the size up to a page boundary */
+-    alignage = mrs_size & (mrs_page - 1);
+-    if (alignage) {
+-        mrs_size += mrs_page - alignage;
+-    }
+-    trace_vhost_region_add_section_aligned(section->mr->name, mrs_gpa, mrs_size,
+-                                           mrs_host);
++    if (dev->vhost_ops->backend_type == VHOST_BACKEND_TYPE_USER) {   
++        /* Round the section to it's page size */
++        /* First align the start down to a page boundary */
++        size_t mrs_page = qemu_ram_pagesize(mrs_rb);
++        uint64_t alignage = mrs_host & (mrs_page - 1);
++        if (alignage) {
++            mrs_host -= alignage;
++            mrs_size += alignage;
++            mrs_gpa  -= alignage;
++        }
++        /* Now align the size up to a page boundary */
++        alignage = mrs_size & (mrs_page - 1);
++        if (alignage) {
++            mrs_size += mrs_page - alignage;
++        }
++        trace_vhost_region_add_section_aligned(section->mr->name, mrs_gpa, mrs_size,
++                                               mrs_host);
++    }
+ 
+     if (dev->n_tmp_sections) {
+         /* Since we already have at least one section, lets see if
+-- 
+1.8.3.1
+

@@ -1,0 +1,88 @@
+From 7a3c94e10b087c06635ef72aadb1550184dd5c58 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:01:58 +0100
+Subject: [PATCH 087/116] virtiofsd: add helper for lo_data cleanup
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-84-dgilbert@redhat.com>
+Patchwork-id: 93538
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 083/112] virtiofsd: add helper for lo_data cleanup
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: Liu Bo <bo.liu@linux.alibaba.com>
+
+This offers an helper function for lo_data's cleanup.
+
+Signed-off-by: Liu Bo <bo.liu@linux.alibaba.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit 18a69cbbb6a4caa7c2040c6db4a33b044a32be7e)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ tools/virtiofsd/passthrough_ll.c | 37 +++++++++++++++++++++----------------
+ 1 file changed, 21 insertions(+), 16 deletions(-)
+
+diff --git a/tools/virtiofsd/passthrough_ll.c b/tools/virtiofsd/passthrough_ll.c
+index 056ebe8..e8dc5c7 100644
+--- a/tools/virtiofsd/passthrough_ll.c
++++ b/tools/virtiofsd/passthrough_ll.c
+@@ -2407,6 +2407,26 @@ static gboolean lo_key_equal(gconstpointer a, gconstpointer b)
+     return la->ino == lb->ino && la->dev == lb->dev;
+ }
+ 
++static void fuse_lo_data_cleanup(struct lo_data *lo)
++{
++    if (lo->inodes) {
++        g_hash_table_destroy(lo->inodes);
++    }
++    lo_map_destroy(&lo->fd_map);
++    lo_map_destroy(&lo->dirp_map);
++    lo_map_destroy(&lo->ino_map);
++
++    if (lo->proc_self_fd >= 0) {
++        close(lo->proc_self_fd);
++    }
++
++    if (lo->root.fd >= 0) {
++        close(lo->root.fd);
++    }
++
++    free(lo->source);
++}
++
+ int main(int argc, char *argv[])
+ {
+     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+@@ -2554,22 +2574,7 @@ err_out2:
+ err_out1:
+     fuse_opt_free_args(&args);
+ 
+-    if (lo.inodes) {
+-        g_hash_table_destroy(lo.inodes);
+-    }
+-    lo_map_destroy(&lo.fd_map);
+-    lo_map_destroy(&lo.dirp_map);
+-    lo_map_destroy(&lo.ino_map);
+-
+-    if (lo.proc_self_fd >= 0) {
+-        close(lo.proc_self_fd);
+-    }
+-
+-    if (lo.root.fd >= 0) {
+-        close(lo.root.fd);
+-    }
+-
+-    free(lo.source);
++    fuse_lo_data_cleanup(&lo);
+ 
+     return ret ? 1 : 0;
+ }
+-- 
+1.8.3.1
+

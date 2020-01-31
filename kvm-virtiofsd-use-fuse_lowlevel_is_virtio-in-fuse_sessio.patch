@@ -1,0 +1,56 @@
+From 1724f54070d33d8070ba2d22c8fac87ea65814c1 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Mon, 27 Jan 2020 19:02:04 +0100
+Subject: [PATCH 093/116] virtiofsd: use fuse_lowlevel_is_virtio() in
+ fuse_session_destroy()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200127190227.40942-90-dgilbert@redhat.com>
+Patchwork-id: 93540
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 089/112] virtiofsd: use fuse_lowlevel_is_virtio() in fuse_session_destroy()
+Bugzilla: 1694164
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+
+From: Stefan Hajnoczi <stefanha@redhat.com>
+
+vu_socket_path is NULL when --fd=FDNUM was used.  Use
+fuse_lowlevel_is_virtio() instead.
+
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit 620e9d8d9cee6df7fe71168dea950dba0cc21a4a)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ tools/virtiofsd/fuse_lowlevel.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/tools/virtiofsd/fuse_lowlevel.c b/tools/virtiofsd/fuse_lowlevel.c
+index 70568d2..dab6a31 100644
+--- a/tools/virtiofsd/fuse_lowlevel.c
++++ b/tools/virtiofsd/fuse_lowlevel.c
+@@ -2537,12 +2537,13 @@ void fuse_session_destroy(struct fuse_session *se)
+         close(se->fd);
+     }
+ 
+-    if (se->vu_socket_path) {
++    if (fuse_lowlevel_is_virtio(se)) {
+         virtio_session_close(se);
+-        free(se->vu_socket_path);
+-        se->vu_socket_path = NULL;
+     }
+ 
++    free(se->vu_socket_path);
++    se->vu_socket_path = NULL;
++
+     free(se);
+ }
+ 
+-- 
+1.8.3.1
+
