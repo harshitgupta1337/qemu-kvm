@@ -1,0 +1,60 @@
+From 2740a84fe798ade5c1ce725d65cdaffb255da47c Mon Sep 17 00:00:00 2001
+From: Andrew Jones <drjones@redhat.com>
+Date: Fri, 31 Jan 2020 14:23:11 +0000
+Subject: [PATCH 09/15] target/arm/kvm64: kvm64 cpus have timer registers
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Andrew Jones <drjones@redhat.com>
+Message-id: <20200131142314.13175-3-drjones@redhat.com>
+Patchwork-id: 93621
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH 2/5] target/arm/kvm64: kvm64 cpus have timer registers
+Bugzilla: 1647366
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Auger Eric <eric.auger@redhat.com>
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1647366
+
+Author: Andrew Jones <drjones@redhat.com>
+Date:   Thu, 30 Jan 2020 16:02:06 +0000
+
+    target/arm/kvm64: kvm64 cpus have timer registers
+
+    Add the missing GENERIC_TIMER feature to kvm64 cpus.
+
+    We don't currently use these registers when KVM is enabled, but it's
+    probably best we add the feature flag for consistency and potential
+    future use. There's also precedent, as we add the PMU feature flag to
+    KVM enabled guests, even though we don't use those registers either.
+
+    This change was originally posted as a hunk of a different, never
+    merged patch from Bijan Mottahedeh.
+
+    Signed-off-by: Andrew Jones <drjones@redhat.com>
+    Reviewed-by: Richard Henderson <richard.henderson@linaro.org>
+    Message-id: 20200120101023.16030-4-drjones@redhat.com
+    Signed-off-by: Peter Maydell <peter.maydell@linaro.org>
+
+(cherry picked from commit 65caa415487f4a6e265105446c6ef8f56bb0aa70)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ target/arm/kvm64.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/target/arm/kvm64.c b/target/arm/kvm64.c
+index e2da756..666a81a 100644
+--- a/target/arm/kvm64.c
++++ b/target/arm/kvm64.c
+@@ -605,6 +605,7 @@ bool kvm_arm_get_host_cpu_features(ARMHostCPUFeatures *ahcf)
+     set_feature(&features, ARM_FEATURE_NEON);
+     set_feature(&features, ARM_FEATURE_AARCH64);
+     set_feature(&features, ARM_FEATURE_PMU);
++    set_feature(&features, ARM_FEATURE_GENERIC_TIMER);
+ 
+     ahcf->features = features;
+ 
+-- 
+1.8.3.1
+

@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 8%{?dist}
+Release: 9%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -373,6 +373,34 @@ Patch145: kvm-virtiofsd-passthrough_ll-Pass-errno-to-fuse_reply_er.patch
 Patch146: kvm-virtiofsd-stop-all-queue-threads-on-exit-in-virtio_l.patch
 # For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
 Patch147: kvm-virtiofsd-add-some-options-to-the-help-message.patch
+# For bz#1776638 - Guest failed to boot up after system_reset  20 times
+Patch148: kvm-ppc-Deassert-the-external-interrupt-pin-in-KVM-on-re.patch
+# For bz#1776638 - Guest failed to boot up after system_reset  20 times
+Patch149: kvm-xics-Don-t-deassert-outputs.patch
+# For bz#1776638 - Guest failed to boot up after system_reset  20 times
+Patch150: kvm-ppc-Don-t-use-CPUPPCState-irq_input_state-with-moder.patch
+# For bz#1787395 - qemu-trace-stap list : TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+Patch151: kvm-trace-update-qemu-trace-stap-to-Python-3.patch
+# For bz#1794503 - CVE-2020-1711 qemu-kvm: QEMU: block: iscsi: OOB heap access via an unexpected response of iSCSI Server [rhel-av-8.2.0]
+Patch153: kvm-iscsi-Cap-block-count-from-GET-LBA-STATUS-CVE-2020-1.patch
+# For bz#1787444 - Broken postcopy migration with vTPM device
+Patch154: kvm-tpm-ppi-page-align-PPI-RAM.patch
+# For bz#1647366 - aarch64: Add support for the kvm-no-adjvtime ARM CPU feature
+Patch155: kvm-target-arm-kvm-trivial-Clean-up-header-documentation.patch
+# For bz#1647366 - aarch64: Add support for the kvm-no-adjvtime ARM CPU feature
+Patch156: kvm-target-arm-kvm64-kvm64-cpus-have-timer-registers.patch
+# For bz#1647366 - aarch64: Add support for the kvm-no-adjvtime ARM CPU feature
+Patch157: kvm-tests-arm-cpu-features-Check-feature-default-values.patch
+# For bz#1647366 - aarch64: Add support for the kvm-no-adjvtime ARM CPU feature
+Patch158: kvm-target-arm-kvm-Implement-virtual-time-adjustment.patch
+# For bz#1647366 - aarch64: Add support for the kvm-no-adjvtime ARM CPU feature
+Patch159: kvm-target-arm-cpu-Add-the-kvm-no-adjvtime-CPU-property.patch
+# For bz#1529231 - [q35] VM hangs after migration with 200 vCPUs
+Patch160: kvm-migration-Define-VMSTATE_INSTANCE_ID_ANY.patch
+# For bz#1529231 - [q35] VM hangs after migration with 200 vCPUs
+Patch161: kvm-migration-Change-SaveStateEntry.instance_id-into-uin.patch
+# For bz#1529231 - [q35] VM hangs after migration with 200 vCPUs
+Patch162: kvm-apic-Use-32bit-APIC-ID-for-migration-instance-ID.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -962,9 +990,6 @@ rm $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}-simplet
 rm $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}-log.stp
 rm $RPM_BUILD_ROOT%{_bindir}/elf2dmp
 
-# Mangle qemu-kvm-stap
-sed -i -e '1 s/python/python3/' $RPM_BUILD_ROOT%{_bindir}/qemu-trace-stap
-
 # Install simpletrace
 install -m 0755 scripts/simpletrace.py $RPM_BUILD_ROOT%{_datadir}/%{name}/simpletrace.py
 # Avoid ambiguous 'python' interpreter name
@@ -1309,6 +1334,35 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Feb 10 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-9.el8
+- kvm-ppc-Deassert-the-external-interrupt-pin-in-KVM-on-re.patch [bz#1776638]
+- kvm-xics-Don-t-deassert-outputs.patch [bz#1776638]
+- kvm-ppc-Don-t-use-CPUPPCState-irq_input_state-with-moder.patch [bz#1776638]
+- kvm-trace-update-qemu-trace-stap-to-Python-3.patch [bz#1787395]
+- kvm-redhat-Remove-redundant-fix-for-qemu-trace-stap.patch [bz#1787395]
+- kvm-iscsi-Cap-block-count-from-GET-LBA-STATUS-CVE-2020-1.patch [bz#1794503]
+- kvm-tpm-ppi-page-align-PPI-RAM.patch [bz#1787444]
+- kvm-target-arm-kvm-trivial-Clean-up-header-documentation.patch [bz#1647366]
+- kvm-target-arm-kvm64-kvm64-cpus-have-timer-registers.patch [bz#1647366]
+- kvm-tests-arm-cpu-features-Check-feature-default-values.patch [bz#1647366]
+- kvm-target-arm-kvm-Implement-virtual-time-adjustment.patch [bz#1647366]
+- kvm-target-arm-cpu-Add-the-kvm-no-adjvtime-CPU-property.patch [bz#1647366]
+- kvm-migration-Define-VMSTATE_INSTANCE_ID_ANY.patch [bz#1529231]
+- kvm-migration-Change-SaveStateEntry.instance_id-into-uin.patch [bz#1529231]
+- kvm-apic-Use-32bit-APIC-ID-for-migration-instance-ID.patch [bz#1529231]
+- Resolves: bz#1529231
+  ([q35] VM hangs after migration with 200 vCPUs)
+- Resolves: bz#1647366
+  (aarch64: Add support for the kvm-no-adjvtime ARM CPU feature)
+- Resolves: bz#1776638
+  (Guest failed to boot up after system_reset  20 times)
+- Resolves: bz#1787395
+  (qemu-trace-stap list : TypeError: startswith first arg must be bytes or a tuple of bytes, not str)
+- Resolves: bz#1787444
+  (Broken postcopy migration with vTPM device)
+- Resolves: bz#1794503
+  (CVE-2020-1711 qemu-kvm: QEMU: block: iscsi: OOB heap access via an unexpected response of iSCSI Server [rhel-av-8.2.0])
+
 * Fri Jan 31 2020 Miroslav Rezanina <mrezanin@redhat.com> - 4.2.0-8.el8
 - kvm-target-arm-arch_dump-Add-SVE-notes.patch [bz#1725084]
 - kvm-vhost-Add-names-to-section-rounded-warning.patch [bz#1779041]

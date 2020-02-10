@@ -1,0 +1,52 @@
+From 99b6ee4b7f63ea49e5b73f61bbf68f67252f27da Mon Sep 17 00:00:00 2001
+From: David Gibson <dgibson@redhat.com>
+Date: Tue, 21 Jan 2020 05:16:12 +0000
+Subject: [PATCH 02/15] xics: Don't deassert outputs
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: David Gibson <dgibson@redhat.com>
+Message-id: <20200121051613.388295-3-dgibson@redhat.com>
+Patchwork-id: 93430
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCH 2/3] xics: Don't deassert outputs
+Bugzilla: 1776638
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+
+From: Greg Kurz <groug@kaod.org>
+
+The correct way to do this is to deassert the input pins on the CPU side.
+This is the case since a previous change.
+
+Signed-off-by: Greg Kurz <groug@kaod.org>
+Message-Id: <157548862298.3650476.1228720391270249433.stgit@bahia.lan>
+Signed-off-by: David Gibson <david@gibson.dropbear.id.au>
+(cherry picked from commit 4febcdd88f08422a66a1aa0dc55e1472abed3c4b)
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1776638
+
+Signed-off-by: David Gibson <dgibson@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/intc/xics.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/hw/intc/xics.c b/hw/intc/xics.c
+index e7ac9ba..72c5dca 100644
+--- a/hw/intc/xics.c
++++ b/hw/intc/xics.c
+@@ -289,9 +289,6 @@ void icp_reset(ICPState *icp)
+     icp->pending_priority = 0xff;
+     icp->mfrr = 0xff;
+ 
+-    /* Make all outputs are deasserted */
+-    qemu_set_irq(icp->output, 0);
+-
+     if (kvm_irqchip_in_kernel()) {
+         Error *local_err = NULL;
+ 
+-- 
+1.8.3.1
+
