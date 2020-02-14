@@ -1,0 +1,46 @@
+From a3778aef0be61dead835af39073a62bbf72c8e20 Mon Sep 17 00:00:00 2001
+From: Kevin Wolf <kwolf@redhat.com>
+Date: Fri, 7 Feb 2020 11:23:59 +0000
+Subject: [PATCH 02/18] iotests: Support job-complete in run_job()
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+Message-id: <20200207112404.25198-2-kwolf@redhat.com>
+Patchwork-id: 93746
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH v2 1/6] iotests: Support job-complete in run_job()
+Bugzilla: 1781637
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+
+Automatically complete jobs that have a 'ready' state and need an
+explicit job-complete. Without this, run_job() would hang for such
+jobs.
+
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Reviewed-by: Eric Blake <eblake@redhat.com>
+Reviewed-by: Vladimir Sementsov-Ogievskiy <vsementsov@virtuozzo.com>
+Reviewed-by: Alberto Garcia <berto@igalia.com>
+Reviewed-by: Stefan Hajnoczi <stefanha@redhat.com>
+(cherry picked from commit 4688c4e32ec76004676470f11734478799673d6d)
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ tests/qemu-iotests/iotests.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/tests/qemu-iotests/iotests.py b/tests/qemu-iotests/iotests.py
+index df07089..3cff671 100644
+--- a/tests/qemu-iotests/iotests.py
++++ b/tests/qemu-iotests/iotests.py
+@@ -617,6 +617,8 @@ class VM(qtest.QEMUQtestMachine):
+                         error = j['error']
+                         if use_log:
+                             log('Job failed: %s' % (j['error']))
++            elif status == 'ready':
++                self.qmp_log('job-complete', id=job)
+             elif status == 'pending' and not auto_finalize:
+                 if pre_finalize:
+                     pre_finalize()
+-- 
+1.8.3.1
+

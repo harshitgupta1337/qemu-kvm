@@ -1,0 +1,123 @@
+From d6df1426ae65b3a0d50bdbb1f8a7246386dd6ebf Mon Sep 17 00:00:00 2001
+From: Kevin Wolf <kwolf@redhat.com>
+Date: Fri, 7 Feb 2020 11:24:04 +0000
+Subject: [PATCH 07/18] iotests.py: Let wait_migration wait even more
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+Message-id: <20200207112404.25198-7-kwolf@redhat.com>
+Patchwork-id: 93751
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH v2 6/6] iotests.py: Let wait_migration wait even more
+Bugzilla: 1781637
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+
+From: Max Reitz <mreitz@redhat.com>
+
+The "migration completed" event may be sent (on the source, to be
+specific) before the migration is actually completed, so the VM runstate
+will still be "finish-migrate" instead of "postmigrate".  So ask the
+users of VM.wait_migration() to specify the final runstate they desire
+and then poll the VM until it has reached that state.  (This should be
+over very quickly, so busy polling is fine.)
+
+Without this patch, I see intermittent failures in the new iotest 280
+under high system load.  I have not yet seen such failures with other
+iotests that use VM.wait_migration() and query-status afterwards, but
+maybe they just occur even more rarely, or it is because they also wait
+on the destination VM to be running.
+
+Signed-off-by: Max Reitz <mreitz@redhat.com>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit 8da7969bd7014f6de037d8ae132b40721944b186)
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ tests/qemu-iotests/234        | 8 ++++----
+ tests/qemu-iotests/262        | 4 ++--
+ tests/qemu-iotests/280        | 2 +-
+ tests/qemu-iotests/iotests.py | 6 +++++-
+ 4 files changed, 12 insertions(+), 8 deletions(-)
+
+diff --git a/tests/qemu-iotests/234 b/tests/qemu-iotests/234
+index 34c818c..59a7f94 100755
+--- a/tests/qemu-iotests/234
++++ b/tests/qemu-iotests/234
+@@ -69,9 +69,9 @@ with iotests.FilePath('img') as img_path, \
+     iotests.log(vm_a.qmp('migrate', uri='exec:cat >%s' % (fifo_a)))
+     with iotests.Timeout(3, 'Migration does not complete'):
+         # Wait for the source first (which includes setup=setup)
+-        vm_a.wait_migration()
++        vm_a.wait_migration('postmigrate')
+         # Wait for the destination second (which does not)
+-        vm_b.wait_migration()
++        vm_b.wait_migration('running')
+ 
+     iotests.log(vm_a.qmp('query-migrate')['return']['status'])
+     iotests.log(vm_b.qmp('query-migrate')['return']['status'])
+@@ -98,9 +98,9 @@ with iotests.FilePath('img') as img_path, \
+     iotests.log(vm_b.qmp('migrate', uri='exec:cat >%s' % (fifo_b)))
+     with iotests.Timeout(3, 'Migration does not complete'):
+         # Wait for the source first (which includes setup=setup)
+-        vm_b.wait_migration()
++        vm_b.wait_migration('postmigrate')
+         # Wait for the destination second (which does not)
+-        vm_a.wait_migration()
++        vm_a.wait_migration('running')
+ 
+     iotests.log(vm_a.qmp('query-migrate')['return']['status'])
+     iotests.log(vm_b.qmp('query-migrate')['return']['status'])
+diff --git a/tests/qemu-iotests/262 b/tests/qemu-iotests/262
+index 0963daa..bbcb526 100755
+--- a/tests/qemu-iotests/262
++++ b/tests/qemu-iotests/262
+@@ -71,9 +71,9 @@ with iotests.FilePath('img') as img_path, \
+     iotests.log(vm_a.qmp('migrate', uri='exec:cat >%s' % (fifo)))
+     with iotests.Timeout(3, 'Migration does not complete'):
+         # Wait for the source first (which includes setup=setup)
+-        vm_a.wait_migration()
++        vm_a.wait_migration('postmigrate')
+         # Wait for the destination second (which does not)
+-        vm_b.wait_migration()
++        vm_b.wait_migration('running')
+ 
+     iotests.log(vm_a.qmp('query-migrate')['return']['status'])
+     iotests.log(vm_b.qmp('query-migrate')['return']['status'])
+diff --git a/tests/qemu-iotests/280 b/tests/qemu-iotests/280
+index 0b1fa8e..85e9114 100755
+--- a/tests/qemu-iotests/280
++++ b/tests/qemu-iotests/280
+@@ -45,7 +45,7 @@ with iotests.FilePath('base') as base_path , \
+     vm.qmp_log('migrate', uri='exec:cat > /dev/null')
+ 
+     with iotests.Timeout(3, 'Migration does not complete'):
+-        vm.wait_migration()
++        vm.wait_migration('postmigrate')
+ 
+     iotests.log('\nVM is now stopped:')
+     iotests.log(vm.qmp('query-migrate')['return']['status'])
+diff --git a/tests/qemu-iotests/iotests.py b/tests/qemu-iotests/iotests.py
+index 5741efb..0c55f7b 100644
+--- a/tests/qemu-iotests/iotests.py
++++ b/tests/qemu-iotests/iotests.py
+@@ -663,12 +663,16 @@ class VM(qtest.QEMUQtestMachine):
+             }
+         ]))
+ 
+-    def wait_migration(self):
++    def wait_migration(self, expect_runstate):
+         while True:
+             event = self.event_wait('MIGRATION')
+             log(event, filters=[filter_qmp_event])
+             if event['data']['status'] == 'completed':
+                 break
++        # The event may occur in finish-migrate, so wait for the expected
++        # post-migration runstate
++        while self.qmp('query-status')['return']['status'] != expect_runstate:
++            pass
+ 
+     def node_info(self, node_name):
+         nodes = self.qmp('query-named-block-nodes')
+-- 
+1.8.3.1
+

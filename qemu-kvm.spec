@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 9%{?dist}
+Release: 10%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -401,6 +401,99 @@ Patch160: kvm-migration-Define-VMSTATE_INSTANCE_ID_ANY.patch
 Patch161: kvm-migration-Change-SaveStateEntry.instance_id-into-uin.patch
 # For bz#1529231 - [q35] VM hangs after migration with 200 vCPUs
 Patch162: kvm-apic-Use-32bit-APIC-ID-for-migration-instance-ID.patch
+# For bz#1779078 - RHVH 4.4: Failed to run VM on 4.3/4.4 engine (Exit message: the CPU is incompatible with host CPU: Host CPU does not provide required features: hle, rtm)
+# For bz#1787291 - RHVH 4.4: Failed to run VM on 4.3/4.4 engine (Exit message: the CPU is incompatible with host CPU: Host CPU does not provide required features: hle, rtm) [rhel-8.1.0.z]
+# For bz#1779078 - RHVH 4.4: Failed to run VM on 4.3/4.4 engine (Exit message: the CPU is incompatible with host CPU: Host CPU does not provide required features: hle, rtm)
+# For bz#1779078 - RHVH 4.4: Failed to run VM on 4.3/4.4 engine (Exit message: the CPU is incompatible with host CPU: Host CPU does not provide required features: hle, rtm)
+Patch163: kvm-i386-Resolve-CPU-models-to-v1-by-default.patch
+# For bz#1781637 - qemu crashed when do mem and disk snapshot
+Patch164: kvm-iotests-Support-job-complete-in-run_job.patch
+# For bz#1781637 - qemu crashed when do mem and disk snapshot
+Patch165: kvm-iotests-Create-VM.blockdev_create.patch
+# For bz#1781637 - qemu crashed when do mem and disk snapshot
+Patch166: kvm-block-Activate-recursively-even-for-already-active-n.patch
+# For bz#1781637 - qemu crashed when do mem and disk snapshot
+Patch167: kvm-hmp-Allow-using-qdev-ID-for-qemu-io-command.patch
+# For bz#1781637 - qemu crashed when do mem and disk snapshot
+Patch168: kvm-iotests-Test-external-snapshot-with-VM-state.patch
+# For bz#1781637 - qemu crashed when do mem and disk snapshot
+Patch169: kvm-iotests.py-Let-wait_migration-wait-even-more.patch
+# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
+# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
+# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
+# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
+# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
+# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
+# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
+Patch170: kvm-blockdev-fix-coding-style-issues-in-drive_backup_pre.patch
+# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
+# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
+# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
+# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
+# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
+# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
+# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
+Patch171: kvm-blockdev-unify-qmp_drive_backup-and-drive-backup-tra.patch
+# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
+# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
+# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
+# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
+# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
+# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
+# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
+Patch172: kvm-blockdev-unify-qmp_blockdev_backup-and-blockdev-back.patch
+# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
+# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
+# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
+# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
+# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
+# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
+# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
+Patch173: kvm-blockdev-honor-bdrv_try_set_aio_context-context-requ.patch
+# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
+# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
+# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
+# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
+# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
+# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
+# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
+Patch174: kvm-backup-top-Begin-drain-earlier.patch
+# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
+# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
+# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
+# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
+# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
+# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
+# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
+Patch175: kvm-block-backup-top-Don-t-acquire-context-while-droppin.patch
+# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
+# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
+# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
+# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
+# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
+# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
+# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
+Patch176: kvm-blockdev-Acquire-AioContext-on-dirty-bitmap-function.patch
+# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
+# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
+# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
+# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
+# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
+# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
+# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
+Patch177: kvm-blockdev-Return-bs-to-the-proper-context-on-snapshot.patch
+# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
+# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
+# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
+# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
+# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
+# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
+# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
+Patch178: kvm-iotests-Test-handling-of-AioContexts-with-some-block.patch
+# For bz#1801320 - aarch64: backport query-cpu-model-expansion and adjvtime document fixes
+Patch179: kvm-target-arm-monitor-query-cpu-model-expansion-crashed.patch
+# For bz#1801320 - aarch64: backport query-cpu-model-expansion and adjvtime document fixes
+Patch180: kvm-docs-arm-cpu-features-Make-kvm-no-adjvtime-comment-c.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1334,6 +1427,48 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Feb 14 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-10.el8
+- kvm-i386-Resolve-CPU-models-to-v1-by-default.patch [bz#1779078 bz#1787291 bz#1779078 bz#1779078]
+- kvm-iotests-Support-job-complete-in-run_job.patch [bz#1781637]
+- kvm-iotests-Create-VM.blockdev_create.patch [bz#1781637]
+- kvm-block-Activate-recursively-even-for-already-active-n.patch [bz#1781637]
+- kvm-hmp-Allow-using-qdev-ID-for-qemu-io-command.patch [bz#1781637]
+- kvm-iotests-Test-external-snapshot-with-VM-state.patch [bz#1781637]
+- kvm-iotests.py-Let-wait_migration-wait-even-more.patch [bz#1781637]
+- kvm-blockdev-fix-coding-style-issues-in-drive_backup_pre.patch [bz#1745606 bz#1746217 bz#1773517 bz#1779036 bz#1782111 bz#1782175 bz#1783965]
+- kvm-blockdev-unify-qmp_drive_backup-and-drive-backup-tra.patch [bz#1745606 bz#1746217 bz#1773517 bz#1779036 bz#1782111 bz#1782175 bz#1783965]
+- kvm-blockdev-unify-qmp_blockdev_backup-and-blockdev-back.patch [bz#1745606 bz#1746217 bz#1773517 bz#1779036 bz#1782111 bz#1782175 bz#1783965]
+- kvm-blockdev-honor-bdrv_try_set_aio_context-context-requ.patch [bz#1745606 bz#1746217 bz#1773517 bz#1779036 bz#1782111 bz#1782175 bz#1783965]
+- kvm-backup-top-Begin-drain-earlier.patch [bz#1745606 bz#1746217 bz#1773517 bz#1779036 bz#1782111 bz#1782175 bz#1783965]
+- kvm-block-backup-top-Don-t-acquire-context-while-droppin.patch [bz#1745606 bz#1746217 bz#1773517 bz#1779036 bz#1782111 bz#1782175 bz#1783965]
+- kvm-blockdev-Acquire-AioContext-on-dirty-bitmap-function.patch [bz#1745606 bz#1746217 bz#1773517 bz#1779036 bz#1782111 bz#1782175 bz#1783965]
+- kvm-blockdev-Return-bs-to-the-proper-context-on-snapshot.patch [bz#1745606 bz#1746217 bz#1773517 bz#1779036 bz#1782111 bz#1782175 bz#1783965]
+- kvm-iotests-Test-handling-of-AioContexts-with-some-block.patch [bz#1745606 bz#1746217 bz#1773517 bz#1779036 bz#1782111 bz#1782175 bz#1783965]
+- kvm-target-arm-monitor-query-cpu-model-expansion-crashed.patch [bz#1801320]
+- kvm-docs-arm-cpu-features-Make-kvm-no-adjvtime-comment-c.patch [bz#1801320]
+- Resolves: bz#1745606
+  (Qemu hang when do incremental live backup in transaction mode without bitmap)
+- Resolves: bz#1746217
+  (Src qemu hang when do storage vm migration during guest installation)
+- Resolves: bz#1773517
+  (Src qemu hang when do storage vm migration with dataplane enable)
+- Resolves: bz#1779036
+  (Qemu coredump when do snapshot in transaction mode with one snapshot path not exist)
+- Resolves: bz#1779078
+  (RHVH 4.4: Failed to run VM on 4.3/4.4 engine (Exit message: the CPU is incompatible with host CPU: Host CPU does not provide required features: hle, rtm))
+- Resolves: bz#1781637
+  (qemu crashed when do mem and disk snapshot)
+- Resolves: bz#1782111
+  (Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable))
+- Resolves: bz#1782175
+  (Qemu core dump when add persistent bitmap(data plane enable))
+- Resolves: bz#1783965
+  (Qemu core dump when do backup with sync: bitmap and no bitmap provided)
+- Resolves: bz#1787291
+  (RHVH 4.4: Failed to run VM on 4.3/4.4 engine (Exit message: the CPU is incompatible with host CPU: Host CPU does not provide required features: hle, rtm) [rhel-8.1.0.z])
+- Resolves: bz#1801320
+  (aarch64: backport query-cpu-model-expansion and adjvtime document fixes)
+
 * Mon Feb 10 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-9.el8
 - kvm-ppc-Deassert-the-external-interrupt-pin-in-KVM-on-re.patch [bz#1776638]
 - kvm-xics-Don-t-deassert-outputs.patch [bz#1776638]

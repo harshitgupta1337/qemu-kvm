@@ -1,0 +1,116 @@
+From 0ef6691ce8964bb2bbd677756c4e594793ca3ad8 Mon Sep 17 00:00:00 2001
+From: Kevin Wolf <kwolf@redhat.com>
+Date: Fri, 7 Feb 2020 11:24:01 +0000
+Subject: [PATCH 04/18] block: Activate recursively even for already active
+ nodes
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+Message-id: <20200207112404.25198-4-kwolf@redhat.com>
+Patchwork-id: 93749
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH v2 3/6] block: Activate recursively even for already active nodes
+Bugzilla: 1781637
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+
+bdrv_invalidate_cache_all() assumes that all nodes in a given subtree
+are either active or inactive when it starts. Therefore, as soon as it
+arrives at an already active node, it stops.
+
+However, this assumption is wrong. For example, it's possible to take a
+snapshot of an inactive node, which results in an active overlay over an
+inactive backing file. The active overlay is probably also the root node
+of an inactive BlockBackend (blk->disable_perm == true).
+
+In this case, bdrv_invalidate_cache_all() does not need to do anything
+to activate the overlay node, but it still needs to recurse into the
+children and the parents to make sure that after returning success,
+really everything is activated.
+
+Cc: qemu-stable@nongnu.org
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Reviewed-by: Max Reitz <mreitz@redhat.com>
+(cherry picked from commit 7bb4941ace471fc7dd6ded4749b95b9622baa6ed)
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ block.c | 50 ++++++++++++++++++++++++--------------------------
+ 1 file changed, 24 insertions(+), 26 deletions(-)
+
+diff --git a/block.c b/block.c
+index 473eb6e..2e5e8b6 100644
+--- a/block.c
++++ b/block.c
+@@ -5335,10 +5335,6 @@ static void coroutine_fn bdrv_co_invalidate_cache(BlockDriverState *bs,
+         return;
+     }
+ 
+-    if (!(bs->open_flags & BDRV_O_INACTIVE)) {
+-        return;
+-    }
+-
+     QLIST_FOREACH(child, &bs->children, next) {
+         bdrv_co_invalidate_cache(child->bs, &local_err);
+         if (local_err) {
+@@ -5360,34 +5356,36 @@ static void coroutine_fn bdrv_co_invalidate_cache(BlockDriverState *bs,
+      * just keep the extended permissions for the next time that an activation
+      * of the image is tried.
+      */
+-    bs->open_flags &= ~BDRV_O_INACTIVE;
+-    bdrv_get_cumulative_perm(bs, &perm, &shared_perm);
+-    ret = bdrv_check_perm(bs, NULL, perm, shared_perm, NULL, NULL, &local_err);
+-    if (ret < 0) {
+-        bs->open_flags |= BDRV_O_INACTIVE;
+-        error_propagate(errp, local_err);
+-        return;
+-    }
+-    bdrv_set_perm(bs, perm, shared_perm);
+-
+-    if (bs->drv->bdrv_co_invalidate_cache) {
+-        bs->drv->bdrv_co_invalidate_cache(bs, &local_err);
+-        if (local_err) {
++    if (bs->open_flags & BDRV_O_INACTIVE) {
++        bs->open_flags &= ~BDRV_O_INACTIVE;
++        bdrv_get_cumulative_perm(bs, &perm, &shared_perm);
++        ret = bdrv_check_perm(bs, NULL, perm, shared_perm, NULL, NULL, &local_err);
++        if (ret < 0) {
+             bs->open_flags |= BDRV_O_INACTIVE;
+             error_propagate(errp, local_err);
+             return;
+         }
+-    }
++        bdrv_set_perm(bs, perm, shared_perm);
+ 
+-    FOR_EACH_DIRTY_BITMAP(bs, bm) {
+-        bdrv_dirty_bitmap_skip_store(bm, false);
+-    }
++        if (bs->drv->bdrv_co_invalidate_cache) {
++            bs->drv->bdrv_co_invalidate_cache(bs, &local_err);
++            if (local_err) {
++                bs->open_flags |= BDRV_O_INACTIVE;
++                error_propagate(errp, local_err);
++                return;
++            }
++        }
+ 
+-    ret = refresh_total_sectors(bs, bs->total_sectors);
+-    if (ret < 0) {
+-        bs->open_flags |= BDRV_O_INACTIVE;
+-        error_setg_errno(errp, -ret, "Could not refresh total sector count");
+-        return;
++        FOR_EACH_DIRTY_BITMAP(bs, bm) {
++            bdrv_dirty_bitmap_skip_store(bm, false);
++        }
++
++        ret = refresh_total_sectors(bs, bs->total_sectors);
++        if (ret < 0) {
++            bs->open_flags |= BDRV_O_INACTIVE;
++            error_setg_errno(errp, -ret, "Could not refresh total sector count");
++            return;
++        }
+     }
+ 
+     QLIST_FOREACH(parent, &bs->parents, next_parent) {
+-- 
+1.8.3.1
+

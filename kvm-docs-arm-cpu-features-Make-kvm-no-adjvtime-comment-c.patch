@@ -1,0 +1,56 @@
+From f01178897c8f5ff98692a22059dd65e35677eaa3 Mon Sep 17 00:00:00 2001
+From: Andrew Jones <drjones@redhat.com>
+Date: Mon, 10 Feb 2020 17:33:58 +0000
+Subject: [PATCH 18/18] docs/arm-cpu-features: Make kvm-no-adjvtime comment
+ clearer
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Andrew Jones <drjones@redhat.com>
+Message-id: <20200210173358.16896-3-drjones@redhat.com>
+Patchwork-id: 93772
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH 2/2] docs/arm-cpu-features: Make kvm-no-adjvtime comment clearer
+Bugzilla: 1801320
+RH-Acked-by: Auger Eric <eric.auger@redhat.com>
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1801320
+
+Author: Philippe Mathieu-Daudé <philmd@redhat.com>
+Date:   Fri, 07 Feb 2020 14:04:28 +0000
+
+    docs/arm-cpu-features: Make kvm-no-adjvtime comment clearer
+
+    The bold text sounds like 'knock knock'. Only bolding the
+    second 'not' makes it easier to read.
+
+    Fixes: dea101a1ae
+    Signed-off-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+    Reviewed-by: Andrew Jones <drjones@redhat.com>
+    Message-id: 20200206225148.23923-1-philmd@redhat.com
+    Signed-off-by: Peter Maydell <peter.maydell@linaro.org>
+
+(cherry picked from commit fa3236a970b6ea5be3fa3ad258f1a75920ca1ebb)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ docs/arm-cpu-features.rst | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/docs/arm-cpu-features.rst b/docs/arm-cpu-features.rst
+index 45d1eb6..48d5054 100644
+--- a/docs/arm-cpu-features.rst
++++ b/docs/arm-cpu-features.rst
+@@ -185,7 +185,7 @@ the list of KVM VCPU features and their descriptions.
+ 
+   kvm-no-adjvtime          By default kvm-no-adjvtime is disabled.  This
+                            means that by default the virtual time
+-                           adjustment is enabled (vtime is *not not*
++                           adjustment is enabled (vtime is not *not*
+                            adjusted).
+ 
+                            When virtual time adjustment is enabled each
+-- 
+1.8.3.1
+
