@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 10%{?dist}
+Release: 11%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -494,6 +494,20 @@ Patch178: kvm-iotests-Test-handling-of-AioContexts-with-some-block.patch
 Patch179: kvm-target-arm-monitor-query-cpu-model-expansion-crashed.patch
 # For bz#1801320 - aarch64: backport query-cpu-model-expansion and adjvtime document fixes
 Patch180: kvm-docs-arm-cpu-features-Make-kvm-no-adjvtime-comment-c.patch
+# For bz#1796240 - Enable hw accelerated cache-count-flush by default for POWER9 DD2.3 cpus
+Patch181: kvm-spapr-Enable-DD2.3-accelerated-count-cache-flush-in-.patch
+# For bz#1798994 - CVE-2020-8608 qemu-kvm: QEMU: Slirp: potential OOB access due to unsafe snprintf() usages [rhel-av-8.2.0]
+Patch182: kvm-util-add-slirp_fmt-helpers.patch
+# For bz#1798994 - CVE-2020-8608 qemu-kvm: QEMU: Slirp: potential OOB access due to unsafe snprintf() usages [rhel-av-8.2.0]
+Patch183: kvm-tcp_emu-fix-unsafe-snprintf-usages.patch
+# For bz#1791590 - [Q35] No "DEVICE_DELETED" event in qmp after unplug virtio-net-pci device
+Patch184: kvm-virtio-add-ability-to-delete-vq-through-a-pointer.patch
+# For bz#1791590 - [Q35] No "DEVICE_DELETED" event in qmp after unplug virtio-net-pci device
+Patch185: kvm-virtio-make-virtio_delete_queue-idempotent.patch
+# For bz#1791590 - [Q35] No "DEVICE_DELETED" event in qmp after unplug virtio-net-pci device
+Patch186: kvm-virtio-reset-region-cache-when-on-queue-deletion.patch
+# For bz#1791590 - [Q35] No "DEVICE_DELETED" event in qmp after unplug virtio-net-pci device
+Patch187: kvm-virtio-net-delete-also-control-queue-when-TX-RX-dele.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1427,6 +1441,21 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Sun Feb 23 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-11.el8
+- kvm-spapr-Enable-DD2.3-accelerated-count-cache-flush-in-.patch [bz#1796240]
+- kvm-util-add-slirp_fmt-helpers.patch [bz#1798994]
+- kvm-tcp_emu-fix-unsafe-snprintf-usages.patch [bz#1798994]
+- kvm-virtio-add-ability-to-delete-vq-through-a-pointer.patch [bz#1791590]
+- kvm-virtio-make-virtio_delete_queue-idempotent.patch [bz#1791590]
+- kvm-virtio-reset-region-cache-when-on-queue-deletion.patch [bz#1791590]
+- kvm-virtio-net-delete-also-control-queue-when-TX-RX-dele.patch [bz#1791590]
+- Resolves: bz#1791590
+  ([Q35] No "DEVICE_DELETED" event in qmp after unplug virtio-net-pci device)
+- Resolves: bz#1796240
+  (Enable hw accelerated cache-count-flush by default for POWER9 DD2.3 cpus)
+- Resolves: bz#1798994
+  (CVE-2020-8608 qemu-kvm: QEMU: Slirp: potential OOB access due to unsafe snprintf() usages [rhel-av-8.2.0])
+
 * Fri Feb 14 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-10.el8
 - kvm-i386-Resolve-CPU-models-to-v1-by-default.patch [bz#1779078 bz#1787291 bz#1779078 bz#1779078]
 - kvm-iotests-Support-job-complete-in-run_job.patch [bz#1781637]

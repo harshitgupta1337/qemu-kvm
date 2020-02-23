@@ -1,0 +1,135 @@
+From eb121ffa97c1c25d7853d51b4c8209c0bb521deb Mon Sep 17 00:00:00 2001
+From: David Gibson <dgibson@redhat.com>
+Date: Fri, 7 Feb 2020 00:57:04 +0000
+Subject: [PATCH 1/7] spapr: Enable DD2.3 accelerated count cache flush in
+ pseries-5.0 machine
+
+RH-Author: David Gibson <dgibson@redhat.com>
+Message-id: <20200207005704.194428-1-dgibson@redhat.com>
+Patchwork-id: 93737
+O-Subject: [RHEL-AV-8.2 qemu-kvm PATCHv2] spapr: Enable DD2.3 accelerated count cache flush in pseries-5.0 machine
+Bugzilla: 1796240
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+
+From: David Gibson <david@gibson.dropbear.id.au>
+
+For POWER9 DD2.2 cpus, the best current Spectre v2 indirect branch
+mitigation is "count cache disabled", which is configured with:
+    -machine cap-ibs=fixed-ccd
+However, this option isn't available on DD2.3 CPUs with KVM, because they
+don't have the count cache disabled.
+
+For POWER9 DD2.3 cpus, it is "count cache flush with assist", configured
+with:
+    -machine cap-ibs=workaround,cap-ccf-assist=on
+However this option isn't available on DD2.2 CPUs with KVM, because they
+don't have the special CCF assist instruction this relies on.
+
+On current machine types, we default to "count cache flush w/o assist",
+that is:
+    -machine cap-ibs=workaround,cap-ccf-assist=off
+This runs, with mitigation on both DD2.2 and DD2.3 host cpus, but has a
+fairly significant performance impact.
+
+It turns out we can do better.  The special instruction that CCF assist
+uses to trigger a count cache flush is a no-op on earlier CPUs, rather than
+trapping or causing other badness.  It doesn't, of itself, implement the
+mitigation, but *if* we have count-cache-disabled, then the count cache
+flush is unnecessary, and so using the count cache flush mitigation is
+harmless.
+
+Therefore for the new pseries-5.0 machine type, enable cap-ccf-assist by
+default.  Along with that, suppress throwing an error if cap-ccf-assist
+is selected but KVM doesn't support it, as long as KVM *is* giving us
+count-cache-disabled.  To allow TCG to work out of the box, even though it
+doesn't implement the ccf flush assist, downgrade the error in that case to
+a warning.  This matches several Spectre mitigations where we allow TCG
+to operate for debugging, since we don't really make guarantees about TCG
+security properties anyway.
+
+While we're there, make the TCG warning for this case match that for other
+mitigations.
+
+Signed-off-by: David Gibson <david@gibson.dropbear.id.au>
+Tested-by: Michael Ellerman <mpe@ellerman.id.au>
+(cherry picked from commit 37965dfe4dffa3ac49438337417608e7f346b58a)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+
+Conflicts:
+	hw/ppc/spapr.c
+
+Adjusted machine version compatibility code to the RHEL machine types
+rather than the upstream machine types.
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1796240
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=26285002
+Branch: rhel-av-8.2.0
+Upstream: Merged for qemu-5.0
+
+Signed-off-by: David Gibson <dgibson@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/ppc/spapr.c      |  4 +++-
+ hw/ppc/spapr_caps.c | 21 +++++++++++++++++----
+ 2 files changed, 20 insertions(+), 5 deletions(-)
+
+diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
+index c12862d..a330f03 100644
+--- a/hw/ppc/spapr.c
++++ b/hw/ppc/spapr.c
+@@ -4440,7 +4440,7 @@ static void spapr_machine_class_init(ObjectClass *oc, void *data)
+     smc->default_caps.caps[SPAPR_CAP_HPT_MAXPAGESIZE] = 16; /* 64kiB */
+     smc->default_caps.caps[SPAPR_CAP_NESTED_KVM_HV] = SPAPR_CAP_OFF;
+     smc->default_caps.caps[SPAPR_CAP_LARGE_DECREMENTER] = SPAPR_CAP_ON;
+-    smc->default_caps.caps[SPAPR_CAP_CCF_ASSIST] = SPAPR_CAP_OFF;
++    smc->default_caps.caps[SPAPR_CAP_CCF_ASSIST] = SPAPR_CAP_ON;
+     spapr_caps_add_properties(smc, &error_abort);
+     smc->irq = &spapr_irq_dual;
+     smc->dr_phb_enabled = true;
+@@ -4904,6 +4904,8 @@ static void spapr_machine_rhel810_class_options(MachineClass *mc)
+                      hw_compat_rhel_8_1_len);
+     compat_props_add(mc->compat_props, compat, G_N_ELEMENTS(compat));
+ 
++    /* from pseries-4.2 */
++    smc->default_caps.caps[SPAPR_CAP_CCF_ASSIST] = SPAPR_CAP_OFF;
+ }
+ 
+ DEFINE_SPAPR_MACHINE(rhel810, "rhel8.1.0", false);
+diff --git a/hw/ppc/spapr_caps.c b/hw/ppc/spapr_caps.c
+index 805f385..6e6fb28 100644
+--- a/hw/ppc/spapr_caps.c
++++ b/hw/ppc/spapr_caps.c
+@@ -492,11 +492,24 @@ static void cap_ccf_assist_apply(SpaprMachineState *spapr, uint8_t val,
+     uint8_t kvm_val = kvmppc_get_cap_count_cache_flush_assist();
+ 
+     if (tcg_enabled() && val) {
+-        /* TODO - for now only allow broken for TCG */
+-        error_setg(errp,
+-"Requested count cache flush assist capability level not supported by tcg,"
+-                   " try appending -machine cap-ccf-assist=off");
++        /* TCG doesn't implement anything here, but allow with a warning */
++        warn_report("TCG doesn't support requested feature, cap-ccf-assist=on");
+     } else if (kvm_enabled() && (val > kvm_val)) {
++        uint8_t kvm_ibs = kvmppc_get_cap_safe_indirect_branch();
++
++        if (kvm_ibs == SPAPR_CAP_FIXED_CCD) {
++            /*
++             * If we don't have CCF assist on the host, the assist
++             * instruction is a harmless no-op.  It won't correctly
++             * implement the cache count flush *but* if we have
++             * count-cache-disabled in the host, that flush is
++             * unnnecessary.  So, specifically allow this case.  This
++             * allows us to have better performance on POWER9 DD2.3,
++             * while still working on POWER9 DD2.2 and POWER8 host
++             * cpus.
++             */
++            return;
++        }
+         error_setg(errp,
+ "Requested count cache flush assist capability level not supported by kvm,"
+                    " try appending -machine cap-ccf-assist=off");
+-- 
+1.8.3.1
+
