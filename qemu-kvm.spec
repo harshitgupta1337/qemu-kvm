@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 11%{?dist}
+Release: 12%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -508,6 +508,8 @@ Patch185: kvm-virtio-make-virtio_delete_queue-idempotent.patch
 Patch186: kvm-virtio-reset-region-cache-when-on-queue-deletion.patch
 # For bz#1791590 - [Q35] No "DEVICE_DELETED" event in qmp after unplug virtio-net-pci device
 Patch187: kvm-virtio-net-delete-also-control-queue-when-TX-RX-dele.patch
+# For bz#1805334 - vhost-user/50-qemu-gpu.json is not valid JSON
+Patch188: kvm-vhost-user-gpu-Drop-trailing-json-comma.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1441,6 +1443,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Feb 24 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-12.el8
+- kvm-vhost-user-gpu-Drop-trailing-json-comma.patch [bz#1805334]
+- Resolves: bz#1805334
+  (vhost-user/50-qemu-gpu.json is not valid JSON)
+
 * Sun Feb 23 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-11.el8
 - kvm-spapr-Enable-DD2.3-accelerated-count-cache-flush-in-.patch [bz#1796240]
 - kvm-util-add-slirp_fmt-helpers.patch [bz#1798994]
