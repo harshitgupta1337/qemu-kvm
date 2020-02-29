@@ -1,0 +1,72 @@
+From 27d7b085f2f568050d638b694ed2f51495db718c Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Mon, 17 Feb 2020 16:23:15 +0000
+Subject: [PATCH 5/9] target/i386: check for availability of MSR_IA32_UCODE_REV
+ as an emulated MSR
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Paolo Bonzini <pbonzini@redhat.com>
+Message-id: <20200217162316.2464-6-pbonzini@redhat.com>
+Patchwork-id: 93898
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH 5/6] target/i386: check for availability of MSR_IA32_UCODE_REV as an emulated MSR
+Bugzilla: 1791648
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Maxim Levitsky <mlevitsk@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+
+Even though MSR_IA32_UCODE_REV has been available long before Linux 5.6,
+which added it to the emulated MSR list, a bug caused the microcode
+version to revert to 0x100000000 on INIT.  As a result, processors other
+than the bootstrap processor would not see the host microcode revision;
+some Windows version complain loudly about this and crash with a
+fairly explicit MICROCODE REVISION MISMATCH error.
+
+[If running 5.6 prereleases, the kernel fix "KVM: x86: do not reset
+ microcode version on INIT or RESET" should also be applied.]
+
+Reported-by: Alex Williamson <alex.williamson@redhat.com>
+Message-id: <20200211175516.10716-1-pbonzini@redhat.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+(cherry picked from commit 6702514814c7e7b4cbf179624539b5f38c72740b)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ target/i386/kvm.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/target/i386/kvm.c b/target/i386/kvm.c
+index 6c61aef..99840ca 100644
+--- a/target/i386/kvm.c
++++ b/target/i386/kvm.c
+@@ -105,6 +105,7 @@ static bool has_msr_smi_count;
+ static bool has_msr_arch_capabs;
+ static bool has_msr_core_capabs;
+ static bool has_msr_vmx_vmfunc;
++static bool has_msr_ucode_rev;
+ 
+ static uint32_t has_architectural_pmu_version;
+ static uint32_t num_architectural_pmu_gp_counters;
+@@ -2056,6 +2057,9 @@ static int kvm_get_supported_msrs(KVMState *s)
+             case MSR_IA32_VMX_VMFUNC:
+                 has_msr_vmx_vmfunc = true;
+                 break;
++            case MSR_IA32_UCODE_REV:
++                has_msr_ucode_rev = true;
++                break;
+             }
+         }
+     }
+@@ -2696,8 +2700,7 @@ static void kvm_init_msrs(X86CPU *cpu)
+                           env->features[FEAT_CORE_CAPABILITY]);
+     }
+ 
+-    if (kvm_arch_get_supported_msr_feature(kvm_state,
+-                                           MSR_IA32_UCODE_REV)) {
++    if (has_msr_ucode_rev) {
+         kvm_msr_entry_add(cpu, MSR_IA32_UCODE_REV, cpu->ucode_rev);
+     }
+ 
+-- 
+1.8.3.1
+

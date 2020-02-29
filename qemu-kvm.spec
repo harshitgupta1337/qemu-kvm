@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 12%{?dist}
+Release: 13%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -510,6 +510,24 @@ Patch186: kvm-virtio-reset-region-cache-when-on-queue-deletion.patch
 Patch187: kvm-virtio-net-delete-also-control-queue-when-TX-RX-dele.patch
 # For bz#1805334 - vhost-user/50-qemu-gpu.json is not valid JSON
 Patch188: kvm-vhost-user-gpu-Drop-trailing-json-comma.patch
+# For bz#1791648 - [RFE] Passthrough host CPU microcode version to KVM guest if using CPU passthrough
+Patch189: kvm-target-i386-kvm-initialize-feature-MSRs-very-early.patch
+# For bz#1791648 - [RFE] Passthrough host CPU microcode version to KVM guest if using CPU passthrough
+Patch190: kvm-target-i386-add-a-ucode-rev-property.patch
+# For bz#1791648 - [RFE] Passthrough host CPU microcode version to KVM guest if using CPU passthrough
+Patch191: kvm-target-i386-kvm-initialize-microcode-revision-from-K.patch
+# For bz#1791648 - [RFE] Passthrough host CPU microcode version to KVM guest if using CPU passthrough
+Patch192: kvm-target-i386-fix-TCG-UCODE_REV-access.patch
+# For bz#1791648 - [RFE] Passthrough host CPU microcode version to KVM guest if using CPU passthrough
+Patch193: kvm-target-i386-check-for-availability-of-MSR_IA32_UCODE.patch
+# For bz#1791648 - [RFE] Passthrough host CPU microcode version to KVM guest if using CPU passthrough
+Patch194: kvm-target-i386-enable-monitor-and-ucode-revision-with-c.patch
+# For bz#1703907 - [upstream]QEMU coredump when converting to qcow2: external data file images on block devices with copy_offloading
+Patch195: kvm-qcow2-Fix-qcow2_alloc_cluster_abort-for-external-dat.patch
+# For bz#1794692 - Mirror block job stops making progress
+Patch196: kvm-mirror-Store-MirrorOp.co-for-debuggability.patch
+# For bz#1794692 - Mirror block job stops making progress
+Patch197: kvm-mirror-Don-t-let-an-operation-wait-for-itself.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1443,6 +1461,23 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Sat Feb 29 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-13.el8
+- kvm-target-i386-kvm-initialize-feature-MSRs-very-early.patch [bz#1791648]
+- kvm-target-i386-add-a-ucode-rev-property.patch [bz#1791648]
+- kvm-target-i386-kvm-initialize-microcode-revision-from-K.patch [bz#1791648]
+- kvm-target-i386-fix-TCG-UCODE_REV-access.patch [bz#1791648]
+- kvm-target-i386-check-for-availability-of-MSR_IA32_UCODE.patch [bz#1791648]
+- kvm-target-i386-enable-monitor-and-ucode-revision-with-c.patch [bz#1791648]
+- kvm-qcow2-Fix-qcow2_alloc_cluster_abort-for-external-dat.patch [bz#1703907]
+- kvm-mirror-Store-MirrorOp.co-for-debuggability.patch [bz#1794692]
+- kvm-mirror-Don-t-let-an-operation-wait-for-itself.patch [bz#1794692]
+- Resolves: bz#1703907
+  ([upstream]QEMU coredump when converting to qcow2: external data file images on block devices with copy_offloading)
+- Resolves: bz#1791648
+  ([RFE] Passthrough host CPU microcode version to KVM guest if using CPU passthrough)
+- Resolves: bz#1794692
+  (Mirror block job stops making progress)
+
 * Mon Feb 24 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-12.el8
 - kvm-vhost-user-gpu-Drop-trailing-json-comma.patch [bz#1805334]
 - Resolves: bz#1805334

@@ -1,0 +1,51 @@
+From 27fe3b8d42a2c99de01ce20e4b0727079c12da65 Mon Sep 17 00:00:00 2001
+From: Kevin Wolf <kwolf@redhat.com>
+Date: Mon, 24 Feb 2020 16:57:09 +0000
+Subject: [PATCH 8/9] mirror: Store MirrorOp.co for debuggability
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+Message-id: <20200224165710.4830-2-kwolf@redhat.com>
+Patchwork-id: 94044
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH 1/2] mirror: Store MirrorOp.co for debuggability
+Bugzilla: 1794692
+RH-Acked-by: John Snow <jsnow@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+
+If a coroutine is launched, but the coroutine pointer isn't stored
+anywhere, debugging any problems inside the coroutine is quite hard.
+Let's store the coroutine pointer of a mirror operation in MirrorOp to
+have it available in the debugger.
+
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Reviewed-by: Eric Blake <eblake@redhat.com>
+(cherry picked from commit eed325b92c3e68417121ea23f96e33af6a4654ed)
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ block/mirror.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/block/mirror.c b/block/mirror.c
+index f0f2d9d..8959e42 100644
+--- a/block/mirror.c
++++ b/block/mirror.c
+@@ -103,6 +103,7 @@ struct MirrorOp {
+     bool is_pseudo_op;
+     bool is_active_write;
+     CoQueue waiting_requests;
++    Coroutine *co;
+ 
+     QTAILQ_ENTRY(MirrorOp) next;
+ };
+@@ -429,6 +430,7 @@ static unsigned mirror_perform(MirrorBlockJob *s, int64_t offset,
+     default:
+         abort();
+     }
++    op->co = co;
+ 
+     QTAILQ_INSERT_TAIL(&s->ops_in_flight, op, next);
+     qemu_coroutine_enter(co);
+-- 
+1.8.3.1
+
