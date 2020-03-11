@@ -1,0 +1,56 @@
+From 3b6461ee08654b2cbb6d4e0cc15c02f89a6610d5 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Tue, 3 Mar 2020 18:43:09 +0000
+Subject: [PATCH 13/18] virtiofsd: fv_create_listen_socket error path socket
+ leak
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200303184314.155564-3-dgilbert@redhat.com>
+Patchwork-id: 94124
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH 2/7] virtiofsd: fv_create_listen_socket error path socket leak
+Bugzilla: 1797064
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+RH-Acked-by: Ján Tomko <jtomko@redhat.com>
+
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+
+If we fail when bringing up the socket we can leak the listen_fd;
+in practice the daemon will exit so it's not really a problem.
+
+Fixes: Coverity CID 1413121
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Reviewed-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Reviewed-by: Stefan Hajnoczi <stefanha@redhat.com>
+(cherry picked from commit 6fa249027f97e3080f3d9c0fab3f94f8f80828fe)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ tools/virtiofsd/fuse_virtio.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/tools/virtiofsd/fuse_virtio.c b/tools/virtiofsd/fuse_virtio.c
+index 80a6e92..dd1c605 100644
+--- a/tools/virtiofsd/fuse_virtio.c
++++ b/tools/virtiofsd/fuse_virtio.c
+@@ -916,6 +916,7 @@ static int fv_create_listen_socket(struct fuse_session *se)
+     old_umask = umask(0077);
+     if (bind(listen_sock, (struct sockaddr *)&un, addr_len) == -1) {
+         fuse_log(FUSE_LOG_ERR, "vhost socket bind: %m\n");
++        close(listen_sock);
+         umask(old_umask);
+         return -1;
+     }
+@@ -923,6 +924,7 @@ static int fv_create_listen_socket(struct fuse_session *se)
+ 
+     if (listen(listen_sock, 1) == -1) {
+         fuse_log(FUSE_LOG_ERR, "vhost socket listen: %m\n");
++        close(listen_sock);
+         return -1;
+     }
+ 
+-- 
+1.8.3.1
+

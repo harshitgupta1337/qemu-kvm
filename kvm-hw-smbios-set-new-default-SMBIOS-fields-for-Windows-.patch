@@ -1,0 +1,262 @@
+From e6c3fbfc82863180007569cf2a9132c28a47bf1f Mon Sep 17 00:00:00 2001
+From: "Daniel P. Berrange" <berrange@redhat.com>
+Date: Mon, 20 Jan 2020 16:13:08 +0000
+Subject: [PATCH 01/18] hw/smbios: set new default SMBIOS fields for Windows
+ driver support
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Daniel P. Berrange <berrange@redhat.com>
+Message-id: <20200120161308.584989-2-berrange@redhat.com>
+Patchwork-id: 93422
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH 1/1] hw/smbios: set new default SMBIOS fields for Windows driver support
+Bugzilla: 1782529
+RH-Acked-by: Eduardo Habkost <ehabkost@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+
+For Windows driver support, we have to follow this doc in order to
+enable Windows to automatically determine the right drivers to install
+for a given guest / host combination:
+
+ https://docs.microsoft.com/en-us/windows-hardware/drivers/install/specifying-hardware-ids-for-a-computer
+
+Out of the choices available, it was decided that the Windows drivers
+will be written to expect use of the scheme documented as "HardwareID-6"
+against Windows 10. This uses SMBIOS System (Type 1) and Base Board
+(Type 2) tables and will match on
+
+      System Manufacturer = Red Hat
+      System SKU Number = 8.2.0
+      Baseboard Manufacturer = Red Hat
+      Baseboard Product = RHEL-AV
+
+The new SMBIOS fields will be tied to machine type and only reported for
+pc-q35-8.2.0 machine and later.
+
+The old SMBIOS fields, previously reported by all machines were:
+
+      System Manufacturer: Red Hat
+      System Product Name: KVM
+      System Version: RHEL-8.2.0 PC (Q35 + ICH9, 2009)
+      System Family: Red Hat Enterprise Linux
+      Baseboard Manufacturer: Red Hat
+      Baseboard Product Name: KVM
+      Baseboard Version: RHEL-8.2.0 PC (Q35 + ICH9, 2009)
+      Chassis Manufacturer: Red Hat
+      Chassis Product Name: KVM
+      Chassis Version: RHEL-8.2.0 PC (Q35 + ICH9, 2009)
+      Processor Manufacturer: Red Hat
+      Processor Product Name: KVM
+      Processor Version: RHEL-8.2.0 PC (Q35 + ICH9, 2009)
+
+This information will continue to be reported for all machines, except
+where it conflicts with the requirement of the new SMBIOS data. IOW,
+the "Baseboard Product Name" will change to "RHEL-AV" for pc-q35-8.2.0
+machine types and later.
+
+Management applications MUST NEVER override the 4 new SMBIOS fields that
+are used for Windows driver matching, with differing values. Aside from
+this, they are free to override any other field, including those from
+the old SMBIOS field data.
+
+In particular if a management application wants to report its own
+product name and version, it is recommended to use "System product"
+and "System version" as identifying fields, as these avoid a clash with
+the new SMBIOS fields used for Windows drivers.
+
+Note that until now the Baseboard (type 2) table has only been generated
+by QEMU if explicitly asked for on the CLI. This patch makes it always
+present for new machine types.
+
+Signed-off-by: Daniel P. Berrangé <berrange@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/arm/virt.c                |  2 +-
+ hw/i386/pc_piix.c            |  2 ++
+ hw/i386/pc_q35.c             |  8 ++++++++
+ hw/smbios/smbios.c           | 45 +++++++++++++++++++++++++++++++++++++++++---
+ include/hw/firmware/smbios.h |  5 ++++-
+ include/hw/i386/pc.h         |  3 +++
+ 6 files changed, 60 insertions(+), 5 deletions(-)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index d30d38c..2dcf6e7 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -1423,7 +1423,7 @@ static void virt_build_smbios(VirtMachineState *vms)
+ 
+     smbios_set_defaults("QEMU", product,
+                         vmc->smbios_old_sys_ver ? "1.0" : mc->name, false,
+-                        true, SMBIOS_ENTRY_POINT_30);
++                        true, NULL, NULL, SMBIOS_ENTRY_POINT_30);
+ 
+     smbios_get_tables(MACHINE(vms), NULL, 0, &smbios_tables, &smbios_tables_len,
+                       &smbios_anchor, &smbios_anchor_len);
+diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
+index bd7fdb9..2ac94d5 100644
+--- a/hw/i386/pc_piix.c
++++ b/hw/i386/pc_piix.c
+@@ -177,6 +177,8 @@ static void pc_init1(MachineState *machine,
+         smbios_set_defaults("Red Hat", "KVM",
+                             mc->desc, pcmc->smbios_legacy_mode,
+                             pcmc->smbios_uuid_encoded,
++                            pcmc->smbios_stream_product,
++                            pcmc->smbios_stream_version,
+                             SMBIOS_ENTRY_POINT_21);
+     }
+ 
+diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
+index 7531d8e..e975643 100644
+--- a/hw/i386/pc_q35.c
++++ b/hw/i386/pc_q35.c
+@@ -200,6 +200,8 @@ static void pc_q35_init(MachineState *machine)
+         smbios_set_defaults("Red Hat", "KVM",
+                             mc->desc, pcmc->smbios_legacy_mode,
+                             pcmc->smbios_uuid_encoded,
++                            pcmc->smbios_stream_product,
++                            pcmc->smbios_stream_version,
+                             SMBIOS_ENTRY_POINT_21);
+     }
+ 
+@@ -565,8 +567,11 @@ static void pc_q35_init_rhel820(MachineState *machine)
+ 
+ static void pc_q35_machine_rhel820_options(MachineClass *m)
+ {
++    PCMachineClass *pcmc = PC_MACHINE_CLASS(m);
+     pc_q35_machine_rhel_options(m);
+     m->desc = "RHEL-8.2.0 PC (Q35 + ICH9, 2009)";
++    pcmc->smbios_stream_product = "RHEL-AV";
++    pcmc->smbios_stream_version = "8.2.0";
+ }
+ 
+ DEFINE_PC_MACHINE(q35_rhel820, "pc-q35-rhel8.2.0", pc_q35_init_rhel820,
+@@ -579,9 +584,12 @@ static void pc_q35_init_rhel810(MachineState *machine)
+ 
+ static void pc_q35_machine_rhel810_options(MachineClass *m)
+ {
++    PCMachineClass *pcmc = PC_MACHINE_CLASS(m);
+     pc_q35_machine_rhel820_options(m);
+     m->desc = "RHEL-8.1.0 PC (Q35 + ICH9, 2009)";
+     m->alias = NULL;
++    pcmc->smbios_stream_product = NULL;
++    pcmc->smbios_stream_version = NULL;
+     compat_props_add(m->compat_props, hw_compat_rhel_8_1, hw_compat_rhel_8_1_len);
+     compat_props_add(m->compat_props, pc_rhel_8_1_compat, pc_rhel_8_1_compat_len);
+ }
+diff --git a/hw/smbios/smbios.c b/hw/smbios/smbios.c
+index e6e9355..d65c149 100644
+--- a/hw/smbios/smbios.c
++++ b/hw/smbios/smbios.c
+@@ -57,6 +57,9 @@ static bool smbios_legacy = true;
+ static bool smbios_uuid_encoded = true;
+ /* end: legacy structures & constants for <= 2.0 machines */
+ 
++/* Set to true for modern Windows 10 HardwareID-6 compat */
++static bool smbios_type2_required;
++
+ 
+ uint8_t *smbios_tables;
+ size_t smbios_tables_len;
+@@ -532,7 +535,7 @@ static void smbios_build_type_1_table(void)
+ 
+ static void smbios_build_type_2_table(void)
+ {
+-    SMBIOS_BUILD_TABLE_PRE(2, 0x200, false); /* optional */
++    SMBIOS_BUILD_TABLE_PRE(2, 0x200, smbios_type2_required);
+ 
+     SMBIOS_TABLE_SET_STR(2, manufacturer_str, type2.manufacturer);
+     SMBIOS_TABLE_SET_STR(2, product_str, type2.product);
+@@ -753,7 +756,10 @@ void smbios_set_cpuid(uint32_t version, uint32_t features)
+ 
+ void smbios_set_defaults(const char *manufacturer, const char *product,
+                          const char *version, bool legacy_mode,
+-                         bool uuid_encoded, SmbiosEntryPointType ep_type)
++                         bool uuid_encoded,
++                         const char *stream_product,
++                         const char *stream_version,
++                         SmbiosEntryPointType ep_type)
+ {
+     smbios_have_defaults = true;
+     smbios_legacy = legacy_mode;
+@@ -774,12 +780,45 @@ void smbios_set_defaults(const char *manufacturer, const char *product,
+         g_free(smbios_entries);
+     }
+ 
++    /*
++     * If @stream_product & @stream_version are non-NULL, then
++     * we're following rules for new Windows driver support.
++     * The data we have to report is defined in this doc:
++     *
++     * https://docs.microsoft.com/en-us/windows-hardware/drivers/install/specifying-hardware-ids-for-a-computer
++     *
++     * The Windows drivers are written to expect use of the
++     * scheme documented as "HardwareID-6" against Windows 10,
++     * which uses SMBIOS System (Type 1) and Base Board (Type 2)
++     * tables and will match on
++     *
++     *   System Manufacturer = Red Hat     (@manufacturer)
++     *   System SKU Number = 8.2.0         (@stream_version)
++     *   Baseboard Manufacturer = Red Hat  (@manufacturer)
++     *   Baseboard Product = RHEL-AV       (@stream_product)
++     *
++     * NB, SKU must be changed with each RHEL-AV release
++     *
++     * Other fields can be freely used by applications using
++     * QEMU. For example apps can use the "System product"
++     * and "System version" to identify themselves.
++     *
++     * We get 'System Manufacturer' and 'Baseboard Manufacturer'
++     */
+     SMBIOS_SET_DEFAULT(type1.manufacturer, manufacturer);
+     SMBIOS_SET_DEFAULT(type1.product, product);
+     SMBIOS_SET_DEFAULT(type1.version, version);
+     SMBIOS_SET_DEFAULT(type1.family, "Red Hat Enterprise Linux");
++    if (stream_version != NULL) {
++        SMBIOS_SET_DEFAULT(type1.sku, stream_version);
++    }
+     SMBIOS_SET_DEFAULT(type2.manufacturer, manufacturer);
+-    SMBIOS_SET_DEFAULT(type2.product, product);
++    if (stream_product != NULL) {
++        SMBIOS_SET_DEFAULT(type2.product, stream_product);
++        smbios_type2_required = true;
++    } else {
++        SMBIOS_SET_DEFAULT(type2.product, product);
++    }
+     SMBIOS_SET_DEFAULT(type2.version, version);
+     SMBIOS_SET_DEFAULT(type3.manufacturer, manufacturer);
+     SMBIOS_SET_DEFAULT(type3.version, version);
+diff --git a/include/hw/firmware/smbios.h b/include/hw/firmware/smbios.h
+index 02a0ced..67e38a1 100644
+--- a/include/hw/firmware/smbios.h
++++ b/include/hw/firmware/smbios.h
+@@ -267,7 +267,10 @@ void smbios_entry_add(QemuOpts *opts, Error **errp);
+ void smbios_set_cpuid(uint32_t version, uint32_t features);
+ void smbios_set_defaults(const char *manufacturer, const char *product,
+                          const char *version, bool legacy_mode,
+-                         bool uuid_encoded, SmbiosEntryPointType ep_type);
++                         bool uuid_encoded,
++                         const char *stream_product,
++                         const char *stream_version,
++                         SmbiosEntryPointType ep_type);
+ uint8_t *smbios_get_table_legacy(MachineState *ms, size_t *length);
+ void smbios_get_tables(MachineState *ms,
+                        const struct smbios_phys_mem_area *mem_array,
+diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
+index 2e362c8..b9f29ba 100644
+--- a/include/hw/i386/pc.h
++++ b/include/hw/i386/pc.h
+@@ -109,6 +109,9 @@ typedef struct PCMachineClass {
+     bool smbios_defaults;
+     bool smbios_legacy_mode;
+     bool smbios_uuid_encoded;
++    /* New fields needed for Windows HardwareID-6 matching */
++    const char *smbios_stream_product;
++    const char *smbios_stream_version;
+ 
+     /* RAM / address space compat: */
+     bool gigabyte_align;
+-- 
+1.8.3.1
+

@@ -1,0 +1,42 @@
+From ab07e0b41c50a85940d798a9a65a58698fd2edfb Mon Sep 17 00:00:00 2001
+From: Juan Quintela <quintela@redhat.com>
+Date: Tue, 3 Mar 2020 14:51:40 +0000
+Subject: [PATCH 08/18] migration: Don't send data if we have stopped
+
+RH-Author: Juan Quintela <quintela@redhat.com>
+Message-id: <20200303145143.149290-8-quintela@redhat.com>
+Patchwork-id: 94114
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH v2 07/10] migration: Don't send data if we have stopped
+Bugzilla: 1738451
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+
+If we do a cancel, we got out without one error, but we can't do the
+rest of the output as in a normal situation.
+
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+Reviewed-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit b69a0227a803256ad270283872d40ff768f4d56d)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ migration/ram.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/migration/ram.c b/migration/ram.c
+index a0257ee..902c56c 100644
+--- a/migration/ram.c
++++ b/migration/ram.c
+@@ -3511,7 +3511,8 @@ static int ram_save_iterate(QEMUFile *f, void *opaque)
+     ram_control_after_iterate(f, RAM_CONTROL_ROUND);
+ 
+ out:
+-    if (ret >= 0) {
++    if (ret >= 0
++        && migration_is_setup_or_active(migrate_get_current()->state)) {
+         multifd_send_sync_main(rs);
+         qemu_put_be64(f, RAM_SAVE_FLAG_EOS);
+         qemu_fflush(f);
+-- 
+1.8.3.1
+

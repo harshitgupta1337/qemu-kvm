@@ -1,0 +1,65 @@
+From 32ee75b7f4a31d6080e5659e2a0285a046ef1036 Mon Sep 17 00:00:00 2001
+From: Juan Quintela <quintela@redhat.com>
+Date: Tue, 3 Mar 2020 14:51:34 +0000
+Subject: [PATCH 02/18] migration/multifd: clean pages after filling packet
+
+RH-Author: Juan Quintela <quintela@redhat.com>
+Message-id: <20200303145143.149290-2-quintela@redhat.com>
+Patchwork-id: 94112
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH v2 01/10] migration/multifd: clean pages after filling packet
+Bugzilla: 1738451
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+
+From: Wei Yang <richardw.yang@linux.intel.com>
+
+This is a preparation for the next patch:
+
+    not use multifd during postcopy.
+
+Without enabling postcopy, everything looks good. While after enabling
+postcopy, migration may fail even not use multifd during postcopy. The
+reason is the pages is not properly cleared and *old* target page will
+continue to be transferred.
+
+After clean pages, migration succeeds.
+
+Signed-off-by: Wei Yang <richardw.yang@linux.intel.com>
+Reviewed-by: Juan Quintela <quintela@redhat.com>
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+(cherry picked from commit eab54aa78ffd9fb7895b20fc2761ee998479489b)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ migration/ram.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/migration/ram.c b/migration/ram.c
+index 5078f94..65580e3 100644
+--- a/migration/ram.c
++++ b/migration/ram.c
+@@ -944,10 +944,10 @@ static int multifd_send_pages(RAMState *rs)
+         }
+         qemu_mutex_unlock(&p->mutex);
+     }
+-    p->pages->used = 0;
++    assert(!p->pages->used);
++    assert(!p->pages->block);
+ 
+     p->packet_num = multifd_send_state->packet_num++;
+-    p->pages->block = NULL;
+     multifd_send_state->pages = p->pages;
+     p->pages = pages;
+     transferred = ((uint64_t) pages->used) * TARGET_PAGE_SIZE + p->packet_len;
+@@ -1129,6 +1129,8 @@ static void *multifd_send_thread(void *opaque)
+             p->flags = 0;
+             p->num_packets++;
+             p->num_pages += used;
++            p->pages->used = 0;
++            p->pages->block = NULL;
+             qemu_mutex_unlock(&p->mutex);
+ 
+             trace_multifd_send(p->id, packet_num, used, flags,
+-- 
+1.8.3.1
+

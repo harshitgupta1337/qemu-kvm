@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 13%{?dist}
+Release: 14%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -528,6 +528,42 @@ Patch195: kvm-qcow2-Fix-qcow2_alloc_cluster_abort-for-external-dat.patch
 Patch196: kvm-mirror-Store-MirrorOp.co-for-debuggability.patch
 # For bz#1794692 - Mirror block job stops making progress
 Patch197: kvm-mirror-Don-t-let-an-operation-wait-for-itself.patch
+# For bz#1782529 - Windows Update Enablement with default smbios strings in qemu
+Patch198: kvm-hw-smbios-set-new-default-SMBIOS-fields-for-Windows-.patch
+# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
+Patch199: kvm-migration-multifd-clean-pages-after-filling-packet.patch
+# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
+Patch200: kvm-migration-Make-sure-that-we-don-t-call-write-in-case.patch
+# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
+Patch201: kvm-migration-multifd-fix-nullptr-access-in-terminating-.patch
+# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
+Patch202: kvm-migration-multifd-fix-destroyed-mutex-access-in-term.patch
+# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
+Patch203: kvm-multifd-Make-sure-that-we-don-t-do-any-IO-after-an-e.patch
+# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
+Patch204: kvm-qemu-file-Don-t-do-IO-after-shutdown.patch
+# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
+Patch205: kvm-migration-Don-t-send-data-if-we-have-stopped.patch
+# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
+Patch206: kvm-migration-Create-migration_is_running.patch
+# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
+Patch207: kvm-migration-multifd-fix-nullptr-access-in-multifd_send.patch
+# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
+Patch208: kvm-migration-Maybe-VM-is-paused-when-migration-is-cance.patch
+# For bz#1797064 - virtiofsd: Fixes
+Patch209: kvm-virtiofsd-Remove-fuse_req_getgroups.patch
+# For bz#1797064 - virtiofsd: Fixes
+Patch210: kvm-virtiofsd-fv_create_listen_socket-error-path-socket-.patch
+# For bz#1797064 - virtiofsd: Fixes
+Patch211: kvm-virtiofsd-load_capng-missing-unlock.patch
+# For bz#1797064 - virtiofsd: Fixes
+Patch212: kvm-virtiofsd-do_read-missing-NULL-check.patch
+# For bz#1797064 - virtiofsd: Fixes
+Patch213: kvm-tools-virtiofsd-fuse_lowlevel-Fix-fuse_out_header-er.patch
+# For bz#1797064 - virtiofsd: Fixes
+Patch214: kvm-virtiofsd-passthrough_ll-cleanup-getxattr-listxattr.patch
+# For bz#1797064 - virtiofsd: Fixes
+Patch215: kvm-virtiofsd-Fix-xattr-operations.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1461,6 +1497,32 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Wed Mar 11 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-14.el8
+- kvm-hw-smbios-set-new-default-SMBIOS-fields-for-Windows-.patch [bz#1782529]
+- kvm-migration-multifd-clean-pages-after-filling-packet.patch [bz#1738451]
+- kvm-migration-Make-sure-that-we-don-t-call-write-in-case.patch [bz#1738451]
+- kvm-migration-multifd-fix-nullptr-access-in-terminating-.patch [bz#1738451]
+- kvm-migration-multifd-fix-destroyed-mutex-access-in-term.patch [bz#1738451]
+- kvm-multifd-Make-sure-that-we-don-t-do-any-IO-after-an-e.patch [bz#1738451]
+- kvm-qemu-file-Don-t-do-IO-after-shutdown.patch [bz#1738451]
+- kvm-migration-Don-t-send-data-if-we-have-stopped.patch [bz#1738451]
+- kvm-migration-Create-migration_is_running.patch [bz#1738451]
+- kvm-migration-multifd-fix-nullptr-access-in-multifd_send.patch [bz#1738451]
+- kvm-migration-Maybe-VM-is-paused-when-migration-is-cance.patch [bz#1738451]
+- kvm-virtiofsd-Remove-fuse_req_getgroups.patch [bz#1797064]
+- kvm-virtiofsd-fv_create_listen_socket-error-path-socket-.patch [bz#1797064]
+- kvm-virtiofsd-load_capng-missing-unlock.patch [bz#1797064]
+- kvm-virtiofsd-do_read-missing-NULL-check.patch [bz#1797064]
+- kvm-tools-virtiofsd-fuse_lowlevel-Fix-fuse_out_header-er.patch [bz#1797064]
+- kvm-virtiofsd-passthrough_ll-cleanup-getxattr-listxattr.patch [bz#1797064]
+- kvm-virtiofsd-Fix-xattr-operations.patch [bz#1797064]
+- Resolves: bz#1738451
+  (qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel))
+- Resolves: bz#1782529
+  (Windows Update Enablement with default smbios strings in qemu)
+- Resolves: bz#1797064
+  (virtiofsd: Fixes)
+
 * Sat Feb 29 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-13.el8
 - kvm-target-i386-kvm-initialize-feature-MSRs-very-early.patch [bz#1791648]
 - kvm-target-i386-add-a-ucode-rev-property.patch [bz#1791648]

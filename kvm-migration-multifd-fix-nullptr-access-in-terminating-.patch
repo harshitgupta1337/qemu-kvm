@@ -1,0 +1,68 @@
+From 7f664fe26ff67f8131faa7a81a388b8a5b51403f Mon Sep 17 00:00:00 2001
+From: Juan Quintela <quintela@redhat.com>
+Date: Tue, 3 Mar 2020 14:51:36 +0000
+Subject: [PATCH 04/18] migration/multifd: fix nullptr access in terminating
+ multifd threads
+
+RH-Author: Juan Quintela <quintela@redhat.com>
+Message-id: <20200303145143.149290-4-quintela@redhat.com>
+Patchwork-id: 94110
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH v2 03/10] migration/multifd: fix nullptr access in terminating multifd threads
+Bugzilla: 1738451
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+
+From: Jiahui Cen <cenjiahui@huawei.com>
+
+One multifd channel will shutdown all the other multifd's IOChannel when it
+fails to receive an IOChannel. In this senario, if some multifds had not
+received its IOChannel yet, it would try to shutdown its IOChannel which could
+cause nullptr access at qio_channel_shutdown.
+
+Here is the coredump stack:
+    #0  object_get_class (obj=obj@entry=0x0) at qom/object.c:908
+    #1  0x00005563fdbb8f4a in qio_channel_shutdown (ioc=0x0, how=QIO_CHANNEL_SHUTDOWN_BOTH, errp=0x0) at io/channel.c:355
+    #2  0x00005563fd7b4c5f in multifd_recv_terminate_threads (err=<optimized out>) at migration/ram.c:1280
+    #3  0x00005563fd7bc019 in multifd_recv_new_channel (ioc=ioc@entry=0x556400255610, errp=errp@entry=0x7ffec07dce00) at migration/ram.c:1478
+    #4  0x00005563fda82177 in migration_ioc_process_incoming (ioc=ioc@entry=0x556400255610, errp=errp@entry=0x7ffec07dce30) at migration/migration.c:605
+    #5  0x00005563fda8567d in migration_channel_process_incoming (ioc=0x556400255610) at migration/channel.c:44
+    #6  0x00005563fda83ee0 in socket_accept_incoming_migration (listener=0x5563fff6b920, cioc=0x556400255610, opaque=<optimized out>) at migration/socket.c:166
+    #7  0x00005563fdbc25cd in qio_net_listener_channel_func (ioc=<optimized out>, condition=<optimized out>, opaque=<optimized out>) at io/net-listener.c:54
+    #8  0x00007f895b6fe9a9 in g_main_context_dispatch () from /usr/lib64/libglib-2.0.so.0
+    #9  0x00005563fdc18136 in glib_pollfds_poll () at util/main-loop.c:218
+    #10 0x00005563fdc181b5 in os_host_main_loop_wait (timeout=1000000000) at util/main-loop.c:241
+    #11 0x00005563fdc183a2 in main_loop_wait (nonblocking=nonblocking@entry=0) at util/main-loop.c:517
+    #12 0x00005563fd8edb37 in main_loop () at vl.c:1791
+    #13 0x00005563fd74fd45 in main (argc=<optimized out>, argv=<optimized out>, envp=<optimized out>) at vl.c:4473
+
+To fix it up, let's check p->c before calling qio_channel_shutdown.
+
+Signed-off-by: Jiahui Cen <cenjiahui@huawei.com>
+Signed-off-by: Ying Fang <fangying1@huawei.com>
+Reviewed-by: Juan Quintela <quintela@redhat.com>
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+(cherry picked from commit f76e32eb05041ab001184ab16afb56524adccd0c)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ migration/ram.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/migration/ram.c b/migration/ram.c
+index 8c783b3..860f781 100644
+--- a/migration/ram.c
++++ b/migration/ram.c
+@@ -1307,7 +1307,9 @@ static void multifd_recv_terminate_threads(Error *err)
+            - normal quit, i.e. everything went fine, just finished
+            - error quit: We close the channels so the channel threads
+              finish the qio_channel_read_all_eof() */
+-        qio_channel_shutdown(p->c, QIO_CHANNEL_SHUTDOWN_BOTH, NULL);
++        if (p->c) {
++            qio_channel_shutdown(p->c, QIO_CHANNEL_SHUTDOWN_BOTH, NULL);
++        }
+         qemu_mutex_unlock(&p->mutex);
+     }
+ }
+-- 
+1.8.3.1
+
