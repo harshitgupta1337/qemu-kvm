@@ -1,0 +1,91 @@
+From 5774af5a3c713d0c93010c30453812eae6a749cd Mon Sep 17 00:00:00 2001
+From: Kevin Wolf <kwolf@redhat.com>
+Date: Fri, 13 Mar 2020 12:34:37 +0000
+Subject: [PATCH 17/20] block: Fix cross-AioContext blockdev-snapshot
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+Message-id: <20200313123439.10548-12-kwolf@redhat.com>
+Patchwork-id: 94286
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH v2 11/13] block: Fix cross-AioContext blockdev-snapshot
+Bugzilla: 1790482 1805143
+RH-Acked-by: John Snow <jsnow@redhat.com>
+RH-Acked-by: Daniel P. Berrange <berrange@redhat.com>
+RH-Acked-by: Peter Krempa <pkrempa@redhat.com>
+
+external_snapshot_prepare() tries to move the overlay to the AioContext
+of the backing file (the snapshotted node). However, it's possible that
+this doesn't work, but the backing file can instead be moved to the
+overlay's AioContext (e.g. opening the backing chain for a mirror
+target).
+
+bdrv_append() already indirectly uses bdrv_attach_node(), which takes
+care to move nodes to make sure they use the same AioContext and which
+tries both directions.
+
+So the problem has a simple fix: Just delete the unnecessary extra
+bdrv_try_set_aio_context() call in external_snapshot_prepare() and
+instead assert in bdrv_append() that both nodes were indeed moved to the
+same AioContext.
+
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Message-Id: <20200310113831.27293-6-kwolf@redhat.com>
+Tested-by: Peter Krempa <pkrempa@redhat.com>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit 30dd65f307b647eef8156c4a33bd007823ef85cb)
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ block.c    |  1 +
+ blockdev.c | 16 ----------------
+ 2 files changed, 1 insertion(+), 16 deletions(-)
+
+diff --git a/block.c b/block.c
+index 354d388..ec29b1e 100644
+--- a/block.c
++++ b/block.c
+@@ -4327,6 +4327,7 @@ void bdrv_replace_node(BlockDriverState *from, BlockDriverState *to,
+     bdrv_ref(from);
+ 
+     assert(qemu_get_current_aio_context() == qemu_get_aio_context());
++    assert(bdrv_get_aio_context(from) == bdrv_get_aio_context(to));
+     bdrv_drained_begin(from);
+ 
+     /* Put all parents into @list and calculate their cumulative permissions */
+diff --git a/blockdev.c b/blockdev.c
+index 7918533..c8d4b51 100644
+--- a/blockdev.c
++++ b/blockdev.c
+@@ -1535,9 +1535,7 @@ static void external_snapshot_prepare(BlkActionState *common,
+                              DO_UPCAST(ExternalSnapshotState, common, common);
+     TransactionAction *action = common->action;
+     AioContext *aio_context;
+-    AioContext *old_context;
+     uint64_t perm, shared;
+-    int ret;
+ 
+     /* 'blockdev-snapshot' and 'blockdev-snapshot-sync' have similar
+      * purpose but a different set of parameters */
+@@ -1678,20 +1676,6 @@ static void external_snapshot_prepare(BlkActionState *common,
+         goto out;
+     }
+ 
+-    /* Honor bdrv_try_set_aio_context() context acquisition requirements. */
+-    old_context = bdrv_get_aio_context(state->new_bs);
+-    aio_context_release(aio_context);
+-    aio_context_acquire(old_context);
+-
+-    ret = bdrv_try_set_aio_context(state->new_bs, aio_context, errp);
+-
+-    aio_context_release(old_context);
+-    aio_context_acquire(aio_context);
+-
+-    if (ret < 0) {
+-        goto out;
+-    }
+-
+     /* This removes our old bs and adds the new bs. This is an operation that
+      * can fail, so we need to do it in .prepare; undoing it for abort is
+      * always possible. */
+-- 
+1.8.3.1
+

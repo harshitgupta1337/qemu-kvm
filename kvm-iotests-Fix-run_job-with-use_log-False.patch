@@ -1,0 +1,47 @@
+From bb7b968a02c97564596b73d8d080cd745d96ed6b Mon Sep 17 00:00:00 2001
+From: Kevin Wolf <kwolf@redhat.com>
+Date: Fri, 13 Mar 2020 12:34:35 +0000
+Subject: [PATCH 15/20] iotests: Fix run_job() with use_log=False
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+Message-id: <20200313123439.10548-10-kwolf@redhat.com>
+Patchwork-id: 94284
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH v2 09/13] iotests: Fix run_job() with use_log=False
+Bugzilla: 1790482 1805143
+RH-Acked-by: John Snow <jsnow@redhat.com>
+RH-Acked-by: Daniel P. Berrange <berrange@redhat.com>
+RH-Acked-by: Peter Krempa <pkrempa@redhat.com>
+
+The 'job-complete' QMP command should be run with qmp() rather than
+qmp_log() if use_log=False is passed.
+
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Message-Id: <20200310113831.27293-4-kwolf@redhat.com>
+Reviewed-by: Peter Krempa <pkrempa@redhat.com>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit b31b532122ec6f68d17168449c034d2197bf96ec)
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ tests/qemu-iotests/iotests.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/tests/qemu-iotests/iotests.py b/tests/qemu-iotests/iotests.py
+index 0c55f7b..46f880c 100644
+--- a/tests/qemu-iotests/iotests.py
++++ b/tests/qemu-iotests/iotests.py
+@@ -618,7 +618,10 @@ class VM(qtest.QEMUQtestMachine):
+                         if use_log:
+                             log('Job failed: %s' % (j['error']))
+             elif status == 'ready':
+-                self.qmp_log('job-complete', id=job)
++                if use_log:
++                    self.qmp_log('job-complete', id=job)
++                else:
++                    self.qmp('job-complete', id=job)
+             elif status == 'pending' and not auto_finalize:
+                 if pre_finalize:
+                     pre_finalize()
+-- 
+1.8.3.1
+

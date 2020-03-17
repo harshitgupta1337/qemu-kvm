@@ -1,0 +1,117 @@
+From 9ba321e18a357c1a3a238ceee301bbb174f96eee Mon Sep 17 00:00:00 2001
+From: Kevin Wolf <kwolf@redhat.com>
+Date: Fri, 13 Mar 2020 12:34:34 +0000
+Subject: [PATCH 14/20] block: Relax restrictions for blockdev-snapshot
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+Message-id: <20200313123439.10548-9-kwolf@redhat.com>
+Patchwork-id: 94285
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH v2 08/13] block: Relax restrictions for blockdev-snapshot
+Bugzilla: 1790482 1805143
+RH-Acked-by: John Snow <jsnow@redhat.com>
+RH-Acked-by: Daniel P. Berrange <berrange@redhat.com>
+RH-Acked-by: Peter Krempa <pkrempa@redhat.com>
+
+blockdev-snapshot returned an error if the overlay was already in use,
+which it defined as having any BlockBackend parent. This is in fact both
+too strict (some parents can tolerate the change of visible data caused
+by attaching a backing file) and too loose (some non-BlockBackend
+parents may not be happy with it).
+
+One important use case that is prevented by the too strict check is live
+storage migration with blockdev-mirror. Here, the target node is
+usually opened without a backing file so that the active layer is
+mirrored while its backing chain can be copied in the background.
+
+The backing chain should be attached to the mirror target node when
+finalising the job, just before switching the users of the source node
+to the new copy (at which point the mirror job still has a reference to
+the node). drive-mirror did this automatically, but with blockdev-mirror
+this is the job of the QMP client, so it needs a way to do this.
+
+blockdev-snapshot is the obvious way, so this patch makes it work in
+this scenario. The new condition is that no parent uses CONSISTENT_READ
+permissions. This will ensure that the operation will still be blocked
+when the node is attached to the guest device, so blockdev-snapshot
+remains safe.
+
+(For the sake of completeness, x-blockdev-reopen can be used to achieve
+the same, however it is a big hammer, performs the graph change
+completely unchecked and is still experimental. So even with the option
+of using x-blockdev-reopen, there are reasons why blockdev-snapshot
+should be able to perform this operation.)
+
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Message-Id: <20200310113831.27293-3-kwolf@redhat.com>
+Reviewed-by: Peter Krempa <pkrempa@redhat.com>
+Tested-by: Peter Krempa <pkrempa@redhat.com>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit d29d3d1f80b3947fb26e7139645c83de66d146a9)
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ blockdev.c                 | 14 ++++++++------
+ tests/qemu-iotests/085.out |  4 ++--
+ 2 files changed, 10 insertions(+), 8 deletions(-)
+
+diff --git a/blockdev.c b/blockdev.c
+index 4cd9a58..7918533 100644
+--- a/blockdev.c
++++ b/blockdev.c
+@@ -1536,6 +1536,7 @@ static void external_snapshot_prepare(BlkActionState *common,
+     TransactionAction *action = common->action;
+     AioContext *aio_context;
+     AioContext *old_context;
++    uint64_t perm, shared;
+     int ret;
+ 
+     /* 'blockdev-snapshot' and 'blockdev-snapshot-sync' have similar
+@@ -1656,16 +1657,17 @@ static void external_snapshot_prepare(BlkActionState *common,
+         goto out;
+     }
+ 
+-    if (bdrv_has_blk(state->new_bs)) {
++    /*
++     * Allow attaching a backing file to an overlay that's already in use only
++     * if the parents don't assume that they are already seeing a valid image.
++     * (Specifically, allow it as a mirror target, which is write-only access.)
++     */
++    bdrv_get_cumulative_perm(state->new_bs, &perm, &shared);
++    if (perm & BLK_PERM_CONSISTENT_READ) {
+         error_setg(errp, "The overlay is already in use");
+         goto out;
+     }
+ 
+-    if (bdrv_op_is_blocked(state->new_bs, BLOCK_OP_TYPE_EXTERNAL_SNAPSHOT,
+-                           errp)) {
+-        goto out;
+-    }
+-
+     if (state->new_bs->backing != NULL) {
+         error_setg(errp, "The overlay already has a backing image");
+         goto out;
+diff --git a/tests/qemu-iotests/085.out b/tests/qemu-iotests/085.out
+index bb50227..487d920 100644
+--- a/tests/qemu-iotests/085.out
++++ b/tests/qemu-iotests/085.out
+@@ -82,7 +82,7 @@ Formatting 'TEST_DIR/t.IMGFMT', fmt=IMGFMT size=134217728 backing_file=TEST_DIR/
+ === Invalid command - cannot create a snapshot using a file BDS ===
+ 
+ { 'execute': 'blockdev-snapshot', 'arguments': { 'node':'virtio0', 'overlay':'file_12' } }
+-{"error": {"class": "GenericError", "desc": "The overlay does not support backing images"}}
++{"error": {"class": "GenericError", "desc": "The overlay is already in use"}}
+ 
+ === Invalid command - snapshot node used as active layer ===
+ 
+@@ -96,7 +96,7 @@ Formatting 'TEST_DIR/t.IMGFMT', fmt=IMGFMT size=134217728 backing_file=TEST_DIR/
+ === Invalid command - snapshot node used as backing hd ===
+ 
+ { 'execute': 'blockdev-snapshot', 'arguments': { 'node': 'virtio0', 'overlay':'snap_11' } }
+-{"error": {"class": "GenericError", "desc": "Node 'snap_11' is busy: node is used as backing hd of 'snap_12'"}}
++{"error": {"class": "GenericError", "desc": "The overlay is already in use"}}
+ 
+ === Invalid command - snapshot node has a backing image ===
+ 
+-- 
+1.8.3.1
+

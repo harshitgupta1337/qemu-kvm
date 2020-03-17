@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 14%{?dist}
+Release: 15%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -564,6 +564,59 @@ Patch213: kvm-tools-virtiofsd-fuse_lowlevel-Fix-fuse_out_header-er.patch
 Patch214: kvm-virtiofsd-passthrough_ll-cleanup-getxattr-listxattr.patch
 # For bz#1797064 - virtiofsd: Fixes
 Patch215: kvm-virtiofsd-Fix-xattr-operations.patch
+# For bz#1640894 - Fix generic file creation fallback for qemu-img nvme:// image creation support
+Patch216: kvm-block-nbd-Fix-hang-in-.bdrv_close.patch
+# For bz#1640894 - Fix generic file creation fallback for qemu-img nvme:// image creation support
+Patch217: kvm-block-Generic-file-creation-fallback.patch
+# For bz#1640894 - Fix generic file creation fallback for qemu-img nvme:// image creation support
+Patch218: kvm-file-posix-Drop-hdev_co_create_opts.patch
+# For bz#1640894 - Fix generic file creation fallback for qemu-img nvme:// image creation support
+Patch219: kvm-iscsi-Drop-iscsi_co_create_opts.patch
+# For bz#1640894 - Fix generic file creation fallback for qemu-img nvme:// image creation support
+Patch220: kvm-iotests-Add-test-for-image-creation-fallback.patch
+# For bz#1640894 - Fix generic file creation fallback for qemu-img nvme:// image creation support
+Patch221: kvm-block-Fix-leak-in-bdrv_create_file_fallback.patch
+# For bz#1790482 - bitmaps in backing images can't be modified
+# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
+Patch222: kvm-iotests-Use-complete_and_wait-in-155.patch
+# For bz#1790482 - bitmaps in backing images can't be modified
+# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
+Patch223: kvm-block-Introduce-bdrv_reopen_commit_post-step.patch
+# For bz#1790482 - bitmaps in backing images can't be modified
+# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
+Patch224: kvm-block-qcow2-Move-bitmap-reopen-into-bdrv_reopen_comm.patch
+# For bz#1790482 - bitmaps in backing images can't be modified
+# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
+Patch225: kvm-iotests-Refactor-blockdev-reopen-test-for-iothreads.patch
+# For bz#1790482 - bitmaps in backing images can't be modified
+# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
+Patch226: kvm-block-bdrv_reopen-with-backing-file-in-different-Aio.patch
+# For bz#1790482 - bitmaps in backing images can't be modified
+# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
+Patch227: kvm-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
+# For bz#1790482 - bitmaps in backing images can't be modified
+# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
+Patch228: kvm-block-Make-bdrv_get_cumulative_perm-public.patch
+# For bz#1790482 - bitmaps in backing images can't be modified
+# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
+Patch229: kvm-block-Relax-restrictions-for-blockdev-snapshot.patch
+# For bz#1790482 - bitmaps in backing images can't be modified
+# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
+Patch230: kvm-iotests-Fix-run_job-with-use_log-False.patch
+# For bz#1790482 - bitmaps in backing images can't be modified
+# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
+Patch231: kvm-iotests-Test-mirror-with-temporarily-disabled-target.patch
+# For bz#1790482 - bitmaps in backing images can't be modified
+# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
+Patch232: kvm-block-Fix-cross-AioContext-blockdev-snapshot.patch
+# For bz#1790482 - bitmaps in backing images can't be modified
+# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
+Patch233: kvm-iotests-Add-iothread-cases-to-155.patch
+# For bz#1790482 - bitmaps in backing images can't be modified
+# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
+Patch234: kvm-qapi-Add-allow-write-only-overlay-feature-for-blockd.patch
+# For bz#1809380 - guest hang during reboot process after migration from RHEl7.8 to RHEL8.2.0.
+Patch235: kvm-exec-rom_reset-Free-rom-data-during-inmigrate-skip.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1497,6 +1550,36 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Mar 17 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-15.el8
+- kvm-block-nbd-Fix-hang-in-.bdrv_close.patch [bz#1640894]
+- kvm-block-Generic-file-creation-fallback.patch [bz#1640894]
+- kvm-file-posix-Drop-hdev_co_create_opts.patch [bz#1640894]
+- kvm-iscsi-Drop-iscsi_co_create_opts.patch [bz#1640894]
+- kvm-iotests-Add-test-for-image-creation-fallback.patch [bz#1640894]
+- kvm-block-Fix-leak-in-bdrv_create_file_fallback.patch [bz#1640894]
+- kvm-iotests-Use-complete_and_wait-in-155.patch [bz#1790482 bz#1805143]
+- kvm-block-Introduce-bdrv_reopen_commit_post-step.patch [bz#1790482 bz#1805143]
+- kvm-block-qcow2-Move-bitmap-reopen-into-bdrv_reopen_comm.patch [bz#1790482 bz#1805143]
+- kvm-iotests-Refactor-blockdev-reopen-test-for-iothreads.patch [bz#1790482 bz#1805143]
+- kvm-block-bdrv_reopen-with-backing-file-in-different-Aio.patch [bz#1790482 bz#1805143]
+- kvm-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch [bz#1790482 bz#1805143]
+- kvm-block-Make-bdrv_get_cumulative_perm-public.patch [bz#1790482 bz#1805143]
+- kvm-block-Relax-restrictions-for-blockdev-snapshot.patch [bz#1790482 bz#1805143]
+- kvm-iotests-Fix-run_job-with-use_log-False.patch [bz#1790482 bz#1805143]
+- kvm-iotests-Test-mirror-with-temporarily-disabled-target.patch [bz#1790482 bz#1805143]
+- kvm-block-Fix-cross-AioContext-blockdev-snapshot.patch [bz#1790482 bz#1805143]
+- kvm-iotests-Add-iothread-cases-to-155.patch [bz#1790482 bz#1805143]
+- kvm-qapi-Add-allow-write-only-overlay-feature-for-blockd.patch [bz#1790482 bz#1805143]
+- kvm-exec-rom_reset-Free-rom-data-during-inmigrate-skip.patch [bz#1809380]
+- Resolves: bz#1640894
+  (Fix generic file creation fallback for qemu-img nvme:// image creation support)
+- Resolves: bz#1790482
+  (bitmaps in backing images can't be modified)
+- Resolves: bz#1805143
+  (allow late/lazy opening of backing chain for shallow blockdev-mirror)
+- Resolves: bz#1809380
+  (guest hang during reboot process after migration from RHEl7.8 to RHEL8.2.0.)
+
 * Wed Mar 11 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-14.el8
 - kvm-hw-smbios-set-new-default-SMBIOS-fields-for-Windows-.patch [bz#1782529]
 - kvm-migration-multifd-clean-pages-after-filling-packet.patch [bz#1738451]

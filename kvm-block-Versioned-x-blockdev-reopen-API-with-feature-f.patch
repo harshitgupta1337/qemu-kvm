@@ -1,0 +1,57 @@
+From 371d312300251c0dc24522607b06b7e47e760b53 Mon Sep 17 00:00:00 2001
+From: Kevin Wolf <kwolf@redhat.com>
+Date: Fri, 13 Mar 2020 12:34:32 +0000
+Subject: [PATCH 12/20] block: Versioned x-blockdev-reopen API with feature
+ flag
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+Message-id: <20200313123439.10548-7-kwolf@redhat.com>
+Patchwork-id: 94283
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH v2 06/13] block: Versioned x-blockdev-reopen API with feature flag
+Bugzilla: 1790482 1805143
+RH-Acked-by: Eric Blake <eblake@redhat.com>
+RH-Acked-by: John Snow <jsnow@redhat.com>
+RH-Acked-by: Daniel P. Berrange <berrange@redhat.com>
+RH-Acked-by: Peter Krempa <pkrempa@redhat.com>
+
+x-blockdev-reopen is still considered unstable upstream. libvirt needs
+(a small subset of) it for incremental backups, though.
+
+Add a downstream-only feature flag that effectively makes this a
+versioned interface. As long as the feature is present, we promise that
+we won't change the interface incompatibly. Incompatible changes to the
+command will require us to drop the feature flag (and possibly introduce
+a new one if the new version is still not stable upstream).
+
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ qapi/block-core.json | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/qapi/block-core.json b/qapi/block-core.json
+index 0cf68fe..a1e85b0 100644
+--- a/qapi/block-core.json
++++ b/qapi/block-core.json
+@@ -4202,10 +4202,17 @@
+ # image does not have a default backing file name as part of its
+ # metadata.
+ #
++# Features:
++# @__com.redhat_rhel-av-8_2_0-api: Versioning the downstream interface while
++#                                  it's still unstable upstream. As long as
++#                                  this flag is present, this command will not
++#                                  change incompatibly.
++#
+ # Since: 4.0
+ ##
+ { 'command': 'x-blockdev-reopen',
+-  'data': 'BlockdevOptions', 'boxed': true }
++  'data': 'BlockdevOptions', 'boxed': true,
++  'features': [ '__com.redhat_rhel-av-8_2_0-api' ] }
+ 
+ ##
+ # @blockdev-del:
+-- 
+1.8.3.1
+

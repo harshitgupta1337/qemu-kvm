@@ -1,0 +1,78 @@
+From 4ef2c464a54b0b618d933641ac0a7012e629fed9 Mon Sep 17 00:00:00 2001
+From: Maxim Levitsky <mlevitsk@redhat.com>
+Date: Wed, 11 Mar 2020 10:51:42 +0000
+Subject: [PATCH 01/20] block/nbd: Fix hang in .bdrv_close()
+
+RH-Author: Maxim Levitsky <mlevitsk@redhat.com>
+Message-id: <20200311105147.13208-2-mlevitsk@redhat.com>
+Patchwork-id: 94224
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH v2 1/6] block/nbd: Fix hang in .bdrv_close()
+Bugzilla: 1640894
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: John Snow <jsnow@redhat.com>
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+
+From: Max Reitz <mreitz@redhat.com>
+
+When nbd_close() is called from a coroutine, the connection_co never
+gets to run, and thus nbd_teardown_connection() hangs.
+
+This is because aio_co_enter() only puts the connection_co into the main
+coroutine's wake-up queue, so this main coroutine needs to yield and
+wait for connection_co to terminate.
+
+Suggested-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Max Reitz <mreitz@redhat.com>
+Message-Id: <20200122164532.178040-2-mreitz@redhat.com>
+Reviewed-by: Eric Blake <eblake@redhat.com>
+Reviewed-by: Maxim Levitsky <mlevitsk@redhat.com>
+Signed-off-by: Max Reitz <mreitz@redhat.com>
+(cherry picked from commit 78c81a3f108870d325b0a39d88711366afe6f703)
+Signed-off-by: Maxim Levitsky <mlevitsk@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ block/nbd.c | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/block/nbd.c b/block/nbd.c
+index 5f18f78..a73f0d9 100644
+--- a/block/nbd.c
++++ b/block/nbd.c
+@@ -70,6 +70,7 @@ typedef struct BDRVNBDState {
+     CoMutex send_mutex;
+     CoQueue free_sema;
+     Coroutine *connection_co;
++    Coroutine *teardown_co;
+     QemuCoSleepState *connection_co_sleep_ns_state;
+     bool drained;
+     bool wait_drained_end;
+@@ -203,7 +204,15 @@ static void nbd_teardown_connection(BlockDriverState *bs)
+             qemu_co_sleep_wake(s->connection_co_sleep_ns_state);
+         }
+     }
+-    BDRV_POLL_WHILE(bs, s->connection_co);
++    if (qemu_in_coroutine()) {
++        s->teardown_co = qemu_coroutine_self();
++        /* connection_co resumes us when it terminates */
++        qemu_coroutine_yield();
++        s->teardown_co = NULL;
++    } else {
++        BDRV_POLL_WHILE(bs, s->connection_co);
++    }
++    assert(!s->connection_co);
+ }
+ 
+ static bool nbd_client_connecting(BDRVNBDState *s)
+@@ -395,6 +404,9 @@ static coroutine_fn void nbd_connection_entry(void *opaque)
+         s->ioc = NULL;
+     }
+ 
++    if (s->teardown_co) {
++        aio_co_wake(s->teardown_co);
++    }
+     aio_wait_kick();
+ }
+ 
+-- 
+1.8.3.1
+

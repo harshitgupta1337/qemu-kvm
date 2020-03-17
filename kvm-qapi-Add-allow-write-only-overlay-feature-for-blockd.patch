@@ -1,0 +1,64 @@
+From 428eb7260718b69b1f3f421d03bce10b8785fc49 Mon Sep 17 00:00:00 2001
+From: Kevin Wolf <kwolf@redhat.com>
+Date: Fri, 13 Mar 2020 12:34:39 +0000
+Subject: [PATCH 19/20] qapi: Add '@allow-write-only-overlay' feature for
+ 'blockdev-snapshot'
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+Message-id: <20200313123439.10548-14-kwolf@redhat.com>
+Patchwork-id: 94290
+O-Subject: [RHEL-AV-8.2.0 qemu-kvm PATCH v2 13/13] qapi: Add '@allow-write-only-overlay' feature for 'blockdev-snapshot'
+Bugzilla: 1790482 1805143
+RH-Acked-by: John Snow <jsnow@redhat.com>
+RH-Acked-by: Daniel P. Berrange <berrange@redhat.com>
+RH-Acked-by: Peter Krempa <pkrempa@redhat.com>
+
+From: Peter Krempa <pkrempa@redhat.com>
+
+Anounce that 'blockdev-snapshot' command's permissions allow changing
+of the backing file if the 'consistent_read' permission is not required.
+
+This is useful for libvirt to allow late opening of the backing chain
+during a blockdev-mirror.
+
+Signed-off-by: Peter Krempa <pkrempa@redhat.com>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Message-Id: <20200310113831.27293-8-kwolf@redhat.com>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit c6bdc312f30d5c7326aa2fdca3e0f98c15eb541a)
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ qapi/block-core.json | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/qapi/block-core.json b/qapi/block-core.json
+index a1e85b0..a64ad81 100644
+--- a/qapi/block-core.json
++++ b/qapi/block-core.json
+@@ -1541,6 +1541,12 @@
+ #
+ # For the arguments, see the documentation of BlockdevSnapshot.
+ #
++# Features:
++# @allow-write-only-overlay: If present, the check whether this operation is safe
++#                            was relaxed so that it can be used to change
++#                            backing file of a destination of a blockdev-mirror.
++#                            (since 5.0)
++#
+ # Since: 2.5
+ #
+ # Example:
+@@ -1561,7 +1567,8 @@
+ #
+ ##
+ { 'command': 'blockdev-snapshot',
+-  'data': 'BlockdevSnapshot' }
++  'data': 'BlockdevSnapshot',
++  'features': [ 'allow-write-only-overlay' ] }
+ 
+ ##
+ # @change-backing-file:
+-- 
+1.8.3.1
+
