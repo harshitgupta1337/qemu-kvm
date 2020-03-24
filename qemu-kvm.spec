@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 15%{?dist}
+Release: 16%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -617,6 +617,10 @@ Patch233: kvm-iotests-Add-iothread-cases-to-155.patch
 Patch234: kvm-qapi-Add-allow-write-only-overlay-feature-for-blockd.patch
 # For bz#1809380 - guest hang during reboot process after migration from RHEl7.8 to RHEL8.2.0.
 Patch235: kvm-exec-rom_reset-Free-rom-data-during-inmigrate-skip.patch
+# For bz#1814336 - [POWER9] QEMU migration-test triggers a kernel warning
+Patch236: kvm-migration-Rate-limit-inside-host-pages.patch
+# For bz#1811670 - Unneeded qemu-guest-agent dependency on pixman
+Patch237: kvm-build-sys-do-not-make-qemu-ga-link-with-pixman.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1550,6 +1554,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Mar 24 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-16.el8
+- kvm-migration-Rate-limit-inside-host-pages.patch [bz#1814336]
+- kvm-build-sys-do-not-make-qemu-ga-link-with-pixman.patch [bz#1811670]
+- Resolves: bz#1811670
+  (Unneeded qemu-guest-agent dependency on pixman)
+- Resolves: bz#1814336
+  ([POWER9] QEMU migration-test triggers a kernel warning)
+
 * Tue Mar 17 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-15.el8
 - kvm-block-nbd-Fix-hang-in-.bdrv_close.patch [bz#1640894]
 - kvm-block-Generic-file-creation-fallback.patch [bz#1640894]
