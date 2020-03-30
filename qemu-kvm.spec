@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 16%{?dist}
+Release: 17%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -621,6 +621,14 @@ Patch235: kvm-exec-rom_reset-Free-rom-data-during-inmigrate-skip.patch
 Patch236: kvm-migration-Rate-limit-inside-host-pages.patch
 # For bz#1811670 - Unneeded qemu-guest-agent dependency on pixman
 Patch237: kvm-build-sys-do-not-make-qemu-ga-link-with-pixman.patch
+# For bz#1816007 - qemu-img convert failed to convert with block device as target
+Patch238: kvm-block-pass-BlockDriver-reference-to-the-.bdrv_co_cre.patch
+# For bz#1816007 - qemu-img convert failed to convert with block device as target
+Patch239: kvm-block-trickle-down-the-fallback-image-creation-funct.patch
+# For bz#1794692 - Mirror block job stops making progress
+Patch240: kvm-Revert-mirror-Don-t-let-an-operation-wait-for-itself.patch
+# For bz#1794692 - Mirror block job stops making progress
+Patch241: kvm-mirror-Wait-only-for-in-flight-operations.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1554,6 +1562,16 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Mar 30 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-17.el8
+- kvm-block-pass-BlockDriver-reference-to-the-.bdrv_co_cre.patch [bz#1816007]
+- kvm-block-trickle-down-the-fallback-image-creation-funct.patch [bz#1816007]
+- kvm-Revert-mirror-Don-t-let-an-operation-wait-for-itself.patch [bz#1794692]
+- kvm-mirror-Wait-only-for-in-flight-operations.patch [bz#1794692]
+- Resolves: bz#1794692
+  (Mirror block job stops making progress)
+- Resolves: bz#1816007
+  (qemu-img convert failed to convert with block device as target)
+
 * Tue Mar 24 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-16.el8
 - kvm-migration-Rate-limit-inside-host-pages.patch [bz#1814336]
 - kvm-build-sys-do-not-make-qemu-ga-link-with-pixman.patch [bz#1811670]
