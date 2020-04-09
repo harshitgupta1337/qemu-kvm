@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 17%{?dist}
+Release: 18%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -629,6 +629,18 @@ Patch239: kvm-block-trickle-down-the-fallback-image-creation-funct.patch
 Patch240: kvm-Revert-mirror-Don-t-let-an-operation-wait-for-itself.patch
 # For bz#1794692 - Mirror block job stops making progress
 Patch241: kvm-mirror-Wait-only-for-in-flight-operations.patch
+# For bz#1817621 - Crash and deadlock with block jobs when using io-threads
+Patch242: kvm-job-take-each-job-s-lock-individually-in-job_txn_app.patch
+# For bz#1817621 - Crash and deadlock with block jobs when using io-threads
+Patch243: kvm-replication-assert-we-own-context-before-job_cancel_.patch
+# For bz#1817621 - Crash and deadlock with block jobs when using io-threads
+Patch244: kvm-backup-don-t-acquire-aio_context-in-backup_clean.patch
+# For bz#1817621 - Crash and deadlock with block jobs when using io-threads
+Patch245: kvm-block-backend-Reorder-flush-pdiscard-function-defini.patch
+# For bz#1817621 - Crash and deadlock with block jobs when using io-threads
+Patch246: kvm-block-Increase-BB.in_flight-for-coroutine-and-sync-i.patch
+# For bz#1817621 - Crash and deadlock with block jobs when using io-threads
+Patch247: kvm-block-Fix-blk-in_flight-during-blk_wait_while_draine.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1562,6 +1574,16 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Apr 09 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-18.el8_2
+- kvm-job-take-each-job-s-lock-individually-in-job_txn_app.patch [bz#1817621]
+- kvm-replication-assert-we-own-context-before-job_cancel_.patch [bz#1817621]
+- kvm-backup-don-t-acquire-aio_context-in-backup_clean.patch [bz#1817621]
+- kvm-block-backend-Reorder-flush-pdiscard-function-defini.patch [bz#1817621]
+- kvm-block-Increase-BB.in_flight-for-coroutine-and-sync-i.patch [bz#1817621]
+- kvm-block-Fix-blk-in_flight-during-blk_wait_while_draine.patch [bz#1817621]
+- Resolves: bz#1817621
+  (Crash and deadlock with block jobs when using io-threads)
+
 * Mon Mar 30 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-17.el8
 - kvm-block-pass-BlockDriver-reference-to-the-.bdrv_co_cre.patch [bz#1816007]
 - kvm-block-trickle-down-the-fallback-image-creation-funct.patch [bz#1816007]
