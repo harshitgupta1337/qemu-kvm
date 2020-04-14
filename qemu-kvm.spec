@@ -67,7 +67,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 4.2.0
-Release: 18%{?dist}
+Release: 19%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -641,6 +641,8 @@ Patch245: kvm-block-backend-Reorder-flush-pdiscard-function-defini.patch
 Patch246: kvm-block-Increase-BB.in_flight-for-coroutine-and-sync-i.patch
 # For bz#1817621 - Crash and deadlock with block jobs when using io-threads
 Patch247: kvm-block-Fix-blk-in_flight-during-blk_wait_while_draine.patch
+# For bz#1822682 - QEMU-4.2 fails to start a VM on Azure
+Patch248: kvm-target-i386-do-not-set-unsupported-VMX-secondary-exe.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1574,6 +1576,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Apr 14 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-19.el8_2
+- kvm-target-i386-do-not-set-unsupported-VMX-secondary-exe.patch [bz#1822682]
+- Resolves: bz#1822682
+  (QEMU-4.2 fails to start a VM on Azure)
+
 * Thu Apr 09 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-18.el8_2
 - kvm-job-take-each-job-s-lock-individually-in-job_txn_app.patch [bz#1817621]
 - kvm-replication-assert-we-own-context-before-job_cancel_.patch [bz#1817621]
