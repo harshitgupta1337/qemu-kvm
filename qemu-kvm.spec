@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.0.0
-Release: 0%{?dist}.wrb200506
+Release: 0%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -1073,7 +1073,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
-Tue May 12 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.0.0-0
+* Tue May 12 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.0.0-0
 - Temporary rebase of qemu-kvm to 5.0.0
 
 * Tue Apr 14 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-19.el8_2
