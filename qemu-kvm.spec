@@ -9,6 +9,7 @@
 %global have_kvm_setup 0
 %global have_memlock_limits 0
 
+
 %ifnarch %{ix86} x86_64
     %global have_usbredir 0
 %endif
@@ -66,8 +67,8 @@ Obsoletes: %1-rhev
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
-Version: 4.2.0
-Release: 19%{?dist}
+Version: 5.0.0
+Release: 0%{?dist}.wrb200506
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -76,7 +77,7 @@ URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
 
-Source0: http://wiki.qemu.org/download/qemu-4.2.0.tar.xz
+Source0: http://wiki.qemu.org/download/qemu-5.0.0.tar.xz
 
 # KSM control scripts
 Source4: ksm.service
@@ -120,529 +121,7 @@ Patch0017: 0017-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
 Patch0018: 0018-usb-xhci-Fix-PCI-capability-order.patch
 Patch0019: 0019-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0020: 0020-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
-Patch0021: 0021-Using-ip_deq-after-m_free-might-read-pointers-from-a.patch
-# For bz#1741345 - Remove the "cpu64-rhel6" CPU from qemu-kvm
-Patch22: kvm-i386-Remove-cpu64-rhel6-CPU-model.patch
-# For bz#1772774 - qemu-kvm core dump during migration+reboot ( Assertion `mem->dirty_bmap' failed )
-Patch23: kvm-Reallocate-dirty_bmap-when-we-change-a-slot.patch
-# For bz#1733893 - Boot a guest with "-prom-env 'auto-boot?=false'", SLOF failed to enter the boot entry after input "boot" followed by "0 > " on VNC
-Patch24: kvm-spapr-Don-t-trigger-a-CAS-reboot-for-XICS-XIVE-mode-.patch
-# For bz#1782678 - qemu core dump after hot-unplugging the   XXV710/XL710 PF
-Patch25: kvm-vfio-pci-Don-t-remove-irqchip-notifier-if-not-regist.patch
-# For bz#1789301 - virtio-blk/scsi: fix notification suppression during AioContext polling
-Patch26: kvm-virtio-don-t-enable-notifications-during-polling.patch
-# For bz#1790844 - USB related fixes
-Patch27: kvm-usbredir-Prevent-recursion-in-usbredir_write.patch
-# For bz#1790844 - USB related fixes
-Patch28: kvm-xhci-recheck-slot-status.patch
-# For bz#1791568 - CVE-2020-7039 qemu-kvm: QEMU: slirp: OOB buffer access while emulating tcp protocols in tcp_emu() [rhel-av-8.2.0]
-Patch29: kvm-tcp_emu-Fix-oob-access.patch
-# For bz#1791568 - CVE-2020-7039 qemu-kvm: QEMU: slirp: OOB buffer access while emulating tcp protocols in tcp_emu() [rhel-av-8.2.0]
-Patch30: kvm-slirp-use-correct-size-while-emulating-IRC-commands.patch
-# For bz#1791568 - CVE-2020-7039 qemu-kvm: QEMU: slirp: OOB buffer access while emulating tcp protocols in tcp_emu() [rhel-av-8.2.0]
-Patch31: kvm-slirp-use-correct-size-while-emulating-commands.patch
-# For bz#1559846 - Nested KVM: limit VMX features according to CPU models - Fast Train
-Patch32: kvm-RHEL-hw-i386-disable-nested-PERF_GLOBAL_CTRL-MSR-sup.patch
-# For bz#1725084 - aarch64: support dumping SVE registers
-Patch33: kvm-target-arm-arch_dump-Add-SVE-notes.patch
-# For bz#1779041 - netkvm: no connectivity Windows guest with q35 + hugepages + vhost + hv_synic
-Patch34: kvm-vhost-Add-names-to-section-rounded-warning.patch
-# For bz#1779041 - netkvm: no connectivity Windows guest with q35 + hugepages + vhost + hv_synic
-Patch35: kvm-vhost-Only-align-sections-for-vhost-user.patch
-# For bz#1779041 - netkvm: no connectivity Windows guest with q35 + hugepages + vhost + hv_synic
-Patch36: kvm-vhost-coding-style-fix.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch37: kvm-virtio-fs-fix-MSI-X-nvectors-calculation.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch38: kvm-vhost-user-fs-remove-vhostfd-property.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch39: kvm-build-rename-CONFIG_LIBCAP-to-CONFIG_LIBCAP_NG.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch40: kvm-virtiofsd-Pull-in-upstream-headers.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch41: kvm-virtiofsd-Pull-in-kernel-s-fuse.h.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch42: kvm-virtiofsd-Add-auxiliary-.c-s.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch43: kvm-virtiofsd-Add-fuse_lowlevel.c.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch44: kvm-virtiofsd-Add-passthrough_ll.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch45: kvm-virtiofsd-Trim-down-imported-files.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch46: kvm-virtiofsd-Format-imported-files-to-qemu-style.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch47: kvm-virtiofsd-remove-mountpoint-dummy-argument.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch48: kvm-virtiofsd-remove-unused-notify-reply-support.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch49: kvm-virtiofsd-Remove-unused-enum-fuse_buf_copy_flags.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch50: kvm-virtiofsd-Fix-fuse_daemonize-ignored-return-values.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch51: kvm-virtiofsd-Fix-common-header-and-define-for-QEMU-buil.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch52: kvm-virtiofsd-Trim-out-compatibility-code.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch53: kvm-vitriofsd-passthrough_ll-fix-fallocate-ifdefs.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch54: kvm-virtiofsd-Make-fsync-work-even-if-only-inode-is-pass.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch55: kvm-virtiofsd-Add-options-for-virtio.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch56: kvm-virtiofsd-add-o-source-PATH-to-help-output.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch57: kvm-virtiofsd-Open-vhost-connection-instead-of-mounting.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch58: kvm-virtiofsd-Start-wiring-up-vhost-user.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch59: kvm-virtiofsd-Add-main-virtio-loop.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch60: kvm-virtiofsd-get-set-features-callbacks.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch61: kvm-virtiofsd-Start-queue-threads.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch62: kvm-virtiofsd-Poll-kick_fd-for-queue.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch63: kvm-virtiofsd-Start-reading-commands-from-queue.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch64: kvm-virtiofsd-Send-replies-to-messages.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch65: kvm-virtiofsd-Keep-track-of-replies.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch66: kvm-virtiofsd-Add-Makefile-wiring-for-virtiofsd-contrib.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch67: kvm-virtiofsd-Fast-path-for-virtio-read.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch68: kvm-virtiofsd-add-fd-FDNUM-fd-passing-option.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch69: kvm-virtiofsd-make-f-foreground-the-default.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch70: kvm-virtiofsd-add-vhost-user.json-file.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch71: kvm-virtiofsd-add-print-capabilities-option.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch72: kvm-virtiofs-Add-maintainers-entry.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch73: kvm-virtiofsd-passthrough_ll-create-new-files-in-caller-.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch74: kvm-virtiofsd-passthrough_ll-add-lo_map-for-ino-fh-indir.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch75: kvm-virtiofsd-passthrough_ll-add-ino_map-to-hide-lo_inod.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch76: kvm-virtiofsd-passthrough_ll-add-dirp_map-to-hide-lo_dir.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch77: kvm-virtiofsd-passthrough_ll-add-fd_map-to-hide-file-des.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch78: kvm-virtiofsd-passthrough_ll-add-fallback-for-racy-ops.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch79: kvm-virtiofsd-validate-path-components.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch80: kvm-virtiofsd-Plumb-fuse_bufvec-through-to-do_write_buf.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch81: kvm-virtiofsd-Pass-write-iov-s-all-the-way-through.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch82: kvm-virtiofsd-add-fuse_mbuf_iter-API.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch83: kvm-virtiofsd-validate-input-buffer-sizes-in-do_write_bu.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch84: kvm-virtiofsd-check-input-buffer-size-in-fuse_lowlevel.c.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch85: kvm-virtiofsd-prevent-.-escape-in-lo_do_lookup.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch86: kvm-virtiofsd-prevent-.-escape-in-lo_do_readdir.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch87: kvm-virtiofsd-use-proc-self-fd-O_PATH-file-descriptor.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch88: kvm-virtiofsd-sandbox-mount-namespace.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch89: kvm-virtiofsd-move-to-an-empty-network-namespace.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch90: kvm-virtiofsd-move-to-a-new-pid-namespace.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch91: kvm-virtiofsd-add-seccomp-whitelist.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch92: kvm-virtiofsd-Parse-flag-FUSE_WRITE_KILL_PRIV.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch93: kvm-virtiofsd-cap-ng-helpers.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch94: kvm-virtiofsd-Drop-CAP_FSETID-if-client-asked-for-it.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch95: kvm-virtiofsd-set-maximum-RLIMIT_NOFILE-limit.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch96: kvm-virtiofsd-fix-libfuse-information-leaks.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch97: kvm-virtiofsd-add-syslog-command-line-option.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch98: kvm-virtiofsd-print-log-only-when-priority-is-high-enoug.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch99: kvm-virtiofsd-Add-ID-to-the-log-with-FUSE_LOG_DEBUG-leve.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch100: kvm-virtiofsd-Add-timestamp-to-the-log-with-FUSE_LOG_DEB.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch101: kvm-virtiofsd-Handle-reinit.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch102: kvm-virtiofsd-Handle-hard-reboot.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch103: kvm-virtiofsd-Kill-threads-when-queues-are-stopped.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch104: kvm-vhost-user-Print-unexpected-slave-message-types.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch105: kvm-contrib-libvhost-user-Protect-slave-fd-with-mutex.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch106: kvm-virtiofsd-passthrough_ll-add-renameat2-support.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch107: kvm-virtiofsd-passthrough_ll-disable-readdirplus-on-cach.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch108: kvm-virtiofsd-passthrough_ll-control-readdirplus.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch109: kvm-virtiofsd-rename-unref_inode-to-unref_inode_lolocked.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch110: kvm-virtiofsd-fail-when-parent-inode-isn-t-known-in-lo_d.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch111: kvm-virtiofsd-extract-root-inode-init-into-setup_root.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch112: kvm-virtiofsd-passthrough_ll-clean-up-cache-related-opti.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch113: kvm-virtiofsd-passthrough_ll-use-hashtable.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch114: kvm-virtiofsd-Clean-up-inodes-on-destroy.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch115: kvm-virtiofsd-support-nanosecond-resolution-for-file-tim.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch116: kvm-virtiofsd-fix-error-handling-in-main.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch117: kvm-virtiofsd-cleanup-allocated-resource-in-se.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch118: kvm-virtiofsd-fix-memory-leak-on-lo.source.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch119: kvm-virtiofsd-add-helper-for-lo_data-cleanup.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch120: kvm-virtiofsd-Prevent-multiply-running-with-same-vhost_u.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch121: kvm-virtiofsd-enable-PARALLEL_DIROPS-during-INIT.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch122: kvm-virtiofsd-fix-incorrect-error-handling-in-lo_do_look.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch123: kvm-Virtiofsd-fix-memory-leak-on-fuse-queueinfo.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch124: kvm-virtiofsd-Support-remote-posix-locks.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch125: kvm-virtiofsd-use-fuse_lowlevel_is_virtio-in-fuse_sessio.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch126: kvm-virtiofsd-prevent-fv_queue_thread-vs-virtio_loop-rac.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch127: kvm-virtiofsd-make-lo_release-atomic.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch128: kvm-virtiofsd-prevent-races-with-lo_dirp_put.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch129: kvm-virtiofsd-rename-inode-refcount-to-inode-nlookup.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch130: kvm-libvhost-user-Fix-some-memtable-remap-cases.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch131: kvm-virtiofsd-passthrough_ll-fix-refcounting-on-remove-r.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch132: kvm-virtiofsd-introduce-inode-refcount-to-prevent-use-af.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch133: kvm-virtiofsd-do-not-always-set-FUSE_FLOCK_LOCKS.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch134: kvm-virtiofsd-convert-more-fprintf-and-perror-to-use-fus.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch135: kvm-virtiofsd-Reset-O_DIRECT-flag-during-file-open.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch136: kvm-virtiofsd-Fix-data-corruption-with-O_APPEND-write-in.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch137: kvm-virtiofsd-passthrough_ll-Use-cache_readdir-for-direc.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch138: kvm-virtiofsd-add-definition-of-fuse_buf_writev.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch139: kvm-virtiofsd-use-fuse_buf_writev-to-replace-fuse_buf_wr.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch140: kvm-virtiofsd-process-requests-in-a-thread-pool.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch141: kvm-virtiofsd-prevent-FUSE_INIT-FUSE_DESTROY-races.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch142: kvm-virtiofsd-fix-lo_destroy-resource-leaks.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch143: kvm-virtiofsd-add-thread-pool-size-NUM-option.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch144: kvm-virtiofsd-Convert-lo_destroy-to-take-the-lo-mutex-lo.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch145: kvm-virtiofsd-passthrough_ll-Pass-errno-to-fuse_reply_er.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch146: kvm-virtiofsd-stop-all-queue-threads-on-exit-in-virtio_l.patch
-# For bz#1694164 - virtio-fs: host<->guest shared file system (qemu)
-Patch147: kvm-virtiofsd-add-some-options-to-the-help-message.patch
-# For bz#1776638 - Guest failed to boot up after system_reset  20 times
-Patch148: kvm-ppc-Deassert-the-external-interrupt-pin-in-KVM-on-re.patch
-# For bz#1776638 - Guest failed to boot up after system_reset  20 times
-Patch149: kvm-xics-Don-t-deassert-outputs.patch
-# For bz#1776638 - Guest failed to boot up after system_reset  20 times
-Patch150: kvm-ppc-Don-t-use-CPUPPCState-irq_input_state-with-moder.patch
-# For bz#1787395 - qemu-trace-stap list : TypeError: startswith first arg must be bytes or a tuple of bytes, not str
-Patch151: kvm-trace-update-qemu-trace-stap-to-Python-3.patch
-# For bz#1794503 - CVE-2020-1711 qemu-kvm: QEMU: block: iscsi: OOB heap access via an unexpected response of iSCSI Server [rhel-av-8.2.0]
-Patch153: kvm-iscsi-Cap-block-count-from-GET-LBA-STATUS-CVE-2020-1.patch
-# For bz#1787444 - Broken postcopy migration with vTPM device
-Patch154: kvm-tpm-ppi-page-align-PPI-RAM.patch
-# For bz#1647366 - aarch64: Add support for the kvm-no-adjvtime ARM CPU feature
-Patch155: kvm-target-arm-kvm-trivial-Clean-up-header-documentation.patch
-# For bz#1647366 - aarch64: Add support for the kvm-no-adjvtime ARM CPU feature
-Patch156: kvm-target-arm-kvm64-kvm64-cpus-have-timer-registers.patch
-# For bz#1647366 - aarch64: Add support for the kvm-no-adjvtime ARM CPU feature
-Patch157: kvm-tests-arm-cpu-features-Check-feature-default-values.patch
-# For bz#1647366 - aarch64: Add support for the kvm-no-adjvtime ARM CPU feature
-Patch158: kvm-target-arm-kvm-Implement-virtual-time-adjustment.patch
-# For bz#1647366 - aarch64: Add support for the kvm-no-adjvtime ARM CPU feature
-Patch159: kvm-target-arm-cpu-Add-the-kvm-no-adjvtime-CPU-property.patch
-# For bz#1529231 - [q35] VM hangs after migration with 200 vCPUs
-Patch160: kvm-migration-Define-VMSTATE_INSTANCE_ID_ANY.patch
-# For bz#1529231 - [q35] VM hangs after migration with 200 vCPUs
-Patch161: kvm-migration-Change-SaveStateEntry.instance_id-into-uin.patch
-# For bz#1529231 - [q35] VM hangs after migration with 200 vCPUs
-Patch162: kvm-apic-Use-32bit-APIC-ID-for-migration-instance-ID.patch
-# For bz#1779078 - RHVH 4.4: Failed to run VM on 4.3/4.4 engine (Exit message: the CPU is incompatible with host CPU: Host CPU does not provide required features: hle, rtm)
-# For bz#1787291 - RHVH 4.4: Failed to run VM on 4.3/4.4 engine (Exit message: the CPU is incompatible with host CPU: Host CPU does not provide required features: hle, rtm) [rhel-8.1.0.z]
-# For bz#1779078 - RHVH 4.4: Failed to run VM on 4.3/4.4 engine (Exit message: the CPU is incompatible with host CPU: Host CPU does not provide required features: hle, rtm)
-# For bz#1779078 - RHVH 4.4: Failed to run VM on 4.3/4.4 engine (Exit message: the CPU is incompatible with host CPU: Host CPU does not provide required features: hle, rtm)
-Patch163: kvm-i386-Resolve-CPU-models-to-v1-by-default.patch
-# For bz#1781637 - qemu crashed when do mem and disk snapshot
-Patch164: kvm-iotests-Support-job-complete-in-run_job.patch
-# For bz#1781637 - qemu crashed when do mem and disk snapshot
-Patch165: kvm-iotests-Create-VM.blockdev_create.patch
-# For bz#1781637 - qemu crashed when do mem and disk snapshot
-Patch166: kvm-block-Activate-recursively-even-for-already-active-n.patch
-# For bz#1781637 - qemu crashed when do mem and disk snapshot
-Patch167: kvm-hmp-Allow-using-qdev-ID-for-qemu-io-command.patch
-# For bz#1781637 - qemu crashed when do mem and disk snapshot
-Patch168: kvm-iotests-Test-external-snapshot-with-VM-state.patch
-# For bz#1781637 - qemu crashed when do mem and disk snapshot
-Patch169: kvm-iotests.py-Let-wait_migration-wait-even-more.patch
-# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
-# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
-# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
-# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
-# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
-# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
-# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
-Patch170: kvm-blockdev-fix-coding-style-issues-in-drive_backup_pre.patch
-# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
-# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
-# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
-# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
-# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
-# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
-# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
-Patch171: kvm-blockdev-unify-qmp_drive_backup-and-drive-backup-tra.patch
-# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
-# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
-# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
-# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
-# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
-# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
-# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
-Patch172: kvm-blockdev-unify-qmp_blockdev_backup-and-blockdev-back.patch
-# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
-# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
-# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
-# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
-# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
-# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
-# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
-Patch173: kvm-blockdev-honor-bdrv_try_set_aio_context-context-requ.patch
-# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
-# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
-# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
-# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
-# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
-# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
-# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
-Patch174: kvm-backup-top-Begin-drain-earlier.patch
-# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
-# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
-# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
-# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
-# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
-# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
-# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
-Patch175: kvm-block-backup-top-Don-t-acquire-context-while-droppin.patch
-# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
-# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
-# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
-# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
-# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
-# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
-# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
-Patch176: kvm-blockdev-Acquire-AioContext-on-dirty-bitmap-function.patch
-# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
-# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
-# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
-# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
-# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
-# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
-# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
-Patch177: kvm-blockdev-Return-bs-to-the-proper-context-on-snapshot.patch
-# For bz#1745606 - Qemu hang when do incremental live backup in transaction mode without bitmap
-# For bz#1746217 - Src qemu hang when do storage vm migration during guest installation
-# For bz#1773517 - Src qemu hang when do storage vm migration with dataplane enable
-# For bz#1779036 - Qemu coredump when do snapshot in transaction mode with one snapshot path not exist
-# For bz#1782111 - Qemu hang when do full backup on multi-disks with one job's 'job-id' missed in transaction mode(data plane enable)
-# For bz#1782175 - Qemu core dump when add persistent bitmap(data plane enable)
-# For bz#1783965 - Qemu core dump when do backup with sync: bitmap and no bitmap provided
-Patch178: kvm-iotests-Test-handling-of-AioContexts-with-some-block.patch
-# For bz#1801320 - aarch64: backport query-cpu-model-expansion and adjvtime document fixes
-Patch179: kvm-target-arm-monitor-query-cpu-model-expansion-crashed.patch
-# For bz#1801320 - aarch64: backport query-cpu-model-expansion and adjvtime document fixes
-Patch180: kvm-docs-arm-cpu-features-Make-kvm-no-adjvtime-comment-c.patch
-# For bz#1796240 - Enable hw accelerated cache-count-flush by default for POWER9 DD2.3 cpus
-Patch181: kvm-spapr-Enable-DD2.3-accelerated-count-cache-flush-in-.patch
-# For bz#1798994 - CVE-2020-8608 qemu-kvm: QEMU: Slirp: potential OOB access due to unsafe snprintf() usages [rhel-av-8.2.0]
-Patch182: kvm-util-add-slirp_fmt-helpers.patch
-# For bz#1798994 - CVE-2020-8608 qemu-kvm: QEMU: Slirp: potential OOB access due to unsafe snprintf() usages [rhel-av-8.2.0]
-Patch183: kvm-tcp_emu-fix-unsafe-snprintf-usages.patch
-# For bz#1791590 - [Q35] No "DEVICE_DELETED" event in qmp after unplug virtio-net-pci device
-Patch184: kvm-virtio-add-ability-to-delete-vq-through-a-pointer.patch
-# For bz#1791590 - [Q35] No "DEVICE_DELETED" event in qmp after unplug virtio-net-pci device
-Patch185: kvm-virtio-make-virtio_delete_queue-idempotent.patch
-# For bz#1791590 - [Q35] No "DEVICE_DELETED" event in qmp after unplug virtio-net-pci device
-Patch186: kvm-virtio-reset-region-cache-when-on-queue-deletion.patch
-# For bz#1791590 - [Q35] No "DEVICE_DELETED" event in qmp after unplug virtio-net-pci device
-Patch187: kvm-virtio-net-delete-also-control-queue-when-TX-RX-dele.patch
-# For bz#1805334 - vhost-user/50-qemu-gpu.json is not valid JSON
-Patch188: kvm-vhost-user-gpu-Drop-trailing-json-comma.patch
-# For bz#1791648 - [RFE] Passthrough host CPU microcode version to KVM guest if using CPU passthrough
-Patch189: kvm-target-i386-kvm-initialize-feature-MSRs-very-early.patch
-# For bz#1791648 - [RFE] Passthrough host CPU microcode version to KVM guest if using CPU passthrough
-Patch190: kvm-target-i386-add-a-ucode-rev-property.patch
-# For bz#1791648 - [RFE] Passthrough host CPU microcode version to KVM guest if using CPU passthrough
-Patch191: kvm-target-i386-kvm-initialize-microcode-revision-from-K.patch
-# For bz#1791648 - [RFE] Passthrough host CPU microcode version to KVM guest if using CPU passthrough
-Patch192: kvm-target-i386-fix-TCG-UCODE_REV-access.patch
-# For bz#1791648 - [RFE] Passthrough host CPU microcode version to KVM guest if using CPU passthrough
-Patch193: kvm-target-i386-check-for-availability-of-MSR_IA32_UCODE.patch
-# For bz#1791648 - [RFE] Passthrough host CPU microcode version to KVM guest if using CPU passthrough
-Patch194: kvm-target-i386-enable-monitor-and-ucode-revision-with-c.patch
-# For bz#1703907 - [upstream]QEMU coredump when converting to qcow2: external data file images on block devices with copy_offloading
-Patch195: kvm-qcow2-Fix-qcow2_alloc_cluster_abort-for-external-dat.patch
-# For bz#1794692 - Mirror block job stops making progress
-Patch196: kvm-mirror-Store-MirrorOp.co-for-debuggability.patch
-# For bz#1794692 - Mirror block job stops making progress
-Patch197: kvm-mirror-Don-t-let-an-operation-wait-for-itself.patch
-# For bz#1782529 - Windows Update Enablement with default smbios strings in qemu
-Patch198: kvm-hw-smbios-set-new-default-SMBIOS-fields-for-Windows-.patch
-# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
-Patch199: kvm-migration-multifd-clean-pages-after-filling-packet.patch
-# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
-Patch200: kvm-migration-Make-sure-that-we-don-t-call-write-in-case.patch
-# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
-Patch201: kvm-migration-multifd-fix-nullptr-access-in-terminating-.patch
-# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
-Patch202: kvm-migration-multifd-fix-destroyed-mutex-access-in-term.patch
-# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
-Patch203: kvm-multifd-Make-sure-that-we-don-t-do-any-IO-after-an-e.patch
-# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
-Patch204: kvm-qemu-file-Don-t-do-IO-after-shutdown.patch
-# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
-Patch205: kvm-migration-Don-t-send-data-if-we-have-stopped.patch
-# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
-Patch206: kvm-migration-Create-migration_is_running.patch
-# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
-Patch207: kvm-migration-multifd-fix-nullptr-access-in-multifd_send.patch
-# For bz#1738451 - qemu on src host core dump after set multifd-channels and do migration twice (first migration execute migrate_cancel)
-Patch208: kvm-migration-Maybe-VM-is-paused-when-migration-is-cance.patch
-# For bz#1797064 - virtiofsd: Fixes
-Patch209: kvm-virtiofsd-Remove-fuse_req_getgroups.patch
-# For bz#1797064 - virtiofsd: Fixes
-Patch210: kvm-virtiofsd-fv_create_listen_socket-error-path-socket-.patch
-# For bz#1797064 - virtiofsd: Fixes
-Patch211: kvm-virtiofsd-load_capng-missing-unlock.patch
-# For bz#1797064 - virtiofsd: Fixes
-Patch212: kvm-virtiofsd-do_read-missing-NULL-check.patch
-# For bz#1797064 - virtiofsd: Fixes
-Patch213: kvm-tools-virtiofsd-fuse_lowlevel-Fix-fuse_out_header-er.patch
-# For bz#1797064 - virtiofsd: Fixes
-Patch214: kvm-virtiofsd-passthrough_ll-cleanup-getxattr-listxattr.patch
-# For bz#1797064 - virtiofsd: Fixes
-Patch215: kvm-virtiofsd-Fix-xattr-operations.patch
-# For bz#1640894 - Fix generic file creation fallback for qemu-img nvme:// image creation support
-Patch216: kvm-block-nbd-Fix-hang-in-.bdrv_close.patch
-# For bz#1640894 - Fix generic file creation fallback for qemu-img nvme:// image creation support
-Patch217: kvm-block-Generic-file-creation-fallback.patch
-# For bz#1640894 - Fix generic file creation fallback for qemu-img nvme:// image creation support
-Patch218: kvm-file-posix-Drop-hdev_co_create_opts.patch
-# For bz#1640894 - Fix generic file creation fallback for qemu-img nvme:// image creation support
-Patch219: kvm-iscsi-Drop-iscsi_co_create_opts.patch
-# For bz#1640894 - Fix generic file creation fallback for qemu-img nvme:// image creation support
-Patch220: kvm-iotests-Add-test-for-image-creation-fallback.patch
-# For bz#1640894 - Fix generic file creation fallback for qemu-img nvme:// image creation support
-Patch221: kvm-block-Fix-leak-in-bdrv_create_file_fallback.patch
-# For bz#1790482 - bitmaps in backing images can't be modified
-# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
-Patch222: kvm-iotests-Use-complete_and_wait-in-155.patch
-# For bz#1790482 - bitmaps in backing images can't be modified
-# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
-Patch223: kvm-block-Introduce-bdrv_reopen_commit_post-step.patch
-# For bz#1790482 - bitmaps in backing images can't be modified
-# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
-Patch224: kvm-block-qcow2-Move-bitmap-reopen-into-bdrv_reopen_comm.patch
-# For bz#1790482 - bitmaps in backing images can't be modified
-# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
-Patch225: kvm-iotests-Refactor-blockdev-reopen-test-for-iothreads.patch
-# For bz#1790482 - bitmaps in backing images can't be modified
-# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
-Patch226: kvm-block-bdrv_reopen-with-backing-file-in-different-Aio.patch
-# For bz#1790482 - bitmaps in backing images can't be modified
-# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
-Patch227: kvm-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
-# For bz#1790482 - bitmaps in backing images can't be modified
-# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
-Patch228: kvm-block-Make-bdrv_get_cumulative_perm-public.patch
-# For bz#1790482 - bitmaps in backing images can't be modified
-# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
-Patch229: kvm-block-Relax-restrictions-for-blockdev-snapshot.patch
-# For bz#1790482 - bitmaps in backing images can't be modified
-# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
-Patch230: kvm-iotests-Fix-run_job-with-use_log-False.patch
-# For bz#1790482 - bitmaps in backing images can't be modified
-# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
-Patch231: kvm-iotests-Test-mirror-with-temporarily-disabled-target.patch
-# For bz#1790482 - bitmaps in backing images can't be modified
-# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
-Patch232: kvm-block-Fix-cross-AioContext-blockdev-snapshot.patch
-# For bz#1790482 - bitmaps in backing images can't be modified
-# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
-Patch233: kvm-iotests-Add-iothread-cases-to-155.patch
-# For bz#1790482 - bitmaps in backing images can't be modified
-# For bz#1805143 - allow late/lazy opening of backing chain for shallow blockdev-mirror
-Patch234: kvm-qapi-Add-allow-write-only-overlay-feature-for-blockd.patch
-# For bz#1809380 - guest hang during reboot process after migration from RHEl7.8 to RHEL8.2.0.
-Patch235: kvm-exec-rom_reset-Free-rom-data-during-inmigrate-skip.patch
-# For bz#1814336 - [POWER9] QEMU migration-test triggers a kernel warning
-Patch236: kvm-migration-Rate-limit-inside-host-pages.patch
-# For bz#1811670 - Unneeded qemu-guest-agent dependency on pixman
-Patch237: kvm-build-sys-do-not-make-qemu-ga-link-with-pixman.patch
-# For bz#1816007 - qemu-img convert failed to convert with block device as target
-Patch238: kvm-block-pass-BlockDriver-reference-to-the-.bdrv_co_cre.patch
-# For bz#1816007 - qemu-img convert failed to convert with block device as target
-Patch239: kvm-block-trickle-down-the-fallback-image-creation-funct.patch
-# For bz#1794692 - Mirror block job stops making progress
-Patch240: kvm-Revert-mirror-Don-t-let-an-operation-wait-for-itself.patch
-# For bz#1794692 - Mirror block job stops making progress
-Patch241: kvm-mirror-Wait-only-for-in-flight-operations.patch
-# For bz#1817621 - Crash and deadlock with block jobs when using io-threads
-Patch242: kvm-job-take-each-job-s-lock-individually-in-job_txn_app.patch
-# For bz#1817621 - Crash and deadlock with block jobs when using io-threads
-Patch243: kvm-replication-assert-we-own-context-before-job_cancel_.patch
-# For bz#1817621 - Crash and deadlock with block jobs when using io-threads
-Patch244: kvm-backup-don-t-acquire-aio_context-in-backup_clean.patch
-# For bz#1817621 - Crash and deadlock with block jobs when using io-threads
-Patch245: kvm-block-backend-Reorder-flush-pdiscard-function-defini.patch
-# For bz#1817621 - Crash and deadlock with block jobs when using io-threads
-Patch246: kvm-block-Increase-BB.in_flight-for-coroutine-and-sync-i.patch
-# For bz#1817621 - Crash and deadlock with block jobs when using io-threads
-Patch247: kvm-block-Fix-blk-in_flight-during-blk_wait_while_draine.patch
-# For bz#1822682 - QEMU-4.2 fails to start a VM on Azure
-Patch248: kvm-target-i386-do-not-set-unsupported-VMX-secondary-exe.patch
+Patch0021: 0021-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -691,8 +170,6 @@ BuildRequires: systemtap-sdt-devel
 BuildRequires: libpng-devel
 # For uuid generation
 BuildRequires: libuuid-devel
-# For BlueZ device support
-BuildRequires: bluez-libs-devel
 # For Braille device support
 BuildRequires: brlapi-devel
 # For test suite
@@ -930,6 +407,7 @@ the Secure Shell (SSH) protocol.
 %prep
 %setup -n qemu-%{version}
 %autopatch -p1
+mkdir qemu-kvm-build
 
 %build
 %global buildarch %{kvm_target}-softmmu
@@ -943,166 +421,174 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
     %global block_drivers_list %{block_drivers_list},gluster
 %endif
 
-./configure  \
- --prefix="%{_prefix}" \
- --libdir="%{_libdir}" \
- --sysconfdir="%{_sysconfdir}" \
- --interp-prefix=%{_prefix}/qemu-%M \
- --localstatedir="%{_localstatedir}" \
- --docdir="%{qemudocdir}" \
- --libexecdir="%{_libexecdir}" \
- --extra-ldflags="-Wl,--build-id -Wl,-z,relro -Wl,-z,now" \
- --extra-cflags="%{optflags}" \
- --with-pkgversion="%{name}-%{version}-%{release}" \
- --with-confsuffix=/"%{name}" \
- --firmwarepath=%{_prefix}/share/qemu-firmware \
-%if 0%{have_fdt}
-  --enable-fdt \
-%else
-  --disable-fdt \
- %endif
-%if 0%{have_gluster}
-  --enable-glusterfs \
-%else
-  --disable-glusterfs \
-%endif
-  --enable-guest-agent \
-%ifnarch s390x
-  --enable-numa \
-%else
-  --disable-numa \
-%endif
-  --enable-rbd \
-%if 0%{have_librdma}
-  --enable-rdma \
-%else
-  --disable-rdma \
-%endif
-  --disable-pvrdma \
-  --enable-seccomp \
-%if 0%{have_spice}
-  --enable-spice \
-  --enable-smartcard \
-  --enable-virglrenderer \
-%else
-  --disable-spice \
-  --disable-smartcard \
-  --disable-virglrenderer \
-%endif
-%if 0%{have_opengl}
-  --enable-opengl \
-%else
-  --disable-opengl \
-%endif
-%if 0%{have_usbredir}
-  --enable-usb-redir \
-%else
-  --disable-usb-redir \
-%endif
-  --disable-tcmalloc \
-%ifarch x86_64
-  --enable-libpmem \
-%else
-  --disable-libpmem \
-%endif
-  --enable-vhost-user \
-%ifarch %{ix86} x86_64
-  --enable-avx2 \
-%else
-  --disable-avx2 \
-%endif
+cd qemu-kvm-build
+../configure  \
+  --prefix="%{_prefix}" \
+  --libdir="%{_libdir}" \
+  --sysconfdir="%{_sysconfdir}" \
+  --interp-prefix=%{_prefix}/qemu-%M \
+  --localstatedir="%{_localstatedir}" \
+  --docdir="%{qemudocdir}" \
+  --libexecdir="%{_libexecdir}" \
+  --extra-ldflags="-Wl,--build-id -Wl,-z,relro -Wl,-z,now" \
+  --extra-cflags="%{optflags}" \
+  --with-pkgversion="%{name}-%{version}-%{release}" \
+  --with-confsuffix=/"%{name}" \
+  --firmwarepath=%{_prefix}/share/qemu-firmware \
   --python=%{__python3} \
   --target-list="%{buildarch}" \
   --block-drv-rw-whitelist=%{block_drivers_list} \
   --audio-drv-list= \
   --block-drv-ro-whitelist=vmdk,vhdx,vpc,https,ssh \
   --with-coroutine=ucontext \
+  --with-git=git \
   --tls-priority=NORMAL \
-  --disable-bluez \
+  --enable-attr \
+  --disable-auth-pam \
+%ifarch %{ix86} x86_64
+  --enable-avx2 \
+%else
+  --disable-avx2 \
+%endif
+  --disable-avx512f \
+  --disable-bochs \
   --disable-brlapi \
+  --disable-bsd-user \
+  --disable-bzip2 \
   --enable-cap-ng \
+  --enable-capstone \
+  --disable-cloop \
+  --disable-cocoa \
   --enable-coroutine-pool \
+  --disable-crypto-afalg \
   --enable-curl \
   --disable-curses \
+  --enable-debug-info \
+  --disable-debug-mutex \
   --disable-debug-tcg \
+  --disable-dmg \
   --enable-docs \
+%if 0%{have_fdt}
+  --enable-fdt \
+%else
+  --disable-fdt \
+ %endif
+  --enable-gcrypt \
+  --disable-git-update \
+%if 0%{have_gluster}
+  --enable-glusterfs \
+%else
+  --disable-glusterfs \
+%endif
+  --enable-gnutls \
   --disable-gtk \
+  --enable-guest-agent \
+  --disable-guest-agent-msi \
+  --disable-hax \
+  --disable-hvf \
+  --enable-iconv \
+  --disable-jemalloc \
   --enable-kvm \
   --enable-libiscsi \
   --disable-libnfs \
+%ifarch x86_64
+  --enable-libpmem \
+%else
+  --disable-libpmem \
+%endif
   --enable-libssh \
   --enable-libusb \
-  --disable-bzip2 \
+  --disable-libxml2 \
   --enable-linux-aio \
-  --disable-live-block-migration \
-  --enable-lzo \
-  --enable-pie \
-  --disable-qom-cast-debug \
-  --disable-sdl \
-  --enable-snappy \
-  --disable-sparse \
-  --disable-strip \
-  --enable-tpm \
-  --enable-trace-backend=dtrace \
-  --disable-vde \
-  --disable-vhost-scsi \
-  --disable-vxhs \
-  --disable-virtfs \
-  --disable-vnc-jpeg \
-  --disable-vte \
-  --enable-vnc-png \
-  --enable-vnc-sasl \
-  --enable-werror \
-  --disable-xen \
-  --disable-xfsctl \
-  --enable-gnutls \
-  --enable-gcrypt \
-  --disable-nettle \
-  --enable-attr \
-  --disable-bsd-user \
-  --disable-cocoa \
-  --enable-debug-info \
-  --disable-guest-agent-msi \
-  --disable-hax \
-  --disable-jemalloc \
+  --disable-linux-io-uring \
   --disable-linux-user \
-  --enable-modules \
-  --disable-netmap \
-  --disable-replication \
-  --enable-system \
-  --enable-tools \
-  --disable-user \
-  --enable-vhost-net \
-  --enable-vhost-vsock \
-  --enable-vnc \
-  --enable-mpath \
-  --disable-xen-pci-passthrough \
-  --enable-tcg \
-  --with-git=git \
-  --disable-sanitizers \
-  --disable-hvf \
-  --disable-whpx \
+  --disable-live-block-migration \
+  --disable-lzfse \
+  --enable-lzo \
   --enable-malloc-trim \
   --disable-membarrier \
-  --disable-vhost-crypto \
-  --disable-libxml2 \
-  --enable-capstone \
-  --disable-git-update \
-  --disable-crypto-afalg \
-  --disable-debug-mutex \
-  --disable-bochs \
-  --disable-cloop \
-  --disable-dmg \
-  --disable-qcow1 \
-  --disable-vdi \
-  --disable-vvfat \
-  --disable-qed \
+  --enable-modules \
+  --disable-module-upgrades \
+  --enable-mpath \
+  --disable-netmap \
+  --disable-nettle \
+%ifnarch s390x
+  --enable-numa \
+%else
+  --disable-numa \
+%endif
+%if 0%{have_opengl}
+  --enable-opengl \
+%else
+  --disable-opengl \
+%endif
   --disable-parallels \
+  --enable-pie \
+  --disable-pvrdma \
+  --disable-qcow1 \
+  --disable-qed \
+  --disable-qom-cast-debug \
+  --enable-rbd \
+%if 0%{have_librdma}
+  --enable-rdma \
+%else
+  --disable-rdma \
+%endif
+  --disable-replication \
+  --disable-sanitizers \
+  --disable-sdl \
+  --disable-sdl-image \
+  --enable-seccomp \
   --disable-sheepdog \
-  --disable-auth-pam \
-  --enable-iconv \
-  --disable-lzfse \
+  --enable-snappy \
+  --disable-sparse \
+%if 0%{have_spice}
+  --enable-smartcard \
+  --enable-spice \
+%else
+  --disable-smartcard \
+  --disable-spice \
+%endif
+  --disable-strip \
+  --enable-system \
+  --enable-tcg \
+  --disable-tcmalloc \
+  --enable-tools \
+  --enable-tpm \
+  --enable-trace-backend=dtrace \
+%if 0%{have_usbredir}
+  --enable-usb-redir \
+%else
+  --disable-usb-redir \
+%endif
+  --disable-user \
+  --disable-vde \
+  --disable-vdi \
+  --disable-vhost-crypto \
   --enable-vhost-kernel \
+  --enable-vhost-net \
+  --disable-vhost-scsi \
+  --enable-vhost-user \
+  --enable-vhost-vsock \
+%if 0%{have_spice}
+  --enable-virglrenderer \
+%else
+  --disable-virglrenderer \
+%endif
+  --disable-virtfs \
+  --enable-vnc \
+  --disable-vnc-jpeg \
+  --enable-vnc-png \
+  --enable-vnc-sasl \
+  --disable-vte \
+  --disable-vvfat \
+  --disable-vxhs \
+  --enable-werror \
+  --disable-whpx \
+  --disable-xen \
+  --disable-xen-pci-passthrough \
+  --disable-xfsctl \
+  --enable-xkbcommon \
   --without-default-devices
 
 echo "config-host.mak contents:"
@@ -1131,6 +617,7 @@ gcc %{SOURCE6} $RPM_OPT_FLAGS $RPM_LD_FLAGS -o ksmctl
 gcc %{SOURCE35} $RPM_OPT_FLAGS $RPM_LD_FLAGS -o udev-kvm-check
 
 %install
+cd qemu-kvm-build
 %define _udevdir %(pkg-config --variable=udevdir udev)
 %define _udevrulesdir %{_udevdir}/rules.d
 
@@ -1175,13 +662,13 @@ cp -R tests/acceptance/* $RPM_BUILD_ROOT%{testsdir}/tests/acceptance/
 # Install qemu.py and qmp/ scripts required to run avocado_qemu tests
 cp -R python/qemu $RPM_BUILD_ROOT%{testsdir}/python
 cp -R scripts/qmp/* $RPM_BUILD_ROOT%{testsdir}/scripts/qmp
-install -p -m 0755 tests/Makefile.include $RPM_BUILD_ROOT%{testsdir}/tests/
+install -p -m 0755 ../tests/Makefile.include $RPM_BUILD_ROOT%{testsdir}/tests/
 
 # Install qemu-iotests
 cp -R tests/qemu-iotests/* $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/
 # Avoid ambiguous 'python' interpreter name
 find $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/env python+%{__python3}+' {} \;
-find $RPM_BUILD_ROOT%{testsdir}/scripts/qmp/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/env python+%{__python3}+' {} \;
+find $RPM_BUILD_ROOT%{testsdir}/scripts/qmp/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/env python3+%{__python3}+' {} \;
 find $RPM_BUILD_ROOT%{testsdir}/scripts/qmp/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/python+%{__python3}+' {} \;
 
 install -p -m 0644 %{SOURCE36} $RPM_BUILD_ROOT%{testsdir}/README
@@ -1235,7 +722,6 @@ rm $RPM_BUILD_ROOT%{_bindir}/elf2dmp
 # Install simpletrace
 install -m 0755 scripts/simpletrace.py $RPM_BUILD_ROOT%{_datadir}/%{name}/simpletrace.py
 # Avoid ambiguous 'python' interpreter name
-sed -i -e '1 s/python/python3/' $RPM_BUILD_ROOT%{_datadir}/%{name}/simpletrace.py
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool
 install -m 0644 -t $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool scripts/tracetool/*.py
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/backend
@@ -1244,11 +730,11 @@ mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/format
 install -m 0644 -t $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/format scripts/tracetool/format/*.py
 
 mkdir -p $RPM_BUILD_ROOT%{qemudocdir}
-install -p -m 0644 -t ${RPM_BUILD_ROOT}%{qemudocdir} Changelog README.rst README.systemtap COPYING COPYING.LIB LICENSE docs/interop/qmp-spec.txt
+install -p -m 0644 -t ${RPM_BUILD_ROOT}%{qemudocdir} ../Changelog ../README.rst ../README.systemtap ../COPYING ../COPYING.LIB ../LICENSE ../docs/interop/qmp-spec.txt
 chmod -x ${RPM_BUILD_ROOT}%{_mandir}/man1/*
 chmod -x ${RPM_BUILD_ROOT}%{_mandir}/man8/*
 
-install -D -p -m 0644 qemu.sasl $RPM_BUILD_ROOT%{_sysconfdir}/sasl2/%{name}.conf
+install -D -p -m 0644 ../qemu.sasl $RPM_BUILD_ROOT%{_sysconfdir}/sasl2/%{name}.conf
 
 # Provided by package openbios
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/openbios-ppc
@@ -1276,6 +762,7 @@ rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/firmware
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/edk2-*.fd
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/edk2-licenses.txt
 
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv32-sifive_u-fw_jump.bin
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv32-virt-fw_jump.bin
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv64-sifive_u-fw_jump.bin
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv64-virt-fw_jump.bin
@@ -1304,6 +791,9 @@ rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/QEMU,cgthree.bin
 # Remove ivshmem example programs
 rm -rf ${RPM_BUILD_ROOT}%{_bindir}/ivshmem-client
 rm -rf ${RPM_BUILD_ROOT}%{_bindir}/ivshmem-server
+
+# Remove qemu-storage-daemon
+rm -rf ${RPM_BUILD_ROOT}%{_bindir}/qemu-storage-daemon
 
 # Remove efi roms
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/efi*.rom
@@ -1378,11 +868,15 @@ chmod +x $RPM_BUILD_ROOT%{_libdir}/qemu-kvm/block-*.so
 
 # Remove buildinfo
 rm -rf $RPM_BUILD_ROOT%{qemudocdir}/interop/.buildinfo
+rm -rf $RPM_BUILD_ROOT%{qemudocdir}/system/.buildinfo
+rm -rf $RPM_BUILD_ROOT%{qemudocdir}/tools/.buildinfo
+rm -rf $RPM_BUILD_ROOT%{qemudocdir}/user/.buildinfo
 
 # Remove spec
 rm -rf $RPM_BUILD_ROOT%{qemudocdir}/specs
 
 %check
+cd qemu-kvm-build
 export DIFF=diff; make check V=1
 
 %post -n qemu-kvm-core
@@ -1431,18 +925,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %dir %{qemudocdir}
 %doc %{qemudocdir}/Changelog
 %doc %{qemudocdir}/README.rst
-%doc %{qemudocdir}/qemu-doc.html
 %doc %{qemudocdir}/COPYING
 %doc %{qemudocdir}/COPYING.LIB
 %doc %{qemudocdir}/LICENSE
 %doc %{qemudocdir}/README.systemtap
 %doc %{qemudocdir}/qmp-spec.txt
-%doc %{qemudocdir}/qemu-doc.txt
 %doc %{qemudocdir}/qemu-ga-ref.html
 %doc %{qemudocdir}/qemu-ga-ref.txt
 %doc %{qemudocdir}/qemu-qmp-ref.html
 %doc %{qemudocdir}/qemu-qmp-ref.txt
 %doc %{qemudocdir}/interop/*
+%doc %{qemudocdir}/index.html
+%doc %{qemudocdir}/system/*
+%doc %{qemudocdir}/tools/*
+%doc %{qemudocdir}/user/*
 %{_mandir}/man7/qemu-qmp-ref.7*
 %{_mandir}/man7/qemu-cpu-models.7*
 %{_bindir}/qemu-keymap
@@ -1452,6 +948,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_unitdir}/qemu-pr-helper.service
 %{_unitdir}/qemu-pr-helper.socket
 %{_mandir}/man7/qemu-ga-ref.7*
+%{_mandir}/man1/virtiofsd.1*
 
 %dir %{_datadir}/%{name}/
 %{_datadir}/%{name}/keymaps/
@@ -1576,6 +1073,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+Tue May 12 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.0.0-0
+- Temporary rebase of qemu-kvm to 5.0.0
+
 * Tue Apr 14 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-19.el8_2
 - kvm-target-i386-do-not-set-unsupported-VMX-secondary-exe.patch [bz#1822682]
 - Resolves: bz#1822682

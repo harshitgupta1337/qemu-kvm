@@ -1,4 +1,4 @@
-From 0842700b3a01891c316e9169fa651f26714cafa5 Mon Sep 17 00:00:00 2001
+From 349c332a69933b977b40f4a2198236611d002818 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:47:32 +0200
 Subject: Add s390x machine types
@@ -20,17 +20,15 @@ Merged patches (4.2.0):
 - fb192e5 redhat: s390x: Rename s390-ccw-virtio-rhel8.0.0 to s390-ccw-virtio-rhel8.1.0
 - a9b22e8 redhat: s390x: Add proper compatibility options for the -rhel7.6.0 machine
 - hw/s390x: Add the s390-ccw-virtio-rhel8.2.0 machine types (patch 92954)
-
-Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/s390x/s390-virtio-ccw.c | 70 +++++++++++++++++++++++++++++++++++++-
- 1 file changed, 69 insertions(+), 1 deletion(-)
+ hw/s390x/s390-virtio-ccw.c | 71 +++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 70 insertions(+), 1 deletion(-)
 
 diff --git a/hw/s390x/s390-virtio-ccw.c b/hw/s390x/s390-virtio-ccw.c
-index d3edeef0ad..c2c83d2fce 100644
+index 45292fb..1b3a04c 100644
 --- a/hw/s390x/s390-virtio-ccw.c
 +++ b/hw/s390x/s390-virtio-ccw.c
-@@ -615,7 +615,7 @@ bool css_migration_enabled(void)
+@@ -777,7 +777,7 @@ bool css_migration_enabled(void)
      {                                                                         \
          MachineClass *mc = MACHINE_CLASS(oc);                                 \
          ccw_machine_##suffix##_class_options(mc);                             \
@@ -38,16 +36,16 @@ index d3edeef0ad..c2c83d2fce 100644
 +        mc->desc = "VirtIO-ccw based S390 machine " verstr;                   \
          if (latest) {                                                         \
              mc->alias = "s390-ccw-virtio";                                    \
-             mc->is_default = 1;                                               \
-@@ -639,6 +639,7 @@ bool css_migration_enabled(void)
+             mc->is_default = true;                                            \
+@@ -801,6 +801,7 @@ bool css_migration_enabled(void)
      }                                                                         \
      type_init(ccw_machine_register_##suffix)
  
 +#if 0 /* Disabled for Red Hat Enterprise Linux */
- static void ccw_machine_4_2_instance_options(MachineState *machine)
+ static void ccw_machine_5_0_instance_options(MachineState *machine)
  {
  }
-@@ -866,6 +867,73 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
+@@ -1041,6 +1042,74 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
      compat_props_add(mc->compat_props, compat, G_N_ELEMENTS(compat));
  }
  DEFINE_CCW_MACHINE(2_4, "2.4", false);
@@ -59,6 +57,7 @@ index d3edeef0ad..c2c83d2fce 100644
 +
 +static void ccw_machine_rhel820_class_options(MachineClass *mc)
 +{
++    mc->fixup_ram_size = s390_fixup_ram_size;
 +}
 +DEFINE_CCW_MACHINE(rhel820, "rhel8.2.0", true);
 +
@@ -122,5 +121,5 @@ index d3edeef0ad..c2c83d2fce 100644
  static void ccw_machine_register_types(void)
  {
 -- 
-2.21.0
+1.8.3.1
 

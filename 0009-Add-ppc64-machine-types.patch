@@ -1,4 +1,4 @@
-From 136eae41007e2e5b0d693cc656f3ec36cbabf16f Mon Sep 17 00:00:00 2001
+From c50a71e2a577b532a904e70d23f7533aca0b3a6f Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:27:13 +0200
 Subject: Add ppc64 machine types
@@ -31,36 +31,37 @@ Merged patches (4.2.0):
 - redhat: update pseries-rhel-7.6.0 machine type (patch 93039)
 - redhat: define pseries-rhel8.2.0 machine type (patch 93041)
 
-Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+Merged patches (weekly-200226):
+- eb121ff spapr: Enable DD2.3 accelerated count cache flush in pseries-5.0 machine (partial)
 ---
- hw/ppc/spapr.c          | 278 ++++++++++++++++++++++++++++++++++++++++
- hw/ppc/spapr_cpu_core.c |  13 ++
+ hw/ppc/spapr.c          | 280 ++++++++++++++++++++++++++++++++++++++++++++++++
+ hw/ppc/spapr_cpu_core.c |  13 +++
  include/hw/ppc/spapr.h  |   1 +
- target/ppc/compat.c     |  13 +-
+ target/ppc/compat.c     |  13 ++-
  target/ppc/cpu.h        |   1 +
- 5 files changed, 305 insertions(+), 1 deletion(-)
+ 5 files changed, 307 insertions(+), 1 deletion(-)
 
 diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
-index e076f6023c..8749c72066 100644
+index 9a2bd50..20b3437 100644
 --- a/hw/ppc/spapr.c
 +++ b/hw/ppc/spapr.c
-@@ -4447,6 +4447,7 @@ static void spapr_machine_class_init(ObjectClass *oc, void *data)
-     smc->linux_pci_probe = true;
+@@ -4549,6 +4549,7 @@ static void spapr_machine_class_init(ObjectClass *oc, void *data)
      smc->smp_threads_vsmt = true;
      smc->nr_xirqs = SPAPR_NR_XIRQS;
+     xfc->match_nvt = spapr_match_nvt;
 +    smc->has_power9_support = true;
  }
  
  static const TypeInfo spapr_machine_info = {
-@@ -4491,6 +4492,7 @@ static const TypeInfo spapr_machine_info = {
+@@ -4599,6 +4600,7 @@ static void spapr_machine_latest_class_options(MachineClass *mc)
      }                                                                \
      type_init(spapr_machine_register_##suffix)
  
 +#if 0 /* Disabled for Red Hat Enterprise Linux */
  /*
-  * pseries-4.2
+  * pseries-5.0
   */
-@@ -4520,6 +4522,7 @@ static void spapr_machine_4_1_class_options(MachineClass *mc)
+@@ -4645,6 +4647,7 @@ static void spapr_machine_4_1_class_options(MachineClass *mc)
  }
  
  DEFINE_SPAPR_MACHINE(4_1, "4.1", false);
@@ -68,7 +69,7 @@ index e076f6023c..8749c72066 100644
  
  /*
   * pseries-4.0
-@@ -4536,6 +4539,7 @@ static void phb_placement_4_0(SpaprMachineState *spapr, uint32_t index,
+@@ -4661,6 +4664,7 @@ static void phb_placement_4_0(SpaprMachineState *spapr, uint32_t index,
      *nv2atsd = 0;
  }
  
@@ -76,7 +77,7 @@ index e076f6023c..8749c72066 100644
  static void spapr_machine_4_0_class_options(MachineClass *mc)
  {
      SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
-@@ -4695,6 +4699,7 @@ DEFINE_SPAPR_MACHINE(2_8, "2.8", false);
+@@ -4820,6 +4824,7 @@ DEFINE_SPAPR_MACHINE(2_8, "2.8", false);
  /*
   * pseries-2.7
   */
@@ -84,7 +85,7 @@ index e076f6023c..8749c72066 100644
  
  static void phb_placement_2_7(SpaprMachineState *spapr, uint32_t index,
                                uint64_t *buid, hwaddr *pio,
-@@ -4749,6 +4754,7 @@ static void phb_placement_2_7(SpaprMachineState *spapr, uint32_t index,
+@@ -4874,6 +4879,7 @@ static void phb_placement_2_7(SpaprMachineState *spapr, uint32_t index,
      *nv2atsd = 0;
  }
  
@@ -92,7 +93,7 @@ index e076f6023c..8749c72066 100644
  static void spapr_machine_2_7_class_options(MachineClass *mc)
  {
      SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
-@@ -4863,6 +4869,278 @@ static void spapr_machine_2_1_class_options(MachineClass *mc)
+@@ -4988,6 +4994,280 @@ static void spapr_machine_2_1_class_options(MachineClass *mc)
      compat_props_add(mc->compat_props, hw_compat_2_1, hw_compat_2_1_len);
  }
  DEFINE_SPAPR_MACHINE(2_1, "2.1", false);
@@ -131,6 +132,8 @@ index e076f6023c..8749c72066 100644
 +                     hw_compat_rhel_8_1_len);
 +    compat_props_add(mc->compat_props, compat, G_N_ELEMENTS(compat));
 +
++    /* from pseries-4.2 */
++    smc->default_caps.caps[SPAPR_CAP_CCF_ASSIST] = SPAPR_CAP_OFF;
 +}
 +
 +DEFINE_SPAPR_MACHINE(rhel810, "rhel8.1.0", false);
@@ -372,7 +375,7 @@ index e076f6023c..8749c72066 100644
  static void spapr_machine_register_types(void)
  {
 diff --git a/hw/ppc/spapr_cpu_core.c b/hw/ppc/spapr_cpu_core.c
-index 301cd7b4e4..ba5a8fb82b 100644
+index 542c19e..916ab0e 100644
 --- a/hw/ppc/spapr_cpu_core.c
 +++ b/hw/ppc/spapr_cpu_core.c
 @@ -24,6 +24,7 @@
@@ -383,7 +386,7 @@ index 301cd7b4e4..ba5a8fb82b 100644
  
  static void spapr_reset_vcpu(PowerPCCPU *cpu)
  {
-@@ -242,6 +243,7 @@ static void spapr_realize_vcpu(PowerPCCPU *cpu, SpaprMachineState *spapr,
+@@ -238,6 +239,7 @@ static void spapr_realize_vcpu(PowerPCCPU *cpu, SpaprMachineState *spapr,
      CPUPPCState *env = &cpu->env;
      CPUState *cs = CPU(cpu);
      Error *local_err = NULL;
@@ -391,7 +394,7 @@ index 301cd7b4e4..ba5a8fb82b 100644
  
      object_property_set_bool(OBJECT(cpu), true, "realized", &local_err);
      if (local_err) {
-@@ -254,6 +256,17 @@ static void spapr_realize_vcpu(PowerPCCPU *cpu, SpaprMachineState *spapr,
+@@ -250,6 +252,17 @@ static void spapr_realize_vcpu(PowerPCCPU *cpu, SpaprMachineState *spapr,
      cpu_ppc_set_vhyp(cpu, PPC_VIRTUAL_HYPERVISOR(spapr));
      kvmppc_set_papr(cpu);
  
@@ -410,22 +413,22 @@ index 301cd7b4e4..ba5a8fb82b 100644
          goto error_intc_create;
      }
 diff --git a/include/hw/ppc/spapr.h b/include/hw/ppc/spapr.h
-index d5ab5ea7b2..aa89cc4a95 100644
+index 42d64a0..c03611f 100644
 --- a/include/hw/ppc/spapr.h
 +++ b/include/hw/ppc/spapr.h
-@@ -125,6 +125,7 @@ struct SpaprMachineClass {
-     bool linux_pci_probe;
+@@ -128,6 +128,7 @@ struct SpaprMachineClass {
      bool smp_threads_vsmt; /* set VSMT to smp_threads by default */
+     hwaddr rma_limit;          /* clamp the RMA to this size */
  
 +    bool has_power9_support;
      void (*phb_placement)(SpaprMachineState *spapr, uint32_t index,
                            uint64_t *buid, hwaddr *pio, 
                            hwaddr *mmio32, hwaddr *mmio64,
 diff --git a/target/ppc/compat.c b/target/ppc/compat.c
-index 7de4bf3122..3e2e35342d 100644
+index f48df25..34e3d0f 100644
 --- a/target/ppc/compat.c
 +++ b/target/ppc/compat.c
-@@ -105,8 +105,19 @@ static const CompatInfo *compat_by_pvr(uint32_t pvr)
+@@ -114,8 +114,19 @@ static const CompatInfo *compat_by_pvr(uint32_t pvr)
      return NULL;
  }
  
@@ -447,10 +450,10 @@ index 7de4bf3122..3e2e35342d 100644
      const CompatInfo *compat = compat_by_pvr(compat_pvr);
      const CompatInfo *min = compat_by_pvr(min_compat_pvr);
 diff --git a/target/ppc/cpu.h b/target/ppc/cpu.h
-index e3e82327b7..5c53801cfd 100644
+index 88d9449..0d7f5f5 100644
 --- a/target/ppc/cpu.h
 +++ b/target/ppc/cpu.h
-@@ -1367,6 +1367,7 @@ static inline int cpu_mmu_index(CPUPPCState *env, bool ifetch)
+@@ -1323,6 +1323,7 @@ static inline int cpu_mmu_index(CPUPPCState *env, bool ifetch)
  
  /* Compatibility modes */
  #if defined(TARGET_PPC64)
@@ -459,5 +462,5 @@ index e3e82327b7..5c53801cfd 100644
                        uint32_t min_compat_pvr, uint32_t max_compat_pvr);
  bool ppc_type_check_compat(const char *cputype, uint32_t compat_pvr,
 -- 
-2.21.0
+1.8.3.1
 

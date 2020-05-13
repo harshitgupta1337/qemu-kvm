@@ -1,8 +1,7 @@
-From 371d312300251c0dc24522607b06b7e47e760b53 Mon Sep 17 00:00:00 2001
+From f07c3ee209b3897efebb4cf008c88a390205a5dd Mon Sep 17 00:00:00 2001
 From: Kevin Wolf <kwolf@redhat.com>
 Date: Fri, 13 Mar 2020 12:34:32 +0000
-Subject: [PATCH 12/20] block: Versioned x-blockdev-reopen API with feature
- flag
+Subject: block: Versioned x-blockdev-reopen API with feature flag
 
 RH-Author: Kevin Wolf <kwolf@redhat.com>
 Message-id: <20200313123439.10548-7-kwolf@redhat.com>
@@ -30,10 +29,10 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  1 file changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/qapi/block-core.json b/qapi/block-core.json
-index 0cf68fe..a1e85b0 100644
+index 943df19..50b99fb 100644
 --- a/qapi/block-core.json
 +++ b/qapi/block-core.json
-@@ -4202,10 +4202,17 @@
+@@ -4126,10 +4126,17 @@
  # image does not have a default backing file name as part of its
  # metadata.
  #
