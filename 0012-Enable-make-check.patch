@@ -1,4 +1,4 @@
-From 0114b7010c87be70014b170ffdf66e1317f6becc Mon Sep 17 00:00:00 2001
+From 19bc7ed029e014148be05551a2f36b7d41035b1c Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:48:41 +0200
 Subject: Enable make check
@@ -82,7 +82,7 @@ index 034d3a3..aadc413 100755
       *)
          ;;
 diff --git a/tests/qemu-iotests/group b/tests/qemu-iotests/group
-index 1710470..0711b66 100644
+index 435dccd..4ad61bc 100644
 --- a/tests/qemu-iotests/group
 +++ b/tests/qemu-iotests/group
 @@ -92,7 +92,7 @@

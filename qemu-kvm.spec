@@ -1075,6 +1075,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %changelog
 * Tue May 12 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.0.0-0
 - Temporary rebase of qemu-kvm to 5.0.0
+- Updated the tarball to actually point to 5.0.0 GA
 
 * Tue Apr 14 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-19.el8_2
 - kvm-target-i386-do-not-set-unsupported-VMX-secondary-exe.patch [bz#1822682]

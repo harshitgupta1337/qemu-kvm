@@ -1,4 +1,4 @@
-From db33b6f22ff44edfb3ca54ef7bf051ccfc53e479 Mon Sep 17 00:00:00 2001
+From 950e13b225f6e890a2c19223b8a05cdc9ecabfa7 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Mon, 11 Jan 2016 11:53:33 +0100
 Subject: Enable/disable devices for RHEL
@@ -65,12 +65,9 @@ Merged patches (4.2.0):
 
 Merged patches (weekly-200108):
 - 4543a3c i386: Remove cpu64-rhel6 CPU model
-
-Conflicts:
-	target/arm/cpu.c
 ---
  backends/Makefile.objs                 |   3 +-
- default-configs/aarch64-rh-devices.mak |  21 +++++++
+ default-configs/aarch64-rh-devices.mak |  20 +++++++
  default-configs/aarch64-softmmu.mak    |  10 ++--
  default-configs/ppc64-rh-devices.mak   |  34 +++++++++++
  default-configs/ppc64-softmmu.mak      |  10 ++--
@@ -95,13 +92,13 @@ Conflicts:
  qemu-options.hx                        |   4 --
  redhat/qemu-kvm.spec.template          |   5 +-
  softmmu/vl.c                           |   2 +-
- target/arm/cpu.c                       |   3 +
+ target/arm/cpu.c                       |   4 +-
  target/i386/cpu.c                      |  17 +++---
  target/ppc/cpu-models.c                |  10 ++++
  target/s390x/cpu_models.c              |   3 +
  target/s390x/kvm.c                     |   8 +++
  util/memfd.c                           |   2 +-
- 32 files changed, 281 insertions(+), 36 deletions(-)
+ 32 files changed, 280 insertions(+), 37 deletions(-)
  create mode 100644 default-configs/aarch64-rh-devices.mak
  create mode 100644 default-configs/ppc64-rh-devices.mak
  create mode 100644 default-configs/rh-virtio.mak
@@ -125,10 +122,10 @@ index 28a847c..0eda216 100644
  dbus-vmstate.o-cflags = $(GIO_CFLAGS)
 diff --git a/default-configs/aarch64-rh-devices.mak b/default-configs/aarch64-rh-devices.mak
 new file mode 100644
-index 0000000..0d756a2
+index 0000000..a1ed641
 --- /dev/null
 +++ b/default-configs/aarch64-rh-devices.mak
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,20 @@
 +include rh-virtio.mak
 +
 +CONFIG_ARM_GIC_KVM=y
@@ -149,7 +146,6 @@ index 0000000..0d756a2
 +CONFIG_VIRTIO_MMIO=y
 +CONFIG_VIRTIO_PCI=y
 +CONFIG_XIO3130=y
-+CONFIG_NVDIMM=y
 diff --git a/default-configs/aarch64-softmmu.mak b/default-configs/aarch64-softmmu.mak
 index 958b1e0..8f6867d 100644
 --- a/default-configs/aarch64-softmmu.mak
@@ -426,7 +422,7 @@ index 534a6a1..bd62442 100644
  obj-$(CONFIG_PXA2XX) += pxa2xx.o pxa2xx_gpio.o pxa2xx_pic.o
  obj-$(CONFIG_DIGIC) += digic.o
 diff --git a/hw/block/fdc.c b/hw/block/fdc.c
-index 9628cc1..37989fe 100644
+index 33bc9e2..3cb8779 100644
 --- a/hw/block/fdc.c
 +++ b/hw/block/fdc.c
 @@ -46,6 +46,8 @@
@@ -452,7 +448,7 @@ index 9628cc1..37989fe 100644
 +
      if (fdctrl->fallback == FLOPPY_DRIVE_TYPE_AUTO) {
          error_setg(errp, "Cannot choose a fallback FDrive type of 'auto'");
-         return;
+     }
 diff --git a/hw/bt/Makefile.objs b/hw/bt/Makefile.objs
 new file mode 100644
 index 0000000..e678e9e
@@ -492,10 +488,10 @@ index 77a7d62..68c793e 100644
  common-obj-$(CONFIG_ADS7846) += ads7846.o
  common-obj-$(CONFIG_VGA_CIRRUS) += cirrus_vga.o
 diff --git a/hw/display/cirrus_vga.c b/hw/display/cirrus_vga.c
-index 1f29731..cac9e40 100644
+index 0d391e1..fb1b2c4 100644
 --- a/hw/display/cirrus_vga.c
 +++ b/hw/display/cirrus_vga.c
-@@ -2973,6 +2973,9 @@ static void pci_cirrus_vga_realize(PCIDevice *dev, Error **errp)
+@@ -2975,6 +2975,9 @@ static void pci_cirrus_vga_realize(PCIDevice *dev, Error **errp)
       PCIDeviceClass *pc = PCI_DEVICE_GET_CLASS(dev);
       int16_t device_id = pc->device_id;
  
@@ -637,7 +633,7 @@ index 292d4e7..1df25ae 100644
  DEF("acpitable", HAS_ARG, QEMU_OPTION_acpitable,
      "-acpitable [sig=str][,rev=n][,oem_id=str][,oem_table_id=str][,oem_rev=n][,asl_compiler_id=str][,asl_compiler_rev=n][,{data|file}=file1[:file2]...]\n"
 diff --git a/softmmu/vl.c b/softmmu/vl.c
-index afd2615..00f7604 100644
+index 32c0047..46b4d98 100644
 --- a/softmmu/vl.c
 +++ b/softmmu/vl.c
 @@ -144,7 +144,7 @@ static Chardev **serial_hds;
@@ -650,21 +646,22 @@ index afd2615..00f7604 100644
  static int no_reboot;
  int no_shutdown = 0;
 diff --git a/target/arm/cpu.c b/target/arm/cpu.c
-index 5d64adf..f1d18b8 100644
+index a79f233..dcdf3b2 100644
 --- a/target/arm/cpu.c
 +++ b/target/arm/cpu.c
-@@ -2904,6 +2904,9 @@ static void arm_cpu_register_types(void)
+@@ -2905,7 +2905,9 @@ static void arm_cpu_register_types(void)
+     type_register_static(&idau_interface_type_info);
  
      while (info->name) {
-         arm_cpu_register(info);
+-        cpu_register(info);
 +        /* RHEL specific: Filter out unsupported cpu models */
-+        if (!strcmp(info->name, "cortex-a15-arm-cpu"))
-+            arm_cpu_register(info);
++        if (!strcmp(info->name, "cortex-a15"))
++            cpu_register(info);
          info++;
      }
  
 diff --git a/target/i386/cpu.c b/target/i386/cpu.c
-index 9c256ab..26a8584 100644
+index 90ffc5f..d98618c 100644
 --- a/target/i386/cpu.c
 +++ b/target/i386/cpu.c
 @@ -1801,20 +1801,21 @@ static CPUCaches epyc_rome_cache_info = {
@@ -782,10 +779,10 @@ index 7c32180..88bf4a9 100644
  
      /* detect missing features if any to properly report them */
 diff --git a/target/s390x/kvm.c b/target/s390x/kvm.c
-index 69881a0..9802878 100644
+index 7f7ebab..8dc2df2 100644
 --- a/target/s390x/kvm.c
 +++ b/target/s390x/kvm.c
-@@ -2494,6 +2494,14 @@ void kvm_s390_apply_cpu_model(const S390CPUModel *model, Error **errp)
+@@ -2429,6 +2429,14 @@ void kvm_s390_apply_cpu_model(const S390CPUModel *model, Error **errp)
          error_setg(errp, "KVM doesn't support CPU models");
          return;
      }

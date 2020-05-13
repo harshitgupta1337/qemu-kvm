@@ -1,4 +1,4 @@
-From e4d185c8c4efbf15a9380c1433bc66b49a09e79d Mon Sep 17 00:00:00 2001
+From 606314e48b9307fd4c79b08017a143d9f749d395 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Thu, 23 Apr 2020 05:26:54 +0200
 Subject: redhat: Adding slirp to the exploded tree

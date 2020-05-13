@@ -1,4 +1,4 @@
-From 50d4f1973a86696cb7487173cbdbc68453445c54 Mon Sep 17 00:00:00 2001
+From ffa7a8516256750abd8c3bfb6964811582d36835 Mon Sep 17 00:00:00 2001
 From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
 Date: Fri, 5 May 2017 19:06:14 +0200
 Subject: usb-xhci: Fix PCI capability order

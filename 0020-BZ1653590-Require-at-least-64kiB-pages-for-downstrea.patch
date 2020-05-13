@@ -1,4 +1,4 @@
-From 3ea4a35afce28805241b3be3c11de605600ecda1 Mon Sep 17 00:00:00 2001
+From 45b492a99791a4a463486be35e9ab44986507efe Mon Sep 17 00:00:00 2001
 From: David Gibson <dgibson@redhat.com>
 Date: Wed, 6 Feb 2019 03:58:56 +0000
 Subject: BZ1653590: Require at least 64kiB pages for downstream guests & hosts

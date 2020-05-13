@@ -1,4 +1,4 @@
-From 4b7f57db366243eeafc0528d3cff4fa6967e7522 Mon Sep 17 00:00:00 2001
+From b510775819649eeb2499b9d4b9baf93538d4bde7 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 12 Oct 2018 07:31:11 +0200
 Subject: Initial redhat build
@@ -11,7 +11,7 @@ several issues are fixed in QEMU tree:
  - Man page renamed from qemu to qemu-kvm
   - man page is installed using make install so we have to fix it in qemu tree
 
-This rebase includes changes up to qemu-kvm-4.2.0-20.el8
+This rebase includes changes up to qemu-kvm-4.2.0-19.el8
 
 Rebase notes (3.1.0):
 - added new configure options
@@ -120,19 +120,19 @@ Conflicts:
  redhat/Makefile                     |   88 ++
  redhat/Makefile.common              |   51 +
  redhat/README.tests                 |   39 +
- redhat/qemu-kvm.spec.template       | 2820 +++++++++++++++++++++++++++++++++++
+ redhat/qemu-kvm.spec.template       | 2812 +++++++++++++++++++++++++++++++++++
  redhat/scripts/extract_build_cmd.py |    2 +-
  redhat/scripts/process-patches.sh   |    7 +-
  tests/check-block.sh                |    2 +
  ui/vnc.c                            |    2 +-
- 11 files changed, 3008 insertions(+), 8 deletions(-)
+ 11 files changed, 3000 insertions(+), 8 deletions(-)
  create mode 100644 redhat/Makefile
  create mode 100644 redhat/Makefile.common
  create mode 100644 redhat/README.tests
  create mode 100644 redhat/qemu-kvm.spec.template
 
 diff --git a/Makefile b/Makefile
-index 34275f5..aee2e8e 100644
+index 8a9113e..a89cc44 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -548,6 +548,7 @@ CAP_CFLAGS += -DCAPSTONE_HAS_ARM
@@ -143,7 +143,7 @@ index 34275f5..aee2e8e 100644
  
  .PHONY: capstone/all
  capstone/all: .git-submodule-status
-@@ -883,7 +884,7 @@ install-doc: $(DOCS) install-sphinxdocs
+@@ -884,7 +885,7 @@ install-doc: $(DOCS) install-sphinxdocs
  	$(INSTALL_DATA) docs/interop/qemu-qmp-ref.txt "$(DESTDIR)$(qemu_docdir)"
  ifdef CONFIG_POSIX
  	$(INSTALL_DIR) "$(DESTDIR)$(mandir)/man1"

@@ -1,4 +1,4 @@
-From c50a71e2a577b532a904e70d23f7533aca0b3a6f Mon Sep 17 00:00:00 2001
+From a07369c763a13a1bbc97b162f5d029a0d98d6fd3 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:27:13 +0200
 Subject: Add ppc64 machine types
