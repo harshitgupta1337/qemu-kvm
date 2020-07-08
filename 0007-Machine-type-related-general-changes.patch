@@ -1,4 +1,4 @@
-From 355248605abeab3ad30da6be267d6352dfea65f0 Mon Sep 17 00:00:00 2001
+From 1266dec11bec3867e8eda3062384b07986a89d3b Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 11 Jan 2019 09:54:45 +0100
 Subject: Machine type related general changes
@@ -35,8 +35,14 @@ Merged patches (4.2.0):
 
 Merged patches (weekly-200318):
 - e6c3fbf hw/smbios: set new default SMBIOS fields for Windows driver support (partialy)
+
+Merged patches (weekly-200506):
+- 8f9f4d8 compat: disable 'edid' for virtio-gpu-ccw
+
+Conflicts:
+	hw/core/machine.c
 ---
- hw/acpi/ich9.c               |  16 ++++
+ hw/acpi/ich9.c               |  15 ++++
  hw/acpi/piix4.c              |   5 +-
  hw/arm/virt.c                |   2 +-
  hw/char/serial.c             |  16 ++++
@@ -59,10 +65,10 @@ Merged patches (weekly-200318):
  include/hw/usb.h             |   4 +
  migration/migration.c        |   2 +
  migration/migration.h        |   5 ++
- 23 files changed, 355 insertions(+), 11 deletions(-)
+ 23 files changed, 354 insertions(+), 11 deletions(-)
 
 diff --git a/hw/acpi/ich9.c b/hw/acpi/ich9.c
-index ae86900..9a8a627 100644
+index 7ead029..3b8501f 100644
 --- a/hw/acpi/ich9.c
 +++ b/hw/acpi/ich9.c
 @@ -369,6 +369,18 @@ static void ich9_pm_set_enable_tco(Object *obj, bool value, Error **errp)
@@ -81,25 +87,24 @@ index ae86900..9a8a627 100644
 +    s->pm.force_rev1_fadt = value;
 +}
 +
- void ich9_pm_add_properties(Object *obj, ICH9LPCPMRegs *pm, Error **errp)
+ void ich9_pm_add_properties(Object *obj, ICH9LPCPMRegs *pm)
  {
      static const uint32_t gpe0_len = ICH9_PMIO_GPE0_LEN;
-@@ -393,6 +405,10 @@ void ich9_pm_add_properties(Object *obj, ICH9LPCPMRegs *pm, Error **errp)
+@@ -391,6 +403,9 @@ void ich9_pm_add_properties(Object *obj, ICH9LPCPMRegs *pm)
+     object_property_add_bool(obj, "cpu-hotplug-legacy",
                               ich9_pm_get_cpu_hotplug_legacy,
-                              ich9_pm_set_cpu_hotplug_legacy,
-                              NULL);
+                              ich9_pm_set_cpu_hotplug_legacy);
 +    object_property_add_bool(obj, "__com.redhat_force-rev1-fadt",
 +                             ich9_pm_get_force_rev1_fadt,
-+                             ich9_pm_set_force_rev1_fadt,
-+                             NULL);
++                             ich9_pm_set_force_rev1_fadt);
      object_property_add_uint8_ptr(obj, ACPI_PM_PROP_S3_DISABLED,
-                                   &pm->disable_s3, OBJ_PROP_FLAG_READWRITE,
-                                   NULL);
+                                   &pm->disable_s3, OBJ_PROP_FLAG_READWRITE);
+     object_property_add_uint8_ptr(obj, ACPI_PM_PROP_S4_DISABLED,
 diff --git a/hw/acpi/piix4.c b/hw/acpi/piix4.c
-index 964d6f5..b8458ba 100644
+index 630ca6e..715bc17 100644
 --- a/hw/acpi/piix4.c
 +++ b/hw/acpi/piix4.c
-@@ -275,6 +275,7 @@ static const VMStateDescription vmstate_acpi = {
+@@ -276,6 +276,7 @@ static const VMStateDescription vmstate_acpi = {
      .name = "piix4_pm",
      .version_id = 3,
      .minimum_version_id = 3,
@@ -107,7 +112,7 @@ index 964d6f5..b8458ba 100644
      .post_load = vmstate_acpi_post_load,
      .fields = (VMStateField[]) {
          VMSTATE_PCI_DEVICE(parent_obj, PIIX4PMState),
-@@ -628,8 +629,8 @@ static void piix4_send_gpe(AcpiDeviceIf *adev, AcpiEventStatusBits ev)
+@@ -630,8 +631,8 @@ static void piix4_send_gpe(AcpiDeviceIf *adev, AcpiEventStatusBits ev)
  
  static Property piix4_pm_properties[] = {
      DEFINE_PROP_UINT32("smb_io_base", PIIX4PMState, smb_io_base, 0),
@@ -117,12 +122,12 @@ index 964d6f5..b8458ba 100644
 +    DEFINE_PROP_UINT8(ACPI_PM_PROP_S4_DISABLED, PIIX4PMState, disable_s4, 1),
      DEFINE_PROP_UINT8(ACPI_PM_PROP_S4_VAL, PIIX4PMState, s4_val, 2),
      DEFINE_PROP_BOOL("acpi-pci-hotplug-with-bridge-support", PIIX4PMState,
-                      use_acpi_pci_hotplug, true),
+                      use_acpi_hotplug_bridge, true),
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index 7dc96ab..1f8d6bf 100644
+index cd0834c..2e3efd3 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
-@@ -1413,7 +1413,7 @@ static void virt_build_smbios(VirtMachineState *vms)
+@@ -1450,7 +1450,7 @@ static void virt_build_smbios(VirtMachineState *vms)
  
      smbios_set_defaults("QEMU", product,
                          vmc->smbios_old_sys_ver ? "1.0" : mc->name, false,
@@ -132,7 +137,7 @@ index 7dc96ab..1f8d6bf 100644
      smbios_get_tables(MACHINE(vms), NULL, 0, &smbios_tables, &smbios_tables_len,
                        &smbios_anchor, &smbios_anchor_len);
 diff --git a/hw/char/serial.c b/hw/char/serial.c
-index c822a9a..0c7f1ff 100644
+index 9eebcb2..11d2d08 100644
 --- a/hw/char/serial.c
 +++ b/hw/char/serial.c
 @@ -35,6 +35,7 @@
@@ -187,7 +192,7 @@ index c822a9a..0c7f1ff 100644
  }
  
 diff --git a/hw/core/machine.c b/hw/core/machine.c
-index c1a444c..3c45365 100644
+index 211b4e0..ef6b320 100644
 --- a/hw/core/machine.c
 +++ b/hw/core/machine.c
 @@ -28,6 +28,176 @@
@@ -239,7 +244,7 @@ index c1a444c..3c45365 100644
 +    /* hw_compat_rhel_8_0 from hw_compat_4_0 */
 +    { "virtio-vga",     "edid", "false" },
 +    /* hw_compat_rhel_8_0 from hw_compat_4_0 */
-+    { "virtio-gpu-pci", "edid", "false" },
++    { "virtio-gpu-device", "edid", "false" },
 +    /* hw_compat_rhel_8_0 from hw_compat_4_0 */
 +    { "virtio-device", "use-started", "false" },
 +    /* hw_compat_rhel_8_0 from hw_compat_3_1 - that was added in 4.1 */
@@ -364,11 +369,11 @@ index c1a444c..3c45365 100644
 +};
 +const size_t hw_compat_rhel_7_1_len = G_N_ELEMENTS(hw_compat_rhel_7_1);
 +
- GlobalProperty hw_compat_4_2[] = {
-     { "virtio-blk-device", "queue-size", "128"},
-     { "virtio-scsi-device", "virtqueue_size", "128"},
+ GlobalProperty hw_compat_5_0[] = {
+     { "virtio-balloon-device", "page-poison", "false" },
+     { "vmport", "x-read-set-eax", "off" },
 diff --git a/hw/display/vga-isa.c b/hw/display/vga-isa.c
-index 0633ed3..b703e9e 100644
+index 3aaeeec..d88f52a 100644
 --- a/hw/display/vga-isa.c
 +++ b/hw/display/vga-isa.c
 @@ -84,7 +84,7 @@ static void vga_isa_realizefn(DeviceState *dev, Error **errp)
@@ -381,10 +386,10 @@ index 0633ed3..b703e9e 100644
  };
  
 diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
-index 22dee0e..26ff640 100644
+index 1d832b2..82a33b4 100644
 --- a/hw/i386/pc_piix.c
 +++ b/hw/i386/pc_piix.c
-@@ -176,6 +176,8 @@ static void pc_init1(MachineState *machine,
+@@ -179,6 +179,8 @@ static void pc_init1(MachineState *machine,
          smbios_set_defaults("QEMU", "Standard PC (i440FX + PIIX, 1996)",
                              mc->name, pcmc->smbios_legacy_mode,
                              pcmc->smbios_uuid_encoded,
@@ -394,10 +399,10 @@ index 22dee0e..26ff640 100644
      }
  
 diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
-index d37c425..f67232e 100644
+index 047ea8d..1818d31 100644
 --- a/hw/i386/pc_q35.c
 +++ b/hw/i386/pc_q35.c
-@@ -201,6 +201,8 @@ static void pc_q35_init(MachineState *machine)
+@@ -204,6 +204,8 @@ static void pc_q35_init(MachineState *machine)
          smbios_set_defaults("QEMU", "Standard PC (Q35 + ICH9, 2009)",
                              mc->name, pcmc->smbios_legacy_mode,
                              pcmc->smbios_uuid_encoded,
@@ -407,7 +412,7 @@ index d37c425..f67232e 100644
      }
  
 diff --git a/hw/net/e1000e.c b/hw/net/e1000e.c
-index 79ba158..311dbe0 100644
+index fda3451..be64a6b 100644
 --- a/hw/net/e1000e.c
 +++ b/hw/net/e1000e.c
 @@ -79,6 +79,11 @@ typedef struct E1000EState {
@@ -481,7 +486,7 @@ index 79ba158..311dbe0 100644
                          e1000e_prop_disable_vnet, bool),
      DEFINE_PROP_SIGNED("subsys_ven", E1000EState, subsys_ven,
 diff --git a/hw/net/rtl8139.c b/hw/net/rtl8139.c
-index 70aca7e..0950cee 100644
+index ab93d78..48a8135 100644
 --- a/hw/net/rtl8139.c
 +++ b/hw/net/rtl8139.c
 @@ -3179,7 +3179,7 @@ static int rtl8139_pre_save(void *opaque)
@@ -504,10 +509,10 @@ index 70aca7e..0950cee 100644
          VMSTATE_UINT16(tally_counters.TxUndrn, RTL8139State),
  
 diff --git a/hw/rtc/mc146818rtc.c b/hw/rtc/mc146818rtc.c
-index dc4269c..3fb9469 100644
+index 7a38540..377d861 100644
 --- a/hw/rtc/mc146818rtc.c
 +++ b/hw/rtc/mc146818rtc.c
-@@ -42,6 +42,7 @@
+@@ -43,6 +43,7 @@
  #include "qapi/visitor.h"
  #include "exec/address-spaces.h"
  #include "hw/rtc/mc146818rtc_regs.h"
@@ -515,7 +520,7 @@ index dc4269c..3fb9469 100644
  
  #ifdef TARGET_I386
  #include "qapi/qapi-commands-misc-target.h"
-@@ -820,6 +821,11 @@ static int rtc_post_load(void *opaque, int version_id)
+@@ -821,6 +822,11 @@ static int rtc_post_load(void *opaque, int version_id)
  static bool rtc_irq_reinject_on_ack_count_needed(void *opaque)
  {
      RTCState *s = (RTCState *)opaque;
@@ -684,7 +689,7 @@ index b330e36..b25cce8 100644
      }
  };
 diff --git a/hw/usb/hcd-xhci.h b/hw/usb/hcd-xhci.h
-index 2fad4df..f554b67 100644
+index 946af51..cc91a7e 100644
 --- a/hw/usb/hcd-xhci.h
 +++ b/hw/usb/hcd-xhci.h
 @@ -157,6 +157,8 @@ typedef struct XHCIEvent {
@@ -697,7 +702,7 @@ index 2fad4df..f554b67 100644
  
  typedef struct XHCIInterrupter {
 diff --git a/include/hw/acpi/ich9.h b/include/hw/acpi/ich9.h
-index 41568d1..1a23ccc 100644
+index 28a5318..ff4a672 100644
 --- a/include/hw/acpi/ich9.h
 +++ b/include/hw/acpi/ich9.h
 @@ -61,6 +61,9 @@ typedef struct ICH9LPCPMRegs {
@@ -711,10 +716,10 @@ index 41568d1..1a23ccc 100644
  
  #define ACPI_PM_PROP_TCO_ENABLED "enable_tco"
 diff --git a/include/hw/boards.h b/include/hw/boards.h
-index fd4d62b..0046ab5 100644
+index 18815d9..2224fbc 100644
 --- a/include/hw/boards.h
 +++ b/include/hw/boards.h
-@@ -369,4 +369,28 @@ extern const size_t hw_compat_2_2_len;
+@@ -372,4 +372,28 @@ extern const size_t hw_compat_2_2_len;
  extern GlobalProperty hw_compat_2_1[];
  extern const size_t hw_compat_2_1_len;
  
@@ -760,10 +765,10 @@ index 02a0ced..67e38a1 100644
  void smbios_get_tables(MachineState *ms,
                         const struct smbios_phys_mem_area *mem_array,
 diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
-index 6ab6eda..69fca4e 100644
+index dce1273..665c430 100644
 --- a/include/hw/i386/pc.h
 +++ b/include/hw/i386/pc.h
-@@ -100,6 +100,9 @@ typedef struct PCMachineClass {
+@@ -102,6 +102,9 @@ typedef struct PCMachineClass {
      bool smbios_defaults;
      bool smbios_legacy_mode;
      bool smbios_uuid_encoded;
@@ -774,10 +779,10 @@ index 6ab6eda..69fca4e 100644
      /* RAM / address space compat: */
      bool gigabyte_align;
 diff --git a/include/hw/usb.h b/include/hw/usb.h
-index c24d968..b353438 100644
+index e29a376..35ac38c 100644
 --- a/include/hw/usb.h
 +++ b/include/hw/usb.h
-@@ -605,4 +605,8 @@ int usb_get_quirks(uint16_t vendor_id, uint16_t product_id,
+@@ -575,4 +575,8 @@ int usb_get_quirks(uint16_t vendor_id, uint16_t product_id,
                     uint8_t interface_class, uint8_t interface_subclass,
                     uint8_t interface_protocol);
  
@@ -787,7 +792,7 @@ index c24d968..b353438 100644
 +
  #endif
 diff --git a/migration/migration.c b/migration/migration.c
-index 187ac04..041b773 100644
+index 481a590..a5a64f9 100644
 --- a/migration/migration.c
 +++ b/migration/migration.c
 @@ -128,6 +128,8 @@ enum mig_rp_message_type {
@@ -800,7 +805,7 @@ index 187ac04..041b773 100644
     migrations at once.  For now we don't need to add
     dynamic creation of migration */
 diff --git a/migration/migration.h b/migration/migration.h
-index 507284e..0baa337 100644
+index f617960..b8bc10d 100644
 --- a/migration/migration.h
 +++ b/migration/migration.h
 @@ -339,6 +339,11 @@ void init_dirty_bitmap_incoming_migration(void);

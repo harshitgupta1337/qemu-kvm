@@ -1,0 +1,81 @@
+From 3be5878b68235837729f452f0940105505bf4a55 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Wed, 1 Jul 2020 12:24:02 +0200
+Subject: redhat: define hw_compat_8_2
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200619154227.23845-2-dgilbert@redhat.com>
+Patchwork-id: 97662
+O-Subject: [RHEL-AV 8.3.0 qemu-kvm PATCH 1/2] redhat: define hw_compat_8_2
+Bugzilla: 1842902
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+
+From: Laurent Vivier <lvivier@redhat.com>
+
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+   For minor fix
+
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/core/machine.c   | 28 ++++++++++++++++++++++++++++
+ include/hw/boards.h |  3 +++
+ 2 files changed, 31 insertions(+)
+
+diff --git a/hw/core/machine.c b/hw/core/machine.c
+index ef6b320..b837399 100644
+--- a/hw/core/machine.c
++++ b/hw/core/machine.c
+@@ -29,6 +29,34 @@
+ #include "migration/vmstate.h"
+ 
+ /*
++ * The same as hw_compat_4_2
++ */
++GlobalProperty hw_compat_rhel_8_2[] = {
++    /* hw_compat_rhel_8_2 from hw_compat_4_2 */
++    { "virtio-blk-device", "queue-size", "128"},
++    /* hw_compat_rhel_8_2 from hw_compat_4_2 */
++    { "virtio-scsi-device", "virtqueue_size", "128"},
++    /* hw_compat_rhel_8_2 from hw_compat_4_2 */
++    { "virtio-blk-device", "x-enable-wce-if-config-wce", "off" },
++    /* hw_compat_rhel_8_2 from hw_compat_4_2 */
++    { "virtio-blk-device", "seg-max-adjust", "off"},
++    /* hw_compat_rhel_8_2 from hw_compat_4_2 */
++    { "virtio-scsi-device", "seg_max_adjust", "off"},
++    /* hw_compat_rhel_8_2 from hw_compat_4_2 */
++    { "vhost-blk-device", "seg_max_adjust", "off"},
++    /* hw_compat_rhel_8_2 from hw_compat_4_2 */
++    { "usb-host", "suppress-remote-wake", "off" },
++    /* hw_compat_rhel_8_2 from hw_compat_4_2 */
++    { "usb-redir", "suppress-remote-wake", "off" },
++    /* hw_compat_rhel_8_2 from hw_compat_4_2 */
++    { "qxl", "revision", "4" },
++    /* hw_compat_rhel_8_2 from hw_compat_4_2 */
++    { "qxl-vga", "revision", "4" },
++    /* hw_compat_rhel_8_2 from hw_compat_4_2 */
++    { "fw_cfg", "acpi-mr-restore", "false" },
++};
++const size_t hw_compat_rhel_8_2_len = G_N_ELEMENTS(hw_compat_rhel_8_2);
++/*
+  * The same as hw_compat_4_1
+  */
+ GlobalProperty hw_compat_rhel_8_1[] = {
+diff --git a/include/hw/boards.h b/include/hw/boards.h
+index 24c1348..26ac91d 100644
+--- a/include/hw/boards.h
++++ b/include/hw/boards.h
+@@ -374,6 +374,9 @@ extern const size_t hw_compat_2_2_len;
+ extern GlobalProperty hw_compat_2_1[];
+ extern const size_t hw_compat_2_1_len;
+ 
++extern GlobalProperty hw_compat_rhel_8_2[];
++extern const size_t hw_compat_rhel_8_2_len;
++
+ extern GlobalProperty hw_compat_rhel_8_1[];
+ extern const size_t hw_compat_rhel_8_1_len;
+ 
+-- 
+1.8.3.1
+

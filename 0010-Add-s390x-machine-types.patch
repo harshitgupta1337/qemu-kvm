@@ -1,4 +1,4 @@
-From d51b2da2b2f22313593ec618f510ebf7452b94af Mon Sep 17 00:00:00 2001
+From bf565781e2deb548173e7530e29d886f6c1eaad8 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:47:32 +0200
 Subject: Add s390x machine types
@@ -25,10 +25,10 @@ Merged patches (4.2.0):
  1 file changed, 70 insertions(+), 1 deletion(-)
 
 diff --git a/hw/s390x/s390-virtio-ccw.c b/hw/s390x/s390-virtio-ccw.c
-index 0fa00a9..d61d85d 100644
+index b111406..f1b1722 100644
 --- a/hw/s390x/s390-virtio-ccw.c
 +++ b/hw/s390x/s390-virtio-ccw.c
-@@ -648,7 +648,7 @@ bool css_migration_enabled(void)
+@@ -774,7 +774,7 @@ bool css_migration_enabled(void)
      {                                                                         \
          MachineClass *mc = MACHINE_CLASS(oc);                                 \
          ccw_machine_##suffix##_class_options(mc);                             \
@@ -37,15 +37,15 @@ index 0fa00a9..d61d85d 100644
          if (latest) {                                                         \
              mc->alias = "s390-ccw-virtio";                                    \
              mc->is_default = true;                                            \
-@@ -672,6 +672,7 @@ bool css_migration_enabled(void)
+@@ -798,6 +798,7 @@ bool css_migration_enabled(void)
      }                                                                         \
      type_init(ccw_machine_register_##suffix)
  
 +#if 0 /* Disabled for Red Hat Enterprise Linux */
- static void ccw_machine_5_0_instance_options(MachineState *machine)
+ static void ccw_machine_5_1_instance_options(MachineState *machine)
  {
  }
-@@ -912,6 +913,74 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
+@@ -1050,6 +1051,74 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
      compat_props_add(mc->compat_props, compat, G_N_ELEMENTS(compat));
  }
  DEFINE_CCW_MACHINE(2_4, "2.4", false);

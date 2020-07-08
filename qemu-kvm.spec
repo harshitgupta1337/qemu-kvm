@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.0.0
-Release: 0%{?dist}
+Release: 0%{?dist}.wrb200701
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -105,6 +105,7 @@ Source35: udev-kvm-check.c
 Source36: README.tests
 
 
+Patch0001: 0001-redhat-Adding-slirp-to-the-exploded-tree.patch
 Patch0005: 0005-Initial-redhat-build.patch
 Patch0006: 0006-Enable-disable-devices-for-RHEL.patch
 Patch0007: 0007-Machine-type-related-general-changes.patch
@@ -122,6 +123,13 @@ Patch0018: 0018-usb-xhci-Fix-PCI-capability-order.patch
 Patch0019: 0019-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0020: 0020-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0021: 0021-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
+Patch0023: 0023-RHEL-only-Enable-vTPM-for-POWER-in-downstream-config.patch
+Patch0024: 0024-redhat-fix-5.0-rebase-missing-ISA-TPM-TIS.patch
+Patch0025: 0025-redhat-define-hw_compat_8_2.patch
+Patch0026: 0026-x86-Add-8.3.0-x86_64-machine-type.patch
+Patch0027: 0027-hw-arm-Changes-to-rhel820-machine.patch
+Patch0028: 0028-hw-arm-Introduce-rhel_virt_instance_init-helper.patch
+Patch0029: 0029-hw-arm-Add-rhel830-machine-type.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -406,6 +414,9 @@ the Secure Shell (SSH) protocol.
 
 %prep
 %setup -n qemu-%{version}
+# Remove slirp content in scratchbuilds because it's being applyed as a patch
+rm -fr slirp
+mkdir slirp
 %autopatch -p1
 mkdir qemu-kvm-build
 
@@ -665,11 +676,12 @@ cp -R scripts/qmp/* $RPM_BUILD_ROOT%{testsdir}/scripts/qmp
 install -p -m 0755 ../tests/Makefile.include $RPM_BUILD_ROOT%{testsdir}/tests/
 
 # Install qemu-iotests
-cp -R tests/qemu-iotests/* $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/
+cp -R ../tests/qemu-iotests/* $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/
+cp -u tests/qemu-iotests/* $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/
 # Avoid ambiguous 'python' interpreter name
-find $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/env python+%{__python3}+' {} \;
-find $RPM_BUILD_ROOT%{testsdir}/scripts/qmp/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/env python3+%{__python3}+' {} \;
-find $RPM_BUILD_ROOT%{testsdir}/scripts/qmp/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/python+%{__python3}+' {} \;
+find $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/env \(python\|python3\)+%{__python3}+' {} \;
+find $RPM_BUILD_ROOT%{testsdir}/scripts/qmp/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/env \(python\|python3\)+%{__python3}+' {} \;
+find $RPM_BUILD_ROOT%{testsdir}/scripts/qmp/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/\(python\|python3\)+%{__python3}+' {} \;
 
 install -p -m 0644 %{SOURCE36} $RPM_BUILD_ROOT%{testsdir}/README
 
@@ -930,10 +942,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %doc %{qemudocdir}/LICENSE
 %doc %{qemudocdir}/README.systemtap
 %doc %{qemudocdir}/qmp-spec.txt
-%doc %{qemudocdir}/qemu-ga-ref.html
-%doc %{qemudocdir}/qemu-ga-ref.txt
-%doc %{qemudocdir}/qemu-qmp-ref.html
-%doc %{qemudocdir}/qemu-qmp-ref.txt
 %doc %{qemudocdir}/interop/*
 %doc %{qemudocdir}/index.html
 %doc %{qemudocdir}/system/*
@@ -942,7 +950,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_mandir}/man7/qemu-qmp-ref.7*
 %{_mandir}/man7/qemu-cpu-models.7*
 %{_bindir}/qemu-keymap
-%{_bindir}/qemu-pr-helper
+%{_libexecdir}/qemu-pr-helper
 %{_bindir}/qemu-edid
 %{_bindir}/qemu-trace-stap
 %{_unitdir}/qemu-pr-helper.service
@@ -1073,9 +1081,152 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
-* Tue May 12 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.0.0-0
-- Temporary rebase of qemu-kvm to 5.0.0
-- Updated the tarball to actually point to 5.0.0 GA
+* Sun Jun 28 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-28.el8
+- kvm-virtio-blk-Refactor-the-code-that-processes-queued-r.patch [bz#1812765]
+- kvm-virtio-blk-On-restart-process-queued-requests-in-the.patch [bz#1812765]
+- kvm-Fix-use-afte-free-in-ip_reass-CVE-2020-1983.patch [bz#1838082]
+- Resolves: bz#1812765
+  (qemu with iothreads enabled crashes on resume after enospc pause for disk extension)
+- Resolves: bz#1838082
+  (CVE-2020-1983 virt:8.2/qemu-kvm: QEMU: slirp: use-after-free in ip_reass() function in ip_input.c [rhel-av-8])
+
+* Thu Jun 18 2020 Eduardo Lima (Etrunko) <elima@redhat.com> - 4.2.0-27.el8
+- kvm-hw-pci-pcie-Move-hot-plug-capability-check-to-pre_pl.patch [bz#1820531]
+- kvm-spec-Fix-python-shenigans-for-tests.patch [bz#1845779]
+- kvm-target-i386-Add-ARCH_CAPABILITIES-related-bits-into-.patch [bz#1840342]
+- Resolves: bz#1820531
+  (qmp command query-pci get wrong result after hotplug device under hotplug=off controller)
+- Resolves: bz#1840342
+  ([Intel 8.2.1 Bug] qemu-kvm Add ARCH_CAPABILITIES to Icelake-Server cpu model - Fast Train)
+- Resolves: bz#1845779
+  (Install 'qemu-kvm-tests' failed as nothing provides /usr/libexec/platform-python3 - virt module 6972)
+
+* Wed Jun 17 2020 Eduardo Lima (Etrunko) <elima@redhat.com> - 4.2.0-26.el8
+- kvm-nbd-server-Avoid-long-error-message-assertions-CVE-2.patch [bz#1845384]
+- kvm-block-Call-attention-to-truncation-of-long-NBD-expor.patch [bz#1845384]
+- Resolves: bz#1845384
+  (CVE-2020-10761 virt:8.2/qemu-kvm: QEMU: nbd: reachable assertion failure in nbd_negotiate_send_rep_verr via remote client [rhel-av-8])
+
+* Tue Jun 09 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-25.el8
+- kvm-enable-ramfb.patch [bz#1841068]
+- kvm-block-Add-flags-to-BlockDriver.bdrv_co_truncate.patch [bz#1780574]
+- kvm-block-Add-flags-to-bdrv-_co-_truncate.patch [bz#1780574]
+- kvm-block-backend-Add-flags-to-blk_truncate.patch [bz#1780574]
+- kvm-qcow2-Support-BDRV_REQ_ZERO_WRITE-for-truncate.patch [bz#1780574]
+- kvm-raw-format-Support-BDRV_REQ_ZERO_WRITE-for-truncate.patch [bz#1780574]
+- kvm-file-posix-Support-BDRV_REQ_ZERO_WRITE-for-truncate.patch [bz#1780574]
+- kvm-block-truncate-Don-t-make-backing-file-data-visible.patch [bz#1780574]
+- kvm-iotests-Add-qemu_io_log.patch [bz#1780574]
+- kvm-iotests-Filter-testfiles-out-in-filter_img_info.patch [bz#1780574]
+- kvm-iotests-Test-committing-to-short-backing-file.patch [bz#1780574]
+- kvm-qcow2-Forward-ZERO_WRITE-flag-for-full-preallocation.patch [bz#1780574]
+- kvm-i386-Add-MSR-feature-bit-for-MDS-NO.patch [bz#1769912]
+- kvm-i386-Add-macro-for-stibp.patch [bz#1769912]
+- kvm-target-i386-Add-new-bit-definitions-of-MSR_IA32_ARCH.patch [bz#1769912]
+- kvm-i386-Add-new-CPU-model-Cooperlake.patch [bz#1769912]
+- kvm-target-i386-Add-missed-features-to-Cooperlake-CPU-mo.patch [bz#1769912]
+- Resolves: bz#1769912
+  ([Intel 8.2.1 Feature] introduce Cooper Lake cpu model - qemu-kvm Fast Train)
+- Resolves: bz#1780574
+  (Data corruption with resizing short overlay over longer backing files)
+- Resolves: bz#1841068
+  (RFE: please support the "ramfb" display device model)
+
+* Mon Jun 08 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-24.el8
+- kvm-target-i386-set-the-CPUID-level-to-0x14-on-old-machi.patch [bz#1513681]
+- kvm-block-curl-HTTP-header-fields-allow-whitespace-aroun.patch [bz#1841038]
+- kvm-block-curl-HTTP-header-field-names-are-case-insensit.patch [bz#1841038]
+- kvm-MAINTAINERS-fix-qcow2-bitmap.c-under-Dirty-Bitmaps-h.patch [bz#1779893 bz#1779904]
+- kvm-iotests-Let-_make_test_img-parse-its-parameters.patch [bz#1779893 bz#1779904]
+- kvm-qemu_img-add-cvtnum_full-to-print-error-reports.patch [bz#1779893 bz#1779904]
+- kvm-block-Make-it-easier-to-learn-which-BDS-support-bitm.patch [bz#1779893 bz#1779904]
+- kvm-blockdev-Promote-several-bitmap-functions-to-non-sta.patch [bz#1779893 bz#1779904]
+- kvm-blockdev-Split-off-basic-bitmap-operations-for-qemu-.patch [bz#1779893 bz#1779904]
+- kvm-qemu-img-Add-bitmap-sub-command.patch [bz#1779893 bz#1779904]
+- kvm-iotests-Fix-test-178.patch [bz#1779893 bz#1779904]
+- kvm-qcow2-Expose-bitmaps-size-during-measure.patch [bz#1779893 bz#1779904]
+- kvm-qemu-img-Factor-out-code-for-merging-bitmaps.patch [bz#1779893 bz#1779904]
+- kvm-qemu-img-Add-convert-bitmaps-option.patch [bz#1779893 bz#1779904]
+- kvm-iotests-Add-test-291-to-for-qemu-img-bitmap-coverage.patch [bz#1779893 bz#1779904]
+- kvm-iotests-Add-more-skip_if_unsupported-statements-to-t.patch [bz#1778593]
+- kvm-iotests-don-t-use-format-for-drive_add.patch [bz#1778593]
+- kvm-iotests-055-refactor-compressed-backup-to-vmdk.patch [bz#1778593]
+- kvm-iotests-055-skip-vmdk-target-tests-if-vmdk-is-not-wh.patch [bz#1778593]
+- kvm-backup-Improve-error-for-bdrv_getlength-failure.patch [bz#1778593]
+- kvm-backup-Make-sure-that-source-and-target-size-match.patch [bz#1778593]
+- kvm-iotests-Backup-with-different-source-target-size.patch [bz#1778593]
+- kvm-iotests-109-Don-t-mirror-with-mismatched-size.patch [bz#1778593]
+- kvm-iotests-229-Use-blkdebug-to-inject-an-error.patch [bz#1778593]
+- kvm-mirror-Make-sure-that-source-and-target-size-match.patch [bz#1778593]
+- kvm-iotests-Mirror-with-different-source-target-size.patch [bz#1778593]
+- Resolves: bz#1513681
+  ([Intel 8.2.1 Feat] qemu-kvm PT VMX -- Fast Train)
+- Resolves: bz#1778593
+  (Qemu coredump when backup to a existing small size image)
+- Resolves: bz#1779893
+  (RFE: Copy bitmaps with qemu-img convert)
+- Resolves: bz#1779904
+  (RFE: ability to estimate bitmap space utilization for qcow2)
+- Resolves: bz#1841038
+  (qemu-img: /var/tmp/v2vovl56bced.qcow2: CURL: Error opening file: Server does not support 'range' (byte ranges) with HTTP/2 server in VMware ESXi 7)
+
+* Thu Jun 04 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-23.el8
+- kvm-target-arm-Fix-PAuth-sbox-functions.patch [bz#1813940]
+- kvm-Don-t-leak-memory-when-reallocation-fails.patch [bz#1749737]
+- kvm-Replace-remaining-malloc-free-user-with-glib.patch [bz#1749737]
+- kvm-Revert-RHEL-disable-hostmem-memfd.patch [bz#1839030]
+- kvm-block-introducing-bdrv_co_delete_file-interface.patch [bz#1827630]
+- kvm-block.c-adding-bdrv_co_delete_file.patch [bz#1827630]
+- kvm-crypto.c-cleanup-created-file-when-block_crypto_co_c.patch [bz#1827630]
+- Resolves: bz#1749737
+  (CVE-2019-15890 qemu-kvm: QEMU: Slirp: use-after-free during packet reassembly [rhel-av-8])
+- Resolves: bz#1813940
+  (CVE-2020-10702 virt:8.1/qemu-kvm: qemu: weak signature generation in Pointer Authentication support for ARM [rhel-av-8])
+- Resolves: bz#1827630
+  (volume creation leaving uncleaned stuff behind on error (vol-clone/libvirt/qemu-kvm))
+- Resolves: bz#1839030
+  (RFE: enable the "memfd" memory backend)
+
+* Mon May 25 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-22.el8
+- kvm-block-always-fill-entire-LUKS-header-space-with-zero.patch [bz#1775462]
+- kvm-numa-remove-not-needed-check.patch [bz#1600217]
+- kvm-numa-properly-check-if-numa-is-supported.patch [bz#1600217]
+- kvm-numa-Extend-CLI-to-provide-initiator-information-for.patch [bz#1600217]
+- kvm-numa-Extend-CLI-to-provide-memory-latency-and-bandwi.patch [bz#1600217]
+- kvm-numa-Extend-CLI-to-provide-memory-side-cache-informa.patch [bz#1600217]
+- kvm-hmat-acpi-Build-Memory-Proximity-Domain-Attributes-S.patch [bz#1600217]
+- kvm-hmat-acpi-Build-System-Locality-Latency-and-Bandwidt.patch [bz#1600217]
+- kvm-hmat-acpi-Build-Memory-Side-Cache-Information-Struct.patch [bz#1600217]
+- kvm-tests-numa-Add-case-for-QMP-build-HMAT.patch [bz#1600217]
+- kvm-tests-bios-tables-test-add-test-cases-for-ACPI-HMAT.patch [bz#1600217]
+- kvm-ACPI-add-expected-files-for-HMAT-tests-acpihmat.patch [bz#1600217]
+- Resolves: bz#1600217
+  ([Intel 8.2.1 FEAT] KVM ACPI HMAT support - qemu-kvm  Fast Train)
+- Resolves: bz#1775462
+  (Creating luks-inside-qcow2 images with cluster_size=2k/4k will get a corrupted image)
+
+* Mon May 11 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-21.el8
+- kvm-hw-pci-pcie-Forbid-hot-plug-if-it-s-disabled-on-the-.patch [bz#1820531]
+- kvm-hw-pci-pcie-Replace-PCI_DEVICE-casts-with-existing-v.patch [bz#1820531]
+- kvm-tools-virtiofsd-passthrough_ll-Fix-double-close.patch [bz#1817445]
+- kvm-virtiofsd-add-rlimit-nofile-NUM-option.patch [bz#1817445]
+- kvm-virtiofsd-stay-below-fs.file-max-sysctl-value-CVE-20.patch [bz#1817445]
+- kvm-virtiofsd-jail-lo-proc_self_fd.patch [bz#1817445]
+- kvm-virtiofsd-Show-submounts.patch [bz#1817445]
+- kvm-virtiofsd-only-retain-file-system-capabilities.patch [bz#1817445]
+- kvm-virtiofsd-drop-all-capabilities-in-the-wait-parent-p.patch [bz#1817445]
+- Resolves: bz#1817445
+  (CVE-2020-10717 virt:8.2/qemu-kvm: QEMU: virtiofsd: guest may open maximum file descriptor to cause DoS [rhel-av-8])
+- Resolves: bz#1820531
+  (qmp command query-pci get wrong result after hotplug device under hotplug=off controller)
+
+* Fri May 01 2020 Jon Maloy <jmaloy@redhat.com> - 4.2.0-20.el8
+- kvm-pcie_root_port-Add-hotplug-disabling-option.patch [bz#1790899]
+- kvm-compat-disable-edid-for-virtio-gpu-ccw.patch [bz#1816793]
+- Resolves: bz#1790899
+  ([RFE] QEMU devices should have the option to enable/disable hotplug/unplug)
+- Resolves: bz#1816793
+  ('edid' compat handling missing for virtio-gpu-ccw)
 
 * Tue Apr 14 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-19.el8_2
 - kvm-target-i386-do-not-set-unsupported-VMX-secondary-exe.patch [bz#1822682]

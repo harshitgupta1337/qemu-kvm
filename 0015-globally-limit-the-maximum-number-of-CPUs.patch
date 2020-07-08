@@ -1,4 +1,4 @@
-From 08d4d4615d252407ba4753e1b53087df813eb9d1 Mon Sep 17 00:00:00 2001
+From 0aa24293cae6e15d483b9aa34f5c27ace53e478c Mon Sep 17 00:00:00 2001
 From: Andrew Jones <drjones@redhat.com>
 Date: Tue, 21 Jan 2014 10:46:52 +0100
 Subject: globally limit the maximum number of CPUs
@@ -80,10 +80,10 @@ This commit matches the limit to current KVM_CAP_NR_VCPUS value.
  2 files changed, 30 insertions(+)
 
 diff --git a/accel/kvm/kvm-all.c b/accel/kvm/kvm-all.c
-index 439a4ef..6f804b8 100644
+index d54a870..aa562c2 100644
 --- a/accel/kvm/kvm-all.c
 +++ b/accel/kvm/kvm-all.c
-@@ -1975,6 +1975,18 @@ static int kvm_init(MachineState *ms)
+@@ -2089,6 +2089,18 @@ static int kvm_init(MachineState *ms)
      soft_vcpus_limit = kvm_recommended_vcpus(s);
      hard_vcpus_limit = kvm_max_vcpus(s);
  
@@ -103,10 +103,10 @@ index 439a4ef..6f804b8 100644
          if (nc->num > soft_vcpus_limit) {
              warn_report("Number of %s cpus requested (%d) exceeds "
 diff --git a/softmmu/vl.c b/softmmu/vl.c
-index 552bae5..bdc4f7f 100644
+index 9d2e2d3..accccd8 100644
 --- a/softmmu/vl.c
 +++ b/softmmu/vl.c
-@@ -115,6 +115,8 @@
+@@ -116,6 +116,8 @@
  
  #define MAX_VIRTIO_CONSOLES 1
  
@@ -136,7 +136,7 @@ index 552bae5..bdc4f7f 100644
  static int machine_help_func(QemuOpts *opts, MachineState *machine)
  {
      ObjectProperty *prop;
-@@ -3829,6 +3845,8 @@ void qemu_init(int argc, char **argv, char **envp)
+@@ -3831,6 +3847,8 @@ void qemu_init(int argc, char **argv, char **envp)
                       "mutually exclusive");
          exit(EXIT_FAILURE);
      }

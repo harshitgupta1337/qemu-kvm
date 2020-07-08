@@ -1,4 +1,4 @@
-From 59faef98f835eb3522a0b49f6af6302b20b17b72 Mon Sep 17 00:00:00 2001
+From a7132dd3a148a8990ef18b38baa2fb2aa89484b4 Mon Sep 17 00:00:00 2001
 From: Bandan Das <bsd@redhat.com>
 Date: Tue, 3 Dec 2013 20:05:13 +0100
 Subject: vfio: cap number of devices that can be assigned
@@ -41,7 +41,7 @@ Merged patches (2.9.0):
  2 files changed, 29 insertions(+), 1 deletion(-)
 
 diff --git a/hw/vfio/pci.c b/hw/vfio/pci.c
-index e265d77..41d00a3 100644
+index 6838bcc..ac109b4 100644
 --- a/hw/vfio/pci.c
 +++ b/hw/vfio/pci.c
 @@ -47,6 +47,9 @@
@@ -54,7 +54,7 @@ index e265d77..41d00a3 100644
  static void vfio_disable_interrupts(VFIOPCIDevice *vdev);
  static void vfio_mmap_set_enabled(VFIOPCIDevice *vdev, bool enabled);
  
-@@ -2722,9 +2725,30 @@ static void vfio_realize(PCIDevice *pdev, Error **errp)
+@@ -2715,9 +2718,30 @@ static void vfio_realize(PCIDevice *pdev, Error **errp)
      ssize_t len;
      struct stat st;
      int groupid;
@@ -86,7 +86,7 @@ index e265d77..41d00a3 100644
      if (!vdev->vbasedev.sysfsdev) {
          if (!(~vdev->host.domain || ~vdev->host.bus ||
                ~vdev->host.slot || ~vdev->host.function)) {
-@@ -3169,6 +3193,9 @@ static Property vfio_pci_dev_properties[] = {
+@@ -3162,6 +3186,9 @@ static Property vfio_pci_dev_properties[] = {
      DEFINE_PROP_BOOL("x-no-kvm-msix", VFIOPCIDevice, no_kvm_msix, false),
      DEFINE_PROP_BOOL("x-no-geforce-quirks", VFIOPCIDevice,
                       no_geforce_quirks, false),

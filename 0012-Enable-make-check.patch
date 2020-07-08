@@ -1,4 +1,4 @@
-From 19bc7ed029e014148be05551a2f36b7d41035b1c Mon Sep 17 00:00:00 2001
+From 8704d7b6ca7438f10d162caf70572b62509b6341 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:48:41 +0200
 Subject: Enable make check
@@ -26,7 +26,7 @@ Rebase changes (weekly-200129):
 - Disable qtest/q35-test (uses upstream machine types)
 
 Rebased changes (weekly-200212):
-- Do not run iotests on make check
+- Do not run iotests on make checka
 
 Merged patches (4.0.0):
 - f7ffd13 Remove 7 qcow2 and luks iotests that are taking > 25 sec to run during the fast train build proce
@@ -82,7 +82,7 @@ index 034d3a3..aadc413 100755
       *)
          ;;
 diff --git a/tests/qemu-iotests/group b/tests/qemu-iotests/group
-index 435dccd..4ad61bc 100644
+index d886fa0..37dd761 100644
 --- a/tests/qemu-iotests/group
 +++ b/tests/qemu-iotests/group
 @@ -92,7 +92,7 @@
@@ -104,7 +104,7 @@ index 435dccd..4ad61bc 100644
  101 rw quick
  102 rw quick
 diff --git a/tests/qtest/Makefile.include b/tests/qtest/Makefile.include
-index 9e5a51d..0732f59 100644
+index 98af2c2..d370459 100644
 --- a/tests/qtest/Makefile.include
 +++ b/tests/qtest/Makefile.include
 @@ -29,7 +29,7 @@ check-qtest-i386-y += ide-test
@@ -266,7 +266,7 @@ index 60e6ec3..f9d6adc 100644
          add_tests(sparc_machines);
      } else if (!strcmp(arch, "sparc64")) {
 diff --git a/tests/qtest/test-x86-cpuid-compat.c b/tests/qtest/test-x86-cpuid-compat.c
-index 772287b..e7c075e 100644
+index 7ca1883..983aa07 100644
 --- a/tests/qtest/test-x86-cpuid-compat.c
 +++ b/tests/qtest/test-x86-cpuid-compat.c
 @@ -300,6 +300,7 @@ int main(int argc, char **argv)
@@ -279,7 +279,7 @@ index 772287b..e7c075e 100644
  
 @@ -350,6 +351,7 @@ int main(int argc, char **argv)
      add_cpuid_test("x86/cpuid/xlevel-compat/pc-i440fx-2.4/npt-on",
-                    "-machine pc-i440fx-2.4 -cpu SandyBridge,+npt",
+                    "-machine pc-i440fx-2.4 -cpu SandyBridge,+svm,+npt",
                     "xlevel", 0x80000008);
 +#endif
  

@@ -1,0 +1,43 @@
+From 7fd82f454755e0c7c68faac76a156c9ddb322124 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marc-Andr=C3=A9=20Lureau?= <marcandre.lureau@redhat.com>
+Date: Wed, 1 Jul 2020 12:24:02 +0200
+Subject: redhat: fix 5.0 rebase missing ISA TPM TIS
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Marc-André Lureau <marcandre.lureau@redhat.com>
+Message-id: <20200608155426.112078-1-marcandre.lureau@redhat.com>
+Patchwork-id: 97457
+O-Subject: [RHEL-AV-8.3.0 qemu-kvm PATCH] redhat: fix 5.0 rebase missing ISA TPM TIS
+Bugzilla: 1841529
+RH-Acked-by: Auger Eric <eric.auger@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+
+BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1841529
+BRANCH: rhel-av-8.3.0-preview-2020-04-29
+UPSTREAM: N/A
+BREW: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=29172313
+
+Signed-off-by: Marc-AndrÃ© Lureau <marcandre.lureau@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ default-configs/x86_64-rh-devices.mak | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/default-configs/x86_64-rh-devices.mak b/default-configs/x86_64-rh-devices.mak
+index d59b6d9..1469e05 100644
+--- a/default-configs/x86_64-rh-devices.mak
++++ b/default-configs/x86_64-rh-devices.mak
+@@ -95,6 +95,6 @@ CONFIG_WDT_IB6300ESB=y
+ CONFIG_WDT_IB700=y
+ CONFIG_XIO3130=y
+ CONFIG_TPM_CRB=y
+-CONFIG_TPM_TIS=y
++CONFIG_TPM_TIS_ISA=y
+ CONFIG_TPM_EMULATOR=y
+ CONFIG_TPM_PASSTHROUGH=y
+-- 
+1.8.3.1
+

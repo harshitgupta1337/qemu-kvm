@@ -1,4 +1,4 @@
-From 950e13b225f6e890a2c19223b8a05cdc9ecabfa7 Mon Sep 17 00:00:00 2001
+From b1e6c8e2a9b58d215042adbd0fffdf102ac9a9d7 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Mon, 11 Jan 2016 11:53:33 +0100
 Subject: Enable/disable devices for RHEL
@@ -45,6 +45,12 @@ Rebase notes (weekly-200205):
 Rebase notes (weekly-200226):
 - Added CONFIG_NVDIMM
 
+Rebase notes (weekly-200513)
+- updated cortex-15 disabling to upstream code
+
+Rebase notes (weekly-200520):
+- Add CONFIG_ACPI_APEI for aarch64
+
 Merged patches (qemu 3.1.0):
 - d51e082 Re-enable CONFIG_HYPERV_TESTDEV
 - 4b889f3 Declare cirrus-vga as deprecated
@@ -65,9 +71,15 @@ Merged patches (4.2.0):
 
 Merged patches (weekly-200108):
 - 4543a3c i386: Remove cpu64-rhel6 CPU model
+
+Merged patches (weekly-200520):
+- 96533 aarch64: Remove tcg cpu types (pjw commit)
+
+Merged patches (weekly-200610):
+- 559d589 Revert "RHEL: disable hostmem-memfd"
+- 441128e enable ramfb
 ---
- backends/Makefile.objs                 |   3 +-
- default-configs/aarch64-rh-devices.mak |  20 +++++++
+ default-configs/aarch64-rh-devices.mak |  22 ++++++++
  default-configs/aarch64-softmmu.mak    |  10 ++--
  default-configs/ppc64-rh-devices.mak   |  34 +++++++++++
  default-configs/ppc64-softmmu.mak      |  10 ++--
@@ -81,24 +93,22 @@ Merged patches (weekly-200108):
  hw/block/fdc.c                         |  10 ++++
  hw/bt/Makefile.objs                    |   3 +
  hw/cpu/Makefile.objs                   |   5 +-
- hw/display/Makefile.objs               |   5 +-
  hw/display/cirrus_vga.c                |   3 +
  hw/ide/piix.c                          |   5 +-
  hw/input/pckbd.c                       |   2 +
  hw/net/e1000.c                         |   2 +
  hw/ppc/spapr_cpu_core.c                |   2 +
  hw/usb/Makefile.objs                   |   4 +-
- hw/vfio/pci.c                          |   5 ++
  qemu-options.hx                        |   4 --
  redhat/qemu-kvm.spec.template          |   5 +-
  softmmu/vl.c                           |   2 +-
  target/arm/cpu.c                       |   4 +-
+ target/arm/cpu_tcg.c                   |   3 +
  target/i386/cpu.c                      |  17 +++---
  target/ppc/cpu-models.c                |  10 ++++
  target/s390x/cpu_models.c              |   3 +
  target/s390x/kvm.c                     |   8 +++
- util/memfd.c                           |   2 +-
- 32 files changed, 280 insertions(+), 37 deletions(-)
+ 29 files changed, 274 insertions(+), 33 deletions(-)
  create mode 100644 default-configs/aarch64-rh-devices.mak
  create mode 100644 default-configs/ppc64-rh-devices.mak
  create mode 100644 default-configs/rh-virtio.mak
@@ -106,26 +116,12 @@ Merged patches (weekly-200108):
  create mode 100644 default-configs/x86_64-rh-devices.mak
  create mode 100644 hw/bt/Makefile.objs
 
-diff --git a/backends/Makefile.objs b/backends/Makefile.objs
-index 28a847c..0eda216 100644
---- a/backends/Makefile.objs
-+++ b/backends/Makefile.objs
-@@ -16,7 +16,8 @@ endif
- 
- common-obj-$(call land,$(CONFIG_VHOST_USER),$(CONFIG_VIRTIO)) += vhost-user.o
- 
--common-obj-$(CONFIG_LINUX) += hostmem-memfd.o
-+# RHEL: disable memfd
-+# common-obj-$(CONFIG_LINUX) += hostmem-memfd.o
- 
- common-obj-$(CONFIG_GIO) += dbus-vmstate.o
- dbus-vmstate.o-cflags = $(GIO_CFLAGS)
 diff --git a/default-configs/aarch64-rh-devices.mak b/default-configs/aarch64-rh-devices.mak
 new file mode 100644
-index 0000000..a1ed641
+index 0000000..f0cf5a1
 --- /dev/null
 +++ b/default-configs/aarch64-rh-devices.mak
-@@ -0,0 +1,20 @@
+@@ -0,0 +1,22 @@
 +include rh-virtio.mak
 +
 +CONFIG_ARM_GIC_KVM=y
@@ -146,6 +142,8 @@ index 0000000..a1ed641
 +CONFIG_VIRTIO_MMIO=y
 +CONFIG_VIRTIO_PCI=y
 +CONFIG_XIO3130=y
++CONFIG_NVDIMM=y
++CONFIG_ACPI_APEI=y
 diff --git a/default-configs/aarch64-softmmu.mak b/default-configs/aarch64-softmmu.mak
 index 958b1e0..8f6867d 100644
 --- a/default-configs/aarch64-softmmu.mak
@@ -394,10 +392,10 @@ index 64b2ee2..b5de7e5 100644
 +
 +include x86_64-rh-devices.mak
 diff --git a/hw/acpi/ich9.c b/hw/acpi/ich9.c
-index 336cace..ae86900 100644
+index 2d204ba..7ead029 100644
 --- a/hw/acpi/ich9.c
 +++ b/hw/acpi/ich9.c
-@@ -374,8 +374,8 @@ void ich9_pm_add_properties(Object *obj, ICH9LPCPMRegs *pm, Error **errp)
+@@ -374,8 +374,8 @@ void ich9_pm_add_properties(Object *obj, ICH9LPCPMRegs *pm)
      static const uint32_t gpe0_len = ICH9_PMIO_GPE0_LEN;
      pm->acpi_memory_hotplug.is_enabled = true;
      pm->cpu_hotplug_legacy = true;
@@ -422,10 +420,10 @@ index 534a6a1..bd62442 100644
  obj-$(CONFIG_PXA2XX) += pxa2xx.o pxa2xx_gpio.o pxa2xx_pic.o
  obj-$(CONFIG_DIGIC) += digic.o
 diff --git a/hw/block/fdc.c b/hw/block/fdc.c
-index 33bc9e2..3cb8779 100644
+index 3425d56..f4ae220 100644
 --- a/hw/block/fdc.c
 +++ b/hw/block/fdc.c
-@@ -46,6 +46,8 @@
+@@ -47,6 +47,8 @@
  #include "qemu/module.h"
  #include "trace.h"
  
@@ -434,7 +432,7 @@ index 33bc9e2..3cb8779 100644
  /********************************************************/
  /* debug Floppy devices */
  
-@@ -2613,6 +2615,14 @@ static void fdctrl_realize_common(DeviceState *dev, FDCtrl *fdctrl,
+@@ -2625,6 +2627,14 @@ static void fdctrl_realize_common(DeviceState *dev, FDCtrl *fdctrl,
      int i, j;
      static int command_tables_inited = 0;
  
@@ -448,7 +446,7 @@ index 33bc9e2..3cb8779 100644
 +
      if (fdctrl->fallback == FLOPPY_DRIVE_TYPE_AUTO) {
          error_setg(errp, "Cannot choose a fallback FDrive type of 'auto'");
-     }
+         return;
 diff --git a/hw/bt/Makefile.objs b/hw/bt/Makefile.objs
 new file mode 100644
 index 0000000..e678e9e
@@ -471,27 +469,11 @@ index 8db9e8a..1601ea9 100644
 +#obj-$(CONFIG_A15MPCORE) += a15mpcore.o
 +common-obj-y += core.o
 +# cluster.o
-diff --git a/hw/display/Makefile.objs b/hw/display/Makefile.objs
-index 77a7d62..68c793e 100644
---- a/hw/display/Makefile.objs
-+++ b/hw/display/Makefile.objs
-@@ -1,8 +1,9 @@
- common-obj-$(CONFIG_DDC) += i2c-ddc.o
- common-obj-$(CONFIG_EDID) += edid-generate.o edid-region.o
- 
--common-obj-$(CONFIG_FW_CFG_DMA) += ramfb.o
--common-obj-$(CONFIG_FW_CFG_DMA) += ramfb-standalone.o
-+# Disabled for Red Hat Enterprise Linux
-+#common-obj-$(CONFIG_FW_CFG_DMA) += ramfb.o
-+#common-obj-$(CONFIG_FW_CFG_DMA) += ramfb-standalone.o
- 
- common-obj-$(CONFIG_ADS7846) += ads7846.o
- common-obj-$(CONFIG_VGA_CIRRUS) += cirrus_vga.o
 diff --git a/hw/display/cirrus_vga.c b/hw/display/cirrus_vga.c
-index 0d391e1..fb1b2c4 100644
+index 212d6f5..f2504e5 100644
 --- a/hw/display/cirrus_vga.c
 +++ b/hw/display/cirrus_vga.c
-@@ -2975,6 +2975,9 @@ static void pci_cirrus_vga_realize(PCIDevice *dev, Error **errp)
+@@ -2958,6 +2958,9 @@ static void pci_cirrus_vga_realize(PCIDevice *dev, Error **errp)
       PCIDeviceClass *pc = PCI_DEVICE_GET_CLASS(dev);
       int16_t device_id = pc->device_id;
  
@@ -502,7 +484,7 @@ index 0d391e1..fb1b2c4 100644
         Also accept 8 MB/16 MB for backward compatibility. */
       if (s->vga.vram_size_mb != 4 && s->vga.vram_size_mb != 8 &&
 diff --git a/hw/ide/piix.c b/hw/ide/piix.c
-index 3b2de4c..980c35e 100644
+index b402a93..d3621a4 100644
 --- a/hw/ide/piix.c
 +++ b/hw/ide/piix.c
 @@ -221,7 +221,8 @@ static void piix3_ide_class_init(ObjectClass *klass, void *data)
@@ -525,12 +507,12 @@ index 3b2de4c..980c35e 100644
  
  static const TypeInfo piix4_ide_info = {
 diff --git a/hw/input/pckbd.c b/hw/input/pckbd.c
-index 60a4130..b2f1f91 100644
+index 29d633c..1442f46 100644
 --- a/hw/input/pckbd.c
 +++ b/hw/input/pckbd.c
-@@ -568,6 +568,8 @@ static void i8042_class_initfn(ObjectClass *klass, void *data)
-     dc->realize = i8042_realizefn;
+@@ -599,6 +599,8 @@ static void i8042_class_initfn(ObjectClass *klass, void *data)
      dc->vmsd = &vmstate_kbd_isa;
+     isa->build_aml = i8042_build_aml;
      set_bit(DEVICE_CATEGORY_INPUT, dc->categories);
 +    /* Disabled for Red Hat Enterprise Linux: */
 +    dc->user_creatable = false;
@@ -538,7 +520,7 @@ index 60a4130..b2f1f91 100644
  
  static const TypeInfo i8042_info = {
 diff --git a/hw/net/e1000.c b/hw/net/e1000.c
-index 2a69eee..af3ec17 100644
+index a18f80e..960b2f0 100644
 --- a/hw/net/e1000.c
 +++ b/hw/net/e1000.c
 @@ -1797,6 +1797,7 @@ static const E1000Info e1000_devices[] = {
@@ -558,10 +540,10 @@ index 2a69eee..af3ec17 100644
  
  static void e1000_register_types(void)
 diff --git a/hw/ppc/spapr_cpu_core.c b/hw/ppc/spapr_cpu_core.c
-index ac1c109..542c19e 100644
+index 26ad566..bfdf6b3 100644
 --- a/hw/ppc/spapr_cpu_core.c
 +++ b/hw/ppc/spapr_cpu_core.c
-@@ -399,10 +399,12 @@ static const TypeInfo spapr_cpu_core_type_infos[] = {
+@@ -396,10 +396,12 @@ static const TypeInfo spapr_cpu_core_type_infos[] = {
          .instance_size = sizeof(SpaprCpuCore),
          .class_size = sizeof(SpaprCpuCoreClass),
      },
@@ -575,10 +557,10 @@ index ac1c109..542c19e 100644
      DEFINE_SPAPR_CPU_CORE_TYPE("power7+_v2.1"),
      DEFINE_SPAPR_CPU_CORE_TYPE("power8_v2.0"),
 diff --git a/hw/usb/Makefile.objs b/hw/usb/Makefile.objs
-index 66835e5..1b03645 100644
+index fa5c3fa..854094c 100644
 --- a/hw/usb/Makefile.objs
 +++ b/hw/usb/Makefile.objs
-@@ -29,7 +29,9 @@ common-obj-$(CONFIG_USB_NETWORK)      += dev-network.o
+@@ -30,7 +30,9 @@ common-obj-$(CONFIG_USB_NETWORK)      += dev-network.o
  ifeq ($(CONFIG_USB_SMARTCARD),y)
  common-obj-y                          += dev-smartcard-reader.o
  common-obj-$(CONFIG_SMARTCARD)        += smartcard.mo
@@ -589,39 +571,11 @@ index 66835e5..1b03645 100644
  smartcard.mo-cflags := $(SMARTCARD_CFLAGS)
  smartcard.mo-libs := $(SMARTCARD_LIBS)
  endif
-diff --git a/hw/vfio/pci.c b/hw/vfio/pci.c
-index 5e75a95..e265d77 100644
---- a/hw/vfio/pci.c
-+++ b/hw/vfio/pci.c
-@@ -3222,6 +3222,7 @@ static const TypeInfo vfio_pci_dev_info = {
-     },
- };
- 
-+#if 0 /* Disabled for Red Hat Enterprise Linux */
- static Property vfio_pci_dev_nohotplug_properties[] = {
-     DEFINE_PROP_BOOL("ramfb", VFIOPCIDevice, enable_ramfb, false),
-     DEFINE_PROP_END_OF_LIST(),
-@@ -3241,11 +3242,15 @@ static const TypeInfo vfio_pci_nohotplug_dev_info = {
-     .instance_size = sizeof(VFIOPCIDevice),
-     .class_init = vfio_pci_nohotplug_dev_class_init,
- };
-+#endif
- 
- static void register_vfio_pci_dev_type(void)
- {
-     type_register_static(&vfio_pci_dev_info);
-+
-+#if 0 /* Disabled for Red Hat Enterprise Linux */
-     type_register_static(&vfio_pci_nohotplug_dev_info);
-+#endif
- }
- 
- type_init(register_vfio_pci_dev_type)
 diff --git a/qemu-options.hx b/qemu-options.hx
-index 292d4e7..1df25ae 100644
+index 196f468..43b0dbc 100644
 --- a/qemu-options.hx
 +++ b/qemu-options.hx
-@@ -2239,10 +2239,6 @@ ERST
+@@ -2248,10 +2248,6 @@ ERST
  
  DEF("no-hpet", 0, QEMU_OPTION_no_hpet,
      "-no-hpet        disable HPET\n", QEMU_ARCH_I386)
@@ -633,10 +587,10 @@ index 292d4e7..1df25ae 100644
  DEF("acpitable", HAS_ARG, QEMU_OPTION_acpitable,
      "-acpitable [sig=str][,rev=n][,oem_id=str][,oem_table_id=str][,oem_rev=n][,asl_compiler_id=str][,asl_compiler_rev=n][,{data|file}=file1[:file2]...]\n"
 diff --git a/softmmu/vl.c b/softmmu/vl.c
-index 32c0047..46b4d98 100644
+index 3e15ee2..3693dfb 100644
 --- a/softmmu/vl.c
 +++ b/softmmu/vl.c
-@@ -144,7 +144,7 @@ static Chardev **serial_hds;
+@@ -145,7 +145,7 @@ static Chardev **serial_hds;
  Chardev *parallel_hds[MAX_PARALLEL_PORTS];
  int win2k_install_hack = 0;
  int singlestep = 0;
@@ -646,25 +600,39 @@ index 32c0047..46b4d98 100644
  static int no_reboot;
  int no_shutdown = 0;
 diff --git a/target/arm/cpu.c b/target/arm/cpu.c
-index a79f233..dcdf3b2 100644
+index 5050e18..79adfe2 100644
 --- a/target/arm/cpu.c
 +++ b/target/arm/cpu.c
-@@ -2905,7 +2905,9 @@ static void arm_cpu_register_types(void)
-     type_register_static(&idau_interface_type_info);
+@@ -2335,7 +2335,9 @@ static void arm_cpu_register_types(void)
  
-     while (info->name) {
--        cpu_register(info);
-+        /* RHEL specific: Filter out unsupported cpu models */
-+        if (!strcmp(info->name, "cortex-a15"))
-+            cpu_register(info);
-         info++;
+         type_register_static(&idau_interface_type_info);
+         for (i = 0; i < cpu_count; ++i) {
+-            arm_cpu_register(&arm_cpus[i]);
++            /* RHEL specific: Filter out unsupported cpu models */
++            if (!strcmp(arm_cpus[i].name, "cortex-a15"))
++                arm_cpu_register(&arm_cpus[i]);
+         }
      }
+ }
+diff --git a/target/arm/cpu_tcg.c b/target/arm/cpu_tcg.c
+index 00b0e08..94d429b 100644
+--- a/target/arm/cpu_tcg.c
++++ b/target/arm/cpu_tcg.c
+@@ -655,6 +655,9 @@ static void arm_tcg_cpu_register_types(void)
+ {
+     size_t i;
  
++    /* Disable TCG cpu types for Red Hat Enterprise Linux */
++    return;
++
+     for (i = 0; i < ARRAY_SIZE(arm_tcg_cpus); ++i) {
+         arm_cpu_register(&arm_tcg_cpus[i]);
+     }
 diff --git a/target/i386/cpu.c b/target/i386/cpu.c
-index 90ffc5f..d98618c 100644
+index 36cbd3d..55a30cd 100644
 --- a/target/i386/cpu.c
 +++ b/target/i386/cpu.c
-@@ -1801,20 +1801,21 @@ static CPUCaches epyc_rome_cache_info = {
+@@ -1825,20 +1825,21 @@ static CPUCaches epyc_rome_cache_info = {
  
  static X86CPUDefinition builtin_x86_defs[] = {
      {
@@ -765,7 +733,7 @@ index 4ad1686..16b2185 100644
      { NULL, NULL }
  };
 diff --git a/target/s390x/cpu_models.c b/target/s390x/cpu_models.c
-index 7c32180..88bf4a9 100644
+index 2fa609b..f6bee32 100644
 --- a/target/s390x/cpu_models.c
 +++ b/target/s390x/cpu_models.c
 @@ -404,6 +404,9 @@ static void check_unavailable_features(const S390CPUModel *max_model,
@@ -779,10 +747,10 @@ index 7c32180..88bf4a9 100644
  
      /* detect missing features if any to properly report them */
 diff --git a/target/s390x/kvm.c b/target/s390x/kvm.c
-index 7f7ebab..8dc2df2 100644
+index f2f75d2..8970e4c 100644
 --- a/target/s390x/kvm.c
 +++ b/target/s390x/kvm.c
-@@ -2429,6 +2429,14 @@ void kvm_s390_apply_cpu_model(const S390CPUModel *model, Error **errp)
+@@ -2494,6 +2494,14 @@ void kvm_s390_apply_cpu_model(const S390CPUModel *model, Error **errp)
          error_setg(errp, "KVM doesn't support CPU models");
          return;
      }
@@ -797,19 +765,6 @@ index 7f7ebab..8dc2df2 100644
      prop.cpuid = s390_cpuid_from_cpu_model(model);
      prop.ibc = s390_ibc_from_cpu_model(model);
      /* configure cpu features indicated via STFL(e) */
-diff --git a/util/memfd.c b/util/memfd.c
-index 4a3c07e..3303ec9 100644
---- a/util/memfd.c
-+++ b/util/memfd.c
-@@ -193,7 +193,7 @@ bool qemu_memfd_alloc_check(void)
-  */
- bool qemu_memfd_check(unsigned int flags)
- {
--#ifdef CONFIG_LINUX
-+#if 0 /* RHEL: memfd support disabled */
-     int mfd = memfd_create("test", flags | MFD_CLOEXEC);
- 
-     if (mfd >= 0) {
 -- 
 1.8.3.1
 

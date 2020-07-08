@@ -1,0 +1,117 @@
+From 16e1749209e7df15f7ce12418886117c2259dee7 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Wed, 1 Jul 2020 12:24:02 +0200
+Subject: x86: Add 8.3.0 x86_64 machine type
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20200619154227.23845-3-dgilbert@redhat.com>
+Patchwork-id: 97663
+O-Subject: [RHEL-AV 8.3.0 qemu-kvm PATCH 2/2] x86: Add 8.3.0 x86_64 machine type
+Bugzilla: 1842902
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+
+Not much change, just the smbase-smram.
+
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/i386/pc.c         |  6 ++++++
+ hw/i386/pc_piix.c    |  4 ++++
+ hw/i386/pc_q35.c     | 22 ++++++++++++++++++++++
+ include/hw/i386/pc.h |  3 +++
+ 4 files changed, 35 insertions(+)
+
+diff --git a/hw/i386/pc.c b/hw/i386/pc.c
+index d17d6f8..aaf3ef4 100644
+--- a/hw/i386/pc.c
++++ b/hw/i386/pc.c
+@@ -359,6 +359,12 @@ GlobalProperty pc_rhel_compat[] = {
+ };
+ const size_t pc_rhel_compat_len = G_N_ELEMENTS(pc_rhel_compat);
+ 
++GlobalProperty pc_rhel_8_2_compat[] = {
++    /* pc_rhel_8_2_compat from pc_compat_4_2 */
++    { "mch", "smbase-smram", "off" },
++};
++const size_t pc_rhel_8_2_compat_len = G_N_ELEMENTS(pc_rhel_8_2_compat);
++
+ /* pc_rhel_8_1_compat is empty since pc_4_1_compat is */
+ GlobalProperty pc_rhel_8_1_compat[] = { };
+ const size_t pc_rhel_8_1_compat_len = G_N_ELEMENTS(pc_rhel_8_1_compat);
+diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
+index b195f26..c951107 100644
+--- a/hw/i386/pc_piix.c
++++ b/hw/i386/pc_piix.c
+@@ -1027,6 +1027,10 @@ static void pc_machine_rhel760_options(MachineClass *m)
+     m->smbus_no_migration_support = true;
+     pcmc->pvh_enabled = false;
+     pcmc->default_cpu_version = CPU_VERSION_LEGACY;
++    compat_props_add(m->compat_props, hw_compat_rhel_8_2,
++                     hw_compat_rhel_8_2_len);
++    compat_props_add(m->compat_props, pc_rhel_8_2_compat,
++                     pc_rhel_8_2_compat_len);
+     compat_props_add(m->compat_props, hw_compat_rhel_8_1, hw_compat_rhel_8_1_len);
+     compat_props_add(m->compat_props, pc_rhel_8_1_compat, pc_rhel_8_1_compat_len);
+     compat_props_add(m->compat_props, hw_compat_rhel_8_0, hw_compat_rhel_8_0_len);
+diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
+index 6c49a50..ef0b6e3 100644
+--- a/hw/i386/pc_q35.c
++++ b/hw/i386/pc_q35.c
+@@ -589,6 +589,23 @@ static void pc_q35_machine_rhel_options(MachineClass *m)
+     compat_props_add(m->compat_props, pc_rhel_compat, pc_rhel_compat_len);
+ }
+ 
++static void pc_q35_init_rhel830(MachineState *machine)
++{
++    pc_q35_init(machine);
++}
++
++static void pc_q35_machine_rhel830_options(MachineClass *m)
++{
++    PCMachineClass *pcmc = PC_MACHINE_CLASS(m);
++    pc_q35_machine_rhel_options(m);
++    m->desc = "RHEL-8.3.0 PC (Q35 + ICH9, 2009)";
++    pcmc->smbios_stream_product = "RHEL-AV";
++    pcmc->smbios_stream_version = "8.3.0";
++}
++
++DEFINE_PC_MACHINE(q35_rhel830, "pc-q35-rhel8.3.0", pc_q35_init_rhel830,
++                  pc_q35_machine_rhel830_options);
++
+ static void pc_q35_init_rhel820(MachineState *machine)
+ {
+     pc_q35_init(machine);
+@@ -599,8 +616,13 @@ static void pc_q35_machine_rhel820_options(MachineClass *m)
+     PCMachineClass *pcmc = PC_MACHINE_CLASS(m);
+     pc_q35_machine_rhel_options(m);
+     m->desc = "RHEL-8.2.0 PC (Q35 + ICH9, 2009)";
++    m->alias = NULL;
+     pcmc->smbios_stream_product = "RHEL-AV";
+     pcmc->smbios_stream_version = "8.2.0";
++    compat_props_add(m->compat_props, hw_compat_rhel_8_2,
++                     hw_compat_rhel_8_2_len);
++    compat_props_add(m->compat_props, pc_rhel_8_2_compat,
++                     pc_rhel_8_2_compat_len);
+ }
+ 
+ DEFINE_PC_MACHINE(q35_rhel820, "pc-q35-rhel8.2.0", pc_q35_init_rhel820,
+diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
+index 95d07f8..e67468b 100644
+--- a/include/hw/i386/pc.h
++++ b/include/hw/i386/pc.h
+@@ -270,6 +270,9 @@ extern const size_t pc_compat_1_4_len;
+ extern GlobalProperty pc_rhel_compat[];
+ extern const size_t pc_rhel_compat_len;
+ 
++extern GlobalProperty pc_rhel_8_2_compat[];
++extern const size_t pc_rhel_8_2_compat_len;
++
+ extern GlobalProperty pc_rhel_8_1_compat[];
+ extern const size_t pc_rhel_8_1_compat_len;
+ 
+-- 
+1.8.3.1
+

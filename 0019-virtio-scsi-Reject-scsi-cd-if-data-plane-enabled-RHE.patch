@@ -1,4 +1,4 @@
-From 6f3b48a5ead2663197589066dfd4ed81d4658fe2 Mon Sep 17 00:00:00 2001
+From fed8a416435347899223bbfc260e57d8f8ddd20a Mon Sep 17 00:00:00 2001
 From: Fam Zheng <famz@redhat.com>
 Date: Wed, 14 Jun 2017 15:37:01 +0200
 Subject: virtio-scsi: Reject scsi-cd if data plane enabled [RHEL only]
@@ -45,7 +45,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  1 file changed, 9 insertions(+)
 
 diff --git a/hw/scsi/virtio-scsi.c b/hw/scsi/virtio-scsi.c
-index 472bbd2..ba2dac8 100644
+index 9b72094..71614b4 100644
 --- a/hw/scsi/virtio-scsi.c
 +++ b/hw/scsi/virtio-scsi.c
 @@ -814,6 +814,15 @@ static void virtio_scsi_hotplug(HotplugHandler *hotplug_dev, DeviceState *dev,

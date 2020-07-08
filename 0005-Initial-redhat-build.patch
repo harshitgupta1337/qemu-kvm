@@ -1,4 +1,4 @@
-From b510775819649eeb2499b9d4b9baf93538d4bde7 Mon Sep 17 00:00:00 2001
+From b9d95992b85d3667c13df3a321933c44c7157d0b Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 12 Oct 2018 07:31:11 +0200
 Subject: Initial redhat build
@@ -11,7 +11,7 @@ several issues are fixed in QEMU tree:
  - Man page renamed from qemu to qemu-kvm
   - man page is installed using make install so we have to fix it in qemu tree
 
-This rebase includes changes up to qemu-kvm-4.2.0-19.el8
+This rebase includes changes up to qemu-kvm-4.2.0-28.el8
 
 Rebase notes (3.1.0):
 - added new configure options
@@ -85,6 +85,15 @@ Rebase notes (5.0.0 rc2):
 Rebase notes (5.0.0 rc3):
 - Reorder configure options
 
+Rebase notes (weekly-200617):
+- Fixing qemu-kvm-tests rpm content
+  - Fixed python shenigans
+  - Include all qemu-iotests files
+- qemu-pr-helper moved to /usr/libexec/ (upstream)
+
+Rebase notes (weekly-200701):
+- Moved qemu-ga-ref.* and qemu-qmp-ref.* docs files to interop diretory (upstream)
+
 Merged patches (3.1.0):
 - 01f0c9f RHEL8: Add disable configure options to qemu spec file
 - Spec file cleanups
@@ -111,31 +120,36 @@ Merged patches (weekly-200205):
 - 5edf6bd Add support for rh-brew-module
 - f77d52d redhat: ship virtiofsd vhost-user device backend
 
-Conflicts:
-	gdbstub.c
+Merged patches (weekly-200610):
+- 63f12d4 redhat: Always use module build target for rh-brew (modified)
+- 9b1e140 redhat: updating the modular target
+
+Merged patches (weekly-200617):
+- 44b8bd0 spec: Fix python shenigans for tests
 ---
  .gitignore                          |    1 +
  Makefile                            |    3 +-
  configure                           |    1 +
- redhat/Makefile                     |   88 ++
- redhat/Makefile.common              |   51 +
+ redhat/Makefile                     |   86 +
+ redhat/Makefile.common              |   53 +
  redhat/README.tests                 |   39 +
- redhat/qemu-kvm.spec.template       | 2812 +++++++++++++++++++++++++++++++++++
+ redhat/qemu-kvm.spec.template       | 2956 +++++++++++++++++++++++++++++++++++
+ redhat/qemu-pr-helper.service       |    2 +-
  redhat/scripts/extract_build_cmd.py |    2 +-
  redhat/scripts/process-patches.sh   |    7 +-
  tests/check-block.sh                |    2 +
  ui/vnc.c                            |    2 +-
- 11 files changed, 3000 insertions(+), 8 deletions(-)
+ 12 files changed, 3145 insertions(+), 9 deletions(-)
  create mode 100644 redhat/Makefile
  create mode 100644 redhat/Makefile.common
  create mode 100644 redhat/README.tests
  create mode 100644 redhat/qemu-kvm.spec.template
 
 diff --git a/Makefile b/Makefile
-index 8a9113e..a89cc44 100644
+index b1b8a5a..88b7565 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -548,6 +548,7 @@ CAP_CFLAGS += -DCAPSTONE_HAS_ARM
+@@ -549,6 +549,7 @@ CAP_CFLAGS += -DCAPSTONE_HAS_ARM
  CAP_CFLAGS += -DCAPSTONE_HAS_ARM64
  CAP_CFLAGS += -DCAPSTONE_HAS_POWERPC
  CAP_CFLAGS += -DCAPSTONE_HAS_X86
@@ -143,8 +157,8 @@ index 8a9113e..a89cc44 100644
  
  .PHONY: capstone/all
  capstone/all: .git-submodule-status
-@@ -884,7 +885,7 @@ install-doc: $(DOCS) install-sphinxdocs
- 	$(INSTALL_DATA) docs/interop/qemu-qmp-ref.txt "$(DESTDIR)$(qemu_docdir)"
+@@ -878,7 +879,7 @@ install-doc: $(DOCS) install-sphinxdocs
+ 	$(INSTALL_DATA) docs/interop/qemu-qmp-ref.txt "$(DESTDIR)$(qemu_docdir)/interop"
  ifdef CONFIG_POSIX
  	$(INSTALL_DIR) "$(DESTDIR)$(mandir)/man1"
 -	$(INSTALL_DATA) $(MANUAL_BUILDDIR)/system/qemu.1 "$(DESTDIR)$(mandir)/man1"
@@ -153,10 +167,10 @@ index 8a9113e..a89cc44 100644
  	$(INSTALL_DATA) docs/interop/qemu-qmp-ref.7 "$(DESTDIR)$(mandir)/man7"
  	$(INSTALL_DATA) $(MANUAL_BUILDDIR)/system/qemu-block-drivers.7 "$(DESTDIR)$(mandir)/man7"
 diff --git a/configure b/configure
-index 23b5e93..1b40d7e 100755
+index 4a22dcd..53979dc 100755
 --- a/configure
 +++ b/configure
-@@ -2538,6 +2538,7 @@ if test "$seccomp" != "no" ; then
+@@ -2596,6 +2596,7 @@ if test "$seccomp" != "no" ; then
          seccomp="no"
      fi
  fi
@@ -165,10 +179,10 @@ index 23b5e93..1b40d7e 100755
  # xen probe
  
 diff --git a/tests/check-block.sh b/tests/check-block.sh
-index ad320c2..1f26083 100755
+index 8e29c86..e9bcb5a 100755
 --- a/tests/check-block.sh
 +++ b/tests/check-block.sh
-@@ -43,6 +43,8 @@ if ! (sed --version | grep 'GNU sed') > /dev/null 2>&1 ; then
+@@ -53,6 +53,8 @@ if ! (sed --version | grep 'GNU sed') > /dev/null 2>&1 ; then
      fi
  fi
  
@@ -178,7 +192,7 @@ index ad320c2..1f26083 100755
  
  ret=0
 diff --git a/ui/vnc.c b/ui/vnc.c
-index 1d7138a..1fc55b7 100644
+index 12a1271..89fb616 100644
 --- a/ui/vnc.c
 +++ b/ui/vnc.c
 @@ -3972,7 +3972,7 @@ void vnc_display_open(const char *id, Error **errp)
