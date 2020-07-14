@@ -1,4 +1,4 @@
-From 0aa24293cae6e15d483b9aa34f5c27ace53e478c Mon Sep 17 00:00:00 2001
+From 47faf13d999995693d505074ee73d4908356888b Mon Sep 17 00:00:00 2001
 From: Andrew Jones <drjones@redhat.com>
 Date: Tue, 21 Jan 2014 10:46:52 +0100
 Subject: globally limit the maximum number of CPUs
@@ -80,10 +80,10 @@ This commit matches the limit to current KVM_CAP_NR_VCPUS value.
  2 files changed, 30 insertions(+)
 
 diff --git a/accel/kvm/kvm-all.c b/accel/kvm/kvm-all.c
-index d54a870..aa562c2 100644
+index ab36fbf..6f6bb47 100644
 --- a/accel/kvm/kvm-all.c
 +++ b/accel/kvm/kvm-all.c
-@@ -2089,6 +2089,18 @@ static int kvm_init(MachineState *ms)
+@@ -2088,6 +2088,18 @@ static int kvm_init(MachineState *ms)
      soft_vcpus_limit = kvm_recommended_vcpus(s);
      hard_vcpus_limit = kvm_max_vcpus(s);
  
@@ -103,7 +103,7 @@ index d54a870..aa562c2 100644
          if (nc->num > soft_vcpus_limit) {
              warn_report("Number of %s cpus requested (%d) exceeds "
 diff --git a/softmmu/vl.c b/softmmu/vl.c
-index 9d2e2d3..accccd8 100644
+index 8453de5..ea6e9e4 100644
 --- a/softmmu/vl.c
 +++ b/softmmu/vl.c
 @@ -116,6 +116,8 @@

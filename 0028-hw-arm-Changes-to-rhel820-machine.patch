@@ -1,6 +1,6 @@
-From b3f4822d380a046220749314c9a05cdb0d5d2718 Mon Sep 17 00:00:00 2001
+From 2717baf34693fc9aa5fa7d1f2a5e8eb1677c1bc2 Mon Sep 17 00:00:00 2001
 From: Gavin Shan <gshan@redhat.com>
-Date: Wed, 1 Jul 2020 12:24:02 +0200
+Date: Wed, 8 Jul 2020 10:02:25 +0200
 Subject: hw/arm: Changes to rhel820 machine
 
 RH-Author: Gavin Shan <gshan@redhat.com>
@@ -24,7 +24,7 @@ Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
  1 file changed, 6 insertions(+), 11 deletions(-)
 
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index abbc7d5..07c5c14 100644
+index 5a45677..53f02e0 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
 @@ -2090,6 +2090,7 @@ static void virt_set_acpi(Object *obj, Visitor *v, const char *name,
@@ -43,7 +43,7 @@ index abbc7d5..07c5c14 100644
  
  static char *virt_get_gic_version(Object *obj, Error **errp)
  {
-@@ -2727,12 +2729,8 @@ static void rhel820_virt_instance_init(Object *obj)
+@@ -2760,12 +2762,8 @@ static void rhel820_virt_instance_init(Object *obj)
      object_property_set_description(obj, "highmem",
                                      "Set on/off to enable/disable using "
                                      "physical address space above 32 bits");
@@ -58,7 +58,7 @@ index abbc7d5..07c5c14 100644
      object_property_add_str(obj, "gic-version", virt_get_gic_version,
                          virt_set_gic_version);
      object_property_set_description(obj, "gic-version",
-@@ -2759,12 +2757,9 @@ static void rhel820_virt_instance_init(Object *obj)
+@@ -2792,12 +2790,9 @@ static void rhel820_virt_instance_init(Object *obj)
      object_property_set_description(obj, "iommu",
                                      "Set the IOMMU type. "
                                      "Valid values are none and smmuv3");

@@ -1,4 +1,4 @@
-From b1e6c8e2a9b58d215042adbd0fffdf102ac9a9d7 Mon Sep 17 00:00:00 2001
+From c956c1d145adb87a8a830bf6091dac80b7925054 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Mon, 11 Jan 2016 11:53:33 +0100
 Subject: Enable/disable devices for RHEL
@@ -572,7 +572,7 @@ index fa5c3fa..854094c 100644
  smartcard.mo-libs := $(SMARTCARD_LIBS)
  endif
 diff --git a/qemu-options.hx b/qemu-options.hx
-index 196f468..43b0dbc 100644
+index fa1b19d..b969944 100644
 --- a/qemu-options.hx
 +++ b/qemu-options.hx
 @@ -2248,10 +2248,6 @@ ERST
@@ -587,7 +587,7 @@ index 196f468..43b0dbc 100644
  DEF("acpitable", HAS_ARG, QEMU_OPTION_acpitable,
      "-acpitable [sig=str][,rev=n][,oem_id=str][,oem_table_id=str][,oem_rev=n][,asl_compiler_id=str][,asl_compiler_rev=n][,{data|file}=file1[:file2]...]\n"
 diff --git a/softmmu/vl.c b/softmmu/vl.c
-index 3e15ee2..3693dfb 100644
+index 9da2e23..6509057 100644
 --- a/softmmu/vl.c
 +++ b/softmmu/vl.c
 @@ -145,7 +145,7 @@ static Chardev **serial_hds;

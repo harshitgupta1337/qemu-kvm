@@ -1,6 +1,6 @@
-From 7fd82f454755e0c7c68faac76a156c9ddb322124 Mon Sep 17 00:00:00 2001
+From 0de024660bb9c42ca87fd179b6a4122c3a9e0eb3 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Marc-Andr=C3=A9=20Lureau?= <marcandre.lureau@redhat.com>
-Date: Wed, 1 Jul 2020 12:24:02 +0200
+Date: Wed, 8 Jul 2020 10:02:25 +0200
 Subject: redhat: fix 5.0 rebase missing ISA TPM TIS
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

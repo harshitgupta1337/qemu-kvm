@@ -1,4 +1,4 @@
-From d27b53512182f6aa6d9ccfcaf64e7aab1a064146 Mon Sep 17 00:00:00 2001
+From 59c55f3104aa650b5b2a31150a34646cc7018b77 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:27:13 +0200
 Subject: Add ppc64 machine types
@@ -42,7 +42,7 @@ Merged patches (weekly-200226):
  5 files changed, 307 insertions(+), 1 deletion(-)
 
 diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
-index 4c185bc..2fa25b1 100644
+index f6f034d..f30618e 100644
 --- a/hw/ppc/spapr.c
 +++ b/hw/ppc/spapr.c
 @@ -4530,6 +4530,7 @@ static void spapr_machine_class_init(ObjectClass *oc, void *data)

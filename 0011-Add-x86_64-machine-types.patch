@@ -1,4 +1,4 @@
-From 04955c10da93ce94d73693a0be07b2a4c81246fe Mon Sep 17 00:00:00 2001
+From 31a74446c5312b248bbc6093f21aee3500b96fca Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:10:31 +0200
 Subject: Add x86_64 machine types
@@ -42,9 +42,6 @@ Merged patches (weekly-200122):
 
 Merged patches (weekly-200318):
 - e6c3fbf hw/smbios: set new default SMBIOS fields for Windows driver support (partialy)
-
-Conflicts:
-	hw/i386/pc_piix.c
 ---
  hw/i386/acpi-build.c |   3 +
  hw/i386/pc.c         | 265 ++++++++++++++++++++++++++++++++++++++++++++++++++-
@@ -71,10 +68,10 @@ index b7bcbbb..fe815c5 100644
      }
  
 diff --git a/hw/i386/pc.c b/hw/i386/pc.c
-index 4af9679..d17d6f8 100644
+index 61acc9e..fe37bde 100644
 --- a/hw/i386/pc.c
 +++ b/hw/i386/pc.c
-@@ -345,6 +345,263 @@ GlobalProperty pc_compat_1_4[] = {
+@@ -346,6 +346,263 @@ GlobalProperty pc_compat_1_4[] = {
  };
  const size_t pc_compat_1_4_len = G_N_ELEMENTS(pc_compat_1_4);
  
@@ -338,7 +335,7 @@ index 4af9679..d17d6f8 100644
  GSIState *pc_gsi_create(qemu_irq **irqs, bool pci_enabled)
  {
      GSIState *s;
-@@ -1010,7 +1267,8 @@ void pc_memory_init(PCMachineState *pcms,
+@@ -1011,7 +1268,8 @@ void pc_memory_init(PCMachineState *pcms,
      option_rom_mr = g_malloc(sizeof(*option_rom_mr));
      memory_region_init_ram(option_rom_mr, NULL, "pc.rom", PC_ROM_SIZE,
                             &error_fatal);
@@ -348,7 +345,7 @@ index 4af9679..d17d6f8 100644
          memory_region_set_readonly(option_rom_mr, true);
      }
      memory_region_add_subregion_overlap(rom_memory,
-@@ -1960,6 +2218,8 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
+@@ -1969,6 +2227,8 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
      pcmc->linuxboot_dma_enabled = true;
      pcmc->pvh_enabled = true;
      assert(!mc->get_hotplug_handler);
@@ -357,7 +354,7 @@ index 4af9679..d17d6f8 100644
      mc->get_hotplug_handler = pc_get_hotplug_handler;
      mc->hotplug_allowed = pc_hotplug_allowed;
      mc->cpu_index_to_instance_props = x86_cpu_index_to_props;
-@@ -1971,7 +2231,8 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
+@@ -1981,7 +2241,8 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
      mc->hot_add_cpu = pc_hot_add_cpu;
      mc->smp_parse = pc_smp_parse;
      mc->block_default_type = IF_IDE;
@@ -368,7 +365,7 @@ index 4af9679..d17d6f8 100644
      mc->wakeup = pc_machine_wakeup;
      hc->pre_plug = pc_machine_device_pre_plug_cb;
 diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
-index 82a33b4..b195f26 100644
+index 18815e8..eeadd89 100644
 --- a/hw/i386/pc_piix.c
 +++ b/hw/i386/pc_piix.c
 @@ -54,6 +54,7 @@
@@ -398,7 +395,7 @@ index 82a33b4..b195f26 100644
  static void pc_compat_2_3_fn(MachineState *machine)
  {
      X86MachineState *x86ms = X86_MACHINE(machine);
-@@ -991,3 +993,207 @@ static void xenfv_3_1_machine_options(MachineClass *m)
+@@ -992,3 +994,207 @@ static void xenfv_3_1_machine_options(MachineClass *m)
  DEFINE_PC_MACHINE(xenfv, "xenfv-3.1", pc_xen_hvm_init,
                    xenfv_3_1_machine_options);
  #endif
@@ -607,7 +604,7 @@ index 82a33b4..b195f26 100644
 +DEFINE_PC_MACHINE(rhel700, "pc-i440fx-rhel7.0.0", pc_init_rhel700,
 +                  pc_machine_rhel700_options);
 diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
-index 1818d31..6c49a50 100644
+index a1131e6..1cd4e15 100644
 --- a/hw/i386/pc_q35.c
 +++ b/hw/i386/pc_q35.c
 @@ -201,8 +201,8 @@ static void pc_q35_init(MachineState *machine)
@@ -629,7 +626,7 @@ index 1818d31..6c49a50 100644
  static void pc_q35_machine_options(MachineClass *m)
  {
      PCMachineClass *pcmc = PC_MACHINE_CLASS(m);
-@@ -564,3 +565,160 @@ static void pc_q35_2_4_machine_options(MachineClass *m)
+@@ -565,3 +566,160 @@ static void pc_q35_2_4_machine_options(MachineClass *m)
  
  DEFINE_Q35_MACHINE(v2_4, "pc-q35-2.4", NULL,
                     pc_q35_2_4_machine_options);
@@ -791,13 +788,13 @@ index 1818d31..6c49a50 100644
 +DEFINE_PC_MACHINE(q35_rhel730, "pc-q35-rhel7.3.0", pc_q35_init_rhel730,
 +                  pc_q35_machine_rhel730_options);
 diff --git a/include/hw/boards.h b/include/hw/boards.h
-index 2224fbc..24c1348 100644
+index 1062df9..c357731 100644
 --- a/include/hw/boards.h
 +++ b/include/hw/boards.h
-@@ -207,6 +207,8 @@ struct MachineClass {
-     const char **valid_cpu_types;
+@@ -208,6 +208,8 @@ struct MachineClass {
      strList *allowed_dynamic_sysbus_devices;
      bool auto_enable_numa_with_memhp;
+     bool auto_enable_numa_with_memdev;
 +    /* RHEL only */
 +    bool async_pf_vmexit_disable;
      void (*numa_auto_assign_ram)(MachineClass *mc, NodeInfo *nodes,

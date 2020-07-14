@@ -1,4 +1,4 @@
-From b9d95992b85d3667c13df3a321933c44c7157d0b Mon Sep 17 00:00:00 2001
+From 9f51ea3d645d7da3eaf55f3e5cedc4cd42981efc Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 12 Oct 2018 07:31:11 +0200
 Subject: Initial redhat build
@@ -11,7 +11,7 @@ several issues are fixed in QEMU tree:
  - Man page renamed from qemu to qemu-kvm
   - man page is installed using make install so we have to fix it in qemu tree
 
-This rebase includes changes up to qemu-kvm-4.2.0-28.el8
+This rebase includes changes up to qemu-kvm-4.2.0-29.el8
 
 Rebase notes (3.1.0):
 - added new configure options
@@ -133,13 +133,13 @@ Merged patches (weekly-200617):
  redhat/Makefile                     |   86 +
  redhat/Makefile.common              |   53 +
  redhat/README.tests                 |   39 +
- redhat/qemu-kvm.spec.template       | 2956 +++++++++++++++++++++++++++++++++++
+ redhat/qemu-kvm.spec.template       | 2961 +++++++++++++++++++++++++++++++++++
  redhat/qemu-pr-helper.service       |    2 +-
  redhat/scripts/extract_build_cmd.py |    2 +-
  redhat/scripts/process-patches.sh   |    7 +-
  tests/check-block.sh                |    2 +
  ui/vnc.c                            |    2 +-
- 12 files changed, 3145 insertions(+), 9 deletions(-)
+ 12 files changed, 3150 insertions(+), 9 deletions(-)
  create mode 100644 redhat/Makefile
  create mode 100644 redhat/Makefile.common
  create mode 100644 redhat/README.tests
@@ -167,10 +167,10 @@ index b1b8a5a..88b7565 100644
  	$(INSTALL_DATA) docs/interop/qemu-qmp-ref.7 "$(DESTDIR)$(mandir)/man7"
  	$(INSTALL_DATA) $(MANUAL_BUILDDIR)/system/qemu-block-drivers.7 "$(DESTDIR)$(mandir)/man7"
 diff --git a/configure b/configure
-index 4a22dcd..53979dc 100755
+index ee6c3c6..bd957a5 100755
 --- a/configure
 +++ b/configure
-@@ -2596,6 +2596,7 @@ if test "$seccomp" != "no" ; then
+@@ -2610,6 +2610,7 @@ if test "$seccomp" != "no" ; then
          seccomp="no"
      fi
  fi
@@ -192,10 +192,10 @@ index 8e29c86..e9bcb5a 100755
  
  ret=0
 diff --git a/ui/vnc.c b/ui/vnc.c
-index 12a1271..89fb616 100644
+index 527ad25..8099c0e 100644
 --- a/ui/vnc.c
 +++ b/ui/vnc.c
-@@ -3972,7 +3972,7 @@ void vnc_display_open(const char *id, Error **errp)
+@@ -3970,7 +3970,7 @@ void vnc_display_open(const char *id, Error **errp)
  
  #ifdef CONFIG_VNC_SASL
      if (sasl) {

@@ -1,6 +1,6 @@
-From c0c64a417f65d388526c62b2d82f29fc4f5aed76 Mon Sep 17 00:00:00 2001
+From afad5b1cdd3d29cd497cb9987fca3009fa352d40 Mon Sep 17 00:00:00 2001
 From: Gavin Shan <gshan@redhat.com>
-Date: Wed, 1 Jul 2020 12:24:02 +0200
+Date: Wed, 8 Jul 2020 10:02:25 +0200
 Subject: hw/arm: Add rhel830 machine type
 
 RH-Author: Gavin Shan <gshan@redhat.com>
@@ -21,10 +21,10 @@ Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
  1 file changed, 15 insertions(+), 2 deletions(-)
 
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index c1bc866..48af222 100644
+index f26ae9f..f1553f3 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
-@@ -2764,6 +2764,17 @@ static void rhel_virt_instance_init(Object *obj)
+@@ -2797,6 +2797,17 @@ static void rhel_virt_instance_init(Object *obj)
      virt_flash_create(vms);
  }
  
@@ -42,7 +42,7 @@ index c1bc866..48af222 100644
  static void rhel820_virt_instance_init(Object *obj)
  {
      rhel_virt_instance_init(obj);
-@@ -2771,6 +2782,8 @@ static void rhel820_virt_instance_init(Object *obj)
+@@ -2804,6 +2815,8 @@ static void rhel820_virt_instance_init(Object *obj)
  
  static void rhel820_virt_options(MachineClass *mc)
  {

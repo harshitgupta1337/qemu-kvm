@@ -1,4 +1,4 @@
-From 79b1a539f271440baa5d3ef4264c761175ca1c9d Mon Sep 17 00:00:00 2001
+From 2ce0d065e712fdfae74a52cfa5188791eaa7f848 Mon Sep 17 00:00:00 2001
 From: Kevin Wolf <kwolf@redhat.com>
 Date: Fri, 13 Mar 2020 12:34:32 +0000
 Subject: block: Versioned x-blockdev-reopen API with feature flag
@@ -29,7 +29,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  1 file changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/qapi/block-core.json b/qapi/block-core.json
-index 0e1c6a5..6d94f92 100644
+index b20332e..db4544d 100644
 --- a/qapi/block-core.json
 +++ b/qapi/block-core.json
 @@ -4135,10 +4135,17 @@

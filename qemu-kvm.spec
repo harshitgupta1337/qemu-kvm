@@ -68,7 +68,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.0.0
-Release: 0%{?dist}.wrb200701
+Release: 1%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -123,13 +123,15 @@ Patch0018: 0018-usb-xhci-Fix-PCI-capability-order.patch
 Patch0019: 0019-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0020: 0020-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0021: 0021-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
-Patch0023: 0023-RHEL-only-Enable-vTPM-for-POWER-in-downstream-config.patch
-Patch0024: 0024-redhat-fix-5.0-rebase-missing-ISA-TPM-TIS.patch
-Patch0025: 0025-redhat-define-hw_compat_8_2.patch
-Patch0026: 0026-x86-Add-8.3.0-x86_64-machine-type.patch
-Patch0027: 0027-hw-arm-Changes-to-rhel820-machine.patch
-Patch0028: 0028-hw-arm-Introduce-rhel_virt_instance_init-helper.patch
-Patch0029: 0029-hw-arm-Add-rhel830-machine-type.patch
+Patch0022: 0022-virtio-net-fix-removal-of-failover-device.patch
+Patch0024: 0024-RHEL-only-Enable-vTPM-for-POWER-in-downstream-config.patch
+Patch0025: 0025-redhat-fix-5.0-rebase-missing-ISA-TPM-TIS.patch
+Patch0026: 0026-redhat-define-hw_compat_8_2.patch
+Patch0027: 0027-x86-Add-8.3.0-x86_64-machine-type.patch
+Patch0028: 0028-hw-arm-Changes-to-rhel820-machine.patch
+Patch0029: 0029-hw-arm-Introduce-rhel_virt_instance_init-helper.patch
+Patch0030: 0030-hw-arm-Add-rhel830-machine-type.patch
+Patch0031: 0031-redhat-define-pseries-rhel8.3.0-machine-type.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1081,6 +1083,19 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Jul 14 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.0.0-1.el8
+- This is an interational rebase, based on the weekly rebase.
+- Altough not official yet, It contains fixes for the following BZs:
+- Resolves: bz#1781911
+- Resolves: bz#1841529
+- Resolves: bz#1842902
+- Resolves: bz#1818843
+
+* Tue Jul 07 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-29.el8
+- kvm-virtio-net-fix-removal-of-failover-device.patch [bz#1820120]
+- Resolves: bz#1820120
+  (After hotunplugging the vitrio device and netdev, hotunpluging the failover VF will cause qemu core dump)
+
 * Sun Jun 28 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-28.el8
 - kvm-virtio-blk-Refactor-the-code-that-processes-queued-r.patch [bz#1812765]
 - kvm-virtio-blk-On-restart-process-queued-requests-in-the.patch [bz#1812765]

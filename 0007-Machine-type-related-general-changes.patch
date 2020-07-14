@@ -1,4 +1,4 @@
-From 1266dec11bec3867e8eda3062384b07986a89d3b Mon Sep 17 00:00:00 2001
+From cbbdd67535fc6da1b77b2fa9f5368f72c211eeb1 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 11 Jan 2019 09:54:45 +0100
 Subject: Machine type related general changes
@@ -101,7 +101,7 @@ index 7ead029..3b8501f 100644
                                    &pm->disable_s3, OBJ_PROP_FLAG_READWRITE);
      object_property_add_uint8_ptr(obj, ACPI_PM_PROP_S4_DISABLED,
 diff --git a/hw/acpi/piix4.c b/hw/acpi/piix4.c
-index 630ca6e..715bc17 100644
+index 283422e..f664201 100644
 --- a/hw/acpi/piix4.c
 +++ b/hw/acpi/piix4.c
 @@ -276,6 +276,7 @@ static const VMStateDescription vmstate_acpi = {
@@ -124,7 +124,7 @@ index 630ca6e..715bc17 100644
      DEFINE_PROP_BOOL("acpi-pci-hotplug-with-bridge-support", PIIX4PMState,
                       use_acpi_hotplug_bridge, true),
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index cd0834c..2e3efd3 100644
+index 7d9f715..e30b837 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
 @@ -1450,7 +1450,7 @@ static void virt_build_smbios(VirtMachineState *vms)
@@ -386,7 +386,7 @@ index 3aaeeec..d88f52a 100644
  };
  
 diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
-index 1d832b2..82a33b4 100644
+index fae487f..18815e8 100644
 --- a/hw/i386/pc_piix.c
 +++ b/hw/i386/pc_piix.c
 @@ -179,6 +179,8 @@ static void pc_init1(MachineState *machine,
@@ -399,7 +399,7 @@ index 1d832b2..82a33b4 100644
      }
  
 diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
-index 047ea8d..1818d31 100644
+index acd6d40..a1131e6 100644
 --- a/hw/i386/pc_q35.c
 +++ b/hw/i386/pc_q35.c
 @@ -204,6 +204,8 @@ static void pc_q35_init(MachineState *machine)
@@ -716,10 +716,10 @@ index 28a5318..ff4a672 100644
  
  #define ACPI_PM_PROP_TCO_ENABLED "enable_tco"
 diff --git a/include/hw/boards.h b/include/hw/boards.h
-index 18815d9..2224fbc 100644
+index 426ce5f..1062df9 100644
 --- a/include/hw/boards.h
 +++ b/include/hw/boards.h
-@@ -372,4 +372,28 @@ extern const size_t hw_compat_2_2_len;
+@@ -373,4 +373,28 @@ extern const size_t hw_compat_2_2_len;
  extern GlobalProperty hw_compat_2_1[];
  extern const size_t hw_compat_2_1_len;
  
@@ -792,7 +792,7 @@ index e29a376..35ac38c 100644
 +
  #endif
 diff --git a/migration/migration.c b/migration/migration.c
-index 481a590..a5a64f9 100644
+index 92e44e0..67d3b75 100644
 --- a/migration/migration.c
 +++ b/migration/migration.c
 @@ -128,6 +128,8 @@ enum mig_rp_message_type {
