@@ -24,6 +24,8 @@ Rebase notes (weekly-200129):
 
 Rebase notes (weekly-200708
  - rewrite patch to new docs structure
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  docs/defs.rst.inc                      |  4 ++--
  docs/interop/live-block-operations.rst |  4 ++--
@@ -33,7 +35,7 @@ Rebase notes (weekly-200708
  5 files changed, 17 insertions(+), 17 deletions(-)
 
 diff --git a/docs/defs.rst.inc b/docs/defs.rst.inc
-index 48d05aa..d74dbde 100644
+index 48d05aaf33..d74dbdeca9 100644
 --- a/docs/defs.rst.inc
 +++ b/docs/defs.rst.inc
 @@ -9,7 +9,7 @@
@@ -47,7 +49,7 @@ index 48d05aa..d74dbde 100644
  .. |I2C| replace:: I\ :sup:`2`\ C
  .. |I2S| replace:: I\ :sup:`2`\ S
 diff --git a/docs/interop/live-block-operations.rst b/docs/interop/live-block-operations.rst
-index 48afdc7..6650b2c 100644
+index 48afdc7927..6650b2c975 100644
 --- a/docs/interop/live-block-operations.rst
 +++ b/docs/interop/live-block-operations.rst
 @@ -129,7 +129,7 @@ To show some example invocations of command-line, we will use the
@@ -69,7 +71,7 @@ index 48afdc7..6650b2c 100644
          -blockdev node-name=node-TargetDisk,driver=qcow2,file.driver=file,file.node-name=file,file.filename=./target-disk.qcow2 \
          -device virtio-blk,drive=node-TargetDisk,id=virtio0 \
 diff --git a/docs/tools/qemu-trace-stap.rst b/docs/tools/qemu-trace-stap.rst
-index fb70445..0d9a783 100644
+index fb70445c75..0d9a783112 100644
 --- a/docs/tools/qemu-trace-stap.rst
 +++ b/docs/tools/qemu-trace-stap.rst
 @@ -45,19 +45,19 @@ The following commands are valid:
@@ -127,7 +129,7 @@ index fb70445..0d9a783 100644
  See also
  --------
 diff --git a/docs/tools/virtiofsd.rst b/docs/tools/virtiofsd.rst
-index 824e713..8449936 100644
+index 824e713491..8449936c63 100644
 --- a/docs/tools/virtiofsd.rst
 +++ b/docs/tools/virtiofsd.rst
 @@ -116,7 +116,7 @@ Export ``/var/lib/fs/vm001/`` on vhost-user UNIX domain socket
@@ -140,7 +142,7 @@ index 824e713..8449936 100644
        -device vhost-user-fs-pci,chardev=char0,tag=myfs \
        -object memory-backend-memfd,id=mem,size=4G,share=on \
 diff --git a/qemu-options.hx b/qemu-options.hx
-index b969944..fe85a0e 100644
+index b9699440a3..fe85a0e952 100644
 --- a/qemu-options.hx
 +++ b/qemu-options.hx
 @@ -2891,11 +2891,11 @@ SRST
@@ -161,5 +163,5 @@ index b969944..fe85a0e 100644
  ``-netdev vhost-vdpa,vhostdev=/path/to/dev``
      Establish a vhost-vdpa netdev.
 -- 
-1.8.3.1
+2.27.0
 

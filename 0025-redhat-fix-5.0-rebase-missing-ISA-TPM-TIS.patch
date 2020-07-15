@@ -1,6 +1,6 @@
-From 0de024660bb9c42ca87fd179b6a4122c3a9e0eb3 Mon Sep 17 00:00:00 2001
+From def5545e3588c8b8c7cd12e3ff8967ce059d3f38 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Marc-Andr=C3=A9=20Lureau?= <marcandre.lureau@redhat.com>
-Date: Wed, 8 Jul 2020 10:02:25 +0200
+Date: Mon, 8 Jun 2020 15:54:26 -0400
 Subject: redhat: fix 5.0 rebase missing ISA TPM TIS
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -20,14 +20,14 @@ BRANCH: rhel-av-8.3.0-preview-2020-04-29
 UPSTREAM: N/A
 BREW: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=29172313
 
-Signed-off-by: Marc-AndrÃ© Lureau <marcandre.lureau@redhat.com>
-Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+Signed-off-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  default-configs/x86_64-rh-devices.mak | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/default-configs/x86_64-rh-devices.mak b/default-configs/x86_64-rh-devices.mak
-index d59b6d9..1469e05 100644
+index d59b6d9bb5..1469e05382 100644
 --- a/default-configs/x86_64-rh-devices.mak
 +++ b/default-configs/x86_64-rh-devices.mak
 @@ -95,6 +95,6 @@ CONFIG_WDT_IB6300ESB=y
@@ -39,5 +39,5 @@ index d59b6d9..1469e05 100644
  CONFIG_TPM_EMULATOR=y
  CONFIG_TPM_PASSTHROUGH=y
 -- 
-1.8.3.1
+2.27.0
 

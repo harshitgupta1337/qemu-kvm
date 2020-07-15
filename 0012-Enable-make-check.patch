@@ -33,6 +33,8 @@ Merged patches (4.0.0):
 
 Merged patches (4.1.0-rc0):
 - 41288ff redhat: Remove raw iotest 205
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  redhat/qemu-kvm.spec.template       |  2 +-
  tests/qemu-iotests/051              | 12 ++++++------
@@ -48,7 +50,7 @@ Merged patches (4.1.0-rc0):
  11 files changed, 38 insertions(+), 18 deletions(-)
 
 diff --git a/tests/qemu-iotests/051 b/tests/qemu-iotests/051
-index 034d3a3..aadc413 100755
+index 034d3a3250..aadc413ee6 100755
 --- a/tests/qemu-iotests/051
 +++ b/tests/qemu-iotests/051
 @@ -183,11 +183,11 @@ run_qemu -drive if=virtio
@@ -82,7 +84,7 @@ index 034d3a3..aadc413 100755
       *)
          ;;
 diff --git a/tests/qemu-iotests/group b/tests/qemu-iotests/group
-index 9b07a7e..c678d91 100644
+index 9b07a7ed03..c678d915b2 100644
 --- a/tests/qemu-iotests/group
 +++ b/tests/qemu-iotests/group
 @@ -92,7 +92,7 @@
@@ -104,7 +106,7 @@ index 9b07a7e..c678d91 100644
  101 rw quick
  102 rw quick
 diff --git a/tests/qtest/Makefile.include b/tests/qtest/Makefile.include
-index 98af2c2..d370459 100644
+index 98af2c2d93..d370459c3a 100644
 --- a/tests/qtest/Makefile.include
 +++ b/tests/qtest/Makefile.include
 @@ -29,7 +29,7 @@ check-qtest-i386-y += ide-test
@@ -155,7 +157,7 @@ index 98af2c2..d370459 100644
  check-qtest-s390x-y += cpu-plug-test
  check-qtest-s390x-y += migration-test
 diff --git a/tests/qtest/boot-serial-test.c b/tests/qtest/boot-serial-test.c
-index 85a3614..1c18441 100644
+index 85a3614286..1c18441334 100644
 --- a/tests/qtest/boot-serial-test.c
 +++ b/tests/qtest/boot-serial-test.c
 @@ -109,19 +109,23 @@ static testdef_t tests[] = {
@@ -184,7 +186,7 @@ index 85a3614..1c18441 100644
      { "sparc", "LX", "", "TMS390S10" },
      { "sparc", "SS-4", "", "MB86904" },
 diff --git a/tests/qtest/cpu-plug-test.c b/tests/qtest/cpu-plug-test.c
-index e8ffbbc..fda7269 100644
+index e8ffbbce4b..fda7269c82 100644
 --- a/tests/qtest/cpu-plug-test.c
 +++ b/tests/qtest/cpu-plug-test.c
 @@ -181,8 +181,8 @@ static void add_pseries_test_case(const char *mname)
@@ -199,7 +201,7 @@ index e8ffbbc..fda7269 100644
      }
      data = g_new(PlugTestData, 1);
 diff --git a/tests/qtest/e1000-test.c b/tests/qtest/e1000-test.c
-index c387984..c89112d 100644
+index c387984ef6..c89112d6f8 100644
 --- a/tests/qtest/e1000-test.c
 +++ b/tests/qtest/e1000-test.c
 @@ -22,9 +22,11 @@ struct QE1000 {
@@ -215,7 +217,7 @@ index c387984..c89112d 100644
  
  static void *e1000_get_driver(void *obj, const char *interface)
 diff --git a/tests/qtest/hd-geo-test.c b/tests/qtest/hd-geo-test.c
-index 48e8e02..6496196 100644
+index 48e8e02d6e..6496196b07 100644
 --- a/tests/qtest/hd-geo-test.c
 +++ b/tests/qtest/hd-geo-test.c
 @@ -737,6 +737,7 @@ static void test_override_ide(void)
@@ -247,7 +249,7 @@ index 48e8e02..6496196 100644
          qtest_add_func("hd-geo/override/zero_chs", test_override_zero_chs);
          qtest_add_func("hd-geo/override/scsi_hot_unplug",
 diff --git a/tests/qtest/prom-env-test.c b/tests/qtest/prom-env-test.c
-index 60e6ec3..f9d6adc 100644
+index 60e6ec3153..f9d6adcfe9 100644
 --- a/tests/qtest/prom-env-test.c
 +++ b/tests/qtest/prom-env-test.c
 @@ -89,10 +89,14 @@ int main(int argc, char *argv[])
@@ -266,7 +268,7 @@ index 60e6ec3..f9d6adc 100644
          add_tests(sparc_machines);
      } else if (!strcmp(arch, "sparc64")) {
 diff --git a/tests/qtest/test-x86-cpuid-compat.c b/tests/qtest/test-x86-cpuid-compat.c
-index 7ca1883..983aa07 100644
+index 7ca1883a29..983aa0719a 100644
 --- a/tests/qtest/test-x86-cpuid-compat.c
 +++ b/tests/qtest/test-x86-cpuid-compat.c
 @@ -300,6 +300,7 @@ int main(int argc, char **argv)
@@ -286,7 +288,7 @@ index 7ca1883..983aa07 100644
      /* Test feature parsing */
      add_feature_test("x86/cpuid/features/plus",
 diff --git a/tests/qtest/usb-hcd-xhci-test.c b/tests/qtest/usb-hcd-xhci-test.c
-index 10ef9d2..3855873 100644
+index 10ef9d2a91..3855873050 100644
 --- a/tests/qtest/usb-hcd-xhci-test.c
 +++ b/tests/qtest/usb-hcd-xhci-test.c
 @@ -21,6 +21,7 @@ static void test_xhci_hotplug(void)
@@ -316,5 +318,5 @@ index 10ef9d2..3855873 100644
  
      qtest_start("-device nec-usb-xhci,id=xhci"
 -- 
-1.8.3.1
+2.27.0
 

@@ -1,6 +1,6 @@
-From 34817c44ee8e467df7e9f92b5fffa5679172bb58 Mon Sep 17 00:00:00 2001
+From 64afb1a8b06f0017b3ee5eb59790e1751424b1d5 Mon Sep 17 00:00:00 2001
 From: David Gibson <dgibson@redhat.com>
-Date: Wed, 8 Jul 2020 10:02:25 +0200
+Date: Fri, 22 May 2020 02:27:18 +0000
 Subject: RHEL-only: Enable vTPM for POWER in downstream configs
 
 RH-Author: David Gibson <dgibson@redhat.com>
@@ -8,6 +8,9 @@ Message-id: <20200522032718.387731-1-dgibson@redhat.com>
 Patchwork-id: 96743
 O-Subject: [RHEL-AV-8.3.0 qemu-kvm PATCH] RHEL-only: Enable vTPM for POWER in downstream configs
 Bugzilla: 1781911
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Greg Kurz <gkurz@redhat.com>
 
 From: David Gibson <david@gibson.dropbear.id.au>
 
@@ -20,13 +23,13 @@ Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=28742072
 Testing: With brewed qemu was able to see a vTPM device in a guest
 
 Signed-off-by: David Gibson <dgibson@redhat.com>
-Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  default-configs/ppc64-rh-devices.mak | 3 +++
  1 file changed, 3 insertions(+)
 
 diff --git a/default-configs/ppc64-rh-devices.mak b/default-configs/ppc64-rh-devices.mak
-index ecbe53f..032422e 100644
+index ecbe53fe63..032422e103 100644
 --- a/default-configs/ppc64-rh-devices.mak
 +++ b/default-configs/ppc64-rh-devices.mak
 @@ -32,3 +32,6 @@ CONFIG_XICS_SPAPR=y
@@ -37,5 +40,5 @@ index ecbe53f..032422e 100644
 +CONFIG_TPM_EMULATOR=y
 +CONFIG_TPM_PASSTHROUGH=y
 -- 
-1.8.3.1
+2.27.0
 

@@ -56,12 +56,13 @@ Conflicts:
 
 (cherry picked from commit a42f86dc906cc7d2c16d02bf125ed76847b469cb)
 (cherry picked from commit 992ab2e4f6e15d3e51bc716763aa8d6f45c6d29d)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  hw/usb/hcd-xhci.c | 12 ++++++------
  1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/hw/usb/hcd-xhci.c b/hw/usb/hcd-xhci.c
-index b25cce8..9582d81 100644
+index b25cce8f0c..9582d81d14 100644
 --- a/hw/usb/hcd-xhci.c
 +++ b/hw/usb/hcd-xhci.c
 @@ -3413,6 +3413,12 @@ static void usb_xhci_realize(struct PCIDevice *dev, Error **errp)
@@ -91,5 +92,5 @@ index b25cce8..9582d81 100644
          /* TODO check for errors, and should fail when msix=on */
          msix_init(dev, xhci->numintrs,
 -- 
-1.8.3.1
+2.27.0
 

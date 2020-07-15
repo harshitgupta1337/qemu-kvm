@@ -35,13 +35,14 @@ Merged patches (2.9.0):
 
 (cherry picked from commit 9fa3c9fc6dfcde76d80db1aa601b2d577f72ceec)
 (cherry picked from commit 3cb35556dc7d994f203d732fe952f95fcdb03c0a)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  hw/vfio/pci.c | 29 ++++++++++++++++++++++++++++-
  hw/vfio/pci.h |  1 +
  2 files changed, 29 insertions(+), 1 deletion(-)
 
 diff --git a/hw/vfio/pci.c b/hw/vfio/pci.c
-index d020ea9..e4292ea 100644
+index d020ea9f82..e4292ea2b4 100644
 --- a/hw/vfio/pci.c
 +++ b/hw/vfio/pci.c
 @@ -47,6 +47,9 @@
@@ -97,7 +98,7 @@ index d020ea9..e4292ea 100644
                       false),
      DEFINE_PROP_BOOL("x-no-vfio-ioeventfd", VFIOPCIDevice, no_vfio_ioeventfd,
 diff --git a/hw/vfio/pci.h b/hw/vfio/pci.h
-index 0da7a20..5d2b0d2 100644
+index 0da7a20a7e..5d2b0d2f2d 100644
 --- a/hw/vfio/pci.h
 +++ b/hw/vfio/pci.h
 @@ -135,6 +135,7 @@ typedef struct VFIOPCIDevice {
@@ -109,5 +110,5 @@ index 0da7a20..5d2b0d2 100644
      uint32_t device_id;
      uint32_t sub_vendor_id;
 -- 
-1.8.3.1
+2.27.0
 

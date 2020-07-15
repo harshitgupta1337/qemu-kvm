@@ -36,7 +36,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/hw/net/virtio-net.c b/hw/net/virtio-net.c
-index 1596cb1..f82455b 100644
+index 1596cb1397..f82455ba5d 100644
 --- a/hw/net/virtio-net.c
 +++ b/hw/net/virtio-net.c
 @@ -3417,6 +3417,7 @@ static void virtio_net_device_unrealize(DeviceState *dev)
@@ -48,5 +48,5 @@ index 1596cb1..f82455b 100644
          g_free(n->standby_id);
          qobject_unref(n->primary_device_dict);
 -- 
-1.8.3.1
+2.27.0
 

@@ -43,13 +43,15 @@ Merged patches (4.0.0):
 Merged patches (4.1.0):
 - c3e39ef aarch64: Add virt-rhel8.1.0 machine type for ARM
 - 59a46d1 aarch64: Allow ARM VIRT iommu option in RHEL8.1 machine
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/arm/virt.c         | 172 +++++++++++++++++++++++++++++++++++++++++++++++++-
- include/hw/arm/virt.h |  11 ++++
+ hw/arm/virt.c         | 172 +++++++++++++++++++++++++++++++++++++++++-
+ include/hw/arm/virt.h |  11 +++
  2 files changed, 182 insertions(+), 1 deletion(-)
 
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index e30b837..5a45677 100644
+index e30b837135..5a45677205 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
 @@ -79,6 +79,7 @@
@@ -264,7 +266,7 @@ index e30b837..5a45677 100644
 +}
 +DEFINE_RHEL_MACHINE_AS_LATEST(8, 2, 0)
 diff --git a/include/hw/arm/virt.h b/include/hw/arm/virt.h
-index 54bcf17..5fdabd8 100644
+index 54bcf17afd..5fdabd87d6 100644
 --- a/include/hw/arm/virt.h
 +++ b/include/hw/arm/virt.h
 @@ -165,6 +165,7 @@ typedef struct {
@@ -293,5 +295,5 @@ index 54bcf17..5fdabd8 100644
  bool virt_is_acpi_enabled(VirtMachineState *vms);
  
 -- 
-1.8.3.1
+2.27.0
 

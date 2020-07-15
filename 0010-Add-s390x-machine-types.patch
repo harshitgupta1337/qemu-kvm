@@ -20,12 +20,14 @@ Merged patches (4.2.0):
 - fb192e5 redhat: s390x: Rename s390-ccw-virtio-rhel8.0.0 to s390-ccw-virtio-rhel8.1.0
 - a9b22e8 redhat: s390x: Add proper compatibility options for the -rhel7.6.0 machine
 - hw/s390x: Add the s390-ccw-virtio-rhel8.2.0 machine types (patch 92954)
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/s390x/s390-virtio-ccw.c | 71 +++++++++++++++++++++++++++++++++++++++++++++-
+ hw/s390x/s390-virtio-ccw.c | 71 +++++++++++++++++++++++++++++++++++++-
  1 file changed, 70 insertions(+), 1 deletion(-)
 
 diff --git a/hw/s390x/s390-virtio-ccw.c b/hw/s390x/s390-virtio-ccw.c
-index 023fd25..0e8dd62 100644
+index 023fd25f2b..0e8dd62b18 100644
 --- a/hw/s390x/s390-virtio-ccw.c
 +++ b/hw/s390x/s390-virtio-ccw.c
 @@ -778,7 +778,7 @@ bool css_migration_enabled(void)
@@ -121,5 +123,5 @@ index 023fd25..0e8dd62 100644
  static void ccw_machine_register_types(void)
  {
 -- 
-1.8.3.1
+2.27.0
 

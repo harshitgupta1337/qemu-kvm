@@ -1,6 +1,6 @@
-From 9fc44f5b2b271ea3337f8e5eae3bc3d2f9d857f3 Mon Sep 17 00:00:00 2001
+From 8b509ce5c11a82d05ad0d43270e4b76e0010015b Mon Sep 17 00:00:00 2001
 From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
-Date: Wed, 8 Jul 2020 10:02:25 +0200
+Date: Fri, 19 Jun 2020 15:42:27 -0400
 Subject: x86: Add 8.3.0 x86_64 machine type
 
 RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
@@ -17,7 +17,7 @@ From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
 Not much change, just the smbase-smram.
 
 Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
-Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  hw/i386/pc.c         |  6 ++++++
  hw/i386/pc_piix.c    |  4 ++++
@@ -26,7 +26,7 @@ Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
  4 files changed, 35 insertions(+)
 
 diff --git a/hw/i386/pc.c b/hw/i386/pc.c
-index fe37bde..94c857e 100644
+index fe37bdec7a..94c857ea97 100644
 --- a/hw/i386/pc.c
 +++ b/hw/i386/pc.c
 @@ -360,6 +360,12 @@ GlobalProperty pc_rhel_compat[] = {
@@ -43,7 +43,7 @@ index fe37bde..94c857e 100644
  GlobalProperty pc_rhel_8_1_compat[] = { };
  const size_t pc_rhel_8_1_compat_len = G_N_ELEMENTS(pc_rhel_8_1_compat);
 diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
-index eeadd89..f14ddcb 100644
+index eeadd896c2..f14ddcb472 100644
 --- a/hw/i386/pc_piix.c
 +++ b/hw/i386/pc_piix.c
 @@ -1028,6 +1028,10 @@ static void pc_machine_rhel760_options(MachineClass *m)
@@ -58,7 +58,7 @@ index eeadd89..f14ddcb 100644
      compat_props_add(m->compat_props, pc_rhel_8_1_compat, pc_rhel_8_1_compat_len);
      compat_props_add(m->compat_props, hw_compat_rhel_8_0, hw_compat_rhel_8_0_len);
 diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
-index 1cd4e15..b9e8dcb 100644
+index 1cd4e15297..b9e8dcb392 100644
 --- a/hw/i386/pc_q35.c
 +++ b/hw/i386/pc_q35.c
 @@ -590,6 +590,23 @@ static void pc_q35_machine_rhel_options(MachineClass *m)
@@ -100,7 +100,7 @@ index 1cd4e15..b9e8dcb 100644
  
  DEFINE_PC_MACHINE(q35_rhel820, "pc-q35-rhel8.2.0", pc_q35_init_rhel820,
 diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
-index 95d07f8..e67468b 100644
+index 95d07f81a0..e67468ba41 100644
 --- a/include/hw/i386/pc.h
 +++ b/include/hw/i386/pc.h
 @@ -270,6 +270,9 @@ extern const size_t pc_compat_1_4_len;
@@ -114,5 +114,5 @@ index 95d07f8..e67468b 100644
  extern const size_t pc_rhel_8_1_compat_len;
  
 -- 
-1.8.3.1
+2.27.0
 

@@ -18,12 +18,13 @@ as unsupported by Red Hat, and advising users to use libvirt instead.
 Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
 (cherry picked from commit 2a07700936e39856cc9f149c6a6517f0715536a6)
 (cherry picked from commit 5dd2f4706e2fef945771949e59a8fcc1b5452de9)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  softmmu/vl.c | 9 +++++++++
  1 file changed, 9 insertions(+)
 
 diff --git a/softmmu/vl.c b/softmmu/vl.c
-index 6509057..8453de5 100644
+index 6509057752..8453de5e68 100644
 --- a/softmmu/vl.c
 +++ b/softmmu/vl.c
 @@ -1674,9 +1674,17 @@ static void version(void)
@@ -53,5 +54,5 @@ index 6509057..8453de5 100644
  }
  
 -- 
-1.8.3.1
+2.27.0
 

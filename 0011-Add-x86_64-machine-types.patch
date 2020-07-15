@@ -42,19 +42,21 @@ Merged patches (weekly-200122):
 
 Merged patches (weekly-200318):
 - e6c3fbf hw/smbios: set new default SMBIOS fields for Windows driver support (partialy)
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  hw/i386/acpi-build.c |   3 +
- hw/i386/pc.c         | 265 ++++++++++++++++++++++++++++++++++++++++++++++++++-
- hw/i386/pc_piix.c    | 210 +++++++++++++++++++++++++++++++++++++++-
- hw/i386/pc_q35.c     | 162 ++++++++++++++++++++++++++++++-
+ hw/i386/pc.c         | 265 ++++++++++++++++++++++++++++++++++++++++++-
+ hw/i386/pc_piix.c    | 210 +++++++++++++++++++++++++++++++++-
+ hw/i386/pc_q35.c     | 162 +++++++++++++++++++++++++-
  include/hw/boards.h  |   2 +
- include/hw/i386/pc.h |  33 +++++++
+ include/hw/i386/pc.h |  33 ++++++
  target/i386/cpu.c    |   3 +-
  target/i386/kvm.c    |   4 +
  8 files changed, 675 insertions(+), 7 deletions(-)
 
 diff --git a/hw/i386/acpi-build.c b/hw/i386/acpi-build.c
-index b7bcbbb..fe815c5 100644
+index b7bcbbbb2a..fe815c5403 100644
 --- a/hw/i386/acpi-build.c
 +++ b/hw/i386/acpi-build.c
 @@ -212,6 +212,9 @@ static void acpi_get_pm_info(MachineState *machine, AcpiPmInfo *pm)
@@ -68,7 +70,7 @@ index b7bcbbb..fe815c5 100644
      }
  
 diff --git a/hw/i386/pc.c b/hw/i386/pc.c
-index 61acc9e..fe37bde 100644
+index 61acc9e530..fe37bdec7a 100644
 --- a/hw/i386/pc.c
 +++ b/hw/i386/pc.c
 @@ -346,6 +346,263 @@ GlobalProperty pc_compat_1_4[] = {
@@ -365,7 +367,7 @@ index 61acc9e..fe37bde 100644
      mc->wakeup = pc_machine_wakeup;
      hc->pre_plug = pc_machine_device_pre_plug_cb;
 diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
-index 18815e8..eeadd89 100644
+index 18815e8302..eeadd896c2 100644
 --- a/hw/i386/pc_piix.c
 +++ b/hw/i386/pc_piix.c
 @@ -54,6 +54,7 @@
@@ -604,7 +606,7 @@ index 18815e8..eeadd89 100644
 +DEFINE_PC_MACHINE(rhel700, "pc-i440fx-rhel7.0.0", pc_init_rhel700,
 +                  pc_machine_rhel700_options);
 diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
-index a1131e6..1cd4e15 100644
+index a1131e6825..1cd4e15297 100644
 --- a/hw/i386/pc_q35.c
 +++ b/hw/i386/pc_q35.c
 @@ -201,8 +201,8 @@ static void pc_q35_init(MachineState *machine)
@@ -788,7 +790,7 @@ index a1131e6..1cd4e15 100644
 +DEFINE_PC_MACHINE(q35_rhel730, "pc-q35-rhel7.3.0", pc_q35_init_rhel730,
 +                  pc_q35_machine_rhel730_options);
 diff --git a/include/hw/boards.h b/include/hw/boards.h
-index 1062df9..c357731 100644
+index 1062df96c0..c3577319c0 100644
 --- a/include/hw/boards.h
 +++ b/include/hw/boards.h
 @@ -208,6 +208,8 @@ struct MachineClass {
@@ -801,7 +803,7 @@ index 1062df9..c357731 100644
                                   int nb_nodes, ram_addr_t size);
      bool ignore_boot_device_suffixes;
 diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
-index 665c430..95d07f8 100644
+index 665c4309a2..95d07f81a0 100644
 --- a/include/hw/i386/pc.h
 +++ b/include/hw/i386/pc.h
 @@ -120,6 +120,9 @@ typedef struct PCMachineClass {
@@ -852,7 +854,7 @@ index 665c430..95d07f8 100644
   * depending on QEMU versions up to QEMU 2.4.
   */
 diff --git a/target/i386/cpu.c b/target/i386/cpu.c
-index 55a30cd..5477433 100644
+index 55a30cd4d9..5477433af5 100644
 --- a/target/i386/cpu.c
 +++ b/target/i386/cpu.c
 @@ -1830,7 +1830,7 @@ static X86CPUDefinition builtin_x86_defs[] = {
@@ -873,7 +875,7 @@ index 55a30cd..5477433 100644
  };
  
 diff --git a/target/i386/kvm.c b/target/i386/kvm.c
-index 6adbff3..51fbfd5 100644
+index 6adbff3d74..51fbfd528e 100644
 --- a/target/i386/kvm.c
 +++ b/target/i386/kvm.c
 @@ -3139,6 +3139,7 @@ static int kvm_get_msrs(X86CPU *cpu)
@@ -895,5 +897,5 @@ index 6adbff3..51fbfd5 100644
          case MSR_KVM_PV_EOI_EN:
              env->pv_eoi_en_msr = msrs[i].data;
 -- 
-1.8.3.1
+2.27.0
 

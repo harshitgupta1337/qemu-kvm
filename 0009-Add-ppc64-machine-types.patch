@@ -33,16 +33,18 @@ Merged patches (4.2.0):
 
 Merged patches (weekly-200226):
 - eb121ff spapr: Enable DD2.3 accelerated count cache flush in pseries-5.0 machine (partial)
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/ppc/spapr.c          | 280 ++++++++++++++++++++++++++++++++++++++++++++++++
- hw/ppc/spapr_cpu_core.c |  13 +++
+ hw/ppc/spapr.c          | 280 ++++++++++++++++++++++++++++++++++++++++
+ hw/ppc/spapr_cpu_core.c |  13 ++
  include/hw/ppc/spapr.h  |   1 +
- target/ppc/compat.c     |  13 ++-
+ target/ppc/compat.c     |  13 +-
  target/ppc/cpu.h        |   1 +
  5 files changed, 307 insertions(+), 1 deletion(-)
 
 diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
-index f6f034d..f30618e 100644
+index f6f034d039..f30618e4b1 100644
 --- a/hw/ppc/spapr.c
 +++ b/hw/ppc/spapr.c
 @@ -4530,6 +4530,7 @@ static void spapr_machine_class_init(ObjectClass *oc, void *data)
@@ -375,7 +377,7 @@ index f6f034d..f30618e 100644
  static void spapr_machine_register_types(void)
  {
 diff --git a/hw/ppc/spapr_cpu_core.c b/hw/ppc/spapr_cpu_core.c
-index bfdf6b3..39fcaf8 100644
+index bfdf6b3e5c..39fcaf855b 100644
 --- a/hw/ppc/spapr_cpu_core.c
 +++ b/hw/ppc/spapr_cpu_core.c
 @@ -24,6 +24,7 @@
@@ -413,7 +415,7 @@ index bfdf6b3..39fcaf8 100644
          goto error_intc_create;
      }
 diff --git a/include/hw/ppc/spapr.h b/include/hw/ppc/spapr.h
-index c421410..5190d6a 100644
+index c421410e3f..5190d6a936 100644
 --- a/include/hw/ppc/spapr.h
 +++ b/include/hw/ppc/spapr.h
 @@ -130,6 +130,7 @@ struct SpaprMachineClass {
@@ -425,7 +427,7 @@ index c421410..5190d6a 100644
                            uint64_t *buid, hwaddr *pio, 
                            hwaddr *mmio32, hwaddr *mmio64,
 diff --git a/target/ppc/compat.c b/target/ppc/compat.c
-index fda0dfe..ab8e3b2 100644
+index fda0dfe8f8..ab8e3b2125 100644
 --- a/target/ppc/compat.c
 +++ b/target/ppc/compat.c
 @@ -114,8 +114,19 @@ static const CompatInfo *compat_by_pvr(uint32_t pvr)
@@ -450,7 +452,7 @@ index fda0dfe..ab8e3b2 100644
      const CompatInfo *compat = compat_by_pvr(compat_pvr);
      const CompatInfo *min = compat_by_pvr(min_compat_pvr);
 diff --git a/target/ppc/cpu.h b/target/ppc/cpu.h
-index e7d382a..3cf209d 100644
+index e7d382ac10..3cf209dd90 100644
 --- a/target/ppc/cpu.h
 +++ b/target/ppc/cpu.h
 @@ -1352,6 +1352,7 @@ static inline int cpu_mmu_index(CPUPPCState *env, bool ifetch)
@@ -462,5 +464,5 @@ index e7d382a..3cf209d 100644
                        uint32_t min_compat_pvr, uint32_t max_compat_pvr);
  bool ppc_type_check_compat(const char *cputype, uint32_t compat_pvr,
 -- 
-1.8.3.1
+2.27.0
 

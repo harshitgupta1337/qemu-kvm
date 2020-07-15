@@ -32,7 +32,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/hw/ppc/spapr_caps.c b/hw/ppc/spapr_caps.c
-index 0c2bc8e..15bef3d 100644
+index 0c2bc8e06e..15bef3d27f 100644
 --- a/hw/ppc/spapr_caps.c
 +++ b/hw/ppc/spapr_caps.c
 @@ -335,12 +335,19 @@ void spapr_check_pagesize(SpaprMachineState *spapr, hwaddr pagesize,
@@ -56,5 +56,5 @@ index 0c2bc8e..15bef3d 100644
      spapr_check_pagesize(spapr, qemu_minrampagesize(), errp);
  }
 -- 
-1.8.3.1
+2.27.0
 

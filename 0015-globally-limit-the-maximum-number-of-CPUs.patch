@@ -74,13 +74,15 @@ The recommended vcpu max limit (KVM_CAP_NR_VCPUS) should be used instead
 of the actual max vcpu limit (KVM_CAP_MAX_VCPUS) to give an error.
 
 This commit matches the limit to current KVM_CAP_NR_VCPUS value.
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  accel/kvm/kvm-all.c | 12 ++++++++++++
  softmmu/vl.c        | 18 ++++++++++++++++++
  2 files changed, 30 insertions(+)
 
 diff --git a/accel/kvm/kvm-all.c b/accel/kvm/kvm-all.c
-index ab36fbf..6f6bb47 100644
+index ab36fbfa0c..6f6bb47d9a 100644
 --- a/accel/kvm/kvm-all.c
 +++ b/accel/kvm/kvm-all.c
 @@ -2088,6 +2088,18 @@ static int kvm_init(MachineState *ms)
@@ -103,7 +105,7 @@ index ab36fbf..6f6bb47 100644
          if (nc->num > soft_vcpus_limit) {
              warn_report("Number of %s cpus requested (%d) exceeds "
 diff --git a/softmmu/vl.c b/softmmu/vl.c
-index 8453de5..ea6e9e4 100644
+index 8453de5e68..ea6e9e4f01 100644
 --- a/softmmu/vl.c
 +++ b/softmmu/vl.c
 @@ -116,6 +116,8 @@
@@ -146,5 +148,5 @@ index 8453de5..ea6e9e4 100644
      configure_rtc(qemu_find_opts_singleton("rtc"));
  
 -- 
-1.8.3.1
+2.27.0
 

@@ -29,7 +29,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  1 file changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/qapi/block-core.json b/qapi/block-core.json
-index b20332e..db4544d 100644
+index b20332e592..db4544df75 100644
 --- a/qapi/block-core.json
 +++ b/qapi/block-core.json
 @@ -4135,10 +4135,17 @@
@@ -52,5 +52,5 @@ index b20332e..db4544d 100644
  ##
  # @blockdev-del:
 -- 
-1.8.3.1
+2.27.0
 

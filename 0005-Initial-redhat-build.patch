@@ -126,6 +126,8 @@ Merged patches (weekly-200610):
 
 Merged patches (weekly-200617):
 - 44b8bd0 spec: Fix python shenigans for tests
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  .gitignore                          |    1 +
  Makefile                            |    3 +-
@@ -133,7 +135,7 @@ Merged patches (weekly-200617):
  redhat/Makefile                     |   86 +
  redhat/Makefile.common              |   53 +
  redhat/README.tests                 |   39 +
- redhat/qemu-kvm.spec.template       | 2961 +++++++++++++++++++++++++++++++++++
+ redhat/qemu-kvm.spec.template       | 2961 +++++++++++++++++++++++++++
  redhat/qemu-pr-helper.service       |    2 +-
  redhat/scripts/extract_build_cmd.py |    2 +-
  redhat/scripts/process-patches.sh   |    7 +-
@@ -146,7 +148,7 @@ Merged patches (weekly-200617):
  create mode 100644 redhat/qemu-kvm.spec.template
 
 diff --git a/Makefile b/Makefile
-index b1b8a5a..88b7565 100644
+index b1b8a5a6d0..88b7565246 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -549,6 +549,7 @@ CAP_CFLAGS += -DCAPSTONE_HAS_ARM
@@ -167,7 +169,7 @@ index b1b8a5a..88b7565 100644
  	$(INSTALL_DATA) docs/interop/qemu-qmp-ref.7 "$(DESTDIR)$(mandir)/man7"
  	$(INSTALL_DATA) $(MANUAL_BUILDDIR)/system/qemu-block-drivers.7 "$(DESTDIR)$(mandir)/man7"
 diff --git a/configure b/configure
-index ee6c3c6..bd957a5 100755
+index ee6c3c6792..bd957a5a26 100755
 --- a/configure
 +++ b/configure
 @@ -2610,6 +2610,7 @@ if test "$seccomp" != "no" ; then
@@ -179,7 +181,7 @@ index ee6c3c6..bd957a5 100755
  # xen probe
  
 diff --git a/tests/check-block.sh b/tests/check-block.sh
-index 8e29c86..e9bcb5a 100755
+index 8e29c868e5..e9bcb5ac27 100755
 --- a/tests/check-block.sh
 +++ b/tests/check-block.sh
 @@ -53,6 +53,8 @@ if ! (sed --version | grep 'GNU sed') > /dev/null 2>&1 ; then
@@ -192,7 +194,7 @@ index 8e29c86..e9bcb5a 100755
  
  ret=0
 diff --git a/ui/vnc.c b/ui/vnc.c
-index 527ad25..8099c0e 100644
+index 527ad25124..8099c0ee13 100644
 --- a/ui/vnc.c
 +++ b/ui/vnc.c
 @@ -3970,7 +3970,7 @@ void vnc_display_open(const char *id, Error **errp)
@@ -205,5 +207,5 @@ index 527ad25..8099c0e 100644
          if (saslErr != SASL_OK) {
              error_setg(errp, "Failed to initialize SASL auth: %s",
 -- 
-1.8.3.1
+2.27.0
 
