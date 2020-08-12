@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.1.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -138,6 +138,8 @@ Patch0033: 0033-vl-Remove-downstream-only-MAX_RHEL_CPUS-code.patch
 Patch0034: 0034-q35-Set-max_cpus-to-512.patch
 Patch0035: 0035-RHEL-only-arm-virt-Allow-the-TPM_TIS_SYSBUS-device-d.patch
 Patch0036: 0036-RHEL-only-Enable-vTPM-for-ARM-in-downstream-configs.patch
+# For bz#1853265 - Forward and backward migration from rhel-av-8.3.0(qemu-kvm-5.0.0) to rhel-av-8.2.1(qemu-kvm-4.2.0) failed with "qemu-kvm: error while loading state for instance 0x0 of device 'spapr'"
+Patch37: kvm-redhat-define-hw_compat_8_2.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1104,6 +1106,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Wed Aug 12 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-2.el8
+- kvm-redhat-define-hw_compat_8_2.patch [bz#1853265]
+- Resolves: bz#1853265
+  (Forward and backward migration from rhel-av-8.3.0(qemu-kvm-5.0.0) to rhel-av-8.2.1(qemu-kvm-4.2.0) failed with "qemu-kvm: error while loading state for instance 0x0 of device 'spapr'")
+
 * Wed Aug 12 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-1.el8
 - Quick changelog fix to reflect the current fixes:
 - Resolve: bz#1781911
