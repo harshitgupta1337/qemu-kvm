@@ -1,4 +1,4 @@
-From cc88b2746e9e8cfa6816e871ca282cddb07a0146 Mon Sep 17 00:00:00 2001
+From 44c255eddd3096d63ebdc055181d3fcebe202eef Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 8 Jul 2020 08:35:50 +0200
 Subject: Use qemu-kvm in documentation instead of qemu-system-<arch>
@@ -142,10 +142,10 @@ index 824e713491..8449936c63 100644
        -device vhost-user-fs-pci,chardev=char0,tag=myfs \
        -object memory-backend-memfd,id=mem,size=4G,share=on \
 diff --git a/qemu-options.hx b/qemu-options.hx
-index b9699440a3..fe85a0e952 100644
+index 1700205035..697276859b 100644
 --- a/qemu-options.hx
 +++ b/qemu-options.hx
-@@ -2891,11 +2891,11 @@ SRST
+@@ -2900,11 +2900,11 @@ SRST
  
      ::
  

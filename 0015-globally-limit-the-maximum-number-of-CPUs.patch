@@ -1,4 +1,4 @@
-From 47faf13d999995693d505074ee73d4908356888b Mon Sep 17 00:00:00 2001
+From edf9e38a2ef58908f45e37a63746926a494f9057 Mon Sep 17 00:00:00 2001
 From: Andrew Jones <drjones@redhat.com>
 Date: Tue, 21 Jan 2014 10:46:52 +0100
 Subject: globally limit the maximum number of CPUs
@@ -82,7 +82,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  2 files changed, 30 insertions(+)
 
 diff --git a/accel/kvm/kvm-all.c b/accel/kvm/kvm-all.c
-index ab36fbfa0c..6f6bb47d9a 100644
+index 63ef6af9a1..db9a6b38b1 100644
 --- a/accel/kvm/kvm-all.c
 +++ b/accel/kvm/kvm-all.c
 @@ -2088,6 +2088,18 @@ static int kvm_init(MachineState *ms)
@@ -105,7 +105,7 @@ index ab36fbfa0c..6f6bb47d9a 100644
          if (nc->num > soft_vcpus_limit) {
              warn_report("Number of %s cpus requested (%d) exceeds "
 diff --git a/softmmu/vl.c b/softmmu/vl.c
-index 8453de5e68..ea6e9e4f01 100644
+index 3c383911cd..62fc7c898f 100644
 --- a/softmmu/vl.c
 +++ b/softmmu/vl.c
 @@ -116,6 +116,8 @@
@@ -117,7 +117,7 @@ index 8453de5e68..ea6e9e4f01 100644
  static const char *data_dir[16];
  static int data_dir_idx;
  const char *bios_name = NULL;
-@@ -1177,6 +1179,20 @@ static MachineClass *find_default_machine(GSList *machines)
+@@ -1189,6 +1191,20 @@ static MachineClass *find_default_machine(GSList *machines)
      return default_machineclass;
  }
  
@@ -138,7 +138,7 @@ index 8453de5e68..ea6e9e4f01 100644
  static int machine_help_func(QemuOpts *opts, MachineState *machine)
  {
      ObjectProperty *prop;
-@@ -3831,6 +3847,8 @@ void qemu_init(int argc, char **argv, char **envp)
+@@ -3845,6 +3861,8 @@ void qemu_init(int argc, char **argv, char **envp)
                       "mutually exclusive");
          exit(EXIT_FAILURE);
      }

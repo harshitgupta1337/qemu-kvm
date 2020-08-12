@@ -1,4 +1,4 @@
-From 9f51ea3d645d7da3eaf55f3e5cedc4cd42981efc Mon Sep 17 00:00:00 2001
+From cf7532e0c854b385ee7acdf5788bc407172f7ae9 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 12 Oct 2018 07:31:11 +0200
 Subject: Initial redhat build
@@ -47,52 +47,24 @@ Rebase notes (4.2.0):
 - Removed spapr-rtas.bin (upstream)
 - Require newer SLOF (20191022)
 
-Rebase notes (weekly-200115):
-- Added index.html (upstream)
-
-Rebase notes (weekly-200122):
+Rebase notes (5.1.0):
 - Use python3 for virtio_seg_max_adjust.py test
 - Removed qemu-trace-stap shebang from spec file
-
-Rebase notes (weekly-200129):
-- Ship docs/qemu-kvm/system help files (added upstream)
-
-Rebase notes (weekly-200212):
 - Added virtiofsd.1 (upstream)
-
-Rebase notes (weekly-200219):
 - Use out-of-tree build
-
-Rebase notes (weekly-200226):
-- added tools documentation (upstream)
-
-Rebase notes (weekly-200304):
+- New documentation structure (upstream)
 - Update local build
-
-Rebase notes (weekly-200311):
-- Add docs/qemu-kvm/user help files (added upstream)
 - Removing installed qemu-storage-daemon (added upstream)
-
-Rebase notes (weekly-200318):
 - Removing opensbi-riscv32-sifive_u-fw_jump.bin (added upstream)
-
-Rebase notes (weekly-200325):
 - Disable iotests (moved from Enable make check commit)
-
-Rebase notes (5.0.0 rc2):
 - Added missing configure options
-
-Rebase notes (5.0.0 rc3):
 - Reorder configure options
-
-Rebase notes (weekly-200617):
-- Fixing qemu-kvm-tests rpm content
-  - Fixed python shenigans
-  - Include all qemu-iotests files
 - qemu-pr-helper moved to /usr/libexec/ (upstream)
-
-Rebase notes (weekly-200701):
-- Moved qemu-ga-ref.* and qemu-qmp-ref.* docs files to interop diretory (upstream)
+- Added submodules for usb-redir, smartcard-reader and qxl display (upstream)
+- Added setting rc version in Makefile for build
+- removed --disable-vxhs configure option (removed upstream)
+- bumped required libusbx-devel version to 1.0.23
+- bumped libfdt version to 1.6.0
 
 Merged patches (3.1.0):
 - 01f0c9f RHEL8: Add disable configure options to qemu spec file
@@ -116,15 +88,11 @@ Merged patches (4.2.0):
 - 69e1fb2 enable virgla
 - d4f6115 enable virgl, for real this time ...
 
-Merged patches (weekly-200205):
+Merged patches (5.1.0):
 - 5edf6bd Add support for rh-brew-module
 - f77d52d redhat: ship virtiofsd vhost-user device backend
-
-Merged patches (weekly-200610):
 - 63f12d4 redhat: Always use module build target for rh-brew (modified)
 - 9b1e140 redhat: updating the modular target
-
-Merged patches (weekly-200617):
 - 44b8bd0 spec: Fix python shenigans for tests
 
 Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
@@ -133,22 +101,22 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  Makefile                            |    3 +-
  configure                           |    1 +
  redhat/Makefile                     |   86 +
- redhat/Makefile.common              |   53 +
+ redhat/Makefile.common              |   54 +
  redhat/README.tests                 |   39 +
- redhat/qemu-kvm.spec.template       | 2961 +++++++++++++++++++++++++++
+ redhat/qemu-kvm.spec.template       | 2977 +++++++++++++++++++++++++++
  redhat/qemu-pr-helper.service       |    2 +-
  redhat/scripts/extract_build_cmd.py |    2 +-
- redhat/scripts/process-patches.sh   |    7 +-
+ redhat/scripts/process-patches.sh   |   17 +-
  tests/check-block.sh                |    2 +
  ui/vnc.c                            |    2 +-
- 12 files changed, 3150 insertions(+), 9 deletions(-)
+ 12 files changed, 3173 insertions(+), 13 deletions(-)
  create mode 100644 redhat/Makefile
  create mode 100644 redhat/Makefile.common
  create mode 100644 redhat/README.tests
  create mode 100644 redhat/qemu-kvm.spec.template
 
 diff --git a/Makefile b/Makefile
-index b1b8a5a6d0..88b7565246 100644
+index 13dd708c4a..42e854b2b1 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -549,6 +549,7 @@ CAP_CFLAGS += -DCAPSTONE_HAS_ARM
@@ -159,7 +127,7 @@ index b1b8a5a6d0..88b7565246 100644
  
  .PHONY: capstone/all
  capstone/all: .git-submodule-status
-@@ -878,7 +879,7 @@ install-doc: $(DOCS) install-sphinxdocs
+@@ -879,7 +880,7 @@ install-doc: $(DOCS) install-sphinxdocs
  	$(INSTALL_DATA) docs/interop/qemu-qmp-ref.txt "$(DESTDIR)$(qemu_docdir)/interop"
  ifdef CONFIG_POSIX
  	$(INSTALL_DIR) "$(DESTDIR)$(mandir)/man1"
@@ -169,10 +137,10 @@ index b1b8a5a6d0..88b7565246 100644
  	$(INSTALL_DATA) docs/interop/qemu-qmp-ref.7 "$(DESTDIR)$(mandir)/man7"
  	$(INSTALL_DATA) $(MANUAL_BUILDDIR)/system/qemu-block-drivers.7 "$(DESTDIR)$(mandir)/man7"
 diff --git a/configure b/configure
-index ee6c3c6792..bd957a5a26 100755
+index 2acc4d1465..eb5b695dbe 100755
 --- a/configure
 +++ b/configure
-@@ -2610,6 +2610,7 @@ if test "$seccomp" != "no" ; then
+@@ -2633,6 +2633,7 @@ if test "$seccomp" != "no" ; then
          seccomp="no"
      fi
  fi
@@ -194,7 +162,7 @@ index 8e29c868e5..e9bcb5ac27 100755
  
  ret=0
 diff --git a/ui/vnc.c b/ui/vnc.c
-index 527ad25124..8099c0ee13 100644
+index f006aa1afd..992f428fec 100644
 --- a/ui/vnc.c
 +++ b/ui/vnc.c
 @@ -3970,7 +3970,7 @@ void vnc_display_open(const char *id, Error **errp)

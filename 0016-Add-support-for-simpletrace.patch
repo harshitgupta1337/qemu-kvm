@@ -1,4 +1,4 @@
-From bc118b0038083bcd54a970ed0a6c92f9d55759e2 Mon Sep 17 00:00:00 2001
+From 9238ce7ba819979c2df2caa49c5db3185376fedd Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Thu, 8 Oct 2015 09:50:17 +0200
 Subject: Add support for simpletrace
@@ -39,10 +39,10 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  create mode 100644 scripts/systemtap/script.d/qemu_kvm.stp
 
 diff --git a/Makefile b/Makefile
-index 88b7565246..045eeb545e 100644
+index 42e854b2b1..3b9ff25f10 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -995,6 +995,10 @@ endif
+@@ -996,6 +996,10 @@ endif
  		$(INSTALL_DATA) $(SRC_PATH)/pc-bios/keymaps/$$x "$(DESTDIR)$(qemu_datadir)/keymaps"; \
  	done
  	$(INSTALL_DATA) $(BUILD_DIR)/trace-events-all "$(DESTDIR)$(qemu_datadir)/trace-events-all"

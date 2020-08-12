@@ -1,6 +1,6 @@
-From effec13a9f842205be3526bcfb15e2068c0067b0 Mon Sep 17 00:00:00 2001
+From a71208a6b42d0ef657b2f712d2f08d2ed40e7094 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
-Date: Thu, 23 Apr 2020 05:26:54 +0200
+Date: Wed, 29 Jul 2020 07:48:57 +0200
 Subject: redhat: Adding slirp to the exploded tree
 
 RH-Author: Danilo de Paula <ddepaula@redhat.com>
@@ -46,8 +46,8 @@ This is an exploded-tree-only change and shouldn't be applied to dist-git.
 
 Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 
-Rebase notes (5.0.0-rc4):
- - Update slirp directory to commit 2faae0f778 (used upstream)
+Rebase notes (5.1.0-rc2):
+  - Update slirp directory to commit ce94eba2042d52a0ba3d9e252ebce86715e94275 (used upstream)
 
 Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
@@ -63,7 +63,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  slirp/build-aux/git-version-gen |  158 ++++
  slirp/build-aux/meson-dist      |   16 +
  slirp/meson.build               |  134 +++
- slirp/src/arp_table.c           |   91 ++
+ slirp/src/arp_table.c           |   92 ++
  slirp/src/bootp.c               |  369 ++++++++
  slirp/src/bootp.h               |  129 +++
  slirp/src/cksum.c               |  179 ++++
@@ -75,11 +75,11 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  slirp/src/if.h                  |   25 +
  slirp/src/ip.h                  |  242 +++++
  slirp/src/ip6.h                 |  214 +++++
- slirp/src/ip6_icmp.c            |  434 +++++++++
+ slirp/src/ip6_icmp.c            |  433 +++++++++
  slirp/src/ip6_icmp.h            |  219 +++++
- slirp/src/ip6_input.c           |   78 ++
+ slirp/src/ip6_input.c           |   85 ++
  slirp/src/ip6_output.c          |   39 +
- slirp/src/ip_icmp.c             |  489 ++++++++++
+ slirp/src/ip_icmp.c             |  492 ++++++++++
  slirp/src/ip_icmp.h             |  166 ++++
  slirp/src/ip_input.c            |  461 +++++++++
  slirp/src/ip_output.c           |  169 ++++
@@ -92,13 +92,13 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  slirp/src/misc.c                |  390 ++++++++
  slirp/src/misc.h                |   72 ++
  slirp/src/ncsi-pkt.h            |  445 +++++++++
- slirp/src/ncsi.c                |  192 ++++
+ slirp/src/ncsi.c                |  193 ++++
  slirp/src/ndp_table.c           |   87 ++
  slirp/src/sbuf.c                |  168 ++++
  slirp/src/sbuf.h                |   27 +
  slirp/src/slirp.c               | 1185 ++++++++++++++++++++++++
- slirp/src/slirp.h               |  283 ++++++
- slirp/src/socket.c              |  957 +++++++++++++++++++
+ slirp/src/slirp.h               |  284 ++++++
+ slirp/src/socket.c              |  954 +++++++++++++++++++
  slirp/src/socket.h              |  164 ++++
  slirp/src/state.c               |  379 ++++++++
  slirp/src/stream.c              |  120 +++
@@ -111,9 +111,9 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  slirp/src/tcp_timer.h           |  130 +++
  slirp/src/tcp_var.h             |  161 ++++
  slirp/src/tcpip.h               |  104 +++
- slirp/src/tftp.c                |  462 ++++++++++
- slirp/src/tftp.h                |   52 ++
- slirp/src/udp.c                 |  361 ++++++++
+ slirp/src/tftp.c                |  464 ++++++++++
+ slirp/src/tftp.h                |   54 ++
+ slirp/src/udp.c                 |  365 ++++++++
  slirp/src/udp.h                 |   90 ++
  slirp/src/udp6.c                |  173 ++++
  slirp/src/util.c                |  428 +++++++++
@@ -121,7 +121,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  slirp/src/version.c             |    8 +
  slirp/src/vmstate.c             |  444 +++++++++
  slirp/src/vmstate.h             |  391 ++++++++
- 70 files changed, 16423 insertions(+), 3 deletions(-)
+ 70 files changed, 16440 insertions(+), 3 deletions(-)
  create mode 100644 slirp/.clang-format
  create mode 100644 slirp/.gitignore
  create mode 100644 slirp/.gitlab-ci.yml
@@ -880,10 +880,10 @@ index 0000000000..3a27149373
 +)
 diff --git a/slirp/src/arp_table.c b/slirp/src/arp_table.c
 new file mode 100644
-index 0000000000..054fbf5e10
+index 0000000000..959e5b9ec0
 --- /dev/null
 +++ b/slirp/src/arp_table.c
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,92 @@
 +/* SPDX-License-Identifier: MIT */
 +/*
 + * ARP table
@@ -913,7 +913,8 @@ index 0000000000..054fbf5e10
 +
 +#include <string.h>
 +
-+void arp_table_add(Slirp *slirp, uint32_t ip_addr, uint8_t ethaddr[ETH_ALEN])
++void arp_table_add(Slirp *slirp, uint32_t ip_addr,
++                   const uint8_t ethaddr[ETH_ALEN])
 +{
 +    const uint32_t broadcast_addr =
 +        ~slirp->vnetwork_mask.s_addr | slirp->vnetwork_addr.s_addr;
@@ -2033,7 +2034,7 @@ index 0000000000..d12c49b36c
 +#endif
 diff --git a/slirp/src/dnssearch.c b/slirp/src/dnssearch.c
 new file mode 100644
-index 0000000000..e8f14e34bb
+index 0000000000..55497e860e
 --- /dev/null
 +++ b/slirp/src/dnssearch.c
 @@ -0,0 +1,306 @@
@@ -2278,7 +2279,7 @@ index 0000000000..e8f14e34bb
 +    uint8_t *result = NULL, *outptr;
 +    CompactDomain *domains = NULL;
 +
-+    num_domains = g_strv_length((GStrv)names);
++    num_domains = g_strv_length((GStrv)(void *)names);
 +    if (num_domains == 0) {
 +        return -2;
 +    }
@@ -3063,10 +3064,10 @@ index 0000000000..0630309d29
 +#endif
 diff --git a/slirp/src/ip6_icmp.c b/slirp/src/ip6_icmp.c
 new file mode 100644
-index 0000000000..28ec2bee35
+index 0000000000..d9c872bc97
 --- /dev/null
 +++ b/slirp/src/ip6_icmp.c
-@@ -0,0 +1,434 @@
+@@ -0,0 +1,433 @@
 +/* SPDX-License-Identifier: BSD-3-Clause */
 +/*
 + * Copyright (c) 2013
@@ -3188,7 +3189,6 @@ index 0000000000..28ec2bee35
 +        break;
 +    default:
 +        g_assert_not_reached();
-+        break;
 +    }
 +    t->m_data += ICMP6_ERROR_MINLEN;
 +    memcpy(t->m_data, m->m_data, error_data_len);
@@ -3728,10 +3728,10 @@ index 0000000000..c37e60f28d
 +#endif
 diff --git a/slirp/src/ip6_input.c b/slirp/src/ip6_input.c
 new file mode 100644
-index 0000000000..dfcbfd6a78
+index 0000000000..a83e4f8e3d
 --- /dev/null
 +++ b/slirp/src/ip6_input.c
-@@ -0,0 +1,78 @@
+@@ -0,0 +1,85 @@
 +/* SPDX-License-Identifier: BSD-3-Clause */
 +/*
 + * Copyright (c) 2013
@@ -3778,8 +3778,15 @@ index 0000000000..dfcbfd6a78
 +        goto bad;
 +    }
 +
-+    if (ntohs(ip6->ip_pl) > slirp->if_mtu) {
++    if (ntohs(ip6->ip_pl) + sizeof(struct ip6) > slirp->if_mtu) {
 +        icmp6_send_error(m, ICMP6_TOOBIG, 0);
++        goto bad;
++    }
++
++    // Check if the message size is big enough to hold what's
++    // set in the payload length header. If not this is an invalid
++    // packet
++    if (m->m_len < ntohs(ip6->ip_pl) + sizeof(struct ip6)) {
 +        goto bad;
 +    }
 +
@@ -3857,10 +3864,10 @@ index 0000000000..b86110662c
 +}
 diff --git a/slirp/src/ip_icmp.c b/slirp/src/ip_icmp.c
 new file mode 100644
-index 0000000000..fe0add438d
+index 0000000000..13a0e55085
 --- /dev/null
 +++ b/slirp/src/ip_icmp.c
-@@ -0,0 +1,489 @@
+@@ -0,0 +1,492 @@
 +/* SPDX-License-Identifier: BSD-3-Clause */
 +/*
 + * Copyright (c) 1982, 1986, 1988, 1993
@@ -3938,8 +3945,11 @@ index 0000000000..fe0add438d
 +
 +void icmp_cleanup(Slirp *slirp)
 +{
-+    while (slirp->icmp.so_next != &slirp->icmp) {
-+        icmp_detach(slirp->icmp.so_next);
++    struct socket *so, *so_next;
++
++    for (so = slirp->icmp.so_next; so != &slirp->icmp; so = so_next) {
++        so_next = so->so_next;
++        icmp_detach(so);
 +    }
 +}
 +
@@ -4137,8 +4147,8 @@ index 0000000000..fe0add438d
 +    ip = mtod(msrc, struct ip *);
 +    if (slirp_debug & DBG_MISC) {
 +        char bufa[20], bufb[20];
-+        strcpy(bufa, inet_ntoa(ip->ip_src));
-+        strcpy(bufb, inet_ntoa(ip->ip_dst));
++        slirp_pstrcpy(bufa, sizeof(bufa), inet_ntoa(ip->ip_src));
++        slirp_pstrcpy(bufb, sizeof(bufb), inet_ntoa(ip->ip_dst));
 +        DEBUG_MISC(" %.16s to %.16s", bufa, bufb);
 +    }
 +    if (ip->ip_off & IP_OFFMASK)
@@ -4524,7 +4534,7 @@ index 0000000000..84707db247
 +#endif
 diff --git a/slirp/src/ip_input.c b/slirp/src/ip_input.c
 new file mode 100644
-index 0000000000..89a01d45aa
+index 0000000000..7f017a238a
 --- /dev/null
 +++ b/slirp/src/ip_input.c
 @@ -0,0 +1,461 @@
@@ -4984,7 +4994,7 @@ index 0000000000..89a01d45aa
 +    olen = (ip->ip_hl << 2) - sizeof(struct ip);
 +    opts = (char *)(ip + 1);
 +    i = m->m_len - (sizeof(struct ip) + olen);
-+    memcpy(opts, opts + olen, (unsigned)i);
++    memmove(opts, opts + olen, (unsigned)i);
 +    m->m_len -= olen;
 +
 +    ip->ip_hl = sizeof(struct ip) >> 2;
@@ -6720,10 +6730,10 @@ index 0000000000..7795ad83ee
 +#endif /* NCSI_PKT_H */
 diff --git a/slirp/src/ncsi.c b/slirp/src/ncsi.c
 new file mode 100644
-index 0000000000..ddd980d869
+index 0000000000..3c1dfef1ff
 --- /dev/null
 +++ b/slirp/src/ncsi.c
-@@ -0,0 +1,192 @@
+@@ -0,0 +1,193 @@
 +/* SPDX-License-Identifier: BSD-3-Clause */
 +/*
 + * NC-SI (Network Controller Sideband Interface) "echo" model
@@ -6862,7 +6872,8 @@ index 0000000000..ddd980d869
 +
 +void ncsi_input(Slirp *slirp, const uint8_t *pkt, int pkt_len)
 +{
-+    struct ncsi_pkt_hdr *nh = (struct ncsi_pkt_hdr *)(pkt + ETH_HLEN);
++    const struct ncsi_pkt_hdr *nh =
++        (const struct ncsi_pkt_hdr *)(pkt + ETH_HLEN);
 +    uint8_t ncsi_reply[ETH_HLEN + NCSI_MAX_LEN];
 +    struct ethhdr *reh = (struct ethhdr *)ncsi_reply;
 +    struct ncsi_rsp_pkt_hdr *rnh =
@@ -7218,7 +7229,7 @@ index 0000000000..01886fbd01
 +#endif
 diff --git a/slirp/src/slirp.c b/slirp/src/slirp.c
 new file mode 100644
-index 0000000000..14458e8510
+index 0000000000..dba7c98163
 --- /dev/null
 +++ b/slirp/src/slirp.c
 @@ -0,0 +1,1185 @@
@@ -7968,7 +7979,8 @@ index 0000000000..14458e8510
 +
 +static void arp_input(Slirp *slirp, const uint8_t *pkt, int pkt_len)
 +{
-+    struct slirp_arphdr *ah = (struct slirp_arphdr *)(pkt + ETH_HLEN);
++    const struct slirp_arphdr *ah =
++        (const struct slirp_arphdr *)(pkt + ETH_HLEN);
 +    uint8_t arp_reply[MAX(ETH_HLEN + sizeof(struct slirp_arphdr), 64)];
 +    struct ethhdr *reh = (struct ethhdr *)arp_reply;
 +    struct slirp_arphdr *rah = (struct slirp_arphdr *)(arp_reply + ETH_HLEN);
@@ -8191,7 +8203,6 @@ index 0000000000..14458e8510
 +
 +    default:
 +        g_assert_not_reached();
-+        break;
 +    }
 +
 +    memcpy(eh->h_dest, ethaddr, ETH_ALEN);
@@ -8409,10 +8420,10 @@ index 0000000000..14458e8510
 +}
 diff --git a/slirp/src/slirp.h b/slirp/src/slirp.h
 new file mode 100644
-index 0000000000..32634bcc00
+index 0000000000..763a65b9ef
 --- /dev/null
 +++ b/slirp/src/slirp.h
-@@ -0,0 +1,283 @@
+@@ -0,0 +1,284 @@
 +/* SPDX-License-Identifier: BSD-3-Clause */
 +#ifndef SLIRP_H
 +#define SLIRP_H
@@ -8513,7 +8524,8 @@ index 0000000000..32634bcc00
 +    int next_victim;
 +} ArpTable;
 +
-+void arp_table_add(Slirp *slirp, uint32_t ip_addr, uint8_t ethaddr[ETH_ALEN]);
++void arp_table_add(Slirp *slirp, uint32_t ip_addr,
++                   const uint8_t ethaddr[ETH_ALEN]);
 +
 +bool arp_table_search(Slirp *slirp, uint32_t ip_addr,
 +                      uint8_t out_ethaddr[ETH_ALEN]);
@@ -8698,10 +8710,10 @@ index 0000000000..32634bcc00
 +#endif
 diff --git a/slirp/src/socket.c b/slirp/src/socket.c
 new file mode 100644
-index 0000000000..4cd9a64b3c
+index 0000000000..1e385df0d8
 --- /dev/null
 +++ b/slirp/src/socket.c
-@@ -0,0 +1,957 @@
+@@ -0,0 +1,954 @@
 +/* SPDX-License-Identifier: BSD-3-Clause */
 +/*
 + * Copyright (c) 1995 Danny Gasparovski.
@@ -9255,7 +9267,6 @@ index 0000000000..4cd9a64b3c
 +            break;
 +        default:
 +            g_assert_not_reached();
-+            break;
 +        }
 +
 +        /*
@@ -9307,7 +9318,6 @@ index 0000000000..4cd9a64b3c
 +                break;
 +            default:
 +                g_assert_not_reached();
-+                break;
 +            }
 +            m_free(m);
 +        } else {
@@ -9343,7 +9353,6 @@ index 0000000000..4cd9a64b3c
 +                break;
 +            default:
 +                g_assert_not_reached();
-+                break;
 +            }
 +        } /* rx error */
 +    } /* if ping packet */
@@ -14316,10 +14325,10 @@ index 0000000000..d3df021493
 +#endif
 diff --git a/slirp/src/tftp.c b/slirp/src/tftp.c
 new file mode 100644
-index 0000000000..c209145282
+index 0000000000..c6950ee10f
 --- /dev/null
 +++ b/slirp/src/tftp.c
-@@ -0,0 +1,462 @@
+@@ -0,0 +1,464 @@
 +/* SPDX-License-Identifier: MIT */
 +/*
 + * tftp.c - a simple, read-only tftp server for qemu
@@ -14440,7 +14449,9 @@ index 0000000000..c209145282
 +    }
 +
 +    if (len) {
-+        lseek(spt->fd, block_nr * spt->block_size, SEEK_SET);
++        if (lseek(spt->fd, block_nr * spt->block_size, SEEK_SET) == (off_t)-1) {
++            return -1;
++        }
 +
 +        bytes_read = read(spt->fd, buf, len);
 +    }
@@ -14784,15 +14795,17 @@ index 0000000000..c209145282
 +}
 diff --git a/slirp/src/tftp.h b/slirp/src/tftp.h
 new file mode 100644
-index 0000000000..c47bb43c7d
+index 0000000000..6d75478e83
 --- /dev/null
 +++ b/slirp/src/tftp.h
-@@ -0,0 +1,52 @@
+@@ -0,0 +1,54 @@
 +/* SPDX-License-Identifier: BSD-3-Clause */
 +/* tftp defines */
 +
 +#ifndef SLIRP_TFTP_H
 +#define SLIRP_TFTP_H
++
++#include "util.h"
 +
 +#define TFTP_SESSIONS_MAX 20
 +
@@ -14822,7 +14835,7 @@ index 0000000000..c47bb43c7d
 +        } tp_error;
 +        char tp_buf[TFTP_BLOCKSIZE_MAX + 2];
 +    } x;
-+} __attribute__((packed));
++} SLIRP_PACKED;
 +
 +struct tftp_session {
 +    Slirp *slirp;
@@ -14842,10 +14855,10 @@ index 0000000000..c47bb43c7d
 +#endif
 diff --git a/slirp/src/udp.c b/slirp/src/udp.c
 new file mode 100644
-index 0000000000..6bde20fafa
+index 0000000000..0ad44d7c03
 --- /dev/null
 +++ b/slirp/src/udp.c
-@@ -0,0 +1,361 @@
+@@ -0,0 +1,365 @@
 +/* SPDX-License-Identifier: BSD-3-Clause */
 +/*
 + * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -14900,7 +14913,10 @@ index 0000000000..6bde20fafa
 +
 +void udp_cleanup(Slirp *slirp)
 +{
-+    while (slirp->udb.so_next != &slirp->udb) {
++    struct socket *so, *so_next;
++
++    for (so = slirp->udb.so_next; so != &slirp->udb; so = so_next) {
++        so_next = so->so_next;
 +        udp_detach(slirp->udb.so_next);
 +    }
 +}
@@ -15174,6 +15190,7 @@ index 0000000000..6bde20fafa
 +    struct socket *so;
 +    socklen_t addrlen = sizeof(struct sockaddr_in);
 +
++    memset(&addr, 0, sizeof(addr));
 +    so = socreate(slirp);
 +    so->s = slirp_socket(AF_INET, SOCK_DGRAM, 0);
 +    if (so->s < 0) {
@@ -15484,7 +15501,7 @@ index 0000000000..6f9486bbca
 +}
 diff --git a/slirp/src/util.c b/slirp/src/util.c
 new file mode 100644
-index 0000000000..570c53f303
+index 0000000000..d3ed5faf8b
 --- /dev/null
 +++ b/slirp/src/util.c
 @@ -0,0 +1,428 @@
@@ -15882,7 +15899,7 @@ index 0000000000..570c53f303
 +    rv = slirp_vsnprintf(str, size, format, args);
 +    va_end(args);
 +
-+    if (rv > size) {
++    if (rv >= size) {
 +        g_critical("slirp_fmt() truncation");
 +    }
 +

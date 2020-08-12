@@ -1,4 +1,4 @@
-From 1f0568a29b004dd3557d5405fddc6979ac5ff911 Mon Sep 17 00:00:00 2001
+From 0ba70804c179d934e5be555abff3c4455ac137a0 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 12:53:31 +0200
 Subject: Add aarch64 machine types
@@ -35,6 +35,9 @@ Rebase notes (weekly-200520):
 Rebase notes (weekly-200701):
 - Added to virt_machine_device_unplug_cb to machine type (upstream)
 
+Rebase notes (5.1.0-rc1):
+- added mte property (upstream)
+
 Merged patches (4.0.0):
 - 7bfdb4c aarch64: Add virt-rhel8.0.0 machine type for ARM
 - 3433e69 aarch64: Set virt-rhel8.0.0 max_cpus to 512
@@ -46,12 +49,12 @@ Merged patches (4.1.0):
 
 Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/arm/virt.c         | 172 +++++++++++++++++++++++++++++++++++++++++-
+ hw/arm/virt.c         | 180 +++++++++++++++++++++++++++++++++++++++++-
  include/hw/arm/virt.h |  11 +++
- 2 files changed, 182 insertions(+), 1 deletion(-)
+ 2 files changed, 188 insertions(+), 3 deletions(-)
 
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index e30b837135..5a45677205 100644
+index 43cf75333b..e1a17e7c87 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
 @@ -79,6 +79,7 @@
@@ -113,7 +116,7 @@ index e30b837135..5a45677205 100644
  
  /* Number of external interrupt lines to configure the GIC with */
  #define NUM_IRQS 256
-@@ -1964,6 +2007,7 @@ static void machvirt_init(MachineState *machine)
+@@ -1979,6 +2022,7 @@ static void machvirt_init(MachineState *machine)
      qemu_add_machine_init_done_notifier(&vms->machine_done);
  }
  
@@ -121,7 +124,7 @@ index e30b837135..5a45677205 100644
  static bool virt_get_secure(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -1992,6 +2036,7 @@ static void virt_set_virt(Object *obj, bool value, Error **errp)
+@@ -2007,6 +2051,7 @@ static void virt_set_virt(Object *obj, bool value, Error **errp)
      vms->virt = value;
  }
  
@@ -129,7 +132,25 @@ index e30b837135..5a45677205 100644
  static bool virt_get_highmem(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -2367,6 +2412,7 @@ static int virt_kvm_type(MachineState *ms, const char *type_str)
+@@ -2073,7 +2118,7 @@ static void virt_set_ras(Object *obj, bool value, Error **errp)
+ 
+     vms->ras = value;
+ }
+-
++#if 0 /* Disabled for Red Hat Enterprise Linux */
+ static bool virt_get_mte(Object *obj, Error **errp)
+ {
+     VirtMachineState *vms = VIRT_MACHINE(obj);
+@@ -2087,7 +2132,7 @@ static void virt_set_mte(Object *obj, bool value, Error **errp)
+ 
+     vms->mte = value;
+ }
+-
++#endif
+ static char *virt_get_gic_version(Object *obj, Error **errp)
+ {
+     VirtMachineState *vms = VIRT_MACHINE(obj);
+@@ -2401,6 +2446,7 @@ static int virt_kvm_type(MachineState *ms, const char *type_str)
      return requested_pa_size > 40 ? requested_pa_size : 0;
  }
  
@@ -137,7 +158,7 @@ index e30b837135..5a45677205 100644
  static void virt_machine_class_init(ObjectClass *oc, void *data)
  {
      MachineClass *mc = MACHINE_CLASS(oc);
-@@ -2637,3 +2683,127 @@ static void virt_machine_2_6_options(MachineClass *mc)
+@@ -2679,3 +2725,131 @@ static void virt_machine_2_6_options(MachineClass *mc)
      vmc->no_pmu = true;
  }
  DEFINE_VIRT_MACHINE(2, 6)
@@ -256,6 +277,10 @@ index e30b837135..5a45677205 100644
 +    object_property_set_description(obj, "ras",
 +                                    "Set on/off to enable/disable reporting host memory errors "
 +                                    "to a KVM guest using ACPI and guest external abort exceptions");
++
++    /* MTE is disabled by default.  */
++    vms->mte = false;
++
 +    vms->irqmap=a15irqmap;
 +    virt_flash_create(vms);
 +}
@@ -266,10 +291,10 @@ index e30b837135..5a45677205 100644
 +}
 +DEFINE_RHEL_MACHINE_AS_LATEST(8, 2, 0)
 diff --git a/include/hw/arm/virt.h b/include/hw/arm/virt.h
-index 54bcf17afd..5fdabd87d6 100644
+index dff67e1bef..7c1e085749 100644
 --- a/include/hw/arm/virt.h
 +++ b/include/hw/arm/virt.h
-@@ -165,6 +165,7 @@ typedef struct {
+@@ -166,6 +166,7 @@ typedef struct {
  
  #define VIRT_ECAM_ID(high) (high ? VIRT_HIGH_PCIE_ECAM : VIRT_PCIE_ECAM)
  
@@ -277,7 +302,7 @@ index 54bcf17afd..5fdabd87d6 100644
  #define TYPE_VIRT_MACHINE   MACHINE_TYPE_NAME("virt")
  #define VIRT_MACHINE(obj) \
      OBJECT_CHECK(VirtMachineState, (obj), TYPE_VIRT_MACHINE)
-@@ -173,6 +174,16 @@ typedef struct {
+@@ -174,6 +175,16 @@ typedef struct {
  #define VIRT_MACHINE_CLASS(klass) \
      OBJECT_CLASS_CHECK(VirtMachineClass, klass, TYPE_VIRT_MACHINE)
  

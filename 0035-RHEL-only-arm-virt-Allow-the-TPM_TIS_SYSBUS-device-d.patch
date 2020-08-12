@@ -1,0 +1,39 @@
+From e5edd3824a782900bcb7aa2a980696e550b55cf6 Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Wed, 12 Aug 2020 11:03:02 +0200
+Subject: RHEL-only: arm/virt: Allow the TPM_TIS_SYSBUS device dynamic
+ allocation in machvirt
+
+RH-Author: Auger Eric <eric.auger@redhat.com>
+Message-id: <20200811163601.14341-2-eric.auger@redhat.com>
+Patchwork-id: 98143
+O-Subject: [RHEL-AV-8.3.0 qemu-kvm PATCH 1/2] RHEL-only: arm/virt: Allow the TPM_TIS_SYSBUS device dynamic allocation in machvirt
+Bugzilla: 1801242
+
+Allow the TPM_TIS_SYSBUS device dynamic instantiation onto the
+platform bus. The TPM_TIS sysbus device compilation will be enabled
+in a separate patch. That way associated qmp tests pass once the config
+is set.
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/arm/virt.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index fb5a5a7013..f087483a04 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -2738,6 +2738,7 @@ static void rhel_machine_class_init(ObjectClass *oc, void *data)
+     mc->init = machvirt_init;
+     /* Maximum supported VCPU count for all virt-rhel* machines */
+     mc->max_cpus = 384;
++    machine_class_allow_dynamic_sysbus_dev(mc, TYPE_TPM_TIS_SYSBUS);
+     mc->block_default_type = IF_VIRTIO;
+     mc->no_cdrom = 1;
+     mc->pci_allow_0_address = true;
+-- 
+2.27.0
+

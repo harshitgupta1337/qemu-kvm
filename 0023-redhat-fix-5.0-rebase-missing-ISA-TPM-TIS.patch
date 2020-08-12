@@ -1,6 +1,6 @@
-From def5545e3588c8b8c7cd12e3ff8967ce059d3f38 Mon Sep 17 00:00:00 2001
+From 69d8ae7ad5314e465c24fdeb1317751fa3e50ceb Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Marc-Andr=C3=A9=20Lureau?= <marcandre.lureau@redhat.com>
-Date: Mon, 8 Jun 2020 15:54:26 -0400
+Date: Mon, 27 Jul 2020 13:29:01 +0200
 Subject: redhat: fix 5.0 rebase missing ISA TPM TIS
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -20,7 +20,8 @@ BRANCH: rhel-av-8.3.0-preview-2020-04-29
 UPSTREAM: N/A
 BREW: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=29172313
 
-Signed-off-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+Signed-off-by: Marc-AndrÃ© Lureau <marcandre.lureau@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  default-configs/x86_64-rh-devices.mak | 2 +-

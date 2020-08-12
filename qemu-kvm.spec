@@ -10,6 +10,7 @@
 %global have_memlock_limits 0
 
 
+
 %ifnarch %{ix86} x86_64
     %global have_usbredir 0
 %endif
@@ -67,8 +68,8 @@ Obsoletes: %1-rhev
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
-Version: 5.0.0
-Release: 2%{?dist}
+Version: 5.1.0
+Release: 0%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -77,7 +78,7 @@ URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
 
-Source0: http://wiki.qemu.org/download/qemu-5.0.0.tar.xz
+Source0: http://wiki.qemu.org/download/qemu-5.1.0.tar.xz
 
 # KSM control scripts
 Source4: ksm.service
@@ -123,11 +124,20 @@ Patch0018: 0018-usb-xhci-Fix-PCI-capability-order.patch
 Patch0019: 0019-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0020: 0020-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0021: 0021-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
-Patch0022: 0022-virtio-net-fix-removal-of-failover-device.patch
-Patch0024: 0024-RHEL-only-Enable-vTPM-for-POWER-in-downstream-config.patch
-Patch0025: 0025-redhat-fix-5.0-rebase-missing-ISA-TPM-TIS.patch
-Patch0026: 0026-redhat-define-hw_compat_8_2.patch
-Patch0027: 0027-x86-Add-8.3.0-x86_64-machine-type.patch
+Patch0022: 0022-RHEL-only-Enable-vTPM-for-POWER-in-downstream-config.patch
+Patch0023: 0023-redhat-fix-5.0-rebase-missing-ISA-TPM-TIS.patch
+Patch0024: 0024-redhat-define-hw_compat_8_2.patch
+Patch0025: 0025-x86-Add-8.3.0-x86_64-machine-type.patch
+Patch0027: 0027-hw-arm-Changes-to-rhel820-machine.patch
+Patch0028: 0028-hw-arm-Introduce-rhel_virt_instance_init-helper.patch
+Patch0029: 0029-hw-arm-Add-rhel830-machine-type.patch
+Patch0030: 0030-redhat-define-pseries-rhel8.3.0-machine-type.patch
+Patch0031: 0031-ppc-Set-correct-max_cpus-value-on-spapr-rhel-machine.patch
+Patch0032: 0032-arm-Set-correct-max_cpus-value-on-virt-rhel-machine-.patch
+Patch0033: 0033-vl-Remove-downstream-only-MAX_RHEL_CPUS-code.patch
+Patch0034: 0034-q35-Set-max_cpus-to-512.patch
+Patch0035: 0035-RHEL-only-arm-virt-Allow-the-TPM_TIS_SYSBUS-device-d.patch
+Patch0036: 0036-RHEL-only-Enable-vTPM-for-ARM-in-downstream-configs.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -144,7 +154,7 @@ BuildRequires: pciutils-devel
 BuildRequires: libiscsi-devel
 BuildRequires: ncurses-devel
 BuildRequires: libattr-devel
-BuildRequires: libusbx-devel >= 1.0.22
+BuildRequires: libusbx-devel >= 1.0.23
 %if %{have_usbredir}
 BuildRequires: usbredir-devel >= 0.7.1
 %endif
@@ -193,7 +203,8 @@ BuildRequires: python3-sphinx
 BuildRequires: rdma-core-devel
 %endif
 %if %{have_fdt}
-BuildRequires: libfdt-devel >= 1.4.3
+BuildRequires: libfdt-devel >= 1.6.0
+Requires: libfdt >= 1.6.0
 %endif
 # iasl and cpp for acpi generation (not a hard requirement as we can use
 # pre-compiled files, but it's better to use this)
@@ -430,6 +441,7 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
     %global block_drivers_list %{block_drivers_list},gluster
 %endif
 
+
 cd qemu-kvm-build
 ../configure  \
   --prefix="%{_prefix}" \
@@ -498,6 +510,7 @@ cd qemu-kvm-build
   --enable-iconv \
   --disable-jemalloc \
   --enable-kvm \
+  --disable-libdaxctl \
   --enable-libiscsi \
   --disable-libnfs \
 %ifarch x86_64
@@ -543,7 +556,9 @@ cd qemu-kvm-build
 %else
   --disable-rdma \
 %endif
+  --disable-rng-none \
   --disable-replication \
+  --disable-safe-stack \
   --disable-sanitizers \
   --disable-sdl \
   --disable-sdl-image \
@@ -578,6 +593,7 @@ cd qemu-kvm-build
   --enable-vhost-net \
   --disable-vhost-scsi \
   --enable-vhost-user \
+  --enable-vhost-vdpa \
   --enable-vhost-vsock \
 %if 0%{have_spice}
   --enable-virglrenderer \
@@ -591,13 +607,13 @@ cd qemu-kvm-build
   --enable-vnc-sasl \
   --disable-vte \
   --disable-vvfat \
-  --disable-vxhs \
   --enable-werror \
   --disable-whpx \
   --disable-xen \
   --disable-xen-pci-passthrough \
   --disable-xfsctl \
   --enable-xkbcommon \
+  --disable-zstd \
   --without-default-devices
 
 echo "config-host.mak contents:"
@@ -1036,6 +1052,15 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 %{_libexecdir}/virtiofsd
 %{_datadir}/%{name}/vhost-user/50-qemu-virtiofsd.json
+%if %{have_usbredir}
+    %{_libdir}/qemu-kvm/hw-usb-redirect.so
+%endif
+%if 0%{have_spice}
+    %{_libdir}/qemu-kvm/hw-usb-smartcard.so
+%endif
+%ifarch x86_64
+    %{_libdir}/qemu-kvm/hw-display-qxl.so
+%endif
 
 %files -n qemu-img
 %defattr(-,root,root)
@@ -1079,12 +1104,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
-* Wed Jul 15 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.0.0-2.el8
-- Resolves: bz#1781911
-- Resolves: bz#1841529
-- Resolves: bz#1842902
-  (This is an unofficial build that fixes the BZs mentioned above)
-
+* Wed Aug 12 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-0.el8
+- Rebase to 5.1.0
+- Resolves: bz#1809650
 
 * Tue Jul 07 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 4.2.0-29.el8
 - kvm-virtio-net-fix-removal-of-failover-device.patch [bz#1820120]

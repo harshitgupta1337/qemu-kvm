@@ -1,4 +1,4 @@
-From 93f9f7beccd34102c5c8e25c3b2b3888c61aa063 Mon Sep 17 00:00:00 2001
+From 69de445124e71df949a3d5289f8a10a5f771bac2 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:48:41 +0200
 Subject: Enable make check
@@ -28,6 +28,9 @@ Rebase changes (weekly-200129):
 Rebased changes (weekly-200212):
 - Do not run iotests on make checka
 
+Rebase changes (5.1.0-rc1):
+- Enabled iotests 071 and 099
+
 Merged patches (4.0.0):
 - f7ffd13 Remove 7 qcow2 and luks iotests that are taking > 25 sec to run during the fast train build proce
 
@@ -38,7 +41,6 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  redhat/qemu-kvm.spec.template       |  2 +-
  tests/qemu-iotests/051              | 12 ++++++------
- tests/qemu-iotests/group            |  4 ++--
  tests/qtest/Makefile.include        | 12 ++++++------
  tests/qtest/boot-serial-test.c      |  6 +++++-
  tests/qtest/cpu-plug-test.c         |  4 ++--
@@ -47,10 +49,10 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  tests/qtest/prom-env-test.c         |  4 ++++
  tests/qtest/test-x86-cpuid-compat.c |  2 ++
  tests/qtest/usb-hcd-xhci-test.c     |  4 ++++
- 11 files changed, 38 insertions(+), 18 deletions(-)
+ 10 files changed, 36 insertions(+), 16 deletions(-)
 
 diff --git a/tests/qemu-iotests/051 b/tests/qemu-iotests/051
-index 034d3a3250..aadc413ee6 100755
+index bee26075b2..61d25c4ed7 100755
 --- a/tests/qemu-iotests/051
 +++ b/tests/qemu-iotests/051
 @@ -183,11 +183,11 @@ run_qemu -drive if=virtio
@@ -83,30 +85,8 @@ index 034d3a3250..aadc413ee6 100755
          ;;
       *)
          ;;
-diff --git a/tests/qemu-iotests/group b/tests/qemu-iotests/group
-index 9b07a7ed03..c678d915b2 100644
---- a/tests/qemu-iotests/group
-+++ b/tests/qemu-iotests/group
-@@ -92,7 +92,7 @@
- 068 rw quick
- 069 rw auto quick
- 070 rw quick
--071 rw auto quick
-+# 071 rw auto quick -- requires whitelisted blkverify
- 072 rw auto quick
- 073 rw auto quick
- 074 rw auto quick
-@@ -120,7 +120,7 @@
- 096 rw quick
- 097 rw auto backing
- 098 rw auto backing quick
--099 rw auto quick
-+# 099 rw auto quick  -- requires whitelisted blkverify
- # 100 was removed, do not reuse
- 101 rw quick
- 102 rw quick
 diff --git a/tests/qtest/Makefile.include b/tests/qtest/Makefile.include
-index 98af2c2d93..d370459c3a 100644
+index b0204e44f2..cf8a138791 100644
 --- a/tests/qtest/Makefile.include
 +++ b/tests/qtest/Makefile.include
 @@ -29,7 +29,7 @@ check-qtest-i386-y += ide-test
@@ -127,7 +107,7 @@ index 98af2c2d93..d370459c3a 100644
  check-qtest-i386-y += vmgenid-test
  check-qtest-i386-$(CONFIG_TPM_CRB) += tpm-crb-swtpm-test
  check-qtest-i386-$(CONFIG_TPM_CRB) += tpm-crb-test
-@@ -88,7 +88,7 @@ check-qtest-mips64el-$(CONFIG_VGA) += display-vga-test
+@@ -90,7 +90,7 @@ check-qtest-mips64el-$(CONFIG_VGA) += display-vga-test
  check-qtest-moxie-y += boot-serial-test
  
  check-qtest-ppc-$(CONFIG_ISA_TESTDEV) = endianness-test
@@ -136,7 +116,7 @@ index 98af2c2d93..d370459c3a 100644
  check-qtest-ppc-y += prom-env-test
  check-qtest-ppc-y += drive_del-test
  check-qtest-ppc-y += boot-serial-test
-@@ -102,8 +102,8 @@ check-qtest-ppc64-$(CONFIG_PSERIES) += rtas-test
+@@ -104,8 +104,8 @@ check-qtest-ppc64-$(CONFIG_PSERIES) += rtas-test
  check-qtest-ppc64-$(CONFIG_SLIRP) += pxe-test
  check-qtest-ppc64-$(CONFIG_USB_UHCI) += usb-hcd-uhci-test
  check-qtest-ppc64-$(CONFIG_USB_XHCI_NEC) += usb-hcd-xhci-test
@@ -147,7 +127,7 @@ index 98af2c2d93..d370459c3a 100644
  check-qtest-ppc64-$(CONFIG_RTL8139_PCI) += test-filter-redirector
  check-qtest-ppc64-$(CONFIG_VGA) += display-vga-test
  check-qtest-ppc64-y += numa-test
-@@ -152,7 +152,7 @@ check-qtest-s390x-$(CONFIG_SLIRP) += test-netfilter
+@@ -154,7 +154,7 @@ check-qtest-s390x-$(CONFIG_SLIRP) += test-netfilter
  check-qtest-s390x-$(CONFIG_POSIX) += test-filter-mirror
  check-qtest-s390x-$(CONFIG_POSIX) += test-filter-redirector
  check-qtest-s390x-y += drive_del-test
@@ -157,10 +137,10 @@ index 98af2c2d93..d370459c3a 100644
  check-qtest-s390x-y += cpu-plug-test
  check-qtest-s390x-y += migration-test
 diff --git a/tests/qtest/boot-serial-test.c b/tests/qtest/boot-serial-test.c
-index 85a3614286..1c18441334 100644
+index bfe7624dc6..1ffaa0bd7e 100644
 --- a/tests/qtest/boot-serial-test.c
 +++ b/tests/qtest/boot-serial-test.c
-@@ -109,19 +109,23 @@ static testdef_t tests[] = {
+@@ -120,19 +120,23 @@ static testdef_t tests[] = {
      { "ppc", "g3beige", "", "PowerPC,750" },
      { "ppc", "mac99", "", "PowerPC,G4" },
      { "ppc", "sam460ex", "-m 256", "DRAM:  256 MiB" },

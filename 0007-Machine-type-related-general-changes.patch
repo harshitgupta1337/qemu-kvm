@@ -1,4 +1,4 @@
-From cbbdd67535fc6da1b77b2fa9f5368f72c211eeb1 Mon Sep 17 00:00:00 2001
+From a86a622ecc7b0b3c66d21fdd1c5dd279bfc75a03 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 11 Jan 2019 09:54:45 +0100
 Subject: Machine type related general changes
@@ -70,7 +70,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  23 files changed, 354 insertions(+), 11 deletions(-)
 
 diff --git a/hw/acpi/ich9.c b/hw/acpi/ich9.c
-index 7ead029e68..3b8501fa38 100644
+index bb8379f6a7..43ad1ff927 100644
 --- a/hw/acpi/ich9.c
 +++ b/hw/acpi/ich9.c
 @@ -369,6 +369,18 @@ static void ich9_pm_set_enable_tco(Object *obj, bool value, Error **errp)
@@ -103,7 +103,7 @@ index 7ead029e68..3b8501fa38 100644
                                    &pm->disable_s3, OBJ_PROP_FLAG_READWRITE);
      object_property_add_uint8_ptr(obj, ACPI_PM_PROP_S4_DISABLED,
 diff --git a/hw/acpi/piix4.c b/hw/acpi/piix4.c
-index 283422e0d3..f6642011c6 100644
+index 26bac4f16c..7c2e17ceb6 100644
 --- a/hw/acpi/piix4.c
 +++ b/hw/acpi/piix4.c
 @@ -276,6 +276,7 @@ static const VMStateDescription vmstate_acpi = {
@@ -126,7 +126,7 @@ index 283422e0d3..f6642011c6 100644
      DEFINE_PROP_BOOL("acpi-pci-hotplug-with-bridge-support", PIIX4PMState,
                       use_acpi_hotplug_bridge, true),
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index 7d9f7157da..e30b837135 100644
+index ecfee362a1..43cf75333b 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
 @@ -1450,7 +1450,7 @@ static void virt_build_smbios(VirtMachineState *vms)
@@ -139,7 +139,7 @@ index 7d9f7157da..e30b837135 100644
      smbios_get_tables(MACHINE(vms), NULL, 0, &smbios_tables, &smbios_tables_len,
                        &smbios_anchor, &smbios_anchor_len);
 diff --git a/hw/char/serial.c b/hw/char/serial.c
-index 9eebcb27e7..11d2d08912 100644
+index 2386479492..c83f816f42 100644
 --- a/hw/char/serial.c
 +++ b/hw/char/serial.c
 @@ -35,6 +35,7 @@
@@ -194,7 +194,7 @@ index 9eebcb27e7..11d2d08912 100644
  }
  
 diff --git a/hw/core/machine.c b/hw/core/machine.c
-index 211b4e077a..ef6b320ea7 100644
+index 8d1a90c6cf..2b8e480040 100644
 --- a/hw/core/machine.c
 +++ b/hw/core/machine.c
 @@ -28,6 +28,176 @@
@@ -372,8 +372,8 @@ index 211b4e077a..ef6b320ea7 100644
 +const size_t hw_compat_rhel_7_1_len = G_N_ELEMENTS(hw_compat_rhel_7_1);
 +
  GlobalProperty hw_compat_5_0[] = {
+     { "pci-host-bridge", "x-config-reg-migration-enabled", "off" },
      { "virtio-balloon-device", "page-poison", "false" },
-     { "vmport", "x-read-set-eax", "off" },
 diff --git a/hw/display/vga-isa.c b/hw/display/vga-isa.c
 index 3aaeeeca1e..d88f52a587 100644
 --- a/hw/display/vga-isa.c
@@ -388,7 +388,7 @@ index 3aaeeeca1e..d88f52a587 100644
  };
  
 diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
-index fae487f57d..18815e8302 100644
+index b789e83f9a..0ecdd57689 100644
 --- a/hw/i386/pc_piix.c
 +++ b/hw/i386/pc_piix.c
 @@ -179,6 +179,8 @@ static void pc_init1(MachineState *machine,
@@ -401,7 +401,7 @@ index fae487f57d..18815e8302 100644
      }
  
 diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
-index acd6d405f0..a1131e6825 100644
+index a3e607a544..b8ea764ce3 100644
 --- a/hw/i386/pc_q35.c
 +++ b/hw/i386/pc_q35.c
 @@ -204,6 +204,8 @@ static void pc_q35_init(MachineState *machine)
@@ -535,7 +535,7 @@ index 7a38540cb9..377d861913 100644
  }
  
 diff --git a/hw/smbios/smbios.c b/hw/smbios/smbios.c
-index ffd98727ee..7818b90c96 100644
+index f560826904..8875e83941 100644
 --- a/hw/smbios/smbios.c
 +++ b/hw/smbios/smbios.c
 @@ -56,6 +56,9 @@ static bool smbios_legacy = true;
@@ -650,7 +650,7 @@ index 37f7beb3fa..2741edc589 100644
      if (s->masterbus) {
          USBPort *ports[NB_PORTS];
 diff --git a/hw/usb/hcd-xhci.c b/hw/usb/hcd-xhci.c
-index b330e36fe6..b25cce8f0c 100644
+index 67a18fe2b6..38bdfaf3fd 100644
 --- a/hw/usb/hcd-xhci.c
 +++ b/hw/usb/hcd-xhci.c
 @@ -3600,9 +3600,27 @@ static const VMStateDescription vmstate_xhci_slot = {
@@ -767,10 +767,10 @@ index 02a0ced0a0..67e38a1b13 100644
  void smbios_get_tables(MachineState *ms,
                         const struct smbios_phys_mem_area *mem_array,
 diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
-index dce1273c7d..665c4309a2 100644
+index 3d7ed3a55e..951e825778 100644
 --- a/include/hw/i386/pc.h
 +++ b/include/hw/i386/pc.h
-@@ -102,6 +102,9 @@ typedef struct PCMachineClass {
+@@ -103,6 +103,9 @@ typedef struct PCMachineClass {
      bool smbios_defaults;
      bool smbios_legacy_mode;
      bool smbios_uuid_encoded;
@@ -794,10 +794,10 @@ index e29a37635b..35ac38c459 100644
 +
  #endif
 diff --git a/migration/migration.c b/migration/migration.c
-index 92e44e021e..67d3b75485 100644
+index 8fe36339db..bf684185b7 100644
 --- a/migration/migration.c
 +++ b/migration/migration.c
-@@ -128,6 +128,8 @@ enum mig_rp_message_type {
+@@ -129,6 +129,8 @@ enum mig_rp_message_type {
      MIG_RP_MSG_MAX
  };
  
@@ -807,10 +807,10 @@ index 92e44e021e..67d3b75485 100644
     migrations at once.  For now we don't need to add
     dynamic creation of migration */
 diff --git a/migration/migration.h b/migration/migration.h
-index f617960522..b8bc10d16d 100644
+index 6c6a931d0d..721e272713 100644
 --- a/migration/migration.h
 +++ b/migration/migration.h
-@@ -339,6 +339,11 @@ void init_dirty_bitmap_incoming_migration(void);
+@@ -340,6 +340,11 @@ void dirty_bitmap_mig_cancel_incoming(void);
  void migrate_add_address(SocketAddress *address);
  
  int foreach_not_ignored_block(RAMBlockIterFunc func, void *opaque);

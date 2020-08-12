@@ -1,4 +1,4 @@
-From 31a74446c5312b248bbc6093f21aee3500b96fca Mon Sep 17 00:00:00 2001
+From 45d5ef7594e5b07d3a975feea8e72541402a797f Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:10:31 +0200
 Subject: Add x86_64 machine types
@@ -70,10 +70,10 @@ index b7bcbbbb2a..fe815c5403 100644
      }
  
 diff --git a/hw/i386/pc.c b/hw/i386/pc.c
-index 61acc9e530..fe37bdec7a 100644
+index 47c5ca3e34..063f01d19a 100644
 --- a/hw/i386/pc.c
 +++ b/hw/i386/pc.c
-@@ -346,6 +346,263 @@ GlobalProperty pc_compat_1_4[] = {
+@@ -347,6 +347,263 @@ GlobalProperty pc_compat_1_4[] = {
  };
  const size_t pc_compat_1_4_len = G_N_ELEMENTS(pc_compat_1_4);
  
@@ -337,7 +337,7 @@ index 61acc9e530..fe37bdec7a 100644
  GSIState *pc_gsi_create(qemu_irq **irqs, bool pci_enabled)
  {
      GSIState *s;
-@@ -1011,7 +1268,8 @@ void pc_memory_init(PCMachineState *pcms,
+@@ -1012,7 +1269,8 @@ void pc_memory_init(PCMachineState *pcms,
      option_rom_mr = g_malloc(sizeof(*option_rom_mr));
      memory_region_init_ram(option_rom_mr, NULL, "pc.rom", PC_ROM_SIZE,
                             &error_fatal);
@@ -347,7 +347,7 @@ index 61acc9e530..fe37bdec7a 100644
          memory_region_set_readonly(option_rom_mr, true);
      }
      memory_region_add_subregion_overlap(rom_memory,
-@@ -1969,6 +2227,8 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
+@@ -1956,6 +2214,8 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
      pcmc->linuxboot_dma_enabled = true;
      pcmc->pvh_enabled = true;
      assert(!mc->get_hotplug_handler);
@@ -356,7 +356,7 @@ index 61acc9e530..fe37bdec7a 100644
      mc->get_hotplug_handler = pc_get_hotplug_handler;
      mc->hotplug_allowed = pc_hotplug_allowed;
      mc->cpu_index_to_instance_props = x86_cpu_index_to_props;
-@@ -1981,7 +2241,8 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
+@@ -1968,7 +2228,8 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
      mc->hot_add_cpu = pc_hot_add_cpu;
      mc->smp_parse = pc_smp_parse;
      mc->block_default_type = IF_IDE;
@@ -367,7 +367,7 @@ index 61acc9e530..fe37bdec7a 100644
      mc->wakeup = pc_machine_wakeup;
      hc->pre_plug = pc_machine_device_pre_plug_cb;
 diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
-index 18815e8302..eeadd896c2 100644
+index 0ecdd57689..6d935645b6 100644
 --- a/hw/i386/pc_piix.c
 +++ b/hw/i386/pc_piix.c
 @@ -54,6 +54,7 @@
@@ -389,7 +389,7 @@ index 18815e8302..eeadd896c2 100644
                              pcmc->smbios_uuid_encoded,
                              pcmc->smbios_stream_product,
                              pcmc->smbios_stream_version,
-@@ -314,6 +315,7 @@ static void pc_init1(MachineState *machine,
+@@ -316,6 +317,7 @@ static void pc_init1(MachineState *machine,
   * hw_compat_*, pc_compat_*, or * pc_*_machine_options().
   */
  
@@ -397,7 +397,7 @@ index 18815e8302..eeadd896c2 100644
  static void pc_compat_2_3_fn(MachineState *machine)
  {
      X86MachineState *x86ms = X86_MACHINE(machine);
-@@ -992,3 +994,207 @@ static void xenfv_3_1_machine_options(MachineClass *m)
+@@ -994,3 +996,207 @@ static void xenfv_3_1_machine_options(MachineClass *m)
  DEFINE_PC_MACHINE(xenfv, "xenfv-3.1", pc_xen_hvm_init,
                    xenfv_3_1_machine_options);
  #endif
@@ -606,7 +606,7 @@ index 18815e8302..eeadd896c2 100644
 +DEFINE_PC_MACHINE(rhel700, "pc-i440fx-rhel7.0.0", pc_init_rhel700,
 +                  pc_machine_rhel700_options);
 diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
-index a1131e6825..1cd4e15297 100644
+index b8ea764ce3..f4edb049d6 100644
 --- a/hw/i386/pc_q35.c
 +++ b/hw/i386/pc_q35.c
 @@ -201,8 +201,8 @@ static void pc_q35_init(MachineState *machine)
@@ -620,7 +620,7 @@ index a1131e6825..1cd4e15297 100644
                              pcmc->smbios_uuid_encoded,
                              pcmc->smbios_stream_product,
                              pcmc->smbios_stream_version,
-@@ -337,6 +337,7 @@ static void pc_q35_init(MachineState *machine)
+@@ -336,6 +336,7 @@ static void pc_q35_init(MachineState *machine)
      DEFINE_PC_MACHINE(suffix, name, pc_init_##suffix, optionfn)
  
  
@@ -628,7 +628,7 @@ index a1131e6825..1cd4e15297 100644
  static void pc_q35_machine_options(MachineClass *m)
  {
      PCMachineClass *pcmc = PC_MACHINE_CLASS(m);
-@@ -565,3 +566,160 @@ static void pc_q35_2_4_machine_options(MachineClass *m)
+@@ -564,3 +565,160 @@ static void pc_q35_2_4_machine_options(MachineClass *m)
  
  DEFINE_Q35_MACHINE(v2_4, "pc-q35-2.4", NULL,
                     pc_q35_2_4_machine_options);
@@ -803,10 +803,10 @@ index 1062df96c0..c3577319c0 100644
                                   int nb_nodes, ram_addr_t size);
      bool ignore_boot_device_suffixes;
 diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
-index 665c4309a2..95d07f81a0 100644
+index 951e825778..156be22995 100644
 --- a/include/hw/i386/pc.h
 +++ b/include/hw/i386/pc.h
-@@ -120,6 +120,9 @@ typedef struct PCMachineClass {
+@@ -121,6 +121,9 @@ typedef struct PCMachineClass {
  
      /* use PVH to load kernels that support this feature */
      bool pvh_enabled;
@@ -816,7 +816,7 @@ index 665c4309a2..95d07f81a0 100644
  } PCMachineClass;
  
  #define TYPE_PC_MACHINE "generic-pc-machine"
-@@ -264,6 +267,36 @@ extern const size_t pc_compat_1_5_len;
+@@ -265,6 +268,36 @@ extern const size_t pc_compat_1_5_len;
  extern GlobalProperty pc_compat_1_4[];
  extern const size_t pc_compat_1_4_len;
  
@@ -854,7 +854,7 @@ index 665c4309a2..95d07f81a0 100644
   * depending on QEMU versions up to QEMU 2.4.
   */
 diff --git a/target/i386/cpu.c b/target/i386/cpu.c
-index 55a30cd4d9..5477433af5 100644
+index 030a5a09ed..cdaa1463f2 100644
 --- a/target/i386/cpu.c
 +++ b/target/i386/cpu.c
 @@ -1830,7 +1830,7 @@ static X86CPUDefinition builtin_x86_defs[] = {
@@ -864,9 +864,9 @@ index 55a30cd4d9..5477433af5 100644
 -        .model = 6,
 +        .model = 13,
          .stepping = 3,
-         .features[FEAT_1_EDX] = CPUID_SSE2 | CPUID_SSE | CPUID_FXSR |
-             CPUID_MMX | CPUID_CLFLUSH | CPUID_PSE36 | CPUID_PAT | CPUID_CMOV |
-@@ -4114,6 +4114,7 @@ static PropValue kvm_default_props[] = {
+         .features[FEAT_1_EDX] =
+             PPRO_FEATURES |
+@@ -4142,6 +4142,7 @@ static PropValue kvm_default_props[] = {
      { "acpi", "off" },
      { "monitor", "off" },
      { "svm", "off" },
@@ -875,10 +875,10 @@ index 55a30cd4d9..5477433af5 100644
  };
  
 diff --git a/target/i386/kvm.c b/target/i386/kvm.c
-index 6adbff3d74..51fbfd528e 100644
+index 6f18d940a5..98249b2e3b 100644
 --- a/target/i386/kvm.c
 +++ b/target/i386/kvm.c
-@@ -3139,6 +3139,7 @@ static int kvm_get_msrs(X86CPU *cpu)
+@@ -3135,6 +3135,7 @@ static int kvm_get_msrs(X86CPU *cpu)
      struct kvm_msr_entry *msrs = cpu->kvm_msr_buf->entries;
      int ret, i;
      uint64_t mtrr_top_bits;
@@ -886,7 +886,7 @@ index 6adbff3d74..51fbfd528e 100644
  
      kvm_msr_buf_reset(cpu);
  
-@@ -3448,6 +3449,9 @@ static int kvm_get_msrs(X86CPU *cpu)
+@@ -3444,6 +3445,9 @@ static int kvm_get_msrs(X86CPU *cpu)
              break;
          case MSR_KVM_ASYNC_PF_EN:
              env->async_pf_en_msr = msrs[i].data;

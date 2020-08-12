@@ -1,0 +1,61 @@
+From 098954acda750a54d2eb512297bcd205212ee718 Mon Sep 17 00:00:00 2001
+From: Gavin Shan <gshan@redhat.com>
+Date: Wed, 12 Aug 2020 10:58:04 +0200
+Subject: hw/arm: Add rhel830 machine type
+
+RH-Author: Gavin Shan <gshan@redhat.com>
+Message-id: <20200630014756.102753-1-gshan@redhat.com>
+Patchwork-id: 97845
+O-Subject: [RHEL-AV 8.3.0 qemu-kvm PATCH v5 3/3] hw/arm: Add rhel830 machine type
+Bugzilla: 1818843
+RH-Acked-by: Auger Eric <eric.auger@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+This adds rhel830 machine type, whose properties are same as to
+rhel820.
+
+Signed-off-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Auger Eric <eric.auger@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/arm/virt.c | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index 650668a8d1..48b58be597 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -2841,6 +2841,17 @@ static void rhel_virt_instance_init(Object *obj)
+     virt_flash_create(vms);
+ }
+ 
++static void rhel830_virt_instance_init(Object *obj)
++{
++    rhel_virt_instance_init(obj);
++}
++
++static void rhel830_virt_options(MachineClass *mc)
++{
++    compat_props_add(mc->compat_props, arm_rhel_compat, arm_rhel_compat_len);
++}
++DEFINE_RHEL_MACHINE_AS_LATEST(8, 3, 0)
++
+ static void rhel820_virt_instance_init(Object *obj)
+ {
+     rhel_virt_instance_init(obj);
+@@ -2848,6 +2859,8 @@ static void rhel820_virt_instance_init(Object *obj)
+ 
+ static void rhel820_virt_options(MachineClass *mc)
+ {
+-    compat_props_add(mc->compat_props, arm_rhel_compat, arm_rhel_compat_len);
++    rhel830_virt_options(mc);
++    compat_props_add(mc->compat_props, hw_compat_rhel_8_2,
++                     hw_compat_rhel_8_2_len);
+ }
+-DEFINE_RHEL_MACHINE_AS_LATEST(8, 2, 0)
++DEFINE_RHEL_MACHINE(8, 2, 0)
+-- 
+2.27.0
+
