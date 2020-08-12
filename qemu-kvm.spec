@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.1.0
-Release: 0%{?dist}
+Release: 1%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -422,7 +422,7 @@ the Secure Shell (SSH) protocol.
 
 
 %prep
-%setup -n qemu-%{version}
+%setup -n qemu-%{version}%{?rcversion}
 # Remove slirp content in scratchbuilds because it's being applyed as a patch
 rm -fr slirp
 mkdir slirp
@@ -1104,6 +1104,15 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Wed Aug 12 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-1.el8
+- Quick changelog fix to reflect the current fixes:
+- Resolve: bz#1781911
+- Resolve: bz#1841529
+- Resolve: bz#1842902
+- Resolve: bz#1818843
+- Resolve: bz#1819292
+- Resolve: bz#1801242
+
 * Wed Aug 12 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-0.el8
 - Rebase to 5.1.0
 - Resolves: bz#1809650
