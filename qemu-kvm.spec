@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.1.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -140,6 +140,12 @@ Patch0035: 0035-RHEL-only-arm-virt-Allow-the-TPM_TIS_SYSBUS-device-d.patch
 Patch0036: 0036-RHEL-only-Enable-vTPM-for-ARM-in-downstream-configs.patch
 # For bz#1853265 - Forward and backward migration from rhel-av-8.3.0(qemu-kvm-5.0.0) to rhel-av-8.2.1(qemu-kvm-4.2.0) failed with "qemu-kvm: error while loading state for instance 0x0 of device 'spapr'"
 Patch37: kvm-redhat-define-hw_compat_8_2.patch
+# For bz#1843348 - 8.3 machine types for POWER
+Patch38: kvm-redhat-Update-hw_compat_8_2.patch
+# For bz#1843348 - 8.3 machine types for POWER
+Patch39: kvm-redhat-update-pseries-rhel8.2.0-machine-type.patch
+# For bz#1801242 - [aarch64] vTPM support in machvirt
+Patch40: kvm-Disable-TPM-passthrough-backend-on-ARM.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -206,7 +212,6 @@ BuildRequires: rdma-core-devel
 %endif
 %if %{have_fdt}
 BuildRequires: libfdt-devel >= 1.6.0
-Requires: libfdt >= 1.6.0
 %endif
 # iasl and cpp for acpi generation (not a hard requirement as we can use
 # pre-compiled files, but it's better to use this)
@@ -302,6 +307,9 @@ Requires: powerpc-utils
 Requires: libusbx >= 1.0.19
 %if %{have_usbredir}
 Requires: usbredir >= 0.7.1
+%endif
+%if %{have_fdt}
+Requires: libfdt >= 1.6.0
 %endif
 
 %rhev_ma_conflicts qemu-kvm
@@ -1106,6 +1114,18 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Wed Aug 19 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-3.el8
+- kvm-redhat-Update-hw_compat_8_2.patch [bz#1843348]
+- kvm-redhat-update-pseries-rhel8.2.0-machine-type.patch [bz#1843348]
+- kvm-Disable-TPM-passthrough-backend-on-ARM.patch [bz#1801242]
+- kvm-Require-libfdt-1.6.0.patch [bz#1867847]
+- Resolves: bz#1801242
+  ([aarch64] vTPM support in machvirt)
+- Resolves: bz#1843348
+  (8.3 machine types for POWER)
+- Resolves: bz#1867847
+  ([ppc] virt module 7629: /usr/libexec/qemu-kvm: undefined symbol: fdt_check_full, version LIBFDT_1.2)
+
 * Wed Aug 12 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-2.el8
 - kvm-redhat-define-hw_compat_8_2.patch [bz#1853265]
 - Resolves: bz#1853265
