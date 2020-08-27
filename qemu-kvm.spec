@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.1.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -146,6 +146,18 @@ Patch38: kvm-redhat-Update-hw_compat_8_2.patch
 Patch39: kvm-redhat-update-pseries-rhel8.2.0-machine-type.patch
 # For bz#1801242 - [aarch64] vTPM support in machvirt
 Patch40: kvm-Disable-TPM-passthrough-backend-on-ARM.patch
+# For bz#1867075 - CVE-2020-10756 virt:8.3/qemu-kvm: QEMU: slirp: networking out-of-bounds read information disclosure vulnerability [rhel-av-8]
+Patch41: kvm-Drop-bogus-IPv6-messages.patch
+# For bz#1849707 - 8.3 machine types for x86 - 5.1 update
+Patch42: kvm-machine-types-numa-set-numa_mem_supported-on-old-mac.patch
+# For bz#1849707 - 8.3 machine types for x86 - 5.1 update
+Patch43: kvm-machine_types-numa-compatibility-for-auto_enable_num.patch
+# For bz#1790492 - 'dirty-bitmaps' migration capability should allow configuring target nodenames
+Patch44: kvm-migration-Add-block-bitmap-mapping-parameter.patch
+# For bz#1790492 - 'dirty-bitmaps' migration capability should allow configuring target nodenames
+Patch45: kvm-iotests.py-Let-wait_migration-return-on-failure.patch
+# For bz#1790492 - 'dirty-bitmaps' migration capability should allow configuring target nodenames
+Patch46: kvm-iotests-Test-node-bitmap-aliases-during-migration.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1114,6 +1126,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Aug 27 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-4.el8
+- kvm-Drop-bogus-IPv6-messages.patch [bz#1867075]
+- kvm-machine-types-numa-set-numa_mem_supported-on-old-mac.patch [bz#1849707]
+- kvm-machine_types-numa-compatibility-for-auto_enable_num.patch [bz#1849707]
+- kvm-migration-Add-block-bitmap-mapping-parameter.patch [bz#1790492]
+- kvm-iotests.py-Let-wait_migration-return-on-failure.patch [bz#1790492]
+- kvm-iotests-Test-node-bitmap-aliases-during-migration.patch [bz#1790492]
+- Resolves: bz#1790492
+  ('dirty-bitmaps' migration capability should allow configuring target nodenames)
+- Resolves: bz#1849707
+  (8.3 machine types for x86 - 5.1 update)
+- Resolves: bz#1867075
+  (CVE-2020-10756 virt:8.3/qemu-kvm: QEMU: slirp: networking out-of-bounds read information disclosure vulnerability [rhel-av-8])
+
 * Wed Aug 19 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-3.el8
 - kvm-redhat-Update-hw_compat_8_2.patch [bz#1843348]
 - kvm-redhat-update-pseries-rhel8.2.0-machine-type.patch [bz#1843348]
