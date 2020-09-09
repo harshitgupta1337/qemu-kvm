@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.1.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -158,6 +158,24 @@ Patch44: kvm-migration-Add-block-bitmap-mapping-parameter.patch
 Patch45: kvm-iotests.py-Let-wait_migration-return-on-failure.patch
 # For bz#1790492 - 'dirty-bitmaps' migration capability should allow configuring target nodenames
 Patch46: kvm-iotests-Test-node-bitmap-aliases-during-migration.patch
+# For bz#1873417 - AMD/NUMA topology - revert 5.1 changes
+Patch47: kvm-Revert-i386-Fix-pkg_id-offset-for-EPYC-cpu-models.patch
+# For bz#1873417 - AMD/NUMA topology - revert 5.1 changes
+Patch48: kvm-Revert-target-i386-Enable-new-apic-id-encoding-for-E.patch
+# For bz#1873417 - AMD/NUMA topology - revert 5.1 changes
+Patch49: kvm-Revert-hw-i386-Move-arch_id-decode-inside-x86_cpus_i.patch
+# For bz#1873417 - AMD/NUMA topology - revert 5.1 changes
+Patch50: kvm-Revert-i386-Introduce-use_epyc_apic_id_encoding-in-X.patch
+# For bz#1873417 - AMD/NUMA topology - revert 5.1 changes
+Patch51: kvm-Revert-hw-i386-Introduce-apicid-functions-inside-X86.patch
+# For bz#1873417 - AMD/NUMA topology - revert 5.1 changes
+Patch52: kvm-Revert-target-i386-Cleanup-and-use-the-EPYC-mode-top.patch
+# For bz#1873417 - AMD/NUMA topology - revert 5.1 changes
+Patch53: kvm-Revert-hw-386-Add-EPYC-mode-topology-decoding-functi.patch
+# For bz#1867739 - -prom-env does not validate input
+Patch54: kvm-nvram-Exit-QEMU-if-NVRAM-cannot-contain-all-prom-env.patch
+# For bz#1869715 - CVE-2020-14364 qemu-kvm: QEMU: usb: out-of-bounds r/w access issue while processing usb packets [rhel-av-8.3.0]
+Patch55: kvm-usb-fix-setup_len-init-CVE-2020-14364.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -184,7 +202,6 @@ BuildRequires: python3-sphinx
 BuildRequires: spice-protocol >= 0.12.12
 BuildRequires: spice-server-devel >= 0.12.8
 BuildRequires: libcacard-devel
-BuildRequires: virglrenderer-devel
 # For smartcard NSS support
 BuildRequires: nss-devel
 %endif
@@ -196,7 +213,7 @@ BuildRequires: librados-devel
 BuildRequires: librbd-devel
 %if %{have_gluster}
 # For gluster block driver
-BuildRequires: glusterfs-api-devel >= 3.6.0
+BuildRequires: glusterfs-api-devel
 BuildRequires: glusterfs-devel
 %endif
 # We need both because the 'stap' binary is probed for by configure
@@ -306,9 +323,6 @@ Requires: %{name}-common = %{epoch}:%{version}-%{release}
 Requires: libseccomp >= 2.4.0
 # For compressed guest memory dumps
 Requires: lzo snappy
-%if %{have_gluster}
-Requires: glusterfs-api >= 3.6.0
-%endif
 %if %{have_kvm_setup}
 Requires(post): systemd-units
 Requires(preun): systemd-units
@@ -617,11 +631,7 @@ cd qemu-kvm-build
   --enable-vhost-user \
   --enable-vhost-vdpa \
   --enable-vhost-vsock \
-%if 0%{have_spice}
-  --enable-virglrenderer \
-%else
   --disable-virglrenderer \
-%endif
   --disable-virtfs \
   --enable-vnc \
   --disable-vnc-jpeg \
@@ -1068,10 +1078,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %if 0%{have_memlock_limits}
     %{_sysconfdir}/security/limits.d/95-kvm-memlock.conf
 %endif
-%if %{have_spice}
-%{_libexecdir}/vhost-user-gpu
-%{_datadir}/%{name}/vhost-user/50-qemu-gpu.json
-%endif
 %{_libexecdir}/virtiofsd
 %{_datadir}/%{name}/vhost-user/50-qemu-virtiofsd.json
 %if %{have_usbredir}
@@ -1126,6 +1132,29 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Sep 08 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-5.el8
+- kvm-Revert-i386-Fix-pkg_id-offset-for-EPYC-cpu-models.patch [bz#1873417]
+- kvm-Revert-target-i386-Enable-new-apic-id-encoding-for-E.patch [bz#1873417]
+- kvm-Revert-hw-i386-Move-arch_id-decode-inside-x86_cpus_i.patch [bz#1873417]
+- kvm-Revert-i386-Introduce-use_epyc_apic_id_encoding-in-X.patch [bz#1873417]
+- kvm-Revert-hw-i386-Introduce-apicid-functions-inside-X86.patch [bz#1873417]
+- kvm-Revert-target-i386-Cleanup-and-use-the-EPYC-mode-top.patch [bz#1873417]
+- kvm-Revert-hw-386-Add-EPYC-mode-topology-decoding-functi.patch [bz#1873417]
+- kvm-nvram-Exit-QEMU-if-NVRAM-cannot-contain-all-prom-env.patch [bz#1867739]
+- kvm-usb-fix-setup_len-init-CVE-2020-14364.patch [bz#1869715]
+- kvm-Remove-explicit-glusterfs-api-dependency.patch [bz#1872853]
+- kvm-disable-virgl.patch [bz#1831271]
+- Resolves: bz#1831271
+  (Drop virgil acceleration support and remove virglrenderer dependency)
+- Resolves: bz#1867739
+  (-prom-env does not validate input)
+- Resolves: bz#1869715
+  (CVE-2020-14364 qemu-kvm: QEMU: usb: out-of-bounds r/w access issue while processing usb packets [rhel-av-8.3.0])
+- Resolves: bz#1872853
+  (move the glusterfs dependency out of qemu-kvm-core to the glusterfs module)
+- Resolves: bz#1873417
+  (AMD/NUMA topology - revert 5.1 changes)
+
 * Thu Aug 27 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-4.el8
 - kvm-Drop-bogus-IPv6-messages.patch [bz#1867075]
 - kvm-machine-types-numa-set-numa_mem_supported-on-old-mac.patch [bz#1849707]
