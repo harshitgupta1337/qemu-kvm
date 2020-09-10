@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.1.0
-Release: 5%{?dist}
+Release: 6%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -330,7 +330,7 @@ Requires(preun): systemd-units
 Requires: powerpc-utils
     %endif
 %endif
-Requires: libusbx >= 1.0.19
+Requires: libusbx >= 1.0.23
 %if %{have_usbredir}
 Requires: usbredir >= 0.7.1
 %endif
@@ -933,6 +933,9 @@ rm -rf $RPM_BUILD_ROOT%{qemudocdir}/user/.buildinfo
 # Remove spec
 rm -rf $RPM_BUILD_ROOT%{qemudocdir}/specs
 
+# Hack to keep qemu-pr-helper in original location
+mv $RPM_BUILD_ROOT%{_libexecdir}/qemu-pr-helper $RPM_BUILD_ROOT%{_bindir}/qemu-pr-helper
+
 %check
 cd qemu-kvm-build
 export DIFF=diff; make check V=1
@@ -996,7 +999,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_mandir}/man7/qemu-qmp-ref.7*
 %{_mandir}/man7/qemu-cpu-models.7*
 %{_bindir}/qemu-keymap
-%{_libexecdir}/qemu-pr-helper
+%{_bindir}/qemu-pr-helper
 %{_bindir}/qemu-edid
 %{_bindir}/qemu-trace-stap
 %{_unitdir}/qemu-pr-helper.service
@@ -1132,6 +1135,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Sep 10 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-6.el8
+- kvm-spec-Move-qemu-pr-helper-back-to-usr-bin.patch [bz#1869635]
+- kvm-Bump-required-libusbx-version.patch [bz#1856591]
+- Resolves: bz#1856591
+  (libusbx isn't updated with qemu-kvm)
+- Resolves: bz#1869635
+  ('/usr/bin/qemu-pr-helper' is not a suitable pr helper: No such file or directory)
+
 * Tue Sep 08 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-5.el8
 - kvm-Revert-i386-Fix-pkg_id-offset-for-EPYC-cpu-models.patch [bz#1873417]
 - kvm-Revert-target-i386-Enable-new-apic-id-encoding-for-E.patch [bz#1873417]
