@@ -1,0 +1,219 @@
+From b162af531abdf6f5e8ad13b93699a3ba28de6702 Mon Sep 17 00:00:00 2001
+From: Michael Roth <mroth@redhat.com>
+Date: Thu, 20 Aug 2020 23:00:51 -0400
+Subject: [PATCH 1/4] target/ppc: Add experimental option for enabling secure
+ guests
+
+RH-Author: Michael Roth <mroth@redhat.com>
+Message-id: <20200820230051.516359-2-mroth@redhat.com>
+Patchwork-id: 98208
+O-Subject: [RHEL-AV-8.3.0 qemu virt PATCH 1/1] target/ppc: Add experimental option for enabling secure guests
+Bugzilla: 1870384
+RH-Acked-by: Greg Kurz <gkurz@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: David Gibson <dgibson@redhat.com>
+
+From: Fabiano Rosas <farosas@linux.ibm.com>
+
+Making use of ppc's Protected Execution Facility (PEF) feature, a
+guest can become a secure guest (aka. secure VM - SVM) and have its
+memory protected from access by the host. This feature is mediated by
+a piece of firmware called the Ultravisor (UV).
+
+The transition from a regular to a secure VM is initiated by the guest
+kernel during prom_init via the use of an ultracall (enter secure mode
+- UV_ESM) and with cooperation from the hypervisor via an hcall
+(H_SVM_INIT_START).
+
+Currently QEMU has no knowledge of this process and no way to
+determine if a host supports the feature. A guest with PEF support
+enabled would always try to enter secure mode regardless of user
+intent or hardware support.
+
+To address the above, a new KVM capability (KVM_CAP_PPC_SECURE_GUEST
+[1]) is being introduced in the kernel without which KVM will block
+the secure transition.
+
+This patch adds support for checking/enabling this KVM capability via
+a new experimental spapr machine option, e.g.:
+
+  -machine pseries,x-svm-allowed=on
+
+The capability defaults to off.
+
+1- https://lore.kernel.org/kvm/20200319043301.GA13052@blackberry
+
+Signed-off-by: Fabiano Rosas <farosas@linux.ibm.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1789757
+Upstream: RHEL-only
+*re-worked to drop use of spapr capabilities infrastructure in favor
+ of a simple one-off machine option
+Signed-off-by: Michael Roth <mroth@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/ppc/spapr.c         | 23 +++++++++++++++++++++++
+ include/hw/ppc/spapr.h |  3 +++
+ target/ppc/kvm.c       | 27 +++++++++++++++++++++++++++
+ target/ppc/kvm_ppc.h   | 13 +++++++++++++
+ 4 files changed, 66 insertions(+)
+
+diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
+index 5e3964326d..e77c90bfc5 100644
+--- a/hw/ppc/spapr.c
++++ b/hw/ppc/spapr.c
+@@ -1636,6 +1636,9 @@ static void spapr_machine_reset(MachineState *machine)
+ 
+     kvmppc_svm_off(&error_fatal);
+     spapr_caps_apply(spapr);
++    if (spapr->svm_allowed) {
++        kvmppc_svm_allow(&error_fatal);
++    }
+ 
+     first_ppc_cpu = POWERPC_CPU(first_cpu);
+     if (kvm_enabled() && kvmppc_has_cap_mmu_radix() &&
+@@ -3303,6 +3306,20 @@ static void spapr_set_host_serial(Object *obj, const char *value, Error **errp)
+     spapr->host_serial = g_strdup(value);
+ }
+ 
++static bool spapr_get_svm_allowed(Object *obj, Error **errp)
++{
++    SpaprMachineState *spapr = SPAPR_MACHINE(obj);
++
++    return spapr->svm_allowed;
++}
++
++static void spapr_set_svm_allowed(Object *obj, bool value, Error **errp)
++{
++    SpaprMachineState *spapr = SPAPR_MACHINE(obj);
++
++    spapr->svm_allowed = value;
++}
++
+ static void spapr_instance_init(Object *obj)
+ {
+     SpaprMachineState *spapr = SPAPR_MACHINE(obj);
+@@ -3358,6 +3375,12 @@ static void spapr_instance_init(Object *obj)
+         spapr_get_host_serial, spapr_set_host_serial);
+     object_property_set_description(obj, "host-serial",
+         "Host serial number to advertise in guest device tree");
++    object_property_add_bool(obj, "x-svm-allowed",
++                            spapr_get_svm_allowed,
++                            spapr_set_svm_allowed);
++    object_property_set_description(obj, "x-svm-allowed",
++                                    "Allow the guest to become a Secure Guest"
++                                    " (experimental only)");
+ }
+ 
+ static void spapr_machine_finalizefn(Object *obj)
+diff --git a/include/hw/ppc/spapr.h b/include/hw/ppc/spapr.h
+index f48089edba..d0728a4758 100644
+--- a/include/hw/ppc/spapr.h
++++ b/include/hw/ppc/spapr.h
+@@ -212,6 +212,9 @@ struct SpaprMachineState {
+     int fwnmi_machine_check_interlock;
+     QemuCond fwnmi_machine_check_interlock_cond;
+ 
++    /* Secure Guest support via x-svm-allowed */
++    bool svm_allowed;
++
+     /*< public >*/
+     char *kvm_type;
+     char *host_model;
+diff --git a/target/ppc/kvm.c b/target/ppc/kvm.c
+index d85ba8ffe0..ce63f8b6f3 100644
+--- a/target/ppc/kvm.c
++++ b/target/ppc/kvm.c
+@@ -89,6 +89,7 @@ static int cap_ppc_count_cache_flush_assist;
+ static int cap_ppc_nested_kvm_hv;
+ static int cap_large_decr;
+ static int cap_fwnmi;
++static int cap_ppc_secure_guest;
+ 
+ static uint32_t debug_inst_opcode;
+ 
+@@ -136,6 +137,7 @@ int kvm_arch_init(MachineState *ms, KVMState *s)
+     cap_resize_hpt = kvm_vm_check_extension(s, KVM_CAP_SPAPR_RESIZE_HPT);
+     kvmppc_get_cpu_characteristics(s);
+     cap_ppc_nested_kvm_hv = kvm_vm_check_extension(s, KVM_CAP_PPC_NESTED_HV);
++    cap_ppc_secure_guest = kvm_vm_check_extension(s, KVM_CAP_PPC_SECURE_GUEST);
+     cap_large_decr = kvmppc_get_dec_bits();
+     cap_fwnmi = kvm_vm_check_extension(s, KVM_CAP_PPC_FWNMI);
+     /*
+@@ -2538,6 +2540,16 @@ int kvmppc_enable_cap_large_decr(PowerPCCPU *cpu, int enable)
+     return 0;
+ }
+ 
++bool kvmppc_has_cap_secure_guest(void)
++{
++    return !!cap_ppc_secure_guest;
++}
++
++int kvmppc_enable_cap_secure_guest(void)
++{
++    return kvm_vm_enable_cap(kvm_state, KVM_CAP_PPC_SECURE_GUEST, 0, 1);
++}
++
+ PowerPCCPUClass *kvm_ppc_get_host_cpu_class(void)
+ {
+     uint32_t host_pvr = mfpvr();
+@@ -2948,3 +2960,18 @@ void kvmppc_svm_off(Error **errp)
+         error_setg_errno(errp, -rc, "KVM_PPC_SVM_OFF ioctl failed");
+     }
+ }
++
++void kvmppc_svm_allow(Error **errp)
++{
++    if (!kvm_enabled()) {
++        error_setg(errp, "No PEF support in tcg, try x-svm-allowed=off");
++        return;
++    }
++
++    if (!kvmppc_has_cap_secure_guest()) {
++        error_setg(errp, "KVM implementation does not support secure guests, "
++                   "try x-svm-allowed=off");
++    } else if (kvmppc_enable_cap_secure_guest() < 0) {
++        error_setg(errp, "Error enabling x-svm-allowed, try x-svm-allowed=off");
++    }
++}
+diff --git a/target/ppc/kvm_ppc.h b/target/ppc/kvm_ppc.h
+index 72e05f1cd2..3fd5ea2414 100644
+--- a/target/ppc/kvm_ppc.h
++++ b/target/ppc/kvm_ppc.h
+@@ -40,6 +40,7 @@ target_ulong kvmppc_configure_v3_mmu(PowerPCCPU *cpu,
+                                      bool radix, bool gtse,
+                                      uint64_t proc_tbl);
+ void kvmppc_svm_off(Error **errp);
++void kvmppc_svm_allow(Error **errp);
+ #ifndef CONFIG_USER_ONLY
+ bool kvmppc_spapr_use_multitce(void);
+ int kvmppc_spapr_enable_inkernel_multitce(void);
+@@ -73,6 +74,8 @@ int kvmppc_set_cap_nested_kvm_hv(int enable);
+ int kvmppc_get_cap_large_decr(void);
+ int kvmppc_enable_cap_large_decr(PowerPCCPU *cpu, int enable);
+ int kvmppc_enable_hwrng(void);
++bool kvmppc_has_cap_secure_guest(void);
++int kvmppc_enable_cap_secure_guest(void);
+ int kvmppc_put_books_sregs(PowerPCCPU *cpu);
+ PowerPCCPUClass *kvm_ppc_get_host_cpu_class(void);
+ void kvmppc_check_papr_resize_hpt(Error **errp);
+@@ -386,6 +389,16 @@ static inline int kvmppc_enable_cap_large_decr(PowerPCCPU *cpu, int enable)
+     return -1;
+ }
+ 
++static inline bool kvmppc_has_cap_secure_guest(void)
++{
++    return false;
++}
++
++static inline int kvmppc_enable_cap_secure_guest(void)
++{
++    return -1;
++}
++
+ static inline int kvmppc_enable_hwrng(void)
+ {
+     return -1;
+-- 
+2.27.0
+

@@ -1,0 +1,66 @@
+From de7263538a5cab64163edd1bdb3a934dabd625f2 Mon Sep 17 00:00:00 2001
+From: Laurent Vivier <lvivier@redhat.com>
+Date: Tue, 8 Sep 2020 18:47:15 -0400
+Subject: [PATCH 3/4] target/arm: Move setting of CPU halted state to generic
+ code
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+Message-id: <20200908184716.1125192-3-lvivier@redhat.com>
+Patchwork-id: 98300
+O-Subject: [RHEL-AV-8.3.0 qemu-kvm PATCH 2/3] target/arm: Move setting of CPU halted state to generic code
+Bugzilla: 1849483
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: David Gibson <dgibson@redhat.com>
+RH-Acked-by: Greg Kurz <gkurz@redhat.com>
+
+From: Thiago Jung Bauermann <bauerman@linux.ibm.com>
+
+This change is in a separate patch because it's not so obvious that it
+won't cause a regression.
+
+Suggested-by: Eduardo Habkost <ehabkost@redhat.com>
+Reviewed-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Reviewed-by: David Gibson <david@gibson.dropbear.id.au>
+Reviewed-by: Greg Kurz <groug@kaod.org>
+Signed-off-by: Thiago Jung Bauermann <bauerman@linux.ibm.com>
+Message-Id: <20200826055535.951207-3-bauerman@linux.ibm.com>
+Signed-off-by: David Gibson <david@gibson.dropbear.id.au>
+(cherry picked from commit 6ad1da667c8e21f019d4adc21702e06dd9225790)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/core/cpu.c    | 2 +-
+ target/arm/cpu.c | 1 -
+ 2 files changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/hw/core/cpu.c b/hw/core/cpu.c
+index 594441a150..71bb7859f1 100644
+--- a/hw/core/cpu.c
++++ b/hw/core/cpu.c
+@@ -258,7 +258,7 @@ static void cpu_common_reset(DeviceState *dev)
+     }
+ 
+     cpu->interrupt_request = 0;
+-    cpu->halted = 0;
++    cpu->halted = cpu->start_powered_off;
+     cpu->mem_io_pc = 0;
+     cpu->icount_extra = 0;
+     atomic_set(&cpu->icount_decr_ptr->u32, 0);
+diff --git a/target/arm/cpu.c b/target/arm/cpu.c
+index 54fb653229..059a5ced6e 100644
+--- a/target/arm/cpu.c
++++ b/target/arm/cpu.c
+@@ -175,7 +175,6 @@ static void arm_cpu_reset(DeviceState *dev)
+     env->vfp.xregs[ARM_VFP_MVFR2] = cpu->isar.mvfr2;
+ 
+     cpu->power_state = s->start_powered_off ? PSCI_OFF : PSCI_ON;
+-    s->halted = s->start_powered_off;
+ 
+     if (arm_feature(env, ARM_FEATURE_IWMMXT)) {
+         env->iwmmxt.cregs[ARM_IWMMXT_wCID] = 0x69051000 | 'Q';
+-- 
+2.27.0
+

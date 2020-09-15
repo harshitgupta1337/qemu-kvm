@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.1.0
-Release: 6%{?dist}
+Release: 7%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -176,6 +176,15 @@ Patch53: kvm-Revert-hw-386-Add-EPYC-mode-topology-decoding-functi.patch
 Patch54: kvm-nvram-Exit-QEMU-if-NVRAM-cannot-contain-all-prom-env.patch
 # For bz#1869715 - CVE-2020-14364 qemu-kvm: QEMU: usb: out-of-bounds r/w access issue while processing usb packets [rhel-av-8.3.0]
 Patch55: kvm-usb-fix-setup_len-init-CVE-2020-14364.patch
+# For bz#1789757 - [IBM 8.4 FEAT] Add machine option to enable secure VM support
+# For bz#1870384 - [IBM 8.3 FEAT] Add interim/unsupported machine option to enable secure VM support for testing purposes
+Patch56: kvm-target-ppc-Add-experimental-option-for-enabling-secu.patch
+# For bz#1849483 - Failed to boot up guest when hotplugging vcpus on bios stage
+Patch57: kvm-target-arm-Move-start-powered-off-property-to-generi.patch
+# For bz#1849483 - Failed to boot up guest when hotplugging vcpus on bios stage
+Patch58: kvm-target-arm-Move-setting-of-CPU-halted-state-to-gener.patch
+# For bz#1849483 - Failed to boot up guest when hotplugging vcpus on bios stage
+Patch59: kvm-ppc-spapr-Use-start-powered-off-CPUState-property.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1135,6 +1144,18 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Sep 15 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-7.el8
+- kvm-target-ppc-Add-experimental-option-for-enabling-secu.patch [bz#1789757 bz#1870384]
+- kvm-target-arm-Move-start-powered-off-property-to-generi.patch [bz#1849483]
+- kvm-target-arm-Move-setting-of-CPU-halted-state-to-gener.patch [bz#1849483]
+- kvm-ppc-spapr-Use-start-powered-off-CPUState-property.patch [bz#1849483]
+- Resolves: bz#1789757
+  ([IBM 8.4 FEAT] Add machine option to enable secure VM support)
+- Resolves: bz#1849483
+  (Failed to boot up guest when hotplugging vcpus on bios stage)
+- Resolves: bz#1870384
+  ([IBM 8.3 FEAT] Add interim/unsupported machine option to enable secure VM support for testing purposes)
+
 * Thu Sep 10 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-6.el8
 - kvm-spec-Move-qemu-pr-helper-back-to-usr-bin.patch [bz#1869635]
 - kvm-Bump-required-libusbx-version.patch [bz#1856591]
