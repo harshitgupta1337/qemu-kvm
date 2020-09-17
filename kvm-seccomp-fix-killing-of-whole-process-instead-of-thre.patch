@@ -1,0 +1,79 @@
+From 4740b2ba008ca469409cf5af58ac85ae5dc7f6a5 Mon Sep 17 00:00:00 2001
+From: Eduardo Otubo <otubo@redhat.com>
+Date: Tue, 15 Sep 2020 15:15:49 -0400
+Subject: [PATCH 2/4] seccomp: fix killing of whole process instead of thread
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eduardo Otubo <otubo@redhat.com>
+Message-id: <20200915151549.5007-1-otubo@redhat.com>
+Patchwork-id: 98392
+O-Subject: [RHEL-AV-8.3.0/RHEL-8.3.0 qemu-kvm PATCH] seccomp: fix killing of whole process instead of thread
+Bugzilla: 1752376
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+RH-Acked-by: Daniel P. Berrange <berrange@redhat.com>
+
+BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1752376
+BRANCH: rhel-av-8.3.0
+UPSTREAM: Merged
+BREW: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=31339152
+
+BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1752376
+BRANCH: rhel-8.3.0
+UPSTREAM: Merged
+BREW: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=31339111
+
+From: Daniel P. Berrangé <berrange@redhat.com>
+
+Back in 2018 we introduced support for killing the whole QEMU process
+instead of just one thread, when a seccomp rule is violated:
+
+  commit bda08a5764d470f101fa38635d30b41179a313e1
+  Author: Marc-André Lureau <marcandre.lureau@redhat.com>
+  Date:   Wed Aug 22 19:02:48 2018 +0200
+
+    seccomp: prefer SCMP_ACT_KILL_PROCESS if available
+
+Fast forward a year and we introduced a patch to avoid killing the
+process for resource control syscalls tickled by Mesa.
+
+  commit 9a1565a03b79d80b236bc7cc2dbce52a2ef3a1b8
+  Author: Daniel P. Berrangé <berrange@redhat.com>
+  Date:   Wed Mar 13 09:49:03 2019 +0000
+
+    seccomp: don't kill process for resource control syscalls
+
+Unfortunately a logic bug effectively reverted the first commit
+mentioned so that we go back to only killing the thread, not the whole
+process.
+
+Signed-off-by: Daniel P. Berrangé <berrange@redhat.com>
+Reviewed-by: Stefan Hajnoczi <stefanha@redhat.com>
+Acked-by: Eduardo Otubo <otubo@redhat.com>
+(cherry picked from commit e474e3aacf4276eb0781d11c45e2fab996f9dc56)
+Signed-off-by: Eduardo Otubo <otubo@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ qemu-seccomp.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/qemu-seccomp.c b/qemu-seccomp.c
+index e0a1829b3d..8325ecb766 100644
+--- a/qemu-seccomp.c
++++ b/qemu-seccomp.c
+@@ -136,8 +136,9 @@ static uint32_t qemu_seccomp_get_action(int set)
+ 
+             if (qemu_seccomp(SECCOMP_GET_ACTION_AVAIL, 0, &action) == 0) {
+                 kill_process = 1;
++            } else {
++                kill_process = 0;
+             }
+-            kill_process = 0;
+         }
+         if (kill_process == 1) {
+             return SCMP_ACT_KILL_PROCESS;
+-- 
+2.27.0
+

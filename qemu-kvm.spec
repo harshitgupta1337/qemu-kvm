@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.1.0
-Release: 7%{?dist}
+Release: 8%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -185,6 +185,14 @@ Patch57: kvm-target-arm-Move-start-powered-off-property-to-generi.patch
 Patch58: kvm-target-arm-Move-setting-of-CPU-halted-state-to-gener.patch
 # For bz#1849483 - Failed to boot up guest when hotplugging vcpus on bios stage
 Patch59: kvm-ppc-spapr-Use-start-powered-off-CPUState-property.patch
+# For bz#1738820 - '-F' option of qemu-ga command  cause the guest-fsfreeze-freeze command doesn't work
+Patch60: kvm-redhat-link-etc-qemu-ga-fsfreeze-hook-to-etc-qemu-kv.patch
+# For bz#1752376 - qemu use SCMP_ACT_TRAP even SCMP_ACT_KILL_PROCESS is available
+Patch61: kvm-seccomp-fix-killing-of-whole-process-instead-of-thre.patch
+# For bz#1867075 - CVE-2020-10756 virt:8.3/qemu-kvm: QEMU: slirp: networking out-of-bounds read information disclosure vulnerability [rhel-av-8]
+Patch62: kvm-Revert-Drop-bogus-IPv6-messages.patch
+# For bz#1821528 - missing namespace attribute when access the rbd image with namespace
+Patch63: kvm-block-rbd-add-namespace-to-qemu_rbd_strong_runtime_o.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -756,6 +764,11 @@ install -m 0644 %{_sourcedir}/99-qemu-guest-agent.rules %{buildroot}%{_udevrules
 install -D --preserve-timestamps \
             scripts/qemu-guest-agent/fsfreeze-hook \
             $RPM_BUILD_ROOT%{_sysconfdir}/qemu-ga/fsfreeze-hook
+# Workaround for the missing /etc/qemu-kvm/fsfreeze-hook
+# Please, do not carry this over to RHEL-9
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/qemu-kvm/
+ln -s %{_sysconfdir}/qemu-ga/fsfreeze-hook \
+      $RPM_BUILD_ROOT%{_sysconfdir}/qemu-kvm/fsfreeze-hook
 
 # - the directory for user scripts:
 mkdir $RPM_BUILD_ROOT%{_sysconfdir}/qemu-ga/fsfreeze-hook.d
@@ -1119,6 +1132,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_udevrulesdir}/99-qemu-guest-agent.rules
 %config(noreplace) %{_sysconfdir}/sysconfig/qemu-ga
 %{_sysconfdir}/qemu-ga
+%{_sysconfdir}/qemu-kvm/fsfreeze-hook
 %{_datadir}/%{name}/qemu-ga
 %dir %{_localstatedir}/log/qemu-ga
 
@@ -1144,6 +1158,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Sep 17 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-8.el8
+- kvm-redhat-link-etc-qemu-ga-fsfreeze-hook-to-etc-qemu-kv.patch [bz#1738820]
+- kvm-seccomp-fix-killing-of-whole-process-instead-of-thre.patch [bz#1752376]
+- kvm-Revert-Drop-bogus-IPv6-messages.patch [bz#1867075]
+- kvm-block-rbd-add-namespace-to-qemu_rbd_strong_runtime_o.patch [bz#1821528]
+- Resolves: bz#1738820
+  ('-F' option of qemu-ga command  cause the guest-fsfreeze-freeze command doesn't work)
+- Resolves: bz#1752376
+  (qemu use SCMP_ACT_TRAP even SCMP_ACT_KILL_PROCESS is available)
+- Resolves: bz#1821528
+  (missing namespace attribute when access the rbd image with namespace)
+- Resolves: bz#1867075
+  (CVE-2020-10756 virt:8.3/qemu-kvm: QEMU: slirp: networking out-of-bounds read information disclosure vulnerability [rhel-av-8])
+
 * Tue Sep 15 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-7.el8
 - kvm-target-ppc-Add-experimental-option-for-enabling-secu.patch [bz#1789757 bz#1870384]
 - kvm-target-arm-Move-start-powered-off-property-to-generi.patch [bz#1849483]

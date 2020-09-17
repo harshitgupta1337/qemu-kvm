@@ -1,0 +1,48 @@
+From 40ce2a0e9f0a9d5c00ba82f187802fdf0a0702d0 Mon Sep 17 00:00:00 2001
+From: Danilo de Paula <ddepaula@redhat.com>
+Date: Wed, 16 Sep 2020 01:25:22 -0400
+Subject: [PATCH 3/4] Revert "Drop bogus IPv6 messages"
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Danilo de Paula <ddepaula@redhat.com>
+Message-id: <20200916012522.1183051-2-ddepaula@redhat.com>
+Patchwork-id: 98394
+O-Subject: [RHEL-AV-8.3.0 qemu-kvm PATCH 1/1] Revert "Drop bogus IPv6 messages"
+Bugzilla: 1867075
+RH-Acked-by: Jon Maloy <jmaloy@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+
+This reverts commit 6ceab004edfb7c1f0f03701bc2ae443941468fd7.
+
+This fix was applied during the rebase.
+The commit above just duplicates it.
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ slirp/src/ip6_input.c | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/slirp/src/ip6_input.c b/slirp/src/ip6_input.c
+index f7ef354ee4..a83e4f8e3d 100644
+--- a/slirp/src/ip6_input.c
++++ b/slirp/src/ip6_input.c
+@@ -56,13 +56,6 @@ void ip6_input(struct mbuf *m)
+         goto bad;
+     }
+ 
+-    // Check if the message size is big enough to hold what's
+-    // set in the payload length header. If not this is an invalid
+-    // packet
+-    if (m->m_len < ntohs(ip6->ip_pl) + sizeof(struct ip6)) {
+-        goto bad;
+-    }
+-
+     /* check ip_ttl for a correct ICMP reply */
+     if (ip6->ip_hl == 0) {
+         icmp6_send_error(m, ICMP6_TIMXCEED, ICMP6_TIMXCEED_INTRANS);
+-- 
+2.27.0
+
