@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.1.0
-Release: 9%{?dist}
+Release: 10%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -195,6 +195,8 @@ Patch62: kvm-Revert-Drop-bogus-IPv6-messages.patch
 Patch63: kvm-block-rbd-add-namespace-to-qemu_rbd_strong_runtime_o.patch
 # For bz#1688978 - RFE: forward host preferences for cipher suites and CA certs to guest firmware
 Patch64: kvm-hw-nvram-fw_cfg-fix-FWCfgDataGeneratorClass-get_data.patch
+# For bz#1877209 - 'qemu-img bitmaps --merge' failed when trying to merge top volume bitmap to base volume bitmap
+Patch65: kvm-qemu-img-Support-bitmap-merge-into-backing-image.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1160,6 +1162,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Sep 28 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-10.el8
+- kvm-qemu-img-Support-bitmap-merge-into-backing-image.patch [bz#1877209]
+- Resolves: bz#1877209
+  ('qemu-img bitmaps --merge' failed when trying to merge top volume bitmap to base volume bitmap)
+
 * Mon Sep 21 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-9.el8
 - kvm-hw-nvram-fw_cfg-fix-FWCfgDataGeneratorClass-get_data.patch [bz#1688978]
 - Resolves: bz#1688978
