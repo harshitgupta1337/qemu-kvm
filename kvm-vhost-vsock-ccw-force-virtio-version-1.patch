@@ -1,0 +1,66 @@
+From ca33af3be677c483117f7124170003fe2876a025 Mon Sep 17 00:00:00 2001
+From: Stefano Garzarella <sgarzare@redhat.com>
+Date: Tue, 29 Sep 2020 12:41:43 -0400
+Subject: [PATCH 4/6] vhost-vsock-ccw: force virtio version 1
+
+RH-Author: Stefano Garzarella <sgarzare@redhat.com>
+Message-id: <20200929124143.41520-5-sgarzare@redhat.com>
+Patchwork-id: 98514
+O-Subject: [RHEL-AV-8.3.0 qemu-kvm PATCH 4/4] vhost-vsock-ccw: force virtio version 1
+Bugzilla: 1868449
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+
+virtio-vsock was introduced after the release of VIRTIO 1.0
+specifications, so it should be 'modern-only'.
+
+This patch forces virtio version 1 as done for vhost-vsock-pci.
+
+To avoid migration issues, we force virtio version 1 only when
+legacy check is enabled in the new machine types (>= 5.1).
+
+Cc: qemu-stable@nongnu.org
+Suggested-by: Cornelia Huck <cohuck@redhat.com>
+Reviewed-by: Cornelia Huck <cohuck@redhat.com>
+Signed-off-by: Stefano Garzarella <sgarzare@redhat.com>
+Message-Id: <20200921122506.82515-5-sgarzare@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit a6704a34cf02add13964149e0de6453ae62bd9db)
+Signed-off-by: Stefano Garzarella <sgarzare@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/s390x/vhost-vsock-ccw.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/hw/s390x/vhost-vsock-ccw.c b/hw/s390x/vhost-vsock-ccw.c
+index 0822ecca893..246416a8f96 100644
+--- a/hw/s390x/vhost-vsock-ccw.c
++++ b/hw/s390x/vhost-vsock-ccw.c
+@@ -40,9 +40,21 @@ static void vhost_vsock_ccw_class_init(ObjectClass *klass, void *data)
+ static void vhost_vsock_ccw_instance_init(Object *obj)
+ {
+     VHostVSockCCWState *dev = VHOST_VSOCK_CCW(obj);
++    VirtioCcwDevice *ccw_dev = VIRTIO_CCW_DEVICE(obj);
++    VirtIODevice *virtio_dev;
+ 
+     virtio_instance_init_common(obj, &dev->vdev, sizeof(dev->vdev),
+                                 TYPE_VHOST_VSOCK);
++
++    virtio_dev = VIRTIO_DEVICE(&dev->vdev);
++
++    /*
++     * To avoid migration issues, we force virtio version 1 only when
++     * legacy check is enabled in the new machine types (>= 5.1).
++     */
++    if (!virtio_legacy_check_disabled(virtio_dev)) {
++        ccw_dev->force_revision_1 = true;
++    }
+ }
+ 
+ static const TypeInfo vhost_vsock_ccw_info = {
+-- 
+2.27.0
+

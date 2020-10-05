@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.1.0
-Release: 10%{?dist}
+Release: 11%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -197,6 +197,16 @@ Patch63: kvm-block-rbd-add-namespace-to-qemu_rbd_strong_runtime_o.patch
 Patch64: kvm-hw-nvram-fw_cfg-fix-FWCfgDataGeneratorClass-get_data.patch
 # For bz#1877209 - 'qemu-img bitmaps --merge' failed when trying to merge top volume bitmap to base volume bitmap
 Patch65: kvm-qemu-img-Support-bitmap-merge-into-backing-image.patch
+# For bz#1868449 - vhost_vsock error: device is modern-only, use disable-legacy=on
+Patch66: kvm-virtio-skip-legacy-support-check-on-machine-types-le.patch
+# For bz#1868449 - vhost_vsock error: device is modern-only, use disable-legacy=on
+Patch67: kvm-vhost-vsock-pci-force-virtio-version-1.patch
+# For bz#1868449 - vhost_vsock error: device is modern-only, use disable-legacy=on
+Patch68: kvm-vhost-user-vsock-pci-force-virtio-version-1.patch
+# For bz#1868449 - vhost_vsock error: device is modern-only, use disable-legacy=on
+Patch69: kvm-vhost-vsock-ccw-force-virtio-version-1.patch
+# For bz#1874004 - Live migration performance is poor during guest installation process on power host
+Patch70: kvm-migration-increase-max-bandwidth-to-128-MiB-s-1-Gib-.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -946,9 +956,9 @@ install -m 0644 %{_sourcedir}/qemu-pr-helper.socket %{buildroot}%{_unitdir}
 
 find $RPM_BUILD_ROOT -name '*.la' -or -name '*.a' | xargs rm -f
 
-# We need to make the block device modules executable else
-# RPM won't pick up their dependencies.
-chmod +x $RPM_BUILD_ROOT%{_libdir}/qemu-kvm/block-*.so
+# We need to make the block device modules and other qemu SO files executable
+# otherwise RPM won't pick up their dependencies.
+chmod +x $RPM_BUILD_ROOT%{_libdir}/qemu-kvm/*.so
 
 # Remove buildinfo
 rm -rf $RPM_BUILD_ROOT%{qemudocdir}/interop/.buildinfo
@@ -1162,6 +1172,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Oct 05 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-11.el8_3
+- kvm-virtio-skip-legacy-support-check-on-machine-types-le.patch [bz#1868449]
+- kvm-vhost-vsock-pci-force-virtio-version-1.patch [bz#1868449]
+- kvm-vhost-user-vsock-pci-force-virtio-version-1.patch [bz#1868449]
+- kvm-vhost-vsock-ccw-force-virtio-version-1.patch [bz#1868449]
+- kvm-migration-increase-max-bandwidth-to-128-MiB-s-1-Gib-.patch [bz#1874004]
+- kvm-redhat-Make-all-generated-so-files-executable-not-on.patch [bz#1876635]
+- Resolves: bz#1868449
+  (vhost_vsock error: device is modern-only, use disable-legacy=on)
+- Resolves: bz#1874004
+  (Live migration performance is poor during guest installation process on power host)
+- Resolves: bz#1876635
+  (VM fails to start with a passthrough smartcard)
+
 * Mon Sep 28 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-10.el8
 - kvm-qemu-img-Support-bitmap-merge-into-backing-image.patch [bz#1877209]
 - Resolves: bz#1877209
