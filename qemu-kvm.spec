@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.1.0
-Release: 11%{?dist}
+Release: 12%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -199,6 +199,14 @@ Patch64: kvm-hw-nvram-fw_cfg-fix-FWCfgDataGeneratorClass-get_data.patch
 Patch65: kvm-qemu-img-Support-bitmap-merge-into-backing-image.patch
 # For bz#1874004 - Live migration performance is poor during guest installation process on power host
 Patch66: kvm-migration-increase-max-bandwidth-to-128-MiB-s-1-Gib-.patch
+# For bz#1868449 - vhost_vsock error: device is modern-only, use disable-legacy=on
+Patch67: kvm-virtio-skip-legacy-support-check-on-machine-types-le.patch
+# For bz#1868449 - vhost_vsock error: device is modern-only, use disable-legacy=on
+Patch68: kvm-vhost-vsock-pci-force-virtio-version-1.patch
+# For bz#1868449 - vhost_vsock error: device is modern-only, use disable-legacy=on
+Patch69: kvm-vhost-user-vsock-pci-force-virtio-version-1.patch
+# For bz#1868449 - vhost_vsock error: device is modern-only, use disable-legacy=on
+Patch70: kvm-vhost-vsock-ccw-force-virtio-version-1.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1164,6 +1172,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Oct 05 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-12.el8_3
+- kvm-virtio-skip-legacy-support-check-on-machine-types-le.patch [bz#1868449]
+- kvm-vhost-vsock-pci-force-virtio-version-1.patch [bz#1868449]
+- kvm-vhost-user-vsock-pci-force-virtio-version-1.patch [bz#1868449]
+- kvm-vhost-vsock-ccw-force-virtio-version-1.patch [bz#1868449]
+- Resolves: bz#1868449
+  (vhost_vsock error: device is modern-only, use disable-legacy=on)
+
 * Mon Oct 05 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-11.el8_3
 - kvm-migration-increase-max-bandwidth-to-128-MiB-s-1-Gib-.patch [bz#1874004]
 - kvm-redhat-Make-all-generated-so-files-executable-not-on.patch [bz#1876635]
