@@ -69,7 +69,7 @@ Obsoletes: %1-rhev
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.1.0
-Release: 12%{?dist}
+Release: 13%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -207,6 +207,12 @@ Patch68: kvm-vhost-vsock-pci-force-virtio-version-1.patch
 Patch69: kvm-vhost-user-vsock-pci-force-virtio-version-1.patch
 # For bz#1868449 - vhost_vsock error: device is modern-only, use disable-legacy=on
 Patch70: kvm-vhost-vsock-ccw-force-virtio-version-1.patch
+# For bz#1846886 - Guest hit soft lockup or reboots if hotplug vcpu under ovmf
+Patch71: kvm-x86-lpc9-let-firmware-negotiate-CPU-hotplug-with-SMI.patch
+# For bz#1846886 - Guest hit soft lockup or reboots if hotplug vcpu under ovmf
+Patch72: kvm-x86-cpuhp-prevent-guest-crash-on-CPU-hotplug-when-br.patch
+# For bz#1846886 - Guest hit soft lockup or reboots if hotplug vcpu under ovmf
+Patch73: kvm-x86-cpuhp-refuse-cpu-hot-unplug-request-earlier-if-n.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1172,6 +1178,13 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Oct 08 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-13.el8_3
+- kvm-x86-lpc9-let-firmware-negotiate-CPU-hotplug-with-SMI.patch [bz#1846886]
+- kvm-x86-cpuhp-prevent-guest-crash-on-CPU-hotplug-when-br.patch [bz#1846886]
+- kvm-x86-cpuhp-refuse-cpu-hot-unplug-request-earlier-if-n.patch [bz#1846886]
+- Resolves: bz#1846886
+  (Guest hit soft lockup or reboots if hotplug vcpu under ovmf)
+
 * Mon Oct 05 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-12.el8_3
 - kvm-virtio-skip-legacy-support-check-on-machine-types-le.patch [bz#1868449]
 - kvm-vhost-vsock-pci-force-virtio-version-1.patch [bz#1868449]

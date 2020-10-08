@@ -1,0 +1,99 @@
+From 98eced5d367a6a69006cab1ea2b77c2c2622694a Mon Sep 17 00:00:00 2001
+From: Igor Mammedov <imammedo@redhat.com>
+Date: Mon, 5 Oct 2020 15:27:02 -0400
+Subject: [PATCH 2/3] x86: cpuhp: prevent guest crash on CPU hotplug when
+ broadcast SMI is in use
+
+RH-Author: Igor Mammedov <imammedo@redhat.com>
+Message-id: <20201005152703.1555401-3-imammedo@redhat.com>
+Patchwork-id: 98550
+O-Subject: [RHEL-AV-8.3.0 qemu-kvm PATCH 2/3] x86: cpuhp: prevent guest crash on CPU hotplug when broadcast SMI is in use
+Bugzilla: 1846886
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1846886
+BRANCH: rhel-av-8.3.0
+UPSTREAM: Merged
+BREW: http://brewweb.devel.redhat.com/brew/taskinfo?taskID=31759628
+Upstream commit: c5be7517d658
+
+There were reports of guest crash on CPU hotplug, when using q35 machine
+type and OVMF with SMM, due to hotplugged CPU trying to process SMI at
+default SMI handler location without it being relocated by firmware first.
+
+Fix it by refusing hotplug if firmware hasn't negotiated CPU hotplug with
+SMI support while SMI broadcast is in use.
+
+Conflicts:
+    hw/i386/x86.c
+      cpu wiring routines were moved to x86.c upstream
+      to be shared with micro vm, so the second hunk
+      has to be put into pc_cpu_pre_plug() and s/x86ms/pcms/.
+
+Signed-off-by: Igor Mammedov <imammedo@redhat.com>
+Reviewed-by: Laszlo Ersek <lersek@redhat.com>
+Tested-by: Laszlo Ersek <lersek@redhat.com>
+Message-Id: <20200923094650.1301166-3-imammedo@redhat.com>
+Tested-by: Laszlo Ersek <lersek@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Igor Mammedov <imammedo@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/acpi/ich9.c | 12 +++++++++++-
+ hw/i386/pc.c   | 11 +++++++++++
+ 2 files changed, 22 insertions(+), 1 deletion(-)
+
+diff --git a/hw/acpi/ich9.c b/hw/acpi/ich9.c
+index 43ad1ff9278..37286a03288 100644
+--- a/hw/acpi/ich9.c
++++ b/hw/acpi/ich9.c
+@@ -423,10 +423,20 @@ void ich9_pm_device_pre_plug_cb(HotplugHandler *hotplug_dev, DeviceState *dev,
+     ICH9LPCState *lpc = ICH9_LPC_DEVICE(hotplug_dev);
+ 
+     if (object_dynamic_cast(OBJECT(dev), TYPE_PC_DIMM) &&
+-        !lpc->pm.acpi_memory_hotplug.is_enabled)
++        !lpc->pm.acpi_memory_hotplug.is_enabled) {
+         error_setg(errp,
+                    "memory hotplug is not enabled: %s.memory-hotplug-support "
+                    "is not set", object_get_typename(OBJECT(lpc)));
++    } else if (object_dynamic_cast(OBJECT(dev), TYPE_CPU)) {
++        uint64_t negotiated = lpc->smi_negotiated_features;
++
++        if (negotiated & BIT_ULL(ICH9_LPC_SMI_F_BROADCAST_BIT) &&
++            !(negotiated & BIT_ULL(ICH9_LPC_SMI_F_CPU_HOTPLUG_BIT))) {
++            error_setg(errp, "cpu hotplug with SMI wasn't enabled by firmware");
++            error_append_hint(errp, "update machine type to newer than 5.1 "
++                "and firmware that suppors CPU hotplug with SMM");
++        }
++    }
+ }
+ 
+ void ich9_pm_device_plug_cb(HotplugHandler *hotplug_dev, DeviceState *dev,
+diff --git a/hw/i386/pc.c b/hw/i386/pc.c
+index 6e0a3f391b0..0332589359b 100644
+--- a/hw/i386/pc.c
++++ b/hw/i386/pc.c
+@@ -1761,6 +1761,17 @@ static void pc_cpu_pre_plug(HotplugHandler *hotplug_dev,
+         return;
+     }
+ 
++    if (pcms->acpi_dev) {
++        Error *local_err = NULL;
++
++        hotplug_handler_pre_plug(HOTPLUG_HANDLER(pcms->acpi_dev), dev,
++                                 &local_err);
++        if (local_err) {
++            error_propagate(errp, local_err);
++            return;
++        }
++    }
++
+     init_topo_info(&topo_info, x86ms);
+ 
+     env->nr_dies = x86ms->smp_dies;
+-- 
+2.27.0
+
