@@ -10,7 +10,6 @@
 %global have_memlock_limits 0
 
 
-
 %ifnarch %{ix86} x86_64
     %global have_usbredir 0
 %endif
