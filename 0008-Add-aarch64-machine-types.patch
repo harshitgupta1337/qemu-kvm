@@ -1,4 +1,4 @@
-From 0ba70804c179d934e5be555abff3c4455ac137a0 Mon Sep 17 00:00:00 2001
+From be3ca54f04ade6a20265f9aeeb46662caa6d16dc Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 12:53:31 +0200
 Subject: Add aarch64 machine types
@@ -23,19 +23,13 @@ Rebase notes (4.2.0-rc3):
 - aarch64: virt: Allow PCDIMM instantiation (patch 92247)
 - aarch64: virt: Enhance the comment related to gic-version (patch 92248)
 
-Rebase notes (weekly-200226):
+Rebase notes (5.0.0):
 - Set default_ram_id in rhel_machine_class_init
-
-Rebase notes (5.0.0-rc1):
 - Added setting acpi properties
 
-Rebase notes (weekly-200520):
+Rebase notes (5.1.0):
 - Added ras property
-
-Rebase notes (weekly-200701):
 - Added to virt_machine_device_unplug_cb to machine type (upstream)
-
-Rebase notes (5.1.0-rc1):
 - added mte property (upstream)
 
 Merged patches (4.0.0):
@@ -47,14 +41,21 @@ Merged patches (4.1.0):
 - c3e39ef aarch64: Add virt-rhel8.1.0 machine type for ARM
 - 59a46d1 aarch64: Allow ARM VIRT iommu option in RHEL8.1 machine
 
-Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+Merged patches (5.2.0 rc0):
+- 12990ad hw/arm: Changes to rhel820 machine
+- 46d5a79 hw/arm: Introduce rhel_virt_instance_init() helper
+- 098954a hw/arm: Add rhel830 machine type
+- ee8e99d arm: Set correct max_cpus value on virt-rhel* machine types
+- e5edd38 RHEL-only: arm/virt: Allow the TPM_TIS_SYSBUS device dynamic allocation in machvirt
+- 6d7ba66 machine types/numa: set numa_mem_supported on old machine types (partialy)
+- 25c5644 machine_types/numa: compatibility for auto_enable_numa_with_memdev (partialy)
 ---
- hw/arm/virt.c         | 180 +++++++++++++++++++++++++++++++++++++++++-
- include/hw/arm/virt.h |  11 +++
- 2 files changed, 188 insertions(+), 3 deletions(-)
+ hw/arm/virt.c         | 191 +++++++++++++++++++++++++++++++++++++++++++++++++-
+ include/hw/arm/virt.h |   8 +++
+ 2 files changed, 196 insertions(+), 3 deletions(-)
 
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index 43cf75333b..e1a17e7c87 100644
+index c908b5f..21e0485 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
 @@ -79,6 +79,7 @@
@@ -116,7 +117,7 @@ index 43cf75333b..e1a17e7c87 100644
  
  /* Number of external interrupt lines to configure the GIC with */
  #define NUM_IRQS 256
-@@ -1979,6 +2022,7 @@ static void machvirt_init(MachineState *machine)
+@@ -2027,6 +2070,7 @@ static void machvirt_init(MachineState *machine)
      qemu_add_machine_init_done_notifier(&vms->machine_done);
  }
  
@@ -124,7 +125,7 @@ index 43cf75333b..e1a17e7c87 100644
  static bool virt_get_secure(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -2007,6 +2051,7 @@ static void virt_set_virt(Object *obj, bool value, Error **errp)
+@@ -2055,6 +2099,7 @@ static void virt_set_virt(Object *obj, bool value, Error **errp)
      vms->virt = value;
  }
  
@@ -132,7 +133,15 @@ index 43cf75333b..e1a17e7c87 100644
  static bool virt_get_highmem(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -2073,7 +2118,7 @@ static void virt_set_ras(Object *obj, bool value, Error **errp)
+@@ -2108,6 +2153,7 @@ static void virt_set_acpi(Object *obj, Visitor *v, const char *name,
+     visit_type_OnOffAuto(v, name, &vms->acpi, errp);
+ }
+ 
++#if 0 /* Disabled for Red Hat Enterprise Linux */
+ static bool virt_get_ras(Object *obj, Error **errp)
+ {
+     VirtMachineState *vms = VIRT_MACHINE(obj);
+@@ -2121,13 +2167,14 @@ static void virt_set_ras(Object *obj, bool value, Error **errp)
  
      vms->ras = value;
  }
@@ -141,7 +150,14 @@ index 43cf75333b..e1a17e7c87 100644
  static bool virt_get_mte(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -2087,7 +2132,7 @@ static void virt_set_mte(Object *obj, bool value, Error **errp)
+ 
+     return vms->mte;
+ }
++#endif /* disabled for RHEL */
+ 
+ static void virt_set_mte(Object *obj, bool value, Error **errp)
+ {
+@@ -2135,7 +2182,7 @@ static void virt_set_mte(Object *obj, bool value, Error **errp)
  
      vms->mte = value;
  }
@@ -150,7 +166,7 @@ index 43cf75333b..e1a17e7c87 100644
  static char *virt_get_gic_version(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -2401,6 +2446,7 @@ static int virt_kvm_type(MachineState *ms, const char *type_str)
+@@ -2442,6 +2489,7 @@ static int virt_kvm_type(MachineState *ms, const char *type_str)
      return requested_pa_size > 40 ? requested_pa_size : 0;
  }
  
@@ -158,7 +174,7 @@ index 43cf75333b..e1a17e7c87 100644
  static void virt_machine_class_init(ObjectClass *oc, void *data)
  {
      MachineClass *mc = MACHINE_CLASS(oc);
-@@ -2679,3 +2725,131 @@ static void virt_machine_2_6_options(MachineClass *mc)
+@@ -2730,3 +2778,140 @@ static void virt_machine_2_6_options(MachineClass *mc)
      vmc->no_pmu = true;
  }
  DEFINE_VIRT_MACHINE(2, 6)
@@ -171,11 +187,9 @@ index 43cf75333b..e1a17e7c87 100644
 +
 +    mc->family = "virt-rhel-Z";
 +    mc->init = machvirt_init;
-+    /* Start with max_cpus set to 512, which is the maximum supported by KVM.
-+     * The value may be reduced later when we have more information about the
-+     * configuration of the particular instance.
-+     */
-+    mc->max_cpus = 512;
++    /* Maximum supported VCPU count for all virt-rhel* machines */
++    mc->max_cpus = 384;
++    machine_class_allow_dynamic_sysbus_dev(mc, TYPE_TPM_TIS_SYSBUS);
 +    mc->block_default_type = IF_VIRTIO;
 +    mc->no_cdrom = 1;
 +    mc->pci_allow_0_address = true;
@@ -192,9 +206,9 @@ index 43cf75333b..e1a17e7c87 100644
 +    hc->plug = virt_machine_device_plug_cb;
 +    hc->unplug_request = virt_machine_device_unplug_request_cb;
 +    hc->unplug = virt_machine_device_unplug_cb;
-+    mc->numa_mem_supported = true;
 +    mc->nvdimm_supported = true;
 +    mc->auto_enable_numa_with_memhp = true;
++    mc->auto_enable_numa_with_memdev = true;
 +    mc->default_ram_id = "mach-virt.ram";
 +
 +    object_class_property_add(oc, "acpi", "OnOffAuto",
@@ -223,7 +237,7 @@ index 43cf75333b..e1a17e7c87 100644
 +}
 +type_init(rhel_machine_init);
 +
-+static void rhel820_virt_instance_init(Object *obj)
++static void rhel_virt_instance_init(Object *obj)
 +{
 +    VirtMachineState *vms = VIRT_MACHINE(obj);
 +    VirtMachineClass *vmc = VIRT_MACHINE_GET_CLASS(vms);
@@ -239,12 +253,8 @@ index 43cf75333b..e1a17e7c87 100644
 +    object_property_set_description(obj, "highmem",
 +                                    "Set on/off to enable/disable using "
 +                                    "physical address space above 32 bits");
-+    /*
-+     * Default GIC type is still v2, but became configurable for RHEL. We
-+     * keep v2 instead of max as TCG CI test cases require an MSI controller
-+     * and there is no userspace ITS MSI emulation available.
-+     */
-+    vms->gic_version = 2;
++
++    vms->gic_version = VIRT_GIC_VERSION_NOSEL;
 +    object_property_add_str(obj, "gic-version", virt_get_gic_version,
 +                        virt_set_gic_version);
 +    object_property_set_description(obj, "gic-version",
@@ -271,13 +281,8 @@ index 43cf75333b..e1a17e7c87 100644
 +    object_property_set_description(obj, "iommu",
 +                                    "Set the IOMMU type. "
 +                                    "Valid values are none and smmuv3");
-+    vms->ras = false;
-+    object_property_add_bool(obj, "ras", virt_get_ras,
-+                             virt_set_ras);
-+    object_property_set_description(obj, "ras",
-+                                    "Set on/off to enable/disable reporting host memory errors "
-+                                    "to a KVM guest using ACPI and guest external abort exceptions");
 +
++    vms->ras = false;
 +    /* MTE is disabled by default.  */
 +    vms->mte = false;
 +
@@ -285,40 +290,53 @@ index 43cf75333b..e1a17e7c87 100644
 +    virt_flash_create(vms);
 +}
 +
-+static void rhel820_virt_options(MachineClass *mc)
++static void rhel830_virt_instance_init(Object *obj)
++{
++    rhel_virt_instance_init(obj);
++}
++
++static void rhel830_virt_options(MachineClass *mc)
 +{
 +    compat_props_add(mc->compat_props, arm_rhel_compat, arm_rhel_compat_len);
 +}
-+DEFINE_RHEL_MACHINE_AS_LATEST(8, 2, 0)
++DEFINE_RHEL_MACHINE_AS_LATEST(8, 3, 0)
++
++static void rhel820_virt_instance_init(Object *obj)
++{
++    rhel_virt_instance_init(obj);
++}
++
++static void rhel820_virt_options(MachineClass *mc)
++{
++    rhel830_virt_options(mc);
++    compat_props_add(mc->compat_props, hw_compat_rhel_8_2,
++                     hw_compat_rhel_8_2_len);
++    mc->numa_mem_supported = true;
++    mc->auto_enable_numa_with_memdev = false;
++}
++DEFINE_RHEL_MACHINE(8, 2, 0)
 diff --git a/include/hw/arm/virt.h b/include/hw/arm/virt.h
-index dff67e1bef..7c1e085749 100644
+index aad6d69..745b76b 100644
 --- a/include/hw/arm/virt.h
 +++ b/include/hw/arm/virt.h
-@@ -166,6 +166,7 @@ typedef struct {
+@@ -167,9 +167,17 @@ struct VirtMachineState {
  
  #define VIRT_ECAM_ID(high) (high ? VIRT_HIGH_PCIE_ECAM : VIRT_PCIE_ECAM)
  
 +#if 0 /* disabled for Red Hat Enterprise Linux */
  #define TYPE_VIRT_MACHINE   MACHINE_TYPE_NAME("virt")
- #define VIRT_MACHINE(obj) \
-     OBJECT_CHECK(VirtMachineState, (obj), TYPE_VIRT_MACHINE)
-@@ -174,6 +175,16 @@ typedef struct {
- #define VIRT_MACHINE_CLASS(klass) \
-     OBJECT_CLASS_CHECK(VirtMachineClass, klass, TYPE_VIRT_MACHINE)
+ OBJECT_DECLARE_TYPE(VirtMachineState, VirtMachineClass, VIRT_MACHINE)
  
 +#else
 +#define TYPE_RHEL_MACHINE MACHINE_TYPE_NAME("virt-rhel")
-+#define VIRT_MACHINE(obj) \
-+    OBJECT_CHECK(VirtMachineState, (obj), TYPE_RHEL_MACHINE)
-+#define VIRT_MACHINE_GET_CLASS(obj) \
-+    OBJECT_GET_CLASS(VirtMachineClass, obj, TYPE_RHEL_MACHINE)
-+#define VIRT_MACHINE_CLASS(klass) \
-+    OBJECT_CLASS_CHECK(VirtMachineClass, klass, TYPE_RHEL_MACHINE)
++typedef struct VirtMachineClass VirtMachineClass;
++typedef struct VirtMachineState VirtMachineState;
++DECLARE_OBJ_CHECKERS(VirtMachineState, VirtMachineClass, VIRT_MACHINE, TYPE_RHEL_MACHINE)
 +#endif
 +
  void virt_acpi_setup(VirtMachineState *vms);
  bool virt_is_acpi_enabled(VirtMachineState *vms);
  
 -- 
-2.27.0
+1.8.3.1
 

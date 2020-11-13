@@ -1,4 +1,4 @@
-From 08d751996b6c983d037134551f1c4b4691989168 Mon Sep 17 00:00:00 2001
+From 3bf885effef5666a13145e7942116ed9ba5039bb Mon Sep 17 00:00:00 2001
 From: Bandan Das <bsd@redhat.com>
 Date: Tue, 3 Dec 2013 20:05:13 +0100
 Subject: vfio: cap number of devices that can be assigned
@@ -32,20 +32,16 @@ Merged patches (2.9.0):
 
  Merged patches (4.1.0-rc3):
 - 2b89558 vfio: increase the cap on number of assigned devices to 64
-
-(cherry picked from commit 9fa3c9fc6dfcde76d80db1aa601b2d577f72ceec)
-(cherry picked from commit 3cb35556dc7d994f203d732fe952f95fcdb03c0a)
-Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  hw/vfio/pci.c | 29 ++++++++++++++++++++++++++++-
  hw/vfio/pci.h |  1 +
  2 files changed, 29 insertions(+), 1 deletion(-)
 
 diff --git a/hw/vfio/pci.c b/hw/vfio/pci.c
-index 2e561c06d6..be1b843e7f 100644
+index 58c0ce8..558eea8 100644
 --- a/hw/vfio/pci.c
 +++ b/hw/vfio/pci.c
-@@ -47,6 +47,9 @@
+@@ -45,6 +45,9 @@
  
  #define TYPE_VFIO_PCI_NOHOTPLUG "vfio-pci-nohotplug"
  
@@ -55,7 +51,7 @@ index 2e561c06d6..be1b843e7f 100644
  static void vfio_disable_interrupts(VFIOPCIDevice *vdev);
  static void vfio_mmap_set_enabled(VFIOPCIDevice *vdev, bool enabled);
  
-@@ -2712,9 +2715,30 @@ static void vfio_realize(PCIDevice *pdev, Error **errp)
+@@ -2768,9 +2771,30 @@ static void vfio_realize(PCIDevice *pdev, Error **errp)
      ssize_t len;
      struct stat st;
      int groupid;
@@ -87,7 +83,7 @@ index 2e561c06d6..be1b843e7f 100644
      if (!vdev->vbasedev.sysfsdev) {
          if (!(~vdev->host.domain || ~vdev->host.bus ||
                ~vdev->host.slot || ~vdev->host.function)) {
-@@ -3158,6 +3182,9 @@ static Property vfio_pci_dev_properties[] = {
+@@ -3202,6 +3226,9 @@ static Property vfio_pci_dev_properties[] = {
      DEFINE_PROP_BOOL("x-no-kvm-msix", VFIOPCIDevice, no_kvm_msix, false),
      DEFINE_PROP_BOOL("x-no-geforce-quirks", VFIOPCIDevice,
                       no_geforce_quirks, false),
@@ -98,10 +94,10 @@ index 2e561c06d6..be1b843e7f 100644
                       false),
      DEFINE_PROP_BOOL("x-no-vfio-ioeventfd", VFIOPCIDevice, no_vfio_ioeventfd,
 diff --git a/hw/vfio/pci.h b/hw/vfio/pci.h
-index 0da7a20a7e..5d2b0d2f2d 100644
+index 1574ef9..fef907c 100644
 --- a/hw/vfio/pci.h
 +++ b/hw/vfio/pci.h
-@@ -135,6 +135,7 @@ typedef struct VFIOPCIDevice {
+@@ -139,6 +139,7 @@ struct VFIOPCIDevice {
      EventNotifier err_notifier;
      EventNotifier req_notifier;
      int (*resetfn)(struct VFIOPCIDevice *);
@@ -110,5 +106,5 @@ index 0da7a20a7e..5d2b0d2f2d 100644
      uint32_t device_id;
      uint32_t sub_vendor_id;
 -- 
-2.27.0
+1.8.3.1
 

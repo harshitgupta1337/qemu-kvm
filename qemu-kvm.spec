@@ -8,6 +8,7 @@
 %global have_gluster  1
 %global have_kvm_setup 0
 %global have_memlock_limits 0
+%global rcversion -rc1
 
 
 %ifnarch %{ix86} x86_64
@@ -61,14 +62,11 @@ Requires: %{name}-block-rbd = %{epoch}:%{version}-%{release}     \
 Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 
 # Macro to properly setup RHEL/RHEV conflict handling
-%define rhev_ma_conflicts()                                      \
-Obsoletes: %1-ma                                                 \
-Obsoletes: %1-rhev
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
-Version: 5.1.0
-Release: 13%{?dist}
+Version: 5.2.0-rc1
+Release: 1%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -76,8 +74,7 @@ Group: Development/Tools
 URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
-
-Source0: http://wiki.qemu.org/download/qemu-5.1.0.tar.xz
+Source0: http://wiki.qemu.org/download/qemu-5.2.0-rc1.tar.xz
 
 # KSM control scripts
 Source4: ksm.service
@@ -117,104 +114,17 @@ Patch0012: 0012-Enable-make-check.patch
 Patch0013: 0013-vfio-cap-number-of-devices-that-can-be-assigned.patch
 Patch0014: 0014-Add-support-statement-to-help-output.patch
 Patch0015: 0015-globally-limit-the-maximum-number-of-CPUs.patch
-Patch0016: 0016-Add-support-for-simpletrace.patch
-Patch0017: 0017-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
-Patch0018: 0018-usb-xhci-Fix-PCI-capability-order.patch
-Patch0019: 0019-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
-Patch0020: 0020-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
-Patch0021: 0021-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
-Patch0022: 0022-RHEL-only-Enable-vTPM-for-POWER-in-downstream-config.patch
-Patch0023: 0023-redhat-fix-5.0-rebase-missing-ISA-TPM-TIS.patch
-Patch0024: 0024-redhat-define-hw_compat_8_2.patch
-Patch0025: 0025-x86-Add-8.3.0-x86_64-machine-type.patch
-Patch0027: 0027-hw-arm-Changes-to-rhel820-machine.patch
-Patch0028: 0028-hw-arm-Introduce-rhel_virt_instance_init-helper.patch
-Patch0029: 0029-hw-arm-Add-rhel830-machine-type.patch
-Patch0030: 0030-redhat-define-pseries-rhel8.3.0-machine-type.patch
-Patch0031: 0031-ppc-Set-correct-max_cpus-value-on-spapr-rhel-machine.patch
-Patch0032: 0032-arm-Set-correct-max_cpus-value-on-virt-rhel-machine-.patch
-Patch0033: 0033-vl-Remove-downstream-only-MAX_RHEL_CPUS-code.patch
-Patch0034: 0034-q35-Set-max_cpus-to-512.patch
-Patch0035: 0035-RHEL-only-arm-virt-Allow-the-TPM_TIS_SYSBUS-device-d.patch
-Patch0036: 0036-RHEL-only-Enable-vTPM-for-ARM-in-downstream-configs.patch
-# For bz#1853265 - Forward and backward migration from rhel-av-8.3.0(qemu-kvm-5.0.0) to rhel-av-8.2.1(qemu-kvm-4.2.0) failed with "qemu-kvm: error while loading state for instance 0x0 of device 'spapr'"
-Patch37: kvm-redhat-define-hw_compat_8_2.patch
-# For bz#1843348 - 8.3 machine types for POWER
-Patch38: kvm-redhat-Update-hw_compat_8_2.patch
-# For bz#1843348 - 8.3 machine types for POWER
-Patch39: kvm-redhat-update-pseries-rhel8.2.0-machine-type.patch
-# For bz#1801242 - [aarch64] vTPM support in machvirt
-Patch40: kvm-Disable-TPM-passthrough-backend-on-ARM.patch
-# For bz#1867075 - CVE-2020-10756 virt:8.3/qemu-kvm: QEMU: slirp: networking out-of-bounds read information disclosure vulnerability [rhel-av-8]
-Patch41: kvm-Drop-bogus-IPv6-messages.patch
-# For bz#1849707 - 8.3 machine types for x86 - 5.1 update
-Patch42: kvm-machine-types-numa-set-numa_mem_supported-on-old-mac.patch
-# For bz#1849707 - 8.3 machine types for x86 - 5.1 update
-Patch43: kvm-machine_types-numa-compatibility-for-auto_enable_num.patch
-# For bz#1790492 - 'dirty-bitmaps' migration capability should allow configuring target nodenames
-Patch44: kvm-migration-Add-block-bitmap-mapping-parameter.patch
-# For bz#1790492 - 'dirty-bitmaps' migration capability should allow configuring target nodenames
-Patch45: kvm-iotests.py-Let-wait_migration-return-on-failure.patch
-# For bz#1790492 - 'dirty-bitmaps' migration capability should allow configuring target nodenames
-Patch46: kvm-iotests-Test-node-bitmap-aliases-during-migration.patch
-# For bz#1873417 - AMD/NUMA topology - revert 5.1 changes
-Patch47: kvm-Revert-i386-Fix-pkg_id-offset-for-EPYC-cpu-models.patch
-# For bz#1873417 - AMD/NUMA topology - revert 5.1 changes
-Patch48: kvm-Revert-target-i386-Enable-new-apic-id-encoding-for-E.patch
-# For bz#1873417 - AMD/NUMA topology - revert 5.1 changes
-Patch49: kvm-Revert-hw-i386-Move-arch_id-decode-inside-x86_cpus_i.patch
-# For bz#1873417 - AMD/NUMA topology - revert 5.1 changes
-Patch50: kvm-Revert-i386-Introduce-use_epyc_apic_id_encoding-in-X.patch
-# For bz#1873417 - AMD/NUMA topology - revert 5.1 changes
-Patch51: kvm-Revert-hw-i386-Introduce-apicid-functions-inside-X86.patch
-# For bz#1873417 - AMD/NUMA topology - revert 5.1 changes
-Patch52: kvm-Revert-target-i386-Cleanup-and-use-the-EPYC-mode-top.patch
-# For bz#1873417 - AMD/NUMA topology - revert 5.1 changes
-Patch53: kvm-Revert-hw-386-Add-EPYC-mode-topology-decoding-functi.patch
-# For bz#1867739 - -prom-env does not validate input
-Patch54: kvm-nvram-Exit-QEMU-if-NVRAM-cannot-contain-all-prom-env.patch
-# For bz#1869715 - CVE-2020-14364 qemu-kvm: QEMU: usb: out-of-bounds r/w access issue while processing usb packets [rhel-av-8.3.0]
-Patch55: kvm-usb-fix-setup_len-init-CVE-2020-14364.patch
-# For bz#1789757 - [IBM 8.4 FEAT] Add machine option to enable secure VM support
-# For bz#1870384 - [IBM 8.3 FEAT] Add interim/unsupported machine option to enable secure VM support for testing purposes
-Patch56: kvm-target-ppc-Add-experimental-option-for-enabling-secu.patch
-# For bz#1849483 - Failed to boot up guest when hotplugging vcpus on bios stage
-Patch57: kvm-target-arm-Move-start-powered-off-property-to-generi.patch
-# For bz#1849483 - Failed to boot up guest when hotplugging vcpus on bios stage
-Patch58: kvm-target-arm-Move-setting-of-CPU-halted-state-to-gener.patch
-# For bz#1849483 - Failed to boot up guest when hotplugging vcpus on bios stage
-Patch59: kvm-ppc-spapr-Use-start-powered-off-CPUState-property.patch
-# For bz#1738820 - '-F' option of qemu-ga command  cause the guest-fsfreeze-freeze command doesn't work
-Patch60: kvm-redhat-link-etc-qemu-ga-fsfreeze-hook-to-etc-qemu-kv.patch
-# For bz#1752376 - qemu use SCMP_ACT_TRAP even SCMP_ACT_KILL_PROCESS is available
-Patch61: kvm-seccomp-fix-killing-of-whole-process-instead-of-thre.patch
-# For bz#1867075 - CVE-2020-10756 virt:8.3/qemu-kvm: QEMU: slirp: networking out-of-bounds read information disclosure vulnerability [rhel-av-8]
-Patch62: kvm-Revert-Drop-bogus-IPv6-messages.patch
-# For bz#1821528 - missing namespace attribute when access the rbd image with namespace
-Patch63: kvm-block-rbd-add-namespace-to-qemu_rbd_strong_runtime_o.patch
-# For bz#1688978 - RFE: forward host preferences for cipher suites and CA certs to guest firmware
-Patch64: kvm-hw-nvram-fw_cfg-fix-FWCfgDataGeneratorClass-get_data.patch
-# For bz#1877209 - 'qemu-img bitmaps --merge' failed when trying to merge top volume bitmap to base volume bitmap
-Patch65: kvm-qemu-img-Support-bitmap-merge-into-backing-image.patch
-# For bz#1874004 - Live migration performance is poor during guest installation process on power host
-Patch66: kvm-migration-increase-max-bandwidth-to-128-MiB-s-1-Gib-.patch
-# For bz#1868449 - vhost_vsock error: device is modern-only, use disable-legacy=on
-Patch67: kvm-virtio-skip-legacy-support-check-on-machine-types-le.patch
-# For bz#1868449 - vhost_vsock error: device is modern-only, use disable-legacy=on
-Patch68: kvm-vhost-vsock-pci-force-virtio-version-1.patch
-# For bz#1868449 - vhost_vsock error: device is modern-only, use disable-legacy=on
-Patch69: kvm-vhost-user-vsock-pci-force-virtio-version-1.patch
-# For bz#1868449 - vhost_vsock error: device is modern-only, use disable-legacy=on
-Patch70: kvm-vhost-vsock-ccw-force-virtio-version-1.patch
-# For bz#1846886 - Guest hit soft lockup or reboots if hotplug vcpu under ovmf
-Patch71: kvm-x86-lpc9-let-firmware-negotiate-CPU-hotplug-with-SMI.patch
-# For bz#1846886 - Guest hit soft lockup or reboots if hotplug vcpu under ovmf
-Patch72: kvm-x86-cpuhp-prevent-guest-crash-on-CPU-hotplug-when-br.patch
-# For bz#1846886 - Guest hit soft lockup or reboots if hotplug vcpu under ovmf
-Patch73: kvm-x86-cpuhp-refuse-cpu-hot-unplug-request-earlier-if-n.patch
+Patch0016: 0016-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
+Patch0017: 0017-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
+Patch0018: 0018-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
+Patch0019: 0019-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
+Patch0020: 0020-Upstream.patch
+Patch0021: 0021-RHEL-9-test.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
+BuildRequires: ninja-build
+BuildRequires: meson
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
 BuildRequires: which
@@ -323,7 +233,6 @@ Requires:      mesa-dri-drivers
 BuildRequires: perl-Test-Harness
 
 Requires: qemu-kvm-core = %{epoch}:%{version}-%{release}
-%rhev_ma_conflicts qemu-kvm
 
 %{requires_all_modules}
 
@@ -374,7 +283,6 @@ Requires: usbredir >= 0.7.1
 Requires: libfdt >= 1.6.0
 %endif
 
-%rhev_ma_conflicts qemu-kvm
 
 %description -n qemu-kvm-core
 qemu-kvm is an open source virtualizer that provides hardware
@@ -387,7 +295,6 @@ hardware for a full system such as a PC and its associated peripherals.
 Summary: QEMU command line tool for manipulating disk images
 Group: Development/Tools
 
-%rhev_ma_conflicts qemu-img
 
 %description -n qemu-img
 This package provides a command line tool for manipulating disk images.
@@ -402,7 +309,6 @@ Requires(post): systemd-units
 Requires(preun): systemd-units
 Requires(postun): systemd-units
 
-%rhev_ma_conflicts qemu-kvm-common
 
 %description -n qemu-kvm-common
 qemu-kvm is an open source virtualizer that provides hardware emulation for
@@ -518,15 +424,16 @@ cd qemu-kvm-build
 ../configure  \
   --prefix="%{_prefix}" \
   --libdir="%{_libdir}" \
+  --datadir="%{_datadir}" \
   --sysconfdir="%{_sysconfdir}" \
   --interp-prefix=%{_prefix}/qemu-%M \
   --localstatedir="%{_localstatedir}" \
-  --docdir="%{qemudocdir}" \
+  --docdir="%{_docdir}" \
   --libexecdir="%{_libexecdir}" \
   --extra-ldflags="-Wl,--build-id -Wl,-z,relro -Wl,-z,now" \
   --extra-cflags="%{optflags}" \
   --with-pkgversion="%{name}-%{version}-%{release}" \
-  --with-confsuffix=/"%{name}" \
+  --with-suffix="%{name}" \
   --firmwarepath=%{_prefix}/share/qemu-firmware \
   --python=%{__python3} \
   --target-list="%{buildarch}" \
@@ -694,15 +601,15 @@ make V=1 %{?_smp_mflags} $buildldflags
 # Setup back compat qemu-kvm binary
 %{__python3} scripts/tracetool.py --backend dtrace --format stap \
   --group=all --binary %{_libexecdir}/qemu-kvm --probe-prefix qemu.kvm \
-  trace-events-all > qemu-kvm.stp
+  trace/trace-events-all > qemu-kvm.stp
 
 %{__python3} scripts/tracetool.py --backends=dtrace --format=log-stap \
   --group=all --binary %{_libexecdir}/qemu-kvm --probe-prefix qemu.kvm \
-  trace-events-all > qemu-kvm-log.stp
+  trace/trace-events-all > qemu-kvm-log.stp
 
 %{__python3} scripts/tracetool.py --backend dtrace --format simpletrace-stap \
   --group=all --binary %{_libexecdir}/qemu-kvm --probe-prefix qemu.kvm \
-  trace-events-all > qemu-kvm-simpletrace.stp
+  trace/trace-events-all > qemu-kvm-simpletrace.stp
 
 cp -a %{kvm_target}-softmmu/qemu-system-%{kvm_target} qemu-kvm
 
@@ -759,7 +666,7 @@ install -p -m 0755 ../tests/Makefile.include $RPM_BUILD_ROOT%{testsdir}/tests/
 
 # Install qemu-iotests
 cp -R ../tests/qemu-iotests/* $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/
-cp -u tests/qemu-iotests/* $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/
+cp -ur tests/qemu-iotests/* $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/
 # Avoid ambiguous 'python' interpreter name
 find $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/env \(python\|python3\)+%{__python3}+' {} \;
 find $RPM_BUILD_ROOT%{testsdir}/scripts/qmp/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/env \(python\|python3\)+%{__python3}+' {} \;
@@ -802,14 +709,18 @@ install --preserve-timestamps --mode=0644 \
 mkdir -p -v $RPM_BUILD_ROOT%{_localstatedir}/log/qemu-ga/
 
 mkdir -p $RPM_BUILD_ROOT%{_bindir}
-install -c -m 0755  qemu-ga ${RPM_BUILD_ROOT}%{_bindir}/qemu-ga
+install -c -m 0755  qga/qemu-ga ${RPM_BUILD_ROOT}%{_bindir}/qemu-ga
 
 mkdir -p $RPM_BUILD_ROOT%{_mandir}/man8
 
-install -m 0755 qemu-kvm $RPM_BUILD_ROOT%{_libexecdir}/
+install -m 0755 %{kvm_target}-softmmu/qemu-system-%{kvm_target} $RPM_BUILD_ROOT%{_libexecdir}/qemu-kvm
 install -m 0644 qemu-kvm.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
 install -m 0644 qemu-kvm-log.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
 install -m 0644 qemu-kvm-simpletrace.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
+install -d -m 0755 "$RPM_BUILD_ROOT%{_datadir}/%{name}/systemtap/script.d"
+install -c -m 0644 scripts/systemtap/script.d/qemu_kvm.stp "$RPM_BUILD_ROOT%{_datadir}/%{name}/systemtap/script.d/"
+install -d -m 0755 "$RPM_BUILD_ROOT%{_datadir}/%{name}/systemtap/conf.d"
+install -c -m 0644 scripts/systemtap/conf.d/qemu_kvm.conf "$RPM_BUILD_ROOT%{_datadir}/%{name}/systemtap/conf.d/"
 
 rm $RPM_BUILD_ROOT/%{_datadir}/applications/qemu.desktop
 rm $RPM_BUILD_ROOT%{_bindir}/qemu-system-%{kvm_target}
@@ -829,11 +740,26 @@ mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/format
 install -m 0644 -t $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/format scripts/tracetool/format/*.py
 
 mkdir -p $RPM_BUILD_ROOT%{qemudocdir}
-install -p -m 0644 -t ${RPM_BUILD_ROOT}%{qemudocdir} ../Changelog ../README.rst ../README.systemtap ../COPYING ../COPYING.LIB ../LICENSE ../docs/interop/qmp-spec.txt
+install -p -m 0644 -t ${RPM_BUILD_ROOT}%{qemudocdir} ../README.rst ../README.systemtap ../COPYING ../COPYING.LIB ../LICENSE ../docs/interop/qmp-spec.txt
+
+# Rename man page
+pushd ${RPM_BUILD_ROOT}%{_mandir}/man1/
+for fn in qemu.1*; do
+     mv $fn "qemu-kvm${fn#qemu}"
+done
+popd
 chmod -x ${RPM_BUILD_ROOT}%{_mandir}/man1/*
 chmod -x ${RPM_BUILD_ROOT}%{_mandir}/man8/*
 
 install -D -p -m 0644 ../qemu.sasl $RPM_BUILD_ROOT%{_sysconfdir}/sasl2/%{name}.conf
+
+# Install keymaps
+pushd pc-bios/keymaps
+for kmp in *; do
+   install $kmp ${RPM_BUILD_ROOT}%{_datadir}/%{name}/keymaps/
+done
+rm -f ${RPM_BUILD_ROOT}%{_datadir}/%{name}/keymaps/*.stamp
+popd
 
 # Provided by package openbios
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/openbios-ppc
@@ -851,6 +777,7 @@ rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/s390-zipl.rom
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/u-boot.e500
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/qemu_vga.ndrv
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/skiboot.lid
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/qboot.rom
 
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/s390-ccw.img
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/hppa-firmware.img
@@ -863,9 +790,12 @@ rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/edk2-licenses.txt
 
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv32-sifive_u-fw_jump.bin
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv32-virt-fw_jump.bin
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv32-generic-fw_dynamic.*
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv64-sifive_u-fw_jump.bin
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv64-virt-fw_jump.bin
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv64-generic-fw_dynamic.*
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/qemu-nsis.bmp
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/npcm7xx_bootrom.bin
 
 rm -rf ${RPM_BUILD_ROOT}%{_libdir}/qemu-kvm/ui-spice-app.so
 
@@ -974,9 +904,6 @@ rm -rf $RPM_BUILD_ROOT%{qemudocdir}/user/.buildinfo
 # Remove spec
 rm -rf $RPM_BUILD_ROOT%{qemudocdir}/specs
 
-# Hack to keep qemu-pr-helper in original location
-mv $RPM_BUILD_ROOT%{_libexecdir}/qemu-pr-helper $RPM_BUILD_ROOT%{_bindir}/qemu-pr-helper
-
 %check
 cd qemu-kvm-build
 export DIFF=diff; make check V=1
@@ -1025,7 +952,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %files -n qemu-kvm-common
 %defattr(-,root,root)
 %dir %{qemudocdir}
-%doc %{qemudocdir}/Changelog
 %doc %{qemudocdir}/README.rst
 %doc %{qemudocdir}/COPYING
 %doc %{qemudocdir}/COPYING.LIB
@@ -1083,6 +1009,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
     %{_datadir}/%{name}/kvmvapic.bin
     %{_datadir}/%{name}/sgabios.bin
     %{_datadir}/%{name}/pvh.bin
+    %{_libdir}/qemu-kvm/ui-egl-headless.so
 %endif
 %ifarch s390x
     %{_datadir}/%{name}/s390-ccw.img
@@ -1103,6 +1030,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
     %{_datadir}/%{name}/efi-pcnet.rom
     %{_datadir}/%{name}/efi-rtl8139.rom
     %{_datadir}/%{name}/efi-ne2k_pci.rom
+    %{_libdir}/qemu-kvm/hw-display-virtio-vga.so
 %endif
 %{_datadir}/icons/*
 %{_datadir}/%{name}/linuxboot_dma.bin
@@ -1129,9 +1057,19 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 %if 0%{have_spice}
     %{_libdir}/qemu-kvm/hw-usb-smartcard.so
+    %{_libdir}/qemu-kvm/audio-spice.so
+    %{_libdir}/qemu-kvm/ui-spice-core.so
+    %{_libdir}/qemu-kvm/chardev-spice.so
 %endif
 %ifarch x86_64
     %{_libdir}/qemu-kvm/hw-display-qxl.so
+%endif
+%{_libdir}/qemu-kvm/hw-display-virtio-gpu.so
+%ifnarch s390x
+    %{_libdir}/qemu-kvm/hw-display-virtio-gpu-pci.so
+%endif
+%if 0%{have_opengl}
+    %{_libdir}/qemu-kvm/ui-opengl.so
 %endif
 
 %files -n qemu-img
@@ -1177,6 +1115,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Oct 13 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-14.el8_3
+- kvm-virtiofsd-avoid-proc-self-fd-tempdir.patch [bz#1884276]
+- Resolves: bz#1884276
+  (Pod with kata-runtime won't start, QEMU: "vhost_user_dev init failed, Operation not permitted" [mkdtemp failing in sandboxing])
+
 * Thu Oct 08 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-13.el8_3
 - kvm-x86-lpc9-let-firmware-negotiate-CPU-hotplug-with-SMI.patch [bz#1846886]
 - kvm-x86-cpuhp-prevent-guest-crash-on-CPU-hotplug-when-br.patch [bz#1846886]

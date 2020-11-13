@@ -1,6 +1,6 @@
-From 3c93dbb29fed4f555904494efe9b823310a14604 Mon Sep 17 00:00:00 2001
+From 65eea220dcce6177b306eae08935f5354847bb08 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
-Date: Mon, 11 Jan 2016 11:53:33 +0100
+Date: Wed, 2 Sep 2020 09:11:07 +0200
 Subject: Enable/disable devices for RHEL
 
 This commit adds all changes related to changes in supported devices.
@@ -47,6 +47,15 @@ Rebase notes (5.1.0):
 - removed obsolete hw/bt/Makefile.objs chunk
 - removed unnecessary changes in target/i386/cpu.c
 
+Rebase notes (5.2.0 rc0):
+- Added CONFIG_USB_XHCI_PCI on aarch64 ppc64 and x86_64
+- remove vl.c hack for no hpet
+- Enable CONFIG_PTIMER for aarch64
+- Do not package hw-display-virtio-gpu.so on s390x
+
+Rebase notes (5.2.0 rc1):
+- Added CONFIG_ARM_GIC for aarch64 (required for build)
+
 Merged patches (qemu 3.1.0):
 - d51e082 Re-enable CONFIG_HYPERV_TESTDEV
 - 4b889f3 Declare cirrus-vga as deprecated
@@ -65,58 +74,62 @@ Merged patches (4.1.0):
 Merged patches (4.2.0):
 - f7587dd RHEL: disable hostmem-memfd
 
-Merged patches (weekly-5.1.0):
+Merged patches (5.1.0):
 - 4543a3c i386: Remove cpu64-rhel6 CPU model
 - 96533 aarch64: Remove tcg cpu types (pjw commit)
 - 559d589 Revert "RHEL: disable hostmem-memfd"
 - 441128e enable ramfb
 
-Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+Merged patches (5.2.0 rc0):
+- f70eb50 RHEL-only: Enable vTPM for POWER in downstream configs
+- 69d8ae7 redhat: fix 5.0 rebase missing ISA TPM TIS
+- 8310f89 RHEL-only: Enable vTPM for ARM in downstream configs
+- 4a8ccfd Disable TPM passthrough backend on ARM
 ---
- default-configs/aarch64-rh-devices.mak |  22 ++++++
- default-configs/aarch64-softmmu.mak    |  10 ++-
- default-configs/ppc64-rh-devices.mak   |  34 +++++++++
- default-configs/ppc64-softmmu.mak      |  10 ++-
- default-configs/rh-virtio.mak          |  10 +++
- default-configs/s390x-rh-devices.mak   |  15 ++++
- default-configs/s390x-softmmu.mak      |   4 +-
- default-configs/x86_64-rh-devices.mak  | 100 +++++++++++++++++++++++++
- default-configs/x86_64-softmmu.mak     |   4 +-
- hw/acpi/ich9.c                         |   4 +-
- hw/arm/Makefile.objs                   |   2 +-
- hw/block/fdc.c                         |  10 +++
- hw/cpu/Makefile.objs                   |   5 +-
- hw/display/cirrus_vga.c                |   3 +
- hw/ide/piix.c                          |   5 +-
- hw/input/pckbd.c                       |   2 +
- hw/net/e1000.c                         |   2 +
- hw/ppc/spapr_cpu_core.c                |   2 +
- hw/usb/Makefile.objs                   |   4 +-
- qemu-options.hx                        |   4 -
- redhat/qemu-kvm.spec.template          |   5 +-
- softmmu/vl.c                           |   2 +-
- target/arm/cpu.c                       |   4 +-
- target/arm/cpu_tcg.c                   |   3 +
- target/i386/cpu.c                      |   1 +
- target/ppc/cpu-models.c                |  10 +++
- target/s390x/cpu_models.c              |   3 +
- target/s390x/kvm.c                     |   8 ++
- 28 files changed, 263 insertions(+), 25 deletions(-)
- create mode 100644 default-configs/aarch64-rh-devices.mak
- create mode 100644 default-configs/ppc64-rh-devices.mak
- create mode 100644 default-configs/rh-virtio.mak
- create mode 100644 default-configs/s390x-rh-devices.mak
- create mode 100644 default-configs/x86_64-rh-devices.mak
+ default-configs/devices/aarch64-rh-devices.mak |  27 +++++++
+ default-configs/devices/aarch64-softmmu.mak    |  10 ++-
+ default-configs/devices/ppc64-rh-devices.mak   |  38 ++++++++++
+ default-configs/devices/ppc64-softmmu.mak      |  10 ++-
+ default-configs/devices/rh-virtio.mak          |  10 +++
+ default-configs/devices/s390x-rh-devices.mak   |  15 ++++
+ default-configs/devices/s390x-softmmu.mak      |   4 +-
+ default-configs/devices/x86_64-rh-devices.mak  | 101 +++++++++++++++++++++++++
+ default-configs/devices/x86_64-softmmu.mak     |   4 +-
+ hw/acpi/ich9.c                                 |   4 +-
+ hw/arm/meson.build                             |   2 +-
+ hw/block/fdc.c                                 |  10 +++
+ hw/cpu/meson.build                             |   5 +-
+ hw/display/cirrus_vga.c                        |   3 +
+ hw/ide/piix.c                                  |   5 +-
+ hw/input/pckbd.c                               |   2 +
+ hw/net/e1000.c                                 |   2 +
+ hw/ppc/spapr_cpu_core.c                        |   2 +
+ hw/usb/meson.build                             |   2 +-
+ qemu-options.hx                                |   4 -
+ redhat/Makefile.common                         |   1 +
+ redhat/qemu-kvm.spec.template                  |   9 ++-
+ target/arm/cpu.c                               |   4 +-
+ target/arm/cpu_tcg.c                           |   3 +
+ target/ppc/cpu-models.c                        |  10 +++
+ target/s390x/cpu_models.c                      |   3 +
+ target/s390x/kvm.c                             |   8 ++
+ 27 files changed, 273 insertions(+), 25 deletions(-)
+ create mode 100644 default-configs/devices/aarch64-rh-devices.mak
+ create mode 100644 default-configs/devices/ppc64-rh-devices.mak
+ create mode 100644 default-configs/devices/rh-virtio.mak
+ create mode 100644 default-configs/devices/s390x-rh-devices.mak
+ create mode 100644 default-configs/devices/x86_64-rh-devices.mak
 
-diff --git a/default-configs/aarch64-rh-devices.mak b/default-configs/aarch64-rh-devices.mak
+diff --git a/default-configs/devices/aarch64-rh-devices.mak b/default-configs/devices/aarch64-rh-devices.mak
 new file mode 100644
-index 0000000000..f0cf5a1b22
+index 0000000..9831940
 --- /dev/null
-+++ b/default-configs/aarch64-rh-devices.mak
-@@ -0,0 +1,22 @@
++++ b/default-configs/devices/aarch64-rh-devices.mak
+@@ -0,0 +1,27 @@
 +include rh-virtio.mak
 +
 +CONFIG_ARM_GIC_KVM=y
++CONFIG_ARM_GIC=y
 +CONFIG_ARM_SMMUV3=y
 +CONFIG_ARM_V7M=y
 +CONFIG_ARM_VIRT=y
@@ -129,6 +142,7 @@ index 0000000000..f0cf5a1b22
 +CONFIG_SEMIHOSTING=y
 +CONFIG_USB=y
 +CONFIG_USB_XHCI=y
++CONFIG_USB_XHCI_PCI=y
 +CONFIG_VFIO=y
 +CONFIG_VFIO_PCI=y
 +CONFIG_VIRTIO_MMIO=y
@@ -136,10 +150,13 @@ index 0000000000..f0cf5a1b22
 +CONFIG_XIO3130=y
 +CONFIG_NVDIMM=y
 +CONFIG_ACPI_APEI=y
-diff --git a/default-configs/aarch64-softmmu.mak b/default-configs/aarch64-softmmu.mak
-index 958b1e08e4..8f6867d48a 100644
---- a/default-configs/aarch64-softmmu.mak
-+++ b/default-configs/aarch64-softmmu.mak
++CONFIG_TPM_EMULATOR=y
++CONFIG_TPM_TIS_SYSBUS=y
++CONFIG_PTIMER=y
+diff --git a/default-configs/devices/aarch64-softmmu.mak b/default-configs/devices/aarch64-softmmu.mak
+index 958b1e0..8f6867d 100644
+--- a/default-configs/devices/aarch64-softmmu.mak
++++ b/default-configs/devices/aarch64-softmmu.mak
 @@ -1,8 +1,10 @@
  # Default configuration for aarch64-softmmu
  
@@ -155,12 +172,12 @@ index 958b1e08e4..8f6867d48a 100644
 +#CONFIG_SBSA_REF=y
 +
 +include aarch64-rh-devices.mak
-diff --git a/default-configs/ppc64-rh-devices.mak b/default-configs/ppc64-rh-devices.mak
+diff --git a/default-configs/devices/ppc64-rh-devices.mak b/default-configs/devices/ppc64-rh-devices.mak
 new file mode 100644
-index 0000000000..ecbe53fe63
+index 0000000..467a16b
 --- /dev/null
-+++ b/default-configs/ppc64-rh-devices.mak
-@@ -0,0 +1,34 @@
++++ b/default-configs/devices/ppc64-rh-devices.mak
+@@ -0,0 +1,38 @@
 +include rh-virtio.mak
 +
 +CONFIG_DIMM=y
@@ -181,6 +198,7 @@ index 0000000000..ecbe53fe63
 +CONFIG_USB_STORAGE_BOT=y
 +CONFIG_USB_XHCI=y
 +CONFIG_USB_XHCI_NEC=y
++CONFIG_USB_XHCI_PCI=y
 +CONFIG_VFIO=y
 +CONFIG_VFIO_PCI=y
 +CONFIG_VGA=y
@@ -195,10 +213,13 @@ index 0000000000..ecbe53fe63
 +CONFIG_XIVE=y
 +CONFIG_XIVE_SPAPR=y
 +CONFIG_XIVE_KVM=y
-diff --git a/default-configs/ppc64-softmmu.mak b/default-configs/ppc64-softmmu.mak
-index ae0841fa3a..040e5575e7 100644
---- a/default-configs/ppc64-softmmu.mak
-+++ b/default-configs/ppc64-softmmu.mak
++CONFIG_TPM_SPAPR=y
++CONFIG_TPM_EMULATOR=y
++CONFIG_TPM_PASSTHROUGH=y
+diff --git a/default-configs/devices/ppc64-softmmu.mak b/default-configs/devices/ppc64-softmmu.mak
+index ae0841f..040e557 100644
+--- a/default-configs/devices/ppc64-softmmu.mak
++++ b/default-configs/devices/ppc64-softmmu.mak
 @@ -1,11 +1,13 @@
  # Default configuration for ppc64-softmmu
  
@@ -217,11 +238,11 @@ index ae0841fa3a..040e5575e7 100644
 +#CONFIG_NVDIMM=y
 +
 +include ppc64-rh-devices.mak
-diff --git a/default-configs/rh-virtio.mak b/default-configs/rh-virtio.mak
+diff --git a/default-configs/devices/rh-virtio.mak b/default-configs/devices/rh-virtio.mak
 new file mode 100644
-index 0000000000..94ede1b5f6
+index 0000000..94ede1b
 --- /dev/null
-+++ b/default-configs/rh-virtio.mak
++++ b/default-configs/devices/rh-virtio.mak
 @@ -0,0 +1,10 @@
 +CONFIG_VIRTIO=y
 +CONFIG_VIRTIO_BALLOON=y
@@ -233,11 +254,11 @@ index 0000000000..94ede1b5f6
 +CONFIG_VIRTIO_RNG=y
 +CONFIG_VIRTIO_SCSI=y
 +CONFIG_VIRTIO_SERIAL=y
-diff --git a/default-configs/s390x-rh-devices.mak b/default-configs/s390x-rh-devices.mak
+diff --git a/default-configs/devices/s390x-rh-devices.mak b/default-configs/devices/s390x-rh-devices.mak
 new file mode 100644
-index 0000000000..c3c73fe752
+index 0000000..c3c73fe
 --- /dev/null
-+++ b/default-configs/s390x-rh-devices.mak
++++ b/default-configs/devices/s390x-rh-devices.mak
 @@ -0,0 +1,15 @@
 +include rh-virtio.mak
 +
@@ -254,10 +275,10 @@ index 0000000000..c3c73fe752
 +CONFIG_VHOST_USER=y
 +CONFIG_VIRTIO_CCW=y
 +CONFIG_WDT_DIAG288=y
-diff --git a/default-configs/s390x-softmmu.mak b/default-configs/s390x-softmmu.mak
-index f2287a133f..3e2e388e91 100644
---- a/default-configs/s390x-softmmu.mak
-+++ b/default-configs/s390x-softmmu.mak
+diff --git a/default-configs/devices/s390x-softmmu.mak b/default-configs/devices/s390x-softmmu.mak
+index f2287a1..3e2e388 100644
+--- a/default-configs/devices/s390x-softmmu.mak
++++ b/default-configs/devices/s390x-softmmu.mak
 @@ -10,4 +10,6 @@
  
  # Boards:
@@ -266,12 +287,12 @@ index f2287a133f..3e2e388e91 100644
 +#CONFIG_S390_CCW_VIRTIO=y
 +
 +include s390x-rh-devices.mak
-diff --git a/default-configs/x86_64-rh-devices.mak b/default-configs/x86_64-rh-devices.mak
+diff --git a/default-configs/devices/x86_64-rh-devices.mak b/default-configs/devices/x86_64-rh-devices.mak
 new file mode 100644
-index 0000000000..d59b6d9bb5
+index 0000000..e80877d
 --- /dev/null
-+++ b/default-configs/x86_64-rh-devices.mak
-@@ -0,0 +1,100 @@
++++ b/default-configs/devices/x86_64-rh-devices.mak
+@@ -0,0 +1,101 @@
 +include rh-virtio.mak
 +
 +CONFIG_AC97=y
@@ -354,6 +375,7 @@ index 0000000000..d59b6d9bb5
 +CONFIG_USB_UHCI=y
 +CONFIG_USB_XHCI=y
 +CONFIG_USB_XHCI_NEC=y
++CONFIG_USB_XHCI_PCI=y
 +CONFIG_VFIO=y
 +CONFIG_VFIO_PCI=y
 +CONFIG_VGA=y
@@ -369,13 +391,13 @@ index 0000000000..d59b6d9bb5
 +CONFIG_WDT_IB700=y
 +CONFIG_XIO3130=y
 +CONFIG_TPM_CRB=y
-+CONFIG_TPM_TIS=y
++CONFIG_TPM_TIS_ISA=y
 +CONFIG_TPM_EMULATOR=y
 +CONFIG_TPM_PASSTHROUGH=y
-diff --git a/default-configs/x86_64-softmmu.mak b/default-configs/x86_64-softmmu.mak
-index 64b2ee2960..b5de7e5279 100644
---- a/default-configs/x86_64-softmmu.mak
-+++ b/default-configs/x86_64-softmmu.mak
+diff --git a/default-configs/devices/x86_64-softmmu.mak b/default-configs/devices/x86_64-softmmu.mak
+index 64b2ee2..b5de7e5 100644
+--- a/default-configs/devices/x86_64-softmmu.mak
++++ b/default-configs/devices/x86_64-softmmu.mak
 @@ -1,3 +1,5 @@
  # Default configuration for x86_64-softmmu
  
@@ -384,7 +406,7 @@ index 64b2ee2960..b5de7e5279 100644
 +
 +include x86_64-rh-devices.mak
 diff --git a/hw/acpi/ich9.c b/hw/acpi/ich9.c
-index 6a19070cec..bb8379f6a7 100644
+index 95cb0f9..f9690a0 100644
 --- a/hw/acpi/ich9.c
 +++ b/hw/acpi/ich9.c
 @@ -374,8 +374,8 @@ void ich9_pm_add_properties(Object *obj, ICH9LPCPMRegs *pm)
@@ -398,26 +420,26 @@ index 6a19070cec..bb8379f6a7 100644
      pm->s4_val = 2;
  
      object_property_add_uint32_ptr(obj, ACPI_PM_PROP_PM_IO_BASE,
-diff --git a/hw/arm/Makefile.objs b/hw/arm/Makefile.objs
-index 534a6a119e..bd62442b54 100644
---- a/hw/arm/Makefile.objs
-+++ b/hw/arm/Makefile.objs
-@@ -28,7 +28,7 @@ obj-$(CONFIG_VEXPRESS) += vexpress.o
- obj-$(CONFIG_ZYNQ) += xilinx_zynq.o
- obj-$(CONFIG_SABRELITE) += sabrelite.o
+diff --git a/hw/arm/meson.build b/hw/arm/meson.build
+index be39117..6fcc5ed 100644
+--- a/hw/arm/meson.build
++++ b/hw/arm/meson.build
+@@ -30,7 +30,7 @@ arm_ss.add(when: 'CONFIG_VEXPRESS', if_true: files('vexpress.c'))
+ arm_ss.add(when: 'CONFIG_ZYNQ', if_true: files('xilinx_zynq.c'))
+ arm_ss.add(when: 'CONFIG_SABRELITE', if_true: files('sabrelite.c'))
  
--obj-$(CONFIG_ARM_V7M) += armv7m.o
-+#obj-$(CONFIG_ARM_V7M) += armv7m.o
- obj-$(CONFIG_EXYNOS4) += exynos4210.o
- obj-$(CONFIG_PXA2XX) += pxa2xx.o pxa2xx_gpio.o pxa2xx_pic.o
- obj-$(CONFIG_DIGIC) += digic.o
+-arm_ss.add(when: 'CONFIG_ARM_V7M', if_true: files('armv7m.c'))
++#arm_ss.add(when: 'CONFIG_ARM_V7M', if_true: files('armv7m.c'))
+ arm_ss.add(when: 'CONFIG_EXYNOS4', if_true: files('exynos4210.c'))
+ arm_ss.add(when: 'CONFIG_PXA2XX', if_true: files('pxa2xx.c', 'pxa2xx_gpio.c', 'pxa2xx_pic.c'))
+ arm_ss.add(when: 'CONFIG_DIGIC', if_true: files('digic.c'))
 diff --git a/hw/block/fdc.c b/hw/block/fdc.c
-index e9ed3eef45..965528a512 100644
+index 4c2c35e..e9eb7b8 100644
 --- a/hw/block/fdc.c
 +++ b/hw/block/fdc.c
-@@ -47,6 +47,8 @@
- #include "qemu/module.h"
+@@ -48,6 +48,8 @@
  #include "trace.h"
+ #include "qom/object.h"
  
 +#include "hw/boards.h"
 +
@@ -439,24 +461,25 @@ index e9ed3eef45..965528a512 100644
      if (fdctrl->fallback == FLOPPY_DRIVE_TYPE_AUTO) {
          error_setg(errp, "Cannot choose a fallback FDrive type of 'auto'");
          return;
-diff --git a/hw/cpu/Makefile.objs b/hw/cpu/Makefile.objs
-index 8db9e8a7b3..1601ea93c7 100644
---- a/hw/cpu/Makefile.objs
-+++ b/hw/cpu/Makefile.objs
-@@ -1,5 +1,6 @@
- obj-$(CONFIG_ARM11MPCORE) += arm11mpcore.o
- obj-$(CONFIG_REALVIEW) += realview_mpcore.o
- obj-$(CONFIG_A9MPCORE) += a9mpcore.o
--obj-$(CONFIG_A15MPCORE) += a15mpcore.o
--common-obj-y += core.o cluster.o
-+#obj-$(CONFIG_A15MPCORE) += a15mpcore.o
-+common-obj-y += core.o
-+# cluster.o
+diff --git a/hw/cpu/meson.build b/hw/cpu/meson.build
+index 9e52fee..bb71c9f 100644
+--- a/hw/cpu/meson.build
++++ b/hw/cpu/meson.build
+@@ -1,6 +1,7 @@
+-softmmu_ss.add(files('core.c', 'cluster.c'))
++#softmmu_ss.add(files('core.c', 'cluster.c'))
++softmmu_ss.add(files('core.c'))
+ 
+ specific_ss.add(when: 'CONFIG_ARM11MPCORE', if_true: files('arm11mpcore.c'))
+ specific_ss.add(when: 'CONFIG_REALVIEW', if_true: files('realview_mpcore.c'))
+ specific_ss.add(when: 'CONFIG_A9MPCORE', if_true: files('a9mpcore.c'))
+-specific_ss.add(when: 'CONFIG_A15MPCORE', if_true: files('a15mpcore.c'))
++#specific_ss.add(when: 'CONFIG_A15MPCORE', if_true: files('a15mpcore.c'))
 diff --git a/hw/display/cirrus_vga.c b/hw/display/cirrus_vga.c
-index 212d6f5e61..f2504e5649 100644
+index 722b9e7..25de8b2 100644
 --- a/hw/display/cirrus_vga.c
 +++ b/hw/display/cirrus_vga.c
-@@ -2958,6 +2958,9 @@ static void pci_cirrus_vga_realize(PCIDevice *dev, Error **errp)
+@@ -2963,6 +2963,9 @@ static void pci_cirrus_vga_realize(PCIDevice *dev, Error **errp)
       PCIDeviceClass *pc = PCI_DEVICE_GET_CLASS(dev);
       int16_t device_id = pc->device_id;
  
@@ -467,10 +490,10 @@ index 212d6f5e61..f2504e5649 100644
         Also accept 8 MB/16 MB for backward compatibility. */
       if (s->vga.vram_size_mb != 4 && s->vga.vram_size_mb != 8 &&
 diff --git a/hw/ide/piix.c b/hw/ide/piix.c
-index b402a93636..d3621a45d9 100644
+index b9860e3..beb1ea6 100644
 --- a/hw/ide/piix.c
 +++ b/hw/ide/piix.c
-@@ -221,7 +221,8 @@ static void piix3_ide_class_init(ObjectClass *klass, void *data)
+@@ -220,7 +220,8 @@ static void piix3_ide_class_init(ObjectClass *klass, void *data)
      k->device_id = PCI_DEVICE_ID_INTEL_82371SB_1;
      k->class_id = PCI_CLASS_STORAGE_IDE;
      set_bit(DEVICE_CATEGORY_STORAGE, dc->categories);
@@ -480,7 +503,7 @@ index b402a93636..d3621a45d9 100644
  }
  
  static const TypeInfo piix3_ide_info = {
-@@ -250,6 +251,8 @@ static void piix4_ide_class_init(ObjectClass *klass, void *data)
+@@ -249,6 +250,8 @@ static void piix4_ide_class_init(ObjectClass *klass, void *data)
      k->class_id = PCI_CLASS_STORAGE_IDE;
      set_bit(DEVICE_CATEGORY_STORAGE, dc->categories);
      dc->hotpluggable = false;
@@ -490,10 +513,10 @@ index b402a93636..d3621a45d9 100644
  
  static const TypeInfo piix4_ide_info = {
 diff --git a/hw/input/pckbd.c b/hw/input/pckbd.c
-index 29d633ca94..1442f46195 100644
+index dde85ba..62cf60c 100644
 --- a/hw/input/pckbd.c
 +++ b/hw/input/pckbd.c
-@@ -599,6 +599,8 @@ static void i8042_class_initfn(ObjectClass *klass, void *data)
+@@ -597,6 +597,8 @@ static void i8042_class_initfn(ObjectClass *klass, void *data)
      dc->vmsd = &vmstate_kbd_isa;
      isa->build_aml = i8042_build_aml;
      set_bit(DEVICE_CATEGORY_INPUT, dc->categories);
@@ -503,10 +526,10 @@ index 29d633ca94..1442f46195 100644
  
  static const TypeInfo i8042_info = {
 diff --git a/hw/net/e1000.c b/hw/net/e1000.c
-index a18f80e369..960b2f00ee 100644
+index 83347cb..8fb83a1 100644
 --- a/hw/net/e1000.c
 +++ b/hw/net/e1000.c
-@@ -1797,6 +1797,7 @@ static const E1000Info e1000_devices[] = {
+@@ -1796,6 +1796,7 @@ static const E1000Info e1000_devices[] = {
          .revision  = 0x03,
          .phy_id2   = E1000_PHY_ID2_8254xx_DEFAULT,
      },
@@ -514,7 +537,7 @@ index a18f80e369..960b2f00ee 100644
      {
          .name      = "e1000-82544gc",
          .device_id = E1000_DEV_ID_82544GC_COPPER,
-@@ -1809,6 +1810,7 @@ static const E1000Info e1000_devices[] = {
+@@ -1808,6 +1809,7 @@ static const E1000Info e1000_devices[] = {
          .revision  = 0x03,
          .phy_id2   = E1000_PHY_ID2_8254xx_DEFAULT,
      },
@@ -523,10 +546,10 @@ index a18f80e369..960b2f00ee 100644
  
  static void e1000_register_types(void)
 diff --git a/hw/ppc/spapr_cpu_core.c b/hw/ppc/spapr_cpu_core.c
-index c4f47dcc04..6a2239d5e5 100644
+index 2f7dc3c..55d36e0 100644
 --- a/hw/ppc/spapr_cpu_core.c
 +++ b/hw/ppc/spapr_cpu_core.c
-@@ -389,10 +389,12 @@ static const TypeInfo spapr_cpu_core_type_infos[] = {
+@@ -376,10 +376,12 @@ static const TypeInfo spapr_cpu_core_type_infos[] = {
          .instance_size = sizeof(SpaprCpuCore),
          .class_size = sizeof(SpaprCpuCoreClass),
      },
@@ -539,26 +562,24 @@ index c4f47dcc04..6a2239d5e5 100644
      DEFINE_SPAPR_CPU_CORE_TYPE("power7_v2.3"),
      DEFINE_SPAPR_CPU_CORE_TYPE("power7+_v2.1"),
      DEFINE_SPAPR_CPU_CORE_TYPE("power8_v2.0"),
-diff --git a/hw/usb/Makefile.objs b/hw/usb/Makefile.objs
-index e342ff59fa..abf044a20f 100644
---- a/hw/usb/Makefile.objs
-+++ b/hw/usb/Makefile.objs
-@@ -31,7 +31,9 @@ ifeq ($(CONFIG_USB_SMARTCARD),y)
- common-obj-y                          += dev-smartcard-reader.o
- ifeq ($(CONFIG_SMARTCARD),y)
- common-obj-m                          += smartcard.mo
--smartcard.mo-objs := ccid-card-passthru.o ccid-card-emulated.o
-+# Disabled for Red Hat Enterprise Linux:
-+#smartcard.mo-objs := ccid-card-passthru.o ccid-card-emulated.o
-+smartcard.mo-objs := ccid-card-passthru.o
- smartcard.mo-cflags := $(SMARTCARD_CFLAGS)
- smartcard.mo-libs := $(SMARTCARD_LIBS)
+diff --git a/hw/usb/meson.build b/hw/usb/meson.build
+index 934e4fa..e3abba5 100644
+--- a/hw/usb/meson.build
++++ b/hw/usb/meson.build
+@@ -48,7 +48,7 @@ softmmu_ss.add(when: 'CONFIG_USB_SMARTCARD', if_true: files('dev-smartcard-reade
+ if config_host.has_key('CONFIG_SMARTCARD')
+   usbsmartcard_ss = ss.source_set()
+   usbsmartcard_ss.add(when: 'CONFIG_USB_SMARTCARD',
+-                      if_true: [cacard, files('ccid-card-emulated.c', 'ccid-card-passthru.c')])
++                      if_true: [cacard, files('ccid-card-passthru.c')])
+   hw_usb_modules += {'smartcard': usbsmartcard_ss}
  endif
+ 
 diff --git a/qemu-options.hx b/qemu-options.hx
-index 708583b4ce..1700205035 100644
+index 2c83390..53472fd 100644
 --- a/qemu-options.hx
 +++ b/qemu-options.hx
-@@ -2257,10 +2257,6 @@ ERST
+@@ -2251,10 +2251,6 @@ ERST
  
  DEF("no-hpet", 0, QEMU_OPTION_no_hpet,
      "-no-hpet        disable HPET\n", QEMU_ARCH_I386)
@@ -569,24 +590,11 @@ index 708583b4ce..1700205035 100644
  
  DEF("acpitable", HAS_ARG, QEMU_OPTION_acpitable,
      "-acpitable [sig=str][,rev=n][,oem_id=str][,oem_table_id=str][,oem_rev=n][,asl_compiler_id=str][,asl_compiler_rev=n][,{data|file}=file1[:file2]...]\n"
-diff --git a/softmmu/vl.c b/softmmu/vl.c
-index 4eb9d1f7fd..a1fb06dca0 100644
---- a/softmmu/vl.c
-+++ b/softmmu/vl.c
-@@ -145,7 +145,7 @@ static Chardev **serial_hds;
- Chardev *parallel_hds[MAX_PARALLEL_PORTS];
- int win2k_install_hack = 0;
- int singlestep = 0;
--int no_hpet = 0;
-+int no_hpet = 1; /* Always disabled for Red Hat Enterprise Linux */
- int fd_bootchk = 1;
- static int no_reboot;
- int no_shutdown = 0;
 diff --git a/target/arm/cpu.c b/target/arm/cpu.c
-index 111579554f..13ad40aa7d 100644
+index 07492e9..a048714 100644
 --- a/target/arm/cpu.c
 +++ b/target/arm/cpu.c
-@@ -2338,7 +2338,9 @@ static void arm_cpu_register_types(void)
+@@ -2358,7 +2358,9 @@ static void arm_cpu_register_types(void)
  
          type_register_static(&idau_interface_type_info);
          for (i = 0; i < cpu_count; ++i) {
@@ -598,10 +606,10 @@ index 111579554f..13ad40aa7d 100644
      }
  }
 diff --git a/target/arm/cpu_tcg.c b/target/arm/cpu_tcg.c
-index 00b0e08f33..94d429b61c 100644
+index 0013e25..6540046 100644
 --- a/target/arm/cpu_tcg.c
 +++ b/target/arm/cpu_tcg.c
-@@ -655,6 +655,9 @@ static void arm_tcg_cpu_register_types(void)
+@@ -679,6 +679,9 @@ static void arm_tcg_cpu_register_types(void)
  {
      size_t i;
  
@@ -611,20 +619,8 @@ index 00b0e08f33..94d429b61c 100644
      for (i = 0; i < ARRAY_SIZE(arm_tcg_cpus); ++i) {
          arm_cpu_register(&arm_tcg_cpus[i]);
      }
-diff --git a/target/i386/cpu.c b/target/i386/cpu.c
-index 588f32e136..030a5a09ed 100644
---- a/target/i386/cpu.c
-+++ b/target/i386/cpu.c
-@@ -1825,6 +1825,7 @@ static CPUCaches epyc_rome_cache_info = {
- 
- static X86CPUDefinition builtin_x86_defs[] = {
-     {
-+        /* qemu64 is the default CPU model for all machine-types */
-         .name = "qemu64",
-         .level = 0xd,
-         .vendor = CPUID_VENDOR_AMD,
 diff --git a/target/ppc/cpu-models.c b/target/ppc/cpu-models.c
-index 4ad16863c0..16b2185fd8 100644
+index 4ad1686..16b2185 100644
 --- a/target/ppc/cpu-models.c
 +++ b/target/ppc/cpu-models.c
 @@ -66,6 +66,7 @@
@@ -694,10 +690,10 @@ index 4ad16863c0..16b2185fd8 100644
      { NULL, NULL }
  };
 diff --git a/target/s390x/cpu_models.c b/target/s390x/cpu_models.c
-index c2af226174..e35bf745dd 100644
+index b5abff8..abe09d7 100644
 --- a/target/s390x/cpu_models.c
 +++ b/target/s390x/cpu_models.c
-@@ -404,6 +404,9 @@ static void check_unavailable_features(const S390CPUModel *max_model,
+@@ -408,6 +408,9 @@ static void check_unavailable_features(const S390CPUModel *max_model,
          (max_model->def->gen == model->def->gen &&
           max_model->def->ec_ga < model->def->ec_ga)) {
          list_add_feat("type", unavailable);
@@ -708,10 +704,10 @@ index c2af226174..e35bf745dd 100644
  
      /* detect missing features if any to properly report them */
 diff --git a/target/s390x/kvm.c b/target/s390x/kvm.c
-index f2f75d2a57..8970e4c374 100644
+index baa070f..10ce36a 100644
 --- a/target/s390x/kvm.c
 +++ b/target/s390x/kvm.c
-@@ -2494,6 +2494,14 @@ void kvm_s390_apply_cpu_model(const S390CPUModel *model, Error **errp)
+@@ -2540,6 +2540,14 @@ void kvm_s390_apply_cpu_model(const S390CPUModel *model, Error **errp)
          error_setg(errp, "KVM doesn't support CPU models");
          return;
      }
@@ -727,5 +723,5 @@ index f2f75d2a57..8970e4c374 100644
      prop.ibc = s390_ibc_from_cpu_model(model);
      /* configure cpu features indicated via STFL(e) */
 -- 
-2.27.0
+1.8.3.1
 

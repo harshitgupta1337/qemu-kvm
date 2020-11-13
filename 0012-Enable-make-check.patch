@@ -1,6 +1,6 @@
-From 69de445124e71df949a3d5289f8a10a5f771bac2 Mon Sep 17 00:00:00 2001
+From 1170780d2fdd4cb8b663603c4d509d65b2e05846 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
-Date: Fri, 19 Oct 2018 13:48:41 +0200
+Date: Wed, 2 Sep 2020 09:39:41 +0200
 Subject: Enable make check
 
 Fixing tests after device disabling and machine types changes and enabling
@@ -22,37 +22,36 @@ Rebase changes (4.1.0-rc1):
 Rebase changes (4.2.0-rc0):
 - partially disable hd-geo-test (requires lsi53c895a)
 
-Rebase changes (weekly-200129):
-- Disable qtest/q35-test (uses upstream machine types)
-
-Rebased changes (weekly-200212):
-- Do not run iotests on make checka
-
 Rebase changes (5.1.0-rc1):
+- Disable qtest/q35-test (uses upstream machine types)
+- Do not run iotests on make checka
 - Enabled iotests 071 and 099
+
+Rebase changes (5.2.0 rc0):
+- Disable cdrom tests (unsupported devices) on x86_64
+- disable fuzz test
 
 Merged patches (4.0.0):
 - f7ffd13 Remove 7 qcow2 and luks iotests that are taking > 25 sec to run during the fast train build proce
 
 Merged patches (4.1.0-rc0):
 - 41288ff redhat: Remove raw iotest 205
-
-Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  redhat/qemu-kvm.spec.template       |  2 +-
  tests/qemu-iotests/051              | 12 ++++++------
- tests/qtest/Makefile.include        | 12 ++++++------
  tests/qtest/boot-serial-test.c      |  6 +++++-
+ tests/qtest/cdrom-test.c            |  2 ++
  tests/qtest/cpu-plug-test.c         |  4 ++--
  tests/qtest/e1000-test.c            |  2 ++
  tests/qtest/hd-geo-test.c           |  4 ++++
+ tests/qtest/meson.build             | 10 ++--------
  tests/qtest/prom-env-test.c         |  4 ++++
  tests/qtest/test-x86-cpuid-compat.c |  2 ++
  tests/qtest/usb-hcd-xhci-test.c     |  4 ++++
- 10 files changed, 36 insertions(+), 16 deletions(-)
+ 11 files changed, 34 insertions(+), 18 deletions(-)
 
 diff --git a/tests/qemu-iotests/051 b/tests/qemu-iotests/051
-index bee26075b2..61d25c4ed7 100755
+index bee2607..61d25c4 100755
 --- a/tests/qemu-iotests/051
 +++ b/tests/qemu-iotests/051
 @@ -183,11 +183,11 @@ run_qemu -drive if=virtio
@@ -85,59 +84,8 @@ index bee26075b2..61d25c4ed7 100755
          ;;
       *)
          ;;
-diff --git a/tests/qtest/Makefile.include b/tests/qtest/Makefile.include
-index b0204e44f2..cf8a138791 100644
---- a/tests/qtest/Makefile.include
-+++ b/tests/qtest/Makefile.include
-@@ -29,7 +29,7 @@ check-qtest-i386-y += ide-test
- check-qtest-i386-$(CONFIG_TOOLS) += ahci-test
- check-qtest-i386-y += hd-geo-test
- check-qtest-i386-y += boot-order-test
--check-qtest-i386-y += bios-tables-test
-+#check-qtest-i386-y += bios-tables-test
- check-qtest-i386-$(CONFIG_SGA) += boot-serial-test
- check-qtest-i386-$(CONFIG_SLIRP) += pxe-test
- check-qtest-i386-y += rtc-test
-@@ -51,7 +51,7 @@ check-qtest-i386-$(CONFIG_USB_UHCI) += usb-hcd-uhci-test
- check-qtest-i386-$(call land,$(CONFIG_USB_EHCI),$(CONFIG_USB_UHCI)) += usb-hcd-ehci-test
- check-qtest-i386-$(CONFIG_USB_XHCI_NEC) += usb-hcd-xhci-test
- check-qtest-i386-y += cpu-plug-test
--check-qtest-i386-y += q35-test
-+#check-qtest-i386-y += q35-test
- check-qtest-i386-y += vmgenid-test
- check-qtest-i386-$(CONFIG_TPM_CRB) += tpm-crb-swtpm-test
- check-qtest-i386-$(CONFIG_TPM_CRB) += tpm-crb-test
-@@ -90,7 +90,7 @@ check-qtest-mips64el-$(CONFIG_VGA) += display-vga-test
- check-qtest-moxie-y += boot-serial-test
- 
- check-qtest-ppc-$(CONFIG_ISA_TESTDEV) = endianness-test
--check-qtest-ppc-y += boot-order-test
-+#check-qtest-ppc-y += boot-order-test
- check-qtest-ppc-y += prom-env-test
- check-qtest-ppc-y += drive_del-test
- check-qtest-ppc-y += boot-serial-test
-@@ -104,8 +104,8 @@ check-qtest-ppc64-$(CONFIG_PSERIES) += rtas-test
- check-qtest-ppc64-$(CONFIG_SLIRP) += pxe-test
- check-qtest-ppc64-$(CONFIG_USB_UHCI) += usb-hcd-uhci-test
- check-qtest-ppc64-$(CONFIG_USB_XHCI_NEC) += usb-hcd-xhci-test
--check-qtest-ppc64-$(CONFIG_SLIRP) += test-netfilter
--check-qtest-ppc64-$(CONFIG_POSIX) += test-filter-mirror
-+#check-qtest-ppc64-$(CONFIG_SLIRP) += test-netfilter
-+#check-qtest-ppc64-$(CONFIG_POSIX) += test-filter-mirror
- check-qtest-ppc64-$(CONFIG_RTL8139_PCI) += test-filter-redirector
- check-qtest-ppc64-$(CONFIG_VGA) += display-vga-test
- check-qtest-ppc64-y += numa-test
-@@ -154,7 +154,7 @@ check-qtest-s390x-$(CONFIG_SLIRP) += test-netfilter
- check-qtest-s390x-$(CONFIG_POSIX) += test-filter-mirror
- check-qtest-s390x-$(CONFIG_POSIX) += test-filter-redirector
- check-qtest-s390x-y += drive_del-test
--check-qtest-s390x-y += device-plug-test
-+#check-qtest-s390x-y += device-plug-test
- check-qtest-s390x-y += virtio-ccw-test
- check-qtest-s390x-y += cpu-plug-test
- check-qtest-s390x-y += migration-test
 diff --git a/tests/qtest/boot-serial-test.c b/tests/qtest/boot-serial-test.c
-index bfe7624dc6..1ffaa0bd7e 100644
+index b6b1c23..cefa1b3 100644
 --- a/tests/qtest/boot-serial-test.c
 +++ b/tests/qtest/boot-serial-test.c
 @@ -120,19 +120,23 @@ static testdef_t tests[] = {
@@ -165,11 +113,31 @@ index bfe7624dc6..1ffaa0bd7e 100644
      { "x86_64", "q35", "-device sga", "SGABIOS" },
      { "sparc", "LX", "", "TMS390S10" },
      { "sparc", "SS-4", "", "MB86904" },
+diff --git a/tests/qtest/cdrom-test.c b/tests/qtest/cdrom-test.c
+index 5af944a..cd5b8e0 100644
+--- a/tests/qtest/cdrom-test.c
++++ b/tests/qtest/cdrom-test.c
+@@ -140,6 +140,7 @@ static void add_x86_tests(void)
+         qtest_add_data_func("cdrom/boot/isapc", "-M isapc "
+                             "-drive if=ide,media=cdrom,file=", test_cdboot);
+     }
++#if 0  /* Disabled for Red Hat Enterprise Linux */
+     qtest_add_data_func("cdrom/boot/am53c974",
+                         "-device am53c974 -device scsi-cd,drive=cd1 "
+                         "-drive if=none,id=cd1,format=raw,file=", test_cdboot);
+@@ -155,6 +156,7 @@ static void add_x86_tests(void)
+     qtest_add_data_func("cdrom/boot/megasas-gen2", "-M q35 "
+                         "-device megasas-gen2 -device scsi-cd,drive=cd1 "
+                         "-blockdev file,node-name=cd1,filename=", test_cdboot);
++#endif
+ }
+ 
+ static void add_s390x_tests(void)
 diff --git a/tests/qtest/cpu-plug-test.c b/tests/qtest/cpu-plug-test.c
-index e8ffbbce4b..fda7269c82 100644
+index a1c6894..a8f0767 100644
 --- a/tests/qtest/cpu-plug-test.c
 +++ b/tests/qtest/cpu-plug-test.c
-@@ -181,8 +181,8 @@ static void add_pseries_test_case(const char *mname)
+@@ -110,8 +110,8 @@ static void add_pseries_test_case(const char *mname)
      char *path;
      PlugTestData *data;
  
@@ -181,7 +149,7 @@ index e8ffbbce4b..fda7269c82 100644
      }
      data = g_new(PlugTestData, 1);
 diff --git a/tests/qtest/e1000-test.c b/tests/qtest/e1000-test.c
-index c387984ef6..c89112d6f8 100644
+index ea286d1..a1847ac 100644
 --- a/tests/qtest/e1000-test.c
 +++ b/tests/qtest/e1000-test.c
 @@ -22,9 +22,11 @@ struct QE1000 {
@@ -197,7 +165,7 @@ index c387984ef6..c89112d6f8 100644
  
  static void *e1000_get_driver(void *obj, const char *interface)
 diff --git a/tests/qtest/hd-geo-test.c b/tests/qtest/hd-geo-test.c
-index 48e8e02d6e..6496196b07 100644
+index f7b7cfb..99cccf8 100644
 --- a/tests/qtest/hd-geo-test.c
 +++ b/tests/qtest/hd-geo-test.c
 @@ -737,6 +737,7 @@ static void test_override_ide(void)
@@ -228,8 +196,57 @@ index 48e8e02d6e..6496196b07 100644
          qtest_add_func("hd-geo/override/virtio_blk", test_override_virtio_blk);
          qtest_add_func("hd-geo/override/zero_chs", test_override_zero_chs);
          qtest_add_func("hd-geo/override/scsi_hot_unplug",
+diff --git a/tests/qtest/meson.build b/tests/qtest/meson.build
+index c19f1c8..15ed460 100644
+--- a/tests/qtest/meson.build
++++ b/tests/qtest/meson.build
+@@ -51,16 +51,13 @@ qtests_i386 = \
+    'ide-test',
+    'hd-geo-test',
+    'boot-order-test',
+-   'bios-tables-test',
+    'rtc-test',
+    'i440fx-test',
+-   'fuzz-test',
+    'fw_cfg-test',
+    'device-plug-test',
+    'drive_del-test',
+    'tco-test',
+    'cpu-plug-test',
+-   'q35-test',
+    'vmgenid-test',
+    'migration-test',
+    'test-x86-cpuid-compat',
+@@ -111,17 +108,15 @@ qtests_moxie = [ 'boot-serial-test' ]
+ 
+ qtests_ppc = \
+   (config_all_devices.has_key('CONFIG_ISA_TESTDEV') ? ['endianness-test'] : []) +            \
+-  (config_all_devices.has_key('CONFIG_M48T59') ? ['m48t59-test'] : []) +                     \
+-  ['boot-order-test', 'prom-env-test', 'boot-serial-test']                 \
++  (config_all_devices.has_key('CONFIG_M48T59') ? ['m48t59-test'] : [])
+ 
+ qtests_ppc64 = \
+   (config_all_devices.has_key('CONFIG_PSERIES') ? ['device-plug-test'] : []) +               \
+   (config_all_devices.has_key('CONFIG_POWERNV') ? ['pnv-xscom-test'] : []) +                 \
+   (config_all_devices.has_key('CONFIG_PSERIES') ? ['rtas-test'] : []) +                      \
+-  (slirp.found() ? ['pxe-test', 'test-netfilter'] : []) +              \
++  (slirp.found() ? ['pxe-test'] : []) +              \
+   (config_all_devices.has_key('CONFIG_USB_UHCI') ? ['usb-hcd-uhci-test'] : []) +             \
+   (config_all_devices.has_key('CONFIG_USB_XHCI_NEC') ? ['usb-hcd-xhci-test'] : []) +         \
+-  (config_host.has_key('CONFIG_POSIX') ? ['test-filter-mirror'] : []) +                      \
+   qtests_pci + ['migration-test', 'numa-test', 'cpu-plug-test', 'drive_del-test']
+ 
+ qtests_sh4 = (config_all_devices.has_key('CONFIG_ISA_TESTDEV') ? ['endianness-test'] : [])
+@@ -164,7 +159,6 @@ qtests_s390x = \
+   (config_host.has_key('CONFIG_POSIX') ? ['test-filter-redirector'] : []) +                     \
+   ['boot-serial-test',
+    'drive_del-test',
+-   'device-plug-test',
+    'virtio-ccw-test',
+    'cpu-plug-test',
+    'migration-test']
 diff --git a/tests/qtest/prom-env-test.c b/tests/qtest/prom-env-test.c
-index 60e6ec3153..f9d6adcfe9 100644
+index f41d801..f8dc478 100644
 --- a/tests/qtest/prom-env-test.c
 +++ b/tests/qtest/prom-env-test.c
 @@ -89,10 +89,14 @@ int main(int argc, char *argv[])
@@ -248,7 +265,7 @@ index 60e6ec3153..f9d6adcfe9 100644
          add_tests(sparc_machines);
      } else if (!strcmp(arch, "sparc64")) {
 diff --git a/tests/qtest/test-x86-cpuid-compat.c b/tests/qtest/test-x86-cpuid-compat.c
-index 7ca1883a29..983aa0719a 100644
+index 7ca1883..983aa07 100644
 --- a/tests/qtest/test-x86-cpuid-compat.c
 +++ b/tests/qtest/test-x86-cpuid-compat.c
 @@ -300,6 +300,7 @@ int main(int argc, char **argv)
@@ -268,7 +285,7 @@ index 7ca1883a29..983aa0719a 100644
      /* Test feature parsing */
      add_feature_test("x86/cpuid/features/plus",
 diff --git a/tests/qtest/usb-hcd-xhci-test.c b/tests/qtest/usb-hcd-xhci-test.c
-index 10ef9d2a91..3855873050 100644
+index 10ef9d2..3855873 100644
 --- a/tests/qtest/usb-hcd-xhci-test.c
 +++ b/tests/qtest/usb-hcd-xhci-test.c
 @@ -21,6 +21,7 @@ static void test_xhci_hotplug(void)
@@ -298,5 +315,5 @@ index 10ef9d2a91..3855873050 100644
  
      qtest_start("-device nec-usb-xhci,id=xhci"
 -- 
-2.27.0
+1.8.3.1
 

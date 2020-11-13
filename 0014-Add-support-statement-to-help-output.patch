@@ -1,4 +1,4 @@
-From 5ee503bc80a271f9b0fcf3d24df42ee3f8c7d687 Mon Sep 17 00:00:00 2001
+From 107ded716aa28243015b41940e660fe72dd4d3de Mon Sep 17 00:00:00 2001
 From: Eduardo Habkost <ehabkost@redhat.com>
 Date: Wed, 4 Dec 2013 18:53:17 +0100
 Subject: Add support statement to -help output
@@ -16,18 +16,15 @@ Add support statement to -help output, reporting direct qemu-kvm usage
 as unsupported by Red Hat, and advising users to use libvirt instead.
 
 Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
-(cherry picked from commit 2a07700936e39856cc9f149c6a6517f0715536a6)
-(cherry picked from commit 5dd2f4706e2fef945771949e59a8fcc1b5452de9)
-Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  softmmu/vl.c | 9 +++++++++
  1 file changed, 9 insertions(+)
 
 diff --git a/softmmu/vl.c b/softmmu/vl.c
-index a1fb06dca0..3c383911cd 100644
+index a711644..f951684 100644
 --- a/softmmu/vl.c
 +++ b/softmmu/vl.c
-@@ -1686,9 +1686,17 @@ static void version(void)
+@@ -1687,9 +1687,17 @@ static void version(void)
             QEMU_COPYRIGHT "\n");
  }
  
@@ -45,7 +42,7 @@ index a1fb06dca0..3c383911cd 100644
      printf("usage: %s [options] [disk_image]\n\n"
             "'disk_image' is a raw hard disk image for IDE hard disk 0\n\n",
              error_get_progname());
-@@ -1705,6 +1713,7 @@ static void help(int exitcode)
+@@ -1706,6 +1714,7 @@ static void help(int exitcode)
             "\n"
             QEMU_HELP_BOTTOM "\n");
  
@@ -54,5 +51,5 @@ index a1fb06dca0..3c383911cd 100644
  }
  
 -- 
-2.27.0
+1.8.3.1
 

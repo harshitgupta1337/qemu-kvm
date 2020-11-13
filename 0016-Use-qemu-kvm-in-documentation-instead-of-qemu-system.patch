@@ -1,4 +1,4 @@
-From 44c255eddd3096d63ebdc055181d3fcebe202eef Mon Sep 17 00:00:00 2001
+From 4f1d9fa771f3932ab14319a9df8cb37e1c9f7547 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 8 Jul 2020 08:35:50 +0200
 Subject: Use qemu-kvm in documentation instead of qemu-system-<arch>
@@ -17,15 +17,11 @@ to reflect this change. Only architectures available in RHEL are updated.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 
----
-
-Rebase notes (weekly-200129):
+Rebase notes (5.1.0 rc0):
  - qemu-block-drivers.texi converted to qemu-block-drivers.rst (upstream)
 
-Rebase notes (weekly-200708
+Rebase notes (5.2.0 rc0):
  - rewrite patch to new docs structure
-
-Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
  docs/defs.rst.inc                      |  4 ++--
  docs/interop/live-block-operations.rst |  4 ++--
@@ -35,7 +31,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  5 files changed, 17 insertions(+), 17 deletions(-)
 
 diff --git a/docs/defs.rst.inc b/docs/defs.rst.inc
-index 48d05aaf33..d74dbdeca9 100644
+index 48d05aa..d74dbde 100644
 --- a/docs/defs.rst.inc
 +++ b/docs/defs.rst.inc
 @@ -9,7 +9,7 @@
@@ -49,14 +45,14 @@ index 48d05aaf33..d74dbdeca9 100644
  .. |I2C| replace:: I\ :sup:`2`\ C
  .. |I2S| replace:: I\ :sup:`2`\ S
 diff --git a/docs/interop/live-block-operations.rst b/docs/interop/live-block-operations.rst
-index 48afdc7927..6650b2c975 100644
+index e13f5a2..6650b2c 100644
 --- a/docs/interop/live-block-operations.rst
 +++ b/docs/interop/live-block-operations.rst
 @@ -129,7 +129,7 @@ To show some example invocations of command-line, we will use the
  following invocation of QEMU, with a QMP server running over UNIX
  socket::
  
--    $ ./x86_64-softmmu/qemu-system-x86_64 -display none -no-user-config \
+-    $ ./qemu-system-x86_64 -display none -no-user-config \
 +    $ qemu-kvm -display none -no-user-config \
          -M q35 -nodefaults -m 512 \
          -blockdev node-name=node-A,driver=qcow2,file.driver=file,file.node-name=file,file.filename=./a.qcow2 \
@@ -65,13 +61,13 @@ index 48afdc7927..6650b2c975 100644
  simplicity's sake, the destination QEMU is started on the same host, but
  it could be located elsewhere)::
  
--    $ ./x86_64-softmmu/qemu-system-x86_64 -display none -no-user-config \
+-    $ ./qemu-system-x86_64 -display none -no-user-config \
 +    $ qemu-kvm -display none -no-user-config \
          -M q35 -nodefaults -m 512 \
          -blockdev node-name=node-TargetDisk,driver=qcow2,file.driver=file,file.node-name=file,file.filename=./target-disk.qcow2 \
          -device virtio-blk,drive=node-TargetDisk,id=virtio0 \
 diff --git a/docs/tools/qemu-trace-stap.rst b/docs/tools/qemu-trace-stap.rst
-index fb70445c75..0d9a783112 100644
+index fb70445..0d9a783 100644
 --- a/docs/tools/qemu-trace-stap.rst
 +++ b/docs/tools/qemu-trace-stap.rst
 @@ -45,19 +45,19 @@ The following commands are valid:
@@ -129,10 +125,10 @@ index fb70445c75..0d9a783112 100644
  See also
  --------
 diff --git a/docs/tools/virtiofsd.rst b/docs/tools/virtiofsd.rst
-index 824e713491..8449936c63 100644
+index 34a9e40..50fec10 100644
 --- a/docs/tools/virtiofsd.rst
 +++ b/docs/tools/virtiofsd.rst
-@@ -116,7 +116,7 @@ Export ``/var/lib/fs/vm001/`` on vhost-user UNIX domain socket
+@@ -297,7 +297,7 @@ Export ``/var/lib/fs/vm001/`` on vhost-user UNIX domain socket
  ::
  
    host# virtiofsd --socket-path=/var/run/vm001-vhost-fs.sock -o source=/var/lib/fs/vm001
@@ -142,10 +138,10 @@ index 824e713491..8449936c63 100644
        -device vhost-user-fs-pci,chardev=char0,tag=myfs \
        -object memory-backend-memfd,id=mem,size=4G,share=on \
 diff --git a/qemu-options.hx b/qemu-options.hx
-index 1700205035..697276859b 100644
+index 53472fd..fde1a62 100644
 --- a/qemu-options.hx
 +++ b/qemu-options.hx
-@@ -2900,11 +2900,11 @@ SRST
+@@ -2935,11 +2935,11 @@ SRST
  
      ::
  
@@ -163,5 +159,5 @@ index 1700205035..697276859b 100644
  ``-netdev vhost-vdpa,vhostdev=/path/to/dev``
      Establish a vhost-vdpa netdev.
 -- 
-2.27.0
+1.8.3.1
 

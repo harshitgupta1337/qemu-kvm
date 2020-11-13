@@ -1,4 +1,4 @@
-From dc0914b5e43a9925217af8ddde44194176822108 Mon Sep 17 00:00:00 2001
+From 79307dba97fef45adfbc03ab46db0460b27ceab9 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:47:32 +0200
 Subject: Add s390x machine types
@@ -20,17 +20,15 @@ Merged patches (4.2.0):
 - fb192e5 redhat: s390x: Rename s390-ccw-virtio-rhel8.0.0 to s390-ccw-virtio-rhel8.1.0
 - a9b22e8 redhat: s390x: Add proper compatibility options for the -rhel7.6.0 machine
 - hw/s390x: Add the s390-ccw-virtio-rhel8.2.0 machine types (patch 92954)
-
-Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 ---
- hw/s390x/s390-virtio-ccw.c | 71 +++++++++++++++++++++++++++++++++++++-
+ hw/s390x/s390-virtio-ccw.c | 71 +++++++++++++++++++++++++++++++++++++++++++++-
  1 file changed, 70 insertions(+), 1 deletion(-)
 
 diff --git a/hw/s390x/s390-virtio-ccw.c b/hw/s390x/s390-virtio-ccw.c
-index e72c61d2ea..a6a37cce94 100644
+index 22222c4..68cea20 100644
 --- a/hw/s390x/s390-virtio-ccw.c
 +++ b/hw/s390x/s390-virtio-ccw.c
-@@ -777,7 +777,7 @@ bool css_migration_enabled(void)
+@@ -761,7 +761,7 @@ bool css_migration_enabled(void)
      {                                                                         \
          MachineClass *mc = MACHINE_CLASS(oc);                                 \
          ccw_machine_##suffix##_class_options(mc);                             \
@@ -39,15 +37,15 @@ index e72c61d2ea..a6a37cce94 100644
          if (latest) {                                                         \
              mc->alias = "s390-ccw-virtio";                                    \
              mc->is_default = true;                                            \
-@@ -801,6 +801,7 @@ bool css_migration_enabled(void)
+@@ -785,6 +785,7 @@ bool css_migration_enabled(void)
      }                                                                         \
      type_init(ccw_machine_register_##suffix)
  
 +#if 0 /* Disabled for Red Hat Enterprise Linux */
- static void ccw_machine_5_1_instance_options(MachineState *machine)
+ static void ccw_machine_5_2_instance_options(MachineState *machine)
  {
  }
-@@ -1053,6 +1054,74 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
+@@ -1049,6 +1050,74 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
      compat_props_add(mc->compat_props, compat, G_N_ELEMENTS(compat));
  }
  DEFINE_CCW_MACHINE(2_4, "2.4", false);
@@ -116,12 +114,12 @@ index e72c61d2ea..a6a37cce94 100644
 +    ccw_machine_rhel760_class_options(mc);
 +    compat_props_add(mc->compat_props, hw_compat_rhel_7_5, hw_compat_rhel_7_5_len);
 +    compat_props_add(mc->compat_props, ccw_compat_rhel_7_5, ccw_compat_rhel_7_5_len);
-+    S390_MACHINE_CLASS(mc)->hpage_1m_allowed = false;
++    S390_CCW_MACHINE_CLASS(mc)->hpage_1m_allowed = false;
 +}
 +DEFINE_CCW_MACHINE(rhel750, "rhel7.5.0", false);
  
  static void ccw_machine_register_types(void)
  {
 -- 
-2.27.0
+1.8.3.1
 
