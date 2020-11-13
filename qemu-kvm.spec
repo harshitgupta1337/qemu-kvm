@@ -65,7 +65,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
-Version: 5.2.0-rc1
+Version: 5.2.0rc1
 Release: 1%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
