@@ -1,4 +1,4 @@
-From 4c6e7a672399b3962d904c2b01e8844544383d89 Mon Sep 17 00:00:00 2001
+From 3fb64e4127e2b74f0d93a51dd3709fe30adc1d23 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:10:31 +0200
 Subject: Add x86_64 machine types
@@ -59,7 +59,7 @@ Merged patches (5.2.0 rc0):
  8 files changed, 714 insertions(+), 7 deletions(-)
 
 diff --git a/hw/i386/acpi-build.c b/hw/i386/acpi-build.c
-index 4f66642..78f50d4 100644
+index 1f5c211..b1082bd 100644
 --- a/hw/i386/acpi-build.c
 +++ b/hw/i386/acpi-build.c
 @@ -217,6 +217,9 @@ static void acpi_get_pm_info(MachineState *machine, AcpiPmInfo *pm)
@@ -896,7 +896,7 @@ index ae6bf1d..e2ba9a4 100644
   * depending on QEMU versions up to QEMU 2.4.
   */
 diff --git a/target/i386/cpu.c b/target/i386/cpu.c
-index 0d86069..dd52fe5 100644
+index 5a8c960..dc592e9 100644
 --- a/target/i386/cpu.c
 +++ b/target/i386/cpu.c
 @@ -1803,7 +1803,7 @@ static X86CPUDefinition builtin_x86_defs[] = {
@@ -917,10 +917,10 @@ index 0d86069..dd52fe5 100644
  };
  
 diff --git a/target/i386/kvm.c b/target/i386/kvm.c
-index cf46259..4e58c09 100644
+index a2934dd..19bc39b 100644
 --- a/target/i386/kvm.c
 +++ b/target/i386/kvm.c
-@@ -3124,6 +3124,7 @@ static int kvm_get_msrs(X86CPU *cpu)
+@@ -3126,6 +3126,7 @@ static int kvm_get_msrs(X86CPU *cpu)
      struct kvm_msr_entry *msrs = cpu->kvm_msr_buf->entries;
      int ret, i;
      uint64_t mtrr_top_bits;
@@ -928,7 +928,7 @@ index cf46259..4e58c09 100644
  
      kvm_msr_buf_reset(cpu);
  
-@@ -3436,6 +3437,9 @@ static int kvm_get_msrs(X86CPU *cpu)
+@@ -3438,6 +3439,9 @@ static int kvm_get_msrs(X86CPU *cpu)
              break;
          case MSR_KVM_ASYNC_PF_EN:
              env->async_pf_en_msr = msrs[i].data;

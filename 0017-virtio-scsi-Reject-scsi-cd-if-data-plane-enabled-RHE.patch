@@ -1,4 +1,4 @@
-From b8b6ddabd9482c454a68fabe51660fda6a13b0b4 Mon Sep 17 00:00:00 2001
+From 21a45442631721270ff6aba4635e2b72ac2cb248 Mon Sep 17 00:00:00 2001
 From: Fam Zheng <famz@redhat.com>
 Date: Wed, 14 Jun 2017 15:37:01 +0200
 Subject: virtio-scsi: Reject scsi-cd if data plane enabled [RHEL only]

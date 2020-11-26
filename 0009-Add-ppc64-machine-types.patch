@@ -1,4 +1,4 @@
-From d33e7e8c4d6e006d5039782d54f583ea3f242fd6 Mon Sep 17 00:00:00 2001
+From 965f17e40984c06f87be2dad8100f4742412cc05 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:27:13 +0200
 Subject: Add ppc64 machine types
@@ -521,7 +521,7 @@ index 2e89e36..ba2d814 100644
      char *kvm_type;
      char *host_model;
 diff --git a/target/ppc/compat.c b/target/ppc/compat.c
-index e9bec5f..74e3db9 100644
+index 7949a24..f207a9b 100644
 --- a/target/ppc/compat.c
 +++ b/target/ppc/compat.c
 @@ -114,8 +114,19 @@ static const CompatInfo *compat_by_pvr(uint32_t pvr)
@@ -546,7 +546,7 @@ index e9bec5f..74e3db9 100644
      const CompatInfo *compat = compat_by_pvr(compat_pvr);
      const CompatInfo *min = compat_by_pvr(min_compat_pvr);
 diff --git a/target/ppc/cpu.h b/target/ppc/cpu.h
-index 2eb41a2..d850521 100644
+index 2609e40..21c63b5 100644
 --- a/target/ppc/cpu.h
 +++ b/target/ppc/cpu.h
 @@ -1347,6 +1347,7 @@ static inline int cpu_mmu_index(CPUPPCState *env, bool ifetch)

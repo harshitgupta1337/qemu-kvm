@@ -1,4 +1,4 @@
-From 3bf885effef5666a13145e7942116ed9ba5039bb Mon Sep 17 00:00:00 2001
+From bb05135a744ae87847bcaf2344f826664dc9e19c Mon Sep 17 00:00:00 2001
 From: Bandan Das <bsd@redhat.com>
 Date: Tue, 3 Dec 2013 20:05:13 +0100
 Subject: vfio: cap number of devices that can be assigned
@@ -38,7 +38,7 @@ Merged patches (2.9.0):
  2 files changed, 29 insertions(+), 1 deletion(-)
 
 diff --git a/hw/vfio/pci.c b/hw/vfio/pci.c
-index 58c0ce8..558eea8 100644
+index 51dc373..06ce2a3 100644
 --- a/hw/vfio/pci.c
 +++ b/hw/vfio/pci.c
 @@ -45,6 +45,9 @@
@@ -83,7 +83,7 @@ index 58c0ce8..558eea8 100644
      if (!vdev->vbasedev.sysfsdev) {
          if (!(~vdev->host.domain || ~vdev->host.bus ||
                ~vdev->host.slot || ~vdev->host.function)) {
-@@ -3202,6 +3226,9 @@ static Property vfio_pci_dev_properties[] = {
+@@ -3207,6 +3231,9 @@ static Property vfio_pci_dev_properties[] = {
      DEFINE_PROP_BOOL("x-no-kvm-msix", VFIOPCIDevice, no_kvm_msix, false),
      DEFINE_PROP_BOOL("x-no-geforce-quirks", VFIOPCIDevice,
                       no_geforce_quirks, false),

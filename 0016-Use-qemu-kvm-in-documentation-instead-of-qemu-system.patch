@@ -1,4 +1,4 @@
-From 4f1d9fa771f3932ab14319a9df8cb37e1c9f7547 Mon Sep 17 00:00:00 2001
+From f72477389598ad4fee78640ec3a96166f00baf97 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 8 Jul 2020 08:35:50 +0200
 Subject: Use qemu-kvm in documentation instead of qemu-system-<arch>
@@ -125,7 +125,7 @@ index fb70445..0d9a783 100644
  See also
  --------
 diff --git a/docs/tools/virtiofsd.rst b/docs/tools/virtiofsd.rst
-index 34a9e40..50fec10 100644
+index 866b7db..5b3be8a 100644
 --- a/docs/tools/virtiofsd.rst
 +++ b/docs/tools/virtiofsd.rst
 @@ -297,7 +297,7 @@ Export ``/var/lib/fs/vm001/`` on vhost-user UNIX domain socket
@@ -138,7 +138,7 @@ index 34a9e40..50fec10 100644
        -device vhost-user-fs-pci,chardev=char0,tag=myfs \
        -object memory-backend-memfd,id=mem,size=4G,share=on \
 diff --git a/qemu-options.hx b/qemu-options.hx
-index 53472fd..fde1a62 100644
+index 363a15b..5e5e265 100644
 --- a/qemu-options.hx
 +++ b/qemu-options.hx
 @@ -2935,11 +2935,11 @@ SRST

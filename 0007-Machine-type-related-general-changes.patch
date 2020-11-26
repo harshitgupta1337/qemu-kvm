@@ -1,4 +1,4 @@
-From 673234091c4073ebc31bf36559e249796772c8b5 Mon Sep 17 00:00:00 2001
+From c08267680d5cdede8c1b80591f294f8c0e8a2ddc Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 11 Jan 2019 09:54:45 +0100
 Subject: Machine type related general changes
@@ -69,7 +69,7 @@ Merged patches (5.2.0 rc0):
  23 files changed, 400 insertions(+), 11 deletions(-)
 
 diff --git a/hw/acpi/ich9.c b/hw/acpi/ich9.c
-index f9690a0..f6c6c6a 100644
+index ac45ca4..0b35b35 100644
 --- a/hw/acpi/ich9.c
 +++ b/hw/acpi/ich9.c
 @@ -369,6 +369,18 @@ static void ich9_pm_set_enable_tco(Object *obj, bool value, Error **errp)
@@ -102,7 +102,7 @@ index f9690a0..f6c6c6a 100644
                                    &pm->disable_s3, OBJ_PROP_FLAG_READWRITE);
      object_property_add_uint8_ptr(obj, ACPI_PM_PROP_S4_DISABLED,
 diff --git a/hw/acpi/piix4.c b/hw/acpi/piix4.c
-index 67a1ea4..85312a3 100644
+index 669be5b..2063131 100644
 --- a/hw/acpi/piix4.c
 +++ b/hw/acpi/piix4.c
 @@ -277,6 +277,7 @@ static const VMStateDescription vmstate_acpi = {
@@ -193,7 +193,7 @@ index 97f7187..aeb207e 100644
  }
  
 diff --git a/hw/core/machine.c b/hw/core/machine.c
-index 98b87f7..8674586 100644
+index d040804..19d50dd 100644
 --- a/hw/core/machine.c
 +++ b/hw/core/machine.c
 @@ -28,6 +28,219 @@
@@ -456,7 +456,7 @@ index a3f4959..f6c2ef4 100644
      }
  
 diff --git a/hw/net/e1000e.c b/hw/net/e1000e.c
-index b6f1ae3..19955eb 100644
+index a8a77ec..6d39c1f 100644
 --- a/hw/net/e1000e.c
 +++ b/hw/net/e1000e.c
 @@ -80,6 +80,11 @@ struct E1000EState {
@@ -692,10 +692,10 @@ index 27ca237..eb24e39 100644
      if (s->masterbus) {
          USBPort *ports[NB_PORTS];
 diff --git a/hw/usb/hcd-xhci.c b/hw/usb/hcd-xhci.c
-index 79ce5c4..325cd02 100644
+index 9ce7ca7..0af661c 100644
 --- a/hw/usb/hcd-xhci.c
 +++ b/hw/usb/hcd-xhci.c
-@@ -3486,9 +3486,27 @@ static const VMStateDescription vmstate_xhci_slot = {
+@@ -3491,9 +3491,27 @@ static const VMStateDescription vmstate_xhci_slot = {
      }
  };
  
@@ -723,7 +723,7 @@ index 79ce5c4..325cd02 100644
      .fields = (VMStateField[]) {
          VMSTATE_UINT32(type,   XHCIEvent),
          VMSTATE_UINT32(ccode,  XHCIEvent),
-@@ -3497,6 +3515,8 @@ static const VMStateDescription vmstate_xhci_event = {
+@@ -3502,6 +3520,8 @@ static const VMStateDescription vmstate_xhci_event = {
          VMSTATE_UINT32(flags,  XHCIEvent),
          VMSTATE_UINT8(slotid,  XHCIEvent),
          VMSTATE_UINT8(epid,    XHCIEvent),
@@ -733,7 +733,7 @@ index 79ce5c4..325cd02 100644
      }
  };
 diff --git a/hw/usb/hcd-xhci.h b/hw/usb/hcd-xhci.h
-index ccf50ae..8716904 100644
+index 02ebd76..dfda04b 100644
 --- a/hw/usb/hcd-xhci.h
 +++ b/hw/usb/hcd-xhci.h
 @@ -149,6 +149,8 @@ typedef struct XHCIEvent {
@@ -746,7 +746,7 @@ index ccf50ae..8716904 100644
  
  typedef struct XHCIInterrupter {
 diff --git a/include/hw/acpi/ich9.h b/include/hw/acpi/ich9.h
-index 28a5318..ff4a672 100644
+index 54571c7..b3369da 100644
 --- a/include/hw/acpi/ich9.h
 +++ b/include/hw/acpi/ich9.h
 @@ -61,6 +61,9 @@ typedef struct ICH9LPCPMRegs {
@@ -839,7 +839,7 @@ index a70a72e..78b9043 100644
 +
  #endif
 diff --git a/migration/migration.c b/migration/migration.c
-index 3263aa5..c8d54ac 100644
+index 87a9b59..1bb8d01 100644
 --- a/migration/migration.c
 +++ b/migration/migration.c
 @@ -134,6 +134,8 @@ enum mig_rp_message_type {

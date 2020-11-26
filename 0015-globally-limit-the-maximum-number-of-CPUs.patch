@@ -1,4 +1,4 @@
-From e3883f9d6e74843fd14d44cdf2d36b35123347a3 Mon Sep 17 00:00:00 2001
+From b0baccfdfb10c34d9f9d35363e098dab7f376fe9 Mon Sep 17 00:00:00 2001
 From: Andrew Jones <drjones@redhat.com>
 Date: Tue, 21 Jan 2014 10:46:52 +0100
 Subject: globally limit the maximum number of CPUs
@@ -38,7 +38,7 @@ Merged patches (5.2.0 rc0):
  1 file changed, 12 insertions(+)
 
 diff --git a/accel/kvm/kvm-all.c b/accel/kvm/kvm-all.c
-index 9ef5daf..4fab04d 100644
+index baaa542..a1fbda0 100644
 --- a/accel/kvm/kvm-all.c
 +++ b/accel/kvm/kvm-all.c
 @@ -2108,6 +2108,18 @@ static int kvm_init(MachineState *ms)

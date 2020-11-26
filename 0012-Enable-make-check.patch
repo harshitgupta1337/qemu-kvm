@@ -1,4 +1,4 @@
-From 1170780d2fdd4cb8b663603c4d509d65b2e05846 Mon Sep 17 00:00:00 2001
+From 2621db7ae95fdf112a7e1798ae428a865ae55b59 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 2 Sep 2020 09:39:41 +0200
 Subject: Enable make check
@@ -36,8 +36,11 @@ Merged patches (4.0.0):
 
 Merged patches (4.1.0-rc0):
 - 41288ff redhat: Remove raw iotest 205
+
+Conflicts:
+	redhat/qemu-kvm.spec.template
 ---
- redhat/qemu-kvm.spec.template       |  2 +-
+ redhat/qemu-kvm.spec.template       |  4 ++--
  tests/qemu-iotests/051              | 12 ++++++------
  tests/qtest/boot-serial-test.c      |  6 +++++-
  tests/qtest/cdrom-test.c            |  2 ++
@@ -48,7 +51,7 @@ Merged patches (4.1.0-rc0):
  tests/qtest/prom-env-test.c         |  4 ++++
  tests/qtest/test-x86-cpuid-compat.c |  2 ++
  tests/qtest/usb-hcd-xhci-test.c     |  4 ++++
- 11 files changed, 34 insertions(+), 18 deletions(-)
+ 11 files changed, 35 insertions(+), 19 deletions(-)
 
 diff --git a/tests/qemu-iotests/051 b/tests/qemu-iotests/051
 index bee2607..61d25c4 100755

@@ -1,4 +1,4 @@
-From 65eea220dcce6177b306eae08935f5354847bb08 Mon Sep 17 00:00:00 2001
+From 2ed436b54735a68c7f4422a8d6e5b4f3a7580fd3 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 2 Sep 2020 09:11:07 +0200
 Subject: Enable/disable devices for RHEL
@@ -106,14 +106,13 @@ Merged patches (5.2.0 rc0):
  hw/ppc/spapr_cpu_core.c                        |   2 +
  hw/usb/meson.build                             |   2 +-
  qemu-options.hx                                |   4 -
- redhat/Makefile.common                         |   1 +
- redhat/qemu-kvm.spec.template                  |   9 ++-
+ redhat/qemu-kvm.spec.template                  |  11 ++-
  target/arm/cpu.c                               |   4 +-
  target/arm/cpu_tcg.c                           |   3 +
  target/ppc/cpu-models.c                        |  10 +++
  target/s390x/cpu_models.c                      |   3 +
  target/s390x/kvm.c                             |   8 ++
- 27 files changed, 273 insertions(+), 25 deletions(-)
+ 26 files changed, 274 insertions(+), 25 deletions(-)
  create mode 100644 default-configs/devices/aarch64-rh-devices.mak
  create mode 100644 default-configs/devices/ppc64-rh-devices.mak
  create mode 100644 default-configs/devices/rh-virtio.mak
@@ -406,7 +405,7 @@ index 64b2ee2..b5de7e5 100644
 +
 +include x86_64-rh-devices.mak
 diff --git a/hw/acpi/ich9.c b/hw/acpi/ich9.c
-index 95cb0f9..f9690a0 100644
+index 5ff4e01..ac45ca4 100644
 --- a/hw/acpi/ich9.c
 +++ b/hw/acpi/ich9.c
 @@ -374,8 +374,8 @@ void ich9_pm_add_properties(Object *obj, ICH9LPCPMRegs *pm)
@@ -476,10 +475,10 @@ index 9e52fee..bb71c9f 100644
 -specific_ss.add(when: 'CONFIG_A15MPCORE', if_true: files('a15mpcore.c'))
 +#specific_ss.add(when: 'CONFIG_A15MPCORE', if_true: files('a15mpcore.c'))
 diff --git a/hw/display/cirrus_vga.c b/hw/display/cirrus_vga.c
-index 722b9e7..25de8b2 100644
+index fdca6ca..fa1a7ee 100644
 --- a/hw/display/cirrus_vga.c
 +++ b/hw/display/cirrus_vga.c
-@@ -2963,6 +2963,9 @@ static void pci_cirrus_vga_realize(PCIDevice *dev, Error **errp)
+@@ -2945,6 +2945,9 @@ static void pci_cirrus_vga_realize(PCIDevice *dev, Error **errp)
       PCIDeviceClass *pc = PCI_DEVICE_GET_CLASS(dev);
       int16_t device_id = pc->device_id;
  
@@ -526,7 +525,7 @@ index dde85ba..62cf60c 100644
  
  static const TypeInfo i8042_info = {
 diff --git a/hw/net/e1000.c b/hw/net/e1000.c
-index 83347cb..8fb83a1 100644
+index d7d05ae..aaea06d 100644
 --- a/hw/net/e1000.c
 +++ b/hw/net/e1000.c
 @@ -1796,6 +1796,7 @@ static const E1000Info e1000_devices[] = {
@@ -576,7 +575,7 @@ index 934e4fa..e3abba5 100644
  endif
  
 diff --git a/qemu-options.hx b/qemu-options.hx
-index 2c83390..53472fd 100644
+index 104632e..363a15b 100644
 --- a/qemu-options.hx
 +++ b/qemu-options.hx
 @@ -2251,10 +2251,6 @@ ERST
@@ -620,7 +619,7 @@ index 0013e25..6540046 100644
          arm_cpu_register(&arm_tcg_cpus[i]);
      }
 diff --git a/target/ppc/cpu-models.c b/target/ppc/cpu-models.c
-index 4ad1686..16b2185 100644
+index 87e4228..6eaa65e 100644
 --- a/target/ppc/cpu-models.c
 +++ b/target/ppc/cpu-models.c
 @@ -66,6 +66,7 @@
@@ -704,10 +703,10 @@ index b5abff8..abe09d7 100644
  
      /* detect missing features if any to properly report them */
 diff --git a/target/s390x/kvm.c b/target/s390x/kvm.c
-index baa070f..10ce36a 100644
+index b8385e6..1839cc6 100644
 --- a/target/s390x/kvm.c
 +++ b/target/s390x/kvm.c
-@@ -2540,6 +2540,14 @@ void kvm_s390_apply_cpu_model(const S390CPUModel *model, Error **errp)
+@@ -2552,6 +2552,14 @@ void kvm_s390_apply_cpu_model(const S390CPUModel *model, Error **errp)
          error_setg(errp, "KVM doesn't support CPU models");
          return;
      }

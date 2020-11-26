@@ -8,7 +8,7 @@
 %global have_gluster  1
 %global have_kvm_setup 0
 %global have_memlock_limits 0
-%global rcversion -rc1
+%global rcversion -rc3
 
 
 %ifnarch %{ix86} x86_64
@@ -61,12 +61,10 @@ Requires: %{name}-block-iscsi = %{epoch}:%{version}-%{release}   \
 Requires: %{name}-block-rbd = %{epoch}:%{version}-%{release}     \
 Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 
-# Macro to properly setup RHEL/RHEV conflict handling
-
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.2.0
-Release: rc1.1%{?dist}
+Release: rc3.1%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -74,7 +72,8 @@ Group: Development/Tools
 URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
-Source0: http://wiki.qemu.org/download/qemu-5.2.0-rc1.tar.xz
+
+Source0: http://wiki.qemu.org/download/qemu-5.2.0-rc3.tar.xz
 
 # KSM control scripts
 Source4: ksm.service
@@ -118,8 +117,7 @@ Patch0016: 0016-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
 Patch0017: 0017-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0018: 0018-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0019: 0019-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
-Patch0020: 0020-Upstream.patch
-Patch0021: 0021-RHEL-9-test.patch
+Patch0020: 0020-Build-RHEL-9.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -247,24 +245,19 @@ hardware for a full system such as a PC and its associated peripherals.
 
 %package -n qemu-kvm-core
 Summary: qemu-kvm core components
+Requires: %{name}-common = %{epoch}:%{version}-%{release}
 Requires: qemu-img = %{epoch}:%{version}-%{release}
+Conflicts: qemu-kiwi
 %ifarch %{ix86} x86_64
-Requires: seabios-bin >= 1.10.2-1
-Requires: sgabios-bin
 Requires: edk2-ovmf
 %endif
 %ifarch aarch64
 Requires: edk2-aarch64
 %endif
 
-%ifnarch aarch64 s390x
-Requires: seavgabios-bin >= 1.12.0-3
-Requires: ipxe-roms-qemu >= 20170123-1
-%endif
 %ifarch %{power64}
 Requires: SLOF >= %{SLOF_gittagdate}-1.git%{SLOF_gittagcommit}
 %endif
-Requires: %{name}-common = %{epoch}:%{version}-%{release}
 Requires: libseccomp >= 2.4.0
 # For compressed guest memory dumps
 Requires: lzo snappy
@@ -283,18 +276,24 @@ Requires: usbredir >= 0.7.1
 Requires: libfdt >= 1.6.0
 %endif
 
-
 %description -n qemu-kvm-core
 qemu-kvm is an open source virtualizer that provides hardware
 emulation for the KVM hypervisor. qemu-kvm acts as a virtual
 machine monitor together with the KVM kernel modules, and emulates the
 hardware for a full system such as a PC and its associated peripherals.
 
+%package -n qemu-kiwi
+Summary: qemu-kiwi components
+Requires: qemu-kvm-common = %{epoch}:%{version}-%{release}
+
+%description -n qemu-kiwi
+qemu-kiwi is a version of qemu-kvm with a restricted set of features
+intended for use by specific applications.
+It's experimental and unsupported.
 
 %package -n qemu-img
 Summary: QEMU command line tool for manipulating disk images
 Group: Development/Tools
-
 
 %description -n qemu-img
 This package provides a command line tool for manipulating disk images.
@@ -308,7 +307,14 @@ Requires(post): /usr/sbin/useradd
 Requires(post): systemd-units
 Requires(preun): systemd-units
 Requires(postun): systemd-units
-
+%ifarch %{ix86} x86_64
+Requires: seabios-bin >= 1.10.2-1
+Requires: sgabios-bin
+%endif
+%ifnarch aarch64 s390x
+Requires: seavgabios-bin >= 1.12.0-3
+Requires: ipxe-roms-qemu >= 20170123-1
+%endif
 
 %description -n qemu-kvm-common
 qemu-kvm is an open source virtualizer that provides hardware emulation for
@@ -405,7 +411,22 @@ the Secure Shell (SSH) protocol.
 rm -fr slirp
 mkdir slirp
 %autopatch -p1
-mkdir qemu-kvm-build
+
+%global qemu_kvm_build qemu_kvm_build
+%global qemu_kiwi_build qemu_kiwi_src/build
+
+# XXX: ugly hack to copy source tree into a new folder.
+# it allows to build qemu-kiwi without touching the original source tree.
+# This is required as the build isolation is not 100% as we also have to
+# change the source tree when building qemu-kiwi. And, when we do that, 
+# calling "make check" on qemu-kvm see that change and behaves baddly.
+# Newer version of qemu allow us to create a better sollution, and this
+# hack can be dropped.
+cp -fpr . ../qemu_kiwi_src
+mv  ../qemu_kiwi_src ./qemu_kiwi_src
+mkdir -p %{qemu_kiwi_build}
+mkdir -p %{qemu_kvm_build}
+
 
 %build
 %global buildarch %{kvm_target}-softmmu
@@ -420,7 +441,121 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
 %endif
 
 
-cd qemu-kvm-build
+%define disable_everything         \\\
+  --disable-attr                   \\\
+  --disable-auth-pam               \\\
+  --disable-avx2                   \\\
+  --disable-avx512f                \\\
+  --disable-bochs                  \\\
+  --disable-brlapi                 \\\
+  --disable-bsd-user               \\\
+  --disable-bzip2                  \\\
+  --disable-cap-ng                 \\\
+  --disable-capstone               \\\
+  --disable-cloop                  \\\
+  --disable-cocoa                  \\\
+  --disable-coroutine-pool         \\\
+  --disable-crypto-afalg           \\\
+  --disable-curl                   \\\
+  --disable-curses                 \\\
+  --disable-debug-info             \\\
+  --disable-debug-mutex            \\\
+  --disable-debug-tcg              \\\
+  --disable-dmg                    \\\
+  --disable-docs                   \\\
+  --disable-fdt                    \\\
+  --disable-gcrypt                 \\\
+  --disable-git-update             \\\
+  --disable-glusterfs              \\\
+  --disable-gnutls                 \\\
+  --disable-gtk                    \\\
+  --disable-guest-agent            \\\
+  --disable-guest-agent-msi        \\\
+  --disable-hax                    \\\
+  --disable-hvf                    \\\
+  --disable-iconv                  \\\
+  --disable-jemalloc               \\\
+  --disable-kvm                    \\\
+  --disable-libdaxctl              \\\
+  --disable-libiscsi               \\\
+  --disable-libnfs                 \\\
+  --disable-libpmem                \\\
+  --disable-libssh                 \\\
+  --disable-libudev                \\\
+  --disable-libusb                 \\\
+  --disable-libxml2                \\\
+  --disable-linux-aio              \\\
+  --disable-linux-io-uring         \\\
+  --disable-linux-user             \\\
+  --disable-live-block-migration   \\\
+  --disable-lzfse                  \\\
+  --disable-lzo                    \\\
+  --disable-malloc-trim            \\\
+  --disable-membarrier             \\\
+  --disable-modules                \\\
+  --disable-module-upgrades        \\\
+  --disable-mpath                  \\\
+  --disable-netmap                 \\\
+  --disable-nettle                 \\\
+  --disable-numa                   \\\
+  --disable-opengl                 \\\
+  --disable-parallels              \\\
+  --disable-pie                    \\\
+  --disable-pvrdma                 \\\
+  --disable-qcow1                  \\\
+  --disable-qed                    \\\
+  --disable-qom-cast-debug         \\\
+  --disable-rbd                    \\\
+  --disable-rdma                   \\\
+  --disable-replication            \\\
+  --disable-rng-none               \\\
+  --disable-safe-stack             \\\
+  --disable-sanitizers             \\\
+  --disable-sdl                    \\\
+  --disable-sdl-image              \\\
+  --disable-seccomp                \\\
+  --disable-sheepdog               \\\
+  --disable-smartcard              \\\
+  --disable-snappy                 \\\
+  --disable-sparse                 \\\
+  --disable-spice                  \\\
+  --disable-strip                  \\\
+  --disable-system                 \\\
+  --disable-tcg                    \\\
+  --disable-tcmalloc               \\\
+  --disable-tools                  \\\
+  --disable-tpm                    \\\
+  --disable-u2f                    \\\
+  --disable-usb-redir              \\\
+  --disable-user                   \\\
+  --disable-vde                    \\\
+  --disable-vdi                    \\\
+  --disable-vhost-crypto           \\\
+  --disable-vhost-kernel           \\\
+  --disable-vhost-net              \\\
+  --disable-vhost-scsi             \\\
+  --disable-vhost-user             \\\
+  --disable-vhost-user-blk-server  \\\
+  --disable-vhost-vdpa             \\\
+  --disable-vhost-vsock            \\\
+  --disable-virglrenderer          \\\
+  --disable-virtfs                 \\\
+  --disable-virtiofsd              \\\
+  --disable-vnc                    \\\
+  --disable-vnc-jpeg               \\\
+  --disable-vnc-png                \\\
+  --disable-vnc-sasl               \\\
+  --disable-vte                    \\\
+  --disable-vvfat                  \\\
+  --disable-werror                 \\\
+  --disable-whpx                   \\\
+  --disable-xen                    \\\
+  --disable-xen-pci-passthrough    \\\
+  --disable-xfsctl                 \\\
+  --disable-xkbcommon              \\\
+  --disable-zstd
+
+pushd %{qemu_kvm_build}
 ../configure  \
   --prefix="%{_prefix}" \
   --libdir="%{_libdir}" \
@@ -443,155 +578,84 @@ cd qemu-kvm-build
   --with-coroutine=ucontext \
   --with-git=git \
   --tls-priority=NORMAL \
+  %{disable_everything} \
   --enable-attr \
-  --disable-auth-pam \
 %ifarch %{ix86} x86_64
   --enable-avx2 \
 %else
-  --disable-avx2 \
 %endif
-  --disable-avx512f \
-  --disable-bochs \
-  --disable-brlapi \
-  --disable-bsd-user \
-  --disable-bzip2 \
   --enable-cap-ng \
   --enable-capstone \
-  --disable-cloop \
-  --disable-cocoa \
   --enable-coroutine-pool \
-  --disable-crypto-afalg \
   --enable-curl \
-  --disable-curses \
   --enable-debug-info \
-  --disable-debug-mutex \
   --disable-debug-tcg \
   --disable-dmg \
   --enable-docs \
 %if 0%{have_fdt}
   --enable-fdt \
-%else
-  --disable-fdt \
- %endif
+%endif
   --enable-gcrypt \
-  --disable-git-update \
 %if 0%{have_gluster}
   --enable-glusterfs \
-%else
-  --disable-glusterfs \
 %endif
   --enable-gnutls \
-  --disable-gtk \
   --enable-guest-agent \
-  --disable-guest-agent-msi \
-  --disable-hax \
-  --disable-hvf \
   --enable-iconv \
-  --disable-jemalloc \
   --enable-kvm \
-  --disable-libdaxctl \
   --enable-libiscsi \
-  --disable-libnfs \
 %ifarch x86_64
   --enable-libpmem \
-%else
-  --disable-libpmem \
 %endif
   --enable-libssh \
   --enable-libusb \
-  --disable-libxml2 \
+  --enable-libudev \
   --enable-linux-aio \
-  --disable-linux-io-uring \
-  --disable-linux-user \
-  --disable-live-block-migration \
-  --disable-lzfse \
   --enable-lzo \
   --enable-malloc-trim \
-  --disable-membarrier \
   --enable-modules \
-  --disable-module-upgrades \
   --enable-mpath \
-  --disable-netmap \
-  --disable-nettle \
 %ifnarch s390x
   --enable-numa \
-%else
-  --disable-numa \
 %endif
 %if 0%{have_opengl}
   --enable-opengl \
-%else
-  --disable-opengl \
 %endif
-  --disable-parallels \
   --enable-pie \
-  --disable-pvrdma \
-  --disable-qcow1 \
-  --disable-qed \
-  --disable-qom-cast-debug \
   --enable-rbd \
 %if 0%{have_librdma}
   --enable-rdma \
-%else
-  --disable-rdma \
 %endif
-  --disable-rng-none \
-  --disable-replication \
-  --disable-safe-stack \
-  --disable-sanitizers \
-  --disable-sdl \
-  --disable-sdl-image \
   --enable-seccomp \
-  --disable-sheepdog \
   --enable-snappy \
-  --disable-sparse \
 %if 0%{have_spice}
   --enable-smartcard \
   --enable-spice \
-%else
-  --disable-smartcard \
-  --disable-spice \
 %endif
-  --disable-strip \
   --enable-system \
   --enable-tcg \
-  --disable-tcmalloc \
   --enable-tools \
   --enable-tpm \
   --enable-trace-backend=dtrace \
 %if 0%{have_usbredir}
   --enable-usb-redir \
-%else
-  --disable-usb-redir \
 %endif
-  --disable-user \
-  --disable-vde \
-  --disable-vdi \
-  --disable-vhost-crypto \
+  --enable-virtiofsd \
   --enable-vhost-kernel \
   --enable-vhost-net \
-  --disable-vhost-scsi \
   --enable-vhost-user \
+  --enable-vhost-user-blk-server \
   --enable-vhost-vdpa \
   --enable-vhost-vsock \
-  --disable-virglrenderer \
-  --disable-virtfs \
   --enable-vnc \
-  --disable-vnc-jpeg \
   --enable-vnc-png \
   --enable-vnc-sasl \
-  --disable-vte \
-  --disable-vvfat \
   --enable-werror \
-  --disable-whpx \
-  --disable-xen \
-  --disable-xen-pci-passthrough \
-  --disable-xfsctl \
   --enable-xkbcommon \
   --disable-zstd \
   --without-default-devices
 
-echo "config-host.mak contents:"
+echo "qemu-kvm config-host.mak contents:"
 echo "==="
 cat config-host.mak
 echo "==="
@@ -616,8 +680,97 @@ cp -a %{kvm_target}-softmmu/qemu-system-%{kvm_target} qemu-kvm
 gcc %{SOURCE6} $RPM_OPT_FLAGS $RPM_LD_FLAGS -o ksmctl
 gcc %{SOURCE35} $RPM_OPT_FLAGS $RPM_LD_FLAGS -o udev-kvm-check
 
+popd
+echo "Starting qemu-kiwi build"
+
+pushd %{qemu_kiwi_build}
+# XXX: removing QXL and CONFIG_TPM.* mak configuration,
+# which causes problem with the config options used by qemu-kiwi.
+# Ideally we should be able to do this at configure time.
+find ../default-configs -name "*-rh-devices.mak" \
+         -exec sed -i '/CONFIG_QXL=/d' {} \;
+find ../default-configs -name "*-rh-devices.mak" \
+         -exec sed -i '/CONFIG_TPM.*=/d' {} \;
+
+../configure  \
+  --prefix="%{_prefix}" \
+  --libdir="%{_libdir}" \
+  --sysconfdir="%{_sysconfdir}" \
+  --interp-prefix=%{_prefix}/qemu-%M \
+  --localstatedir="%{_localstatedir}" \
+  --libexecdir="%{_libexecdir}" \
+  --extra-ldflags="-Wl,--build-id -Wl,-z,relro -Wl,-z,now" \
+  --extra-cflags="%{optflags}" \
+  --with-pkgversion="%{name}-%{version}-%{release}" \
+  --firmwarepath=%{_prefix}/share/qemu-firmware \
+  --python=%{__python3} \
+  --target-list="%{buildarch}" \
+  --block-drv-rw-whitelist=%{block_drivers_list} \
+  --audio-drv-list= \
+  --block-drv-ro-whitelist=vmdk,vhdx,vpc,https,ssh \
+  --with-coroutine=ucontext \
+  --with-git=git \
+  --tls-priority=NORMAL \
+  %{disable_everything} \
+  --enable-attr \
+%ifarch %{ix86} x86_64
+  --enable-avx2 \
+%endif
+  --enable-cap-ng \
+  --enable-coroutine-pool \
+  --enable-debug-info \
+%if 0%{have_fdt}
+  --enable-fdt \
+%endif
+  --enable-kvm \
+%ifarch x86_64
+  --enable-libpmem \
+%endif
+  --enable-linux-aio \
+  --enable-libudev \
+  --enable-malloc-trim \
+  --enable-mpath \
+%ifnarch s390x
+  --enable-numa \
+%endif
+  --enable-seccomp \
+  --enable-system \
+  --enable-tcg \
+  --enable-trace-backend=dtrace \
+  --enable-vhost-kernel \
+  --enable-vhost-net \
+  --enable-vhost-user \
+  --enable-vhost-user-blk-server \
+  --enable-vhost-vdpa \
+  --enable-vhost-vsock \
+  --enable-werror \
+  --enable-xkbcommon \
+  --without-default-devices
+
+echo "qemu-kiki config-host.mak contents:"
+echo "==="
+cat config-host.mak
+echo "==="
+
+make V=1 %{?_smp_mflags} $buildldflags
+
+%{__python3} scripts/tracetool.py --backend dtrace --format stap \
+  --group=all --binary %{_libexecdir}/qemu-kiwi --probe-prefix qemu.kvm \
+  trace/trace-events-all > qemu-kiwi.stp
+
+%{__python3} scripts/tracetool.py --backends=dtrace --format=log-stap \
+  --group=all --binary %{_libexecdir}/qemu-kiwi --probe-prefix qemu.kvm \
+  trace/trace-events-all > qemu-kiwi-log.stp
+
+%{__python3} scripts/tracetool.py --backend dtrace --format simpletrace-stap \
+  --group=all --binary %{_libexecdir}/qemu-kiwi --probe-prefix qemu.kvm \
+  trace/trace-events-all > qemu-kiwi-simpletrace.stp
+
+cp -a %{kvm_target}-softmmu/qemu-system-%{kvm_target} qemu-kiwi
+popd
+
 %install
-cd qemu-kvm-build
+pushd %{qemu_kvm_build}
 %define _udevdir %(pkg-config --variable=udevdir udev)
 %define _udevrulesdir %{_udevdir}/rules.d
 
@@ -721,6 +874,7 @@ install -d -m 0755 "$RPM_BUILD_ROOT%{_datadir}/%{name}/systemtap/script.d"
 install -c -m 0644 scripts/systemtap/script.d/qemu_kvm.stp "$RPM_BUILD_ROOT%{_datadir}/%{name}/systemtap/script.d/"
 install -d -m 0755 "$RPM_BUILD_ROOT%{_datadir}/%{name}/systemtap/conf.d"
 install -c -m 0644 scripts/systemtap/conf.d/qemu_kvm.conf "$RPM_BUILD_ROOT%{_datadir}/%{name}/systemtap/conf.d/"
+
 
 rm $RPM_BUILD_ROOT/%{_datadir}/applications/qemu.desktop
 rm $RPM_BUILD_ROOT%{_bindir}/qemu-system-%{kvm_target}
@@ -904,11 +1058,50 @@ rm -rf $RPM_BUILD_ROOT%{qemudocdir}/user/.buildinfo
 # Remove spec
 rm -rf $RPM_BUILD_ROOT%{qemudocdir}/specs
 
-%check
-cd qemu-kvm-build
-export DIFF=diff; make check V=1
+popd
 
-%post -n qemu-kvm-core
+pushd %{qemu_kiwi_build}
+install -m 0755 %{kvm_target}-softmmu/qemu-system-%{kvm_target} $RPM_BUILD_ROOT%{_libexecdir}/qemu-kiwi
+install -m 0644 qemu-kiwi.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
+install -m 0644 qemu-kiwi-log.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
+install -m 0644 qemu-kiwi-simpletrace.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
+popd
+
+%check
+pushd %{qemu_kvm_build}
+echo "Testing qemu-kvm-build"
+export DIFF=diff; make check V=1
+popd
+
+echo "Testing qemu-kiwi"
+pushd %{qemu_kiwi_build}
+export DIFF=diff; make check V=1
+popd
+
+%post -n qemu-kvm-common
+%systemd_post ksm.service
+%systemd_post ksmtuned.service
+
+getent group kvm >/dev/null || groupadd -g 36 -r kvm
+getent group qemu >/dev/null || groupadd -g 107 -r qemu
+getent passwd qemu >/dev/null || \
+useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
+  -c "qemu user" qemu
+
+# load kvm modules now, so we can make sure no reboot is needed.
+# If there's already a kvm module installed, we don't mess with it
+%udev_rules_update
+sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
+    udevadm trigger --subsystem-match=misc --sysname-match=kvm --action=add || :
+%if %{have_kvm_setup}
+    systemctl daemon-reload # Make sure it sees the new presets and unitfile
+    %systemd_post kvm-setup.service
+    if systemctl is-enabled kvm-setup.service > /dev/null; then
+        systemctl start kvm-setup.service
+    fi
+%endif
+
+%post -n qemu-kiwi
 # load kvm modules now, so we can make sure no reboot is needed.
 # If there's already a kvm module installed, we don't mess with it
 %udev_rules_update
@@ -923,27 +1116,27 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %endif
 
 %if %{have_kvm_setup}
-%preun -n qemu-kvm-core
+%preun -n qemu-kiwi
 %systemd_preun kvm-setup.service
 %endif
-
-%post -n qemu-kvm-common
-%systemd_post ksm.service
-%systemd_post ksmtuned.service
-
-getent group kvm >/dev/null || groupadd -g 36 -r kvm
-getent group qemu >/dev/null || groupadd -g 107 -r qemu
-getent passwd qemu >/dev/null || \
-useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
-  -c "qemu user" qemu
 
 %preun -n qemu-kvm-common
 %systemd_preun ksm.service
 %systemd_preun ksmtuned.service
+%if %{have_kvm_setup}
+%systemd_preun kvm-setup.service
+%endif
 
 %postun -n qemu-kvm-common
 %systemd_postun_with_restart ksm.service
 %systemd_postun_with_restart ksmtuned.service
+
+%post -n qemu-guest-agent
+%systemd_post qemu-guest-agent.service
+%preun -n qemu-guest-agent
+%systemd_preun qemu-guest-agent.service
+%postun -n qemu-guest-agent
+%systemd_postun_with_restart qemu-guest-agent.service
 
 %files
 # Deliberately empty
@@ -972,6 +1165,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_unitdir}/qemu-pr-helper.service
 %{_unitdir}/qemu-pr-helper.socket
 %{_mandir}/man7/qemu-ga-ref.7*
+%{_mandir}/man8/qemu-pr-helper.8*
 %{_mandir}/man1/virtiofsd.1*
 
 %dir %{_datadir}/%{name}/
@@ -999,8 +1193,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_datadir}/%{name}/tracetool/backend/*.py*
 %{_datadir}/%{name}/tracetool/format/*.py*
 
-%files -n qemu-kvm-core
-%defattr(-,root,root)
 %ifarch x86_64
     %{_datadir}/%{name}/bios.bin
     %{_datadir}/%{name}/bios-256k.bin
@@ -1035,13 +1227,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_datadir}/icons/*
 %{_datadir}/%{name}/linuxboot_dma.bin
 %{_datadir}/%{name}/dump-guest-memory.py*
-%{_libexecdir}/qemu-kvm
-%{_datadir}/systemtap/tapset/qemu-kvm.stp
-%{_datadir}/systemtap/tapset/qemu-kvm-log.stp
 %{_datadir}/%{name}/trace-events-all
-%{_datadir}/systemtap/tapset/qemu-kvm-simpletrace.stp
-%{_datadir}/%{name}/systemtap/script.d/qemu_kvm.stp
-%{_datadir}/%{name}/systemtap/conf.d/qemu_kvm.conf
 %if 0%{have_kvm_setup}
     %{_prefix}/lib/systemd/kvm-setup
     %{_unitdir}/kvm-setup.service
@@ -1052,6 +1238,16 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 %{_libexecdir}/virtiofsd
 %{_datadir}/%{name}/vhost-user/50-qemu-virtiofsd.json
+
+%files -n qemu-kvm-core
+%defattr(-,root,root)
+%{_libexecdir}/qemu-kvm
+%{_datadir}/systemtap/tapset/qemu-kvm.stp
+%{_datadir}/systemtap/tapset/qemu-kvm-log.stp
+%{_datadir}/systemtap/tapset/qemu-kvm-simpletrace.stp
+%{_datadir}/%{name}/systemtap/script.d/qemu_kvm.stp
+%{_datadir}/%{name}/systemtap/conf.d/qemu_kvm.conf
+
 %if %{have_usbredir}
     %{_libdir}/qemu-kvm/hw-usb-redirect.so
 %endif
@@ -1071,6 +1267,13 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %if 0%{have_opengl}
     %{_libdir}/qemu-kvm/ui-opengl.so
 %endif
+
+%files -n qemu-kiwi
+%defattr(-,root,root)
+%{_libexecdir}/qemu-kiwi
+%{_datadir}/systemtap/tapset/qemu-kiwi.stp
+%{_datadir}/systemtap/tapset/qemu-kiwi-log.stp
+%{_datadir}/systemtap/tapset/qemu-kiwi-simpletrace.stp
 
 %files -n qemu-img
 %defattr(-,root,root)
@@ -1115,6 +1318,39 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Nov 16 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-15.el8
+- kvm-redhat-add-un-pre-install-systemd-hooks-for-qemu-ga.patch [bz#1882719]
+- kvm-rcu-Implement-drain_call_rcu.patch [bz#1812399 bz#1866707]
+- kvm-libqtest-Rename-qmp_assert_error_class-to-qmp_expect.patch [bz#1812399 bz#1866707]
+- kvm-qtest-rename-qtest_qmp_receive-to-qtest_qmp_receive_.patch [bz#1812399 bz#1866707]
+- kvm-qtest-Reintroduce-qtest_qmp_receive-with-QMP-event-b.patch [bz#1812399 bz#1866707]
+- kvm-qtest-remove-qtest_qmp_receive_success.patch [bz#1812399 bz#1866707]
+- kvm-device-plug-test-use-qtest_qmp-to-send-the-device_de.patch [bz#1812399 bz#1866707]
+- kvm-qtest-switch-users-back-to-qtest_qmp_receive.patch [bz#1812399 bz#1866707]
+- kvm-qtest-check-that-drives-are-really-appearing-and-dis.patch [bz#1812399 bz#1866707]
+- kvm-qemu-iotests-qtest-rewrite-test-067-as-a-qtest.patch [bz#1812399 bz#1866707]
+- kvm-qdev-add-check-if-address-free-callback-for-buses.patch [bz#1812399 bz#1866707]
+- kvm-scsi-scsi_bus-switch-search-direction-in-scsi_device.patch [bz#1812399 bz#1866707]
+- kvm-device_core-use-drain_call_rcu-in-in-qmp_device_add.patch [bz#1812399 bz#1866707]
+- kvm-device-core-use-RCU-for-list-of-children-of-a-bus.patch [bz#1812399 bz#1866707]
+- kvm-scsi-switch-to-bus-check_address.patch [bz#1812399 bz#1866707]
+- kvm-device-core-use-atomic_set-on-.realized-property.patch [bz#1812399 bz#1866707]
+- kvm-scsi-scsi-bus-scsi_device_find-don-t-return-unrealiz.patch [bz#1812399]
+- kvm-scsi-scsi_bus-Add-scsi_device_get.patch [bz#1812399 bz#1866707]
+- kvm-virtio-scsi-use-scsi_device_get.patch [bz#1812399 bz#1866707]
+- kvm-scsi-scsi_bus-fix-races-in-REPORT-LUNS.patch [bz#1812399 bz#1866707]
+- kvm-tests-migration-fix-memleak-in-wait_command-wait_com.patch [bz#1812399 bz#1866707]
+- kvm-libqtest-fix-the-order-of-buffered-events.patch [bz#1812399 bz#1866707]
+- kvm-libqtest-fix-memory-leak-in-the-qtest_qmp_event_ref.patch [bz#1812399 bz#1866707]
+- kvm-iotests-add-filter_qmp_virtio_scsi-function.patch [bz#1812399 bz#1866707]
+- kvm-iotests-rewrite-iotest-240-in-python.patch [bz#1812399 bz#1866707]
+- Resolves: bz#1812399
+  (Qemu crash when detach disk with cache="none" discard="ignore" io="native")
+- Resolves: bz#1866707
+  (qemu-kvm is crashing with error "scsi_target_emulate_report_luns: Assertion `i == n + 8' failed")
+- Resolves: bz#1882719
+  (qemu-ga service still active and can work after qemu-guest-agent been removed)
+
 * Tue Oct 13 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-14.el8_3
 - kvm-virtiofsd-avoid-proc-self-fd-tempdir.patch [bz#1884276]
 - Resolves: bz#1884276

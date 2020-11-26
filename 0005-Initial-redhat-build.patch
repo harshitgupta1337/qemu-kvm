@@ -1,4 +1,4 @@
-From 788398591901ece77695d73db0e392ce2c357636 Mon Sep 17 00:00:00 2001
+From b3ec5c5cc8ed777c5c2cd1bd27f6684a99317953 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 12 Oct 2018 07:31:11 +0200
 Subject: Initial redhat build
@@ -11,7 +11,7 @@ several issues are fixed in QEMU tree:
  - Man page renamed from qemu to qemu-kvm
   - man page is installed using make install so we have to fix it in qemu tree
 
-This rebase includes changes up to qemu-kvm-5.1.0-14.el8
+This rebase includes changes up to qemu-kvm-5.1.0-15.el8
 
 Rebase notes (3.1.0):
 - added new configure options
@@ -81,6 +81,14 @@ Rebase notes (5.2.0 rc0):
 - Fix in directory used for docs (upstream add %name so we do not pass it in configure)
 - Package various .so as part of qemu-kvm-core package.
 
+Rebase notes (5.2.0 rc2):
+- Added fix for dtrace build on RHEL 8.4.0
+
+Rebase notes (5.2.0 rc3):
+- Added man page for qemu-pr-helper
+- Added new configure options
+- Update qemu-kiwi patches to v4
+
 Merged patches (3.1.0):
 - 01f0c9f RHEL8: Add disable configure options to qemu spec file
 - Spec file cleanups
@@ -116,24 +124,34 @@ Merged patches (5.2.0 rc0):
 - fd62478 disable virgl
 - 0205018 redhat: link /etc/qemu-ga/fsfreeze-hook to /etc/qemu-kvm/
 - 3645097 redhat: Make all generated so files executable (not only block-*)
+
+Merged patches (5.2.0 rc2):
+- pjw 99657 redhat: introduces disable_everything macro into the configure call
+- pjw 99659 redhat: scripts/extract_build_cmd.py - Avoid listing empty lines
+- pjw 99658 redhat: Fixing rh-local build
+- pjw 99660 redhat: Add qemu-kiwi subpackage
+- d2e59ce redhat: add (un/pre)install systemd hooks for qemu-ga
+
+Merged patches (5.2.0 rc3):
+- pjw 99887 - redhat: allow Makefile rh-prep builddep to fail
+- pjw 99885 - redhat: adding rh-rpm target
 ---
  .gitignore                              |    1 +
  README.systemtap                        |   43 +
- crypto/meson.build                      |    1 -
  hw/s390x/s390-pci-vfio.c                |    4 +-
- meson.build                             |   10 +-
+ meson.build                             |    4 +-
  redhat/Makefile                         |   90 +
  redhat/Makefile.common                  |   53 +
  redhat/README.tests                     |   39 +
- redhat/qemu-kvm.spec.template           | 3170 +++++++++++++++++++++++++++++++
- redhat/scripts/extract_build_cmd.py     |    2 +-
+ redhat/qemu-kvm.spec.template           | 3409 +++++++++++++++++++++++++++++++
+ redhat/scripts/extract_build_cmd.py     |    5 +-
  redhat/scripts/process-patches.sh       |   17 +-
  scripts/qemu-guest-agent/fsfreeze-hook  |    2 +-
  scripts/systemtap/conf.d/qemu_kvm.conf  |    4 +
  scripts/systemtap/script.d/qemu_kvm.stp |    1 +
  tests/check-block.sh                    |    2 +
  ui/vnc.c                                |    2 +-
- 16 files changed, 3424 insertions(+), 17 deletions(-)
+ 15 files changed, 3660 insertions(+), 16 deletions(-)
  create mode 100644 README.systemtap
  create mode 100644 redhat/Makefile
  create mode 100644 redhat/Makefile.common
@@ -191,20 +209,8 @@ index 0000000..ad913fc
 +
 +3. Translate the trace record to readable format.
 +  # /usr/share/qemu-kvm/simpletrace.py --no-header /usr/share/qemu-kvm/trace-events /tmp/trace.log
-diff --git a/crypto/meson.build b/crypto/meson.build
-index 7f37b5d..e30efb8 100644
---- a/crypto/meson.build
-+++ b/crypto/meson.build
-@@ -50,7 +50,6 @@ if 'CONFIG_GNUTLS' in config_host
-   crypto_ss.add(gnutls)
- endif
- 
--
- util_ss.add(files('aes.c'))
- util_ss.add(files('init.c'))
- 
 diff --git a/hw/s390x/s390-pci-vfio.c b/hw/s390x/s390-pci-vfio.c
-index d5c7806..19f92eb 100644
+index 9296e1b..f70c5a8 100644
 --- a/hw/s390x/s390-pci-vfio.c
 +++ b/hw/s390x/s390-pci-vfio.c
 @@ -28,7 +28,7 @@
@@ -226,21 +232,10 @@ index d5c7806..19f92eb 100644
      uint32_t argsz;
      int fd;
 diff --git a/meson.build b/meson.build
-index b473620..3636fb9 100644
+index 5062407..c1db9b8 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -292,6 +292,10 @@ if 'CONFIG_GNUTLS' in config_host
-   gnutls = declare_dependency(compile_args: config_host['GNUTLS_CFLAGS'].split(),
-                               link_args: config_host['GNUTLS_LIBS'].split())
- endif
-+gcrypt = not_found
-+if 'CONFIG_GCRYPT' in config_host
-+  gcrypt = dependency('libgcrypt')
-+endif
- pixman = not_found
- if have_system or have_tools
-   pixman = dependency('pixman-1', required: have_system, version:'>=0.21.8',
-@@ -1123,7 +1127,9 @@ if capstone_opt == 'internal'
+@@ -1149,7 +1149,9 @@ if capstone_opt == 'internal'
      # Include all configuration defines via a header file, which will wind up
      # as a dependency on the object file, and thus changes here will result
      # in a rebuild.
@@ -251,15 +246,6 @@ index b473620..3636fb9 100644
    ]
  
    libcapstone = static_library('capstone',
-@@ -1641,7 +1647,7 @@ libblock = static_library('block', block_ss.sources() + genh,
- 
- block = declare_dependency(link_whole: [libblock],
-                            link_args: '@block.syms',
--                           dependencies: [crypto, io])
-+                           dependencies: [crypto, io, zlib])
- 
- blockdev_ss = blockdev_ss.apply(config_host, strict: false)
- libblockdev = static_library('blockdev', blockdev_ss.sources() + genh,
 diff --git a/scripts/qemu-guest-agent/fsfreeze-hook b/scripts/qemu-guest-agent/fsfreeze-hook
 index 13aafd4..e9b84ec 100755
 --- a/scripts/qemu-guest-agent/fsfreeze-hook

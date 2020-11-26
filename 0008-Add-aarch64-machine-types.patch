@@ -1,4 +1,4 @@
-From be3ca54f04ade6a20265f9aeeb46662caa6d16dc Mon Sep 17 00:00:00 2001
+From 57f949e002928186b80562fe517e1d83464c24fd Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 12:53:31 +0200
 Subject: Add aarch64 machine types
