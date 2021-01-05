@@ -1,4 +1,4 @@
-From b3ec5c5cc8ed777c5c2cd1bd27f6684a99317953 Mon Sep 17 00:00:00 2001
+From e4cd78dda8017f181fa94bbad1f0f015a99271db Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 12 Oct 2018 07:31:11 +0200
 Subject: Initial redhat build
@@ -11,7 +11,7 @@ several issues are fixed in QEMU tree:
  - Man page renamed from qemu to qemu-kvm
   - man page is installed using make install so we have to fix it in qemu tree
 
-This rebase includes changes up to qemu-kvm-5.1.0-15.el8
+This rebase includes changes up to qemu-kvm-5.1.0-16.el8
 
 Rebase notes (3.1.0):
 - added new configure options
@@ -143,7 +143,7 @@ Merged patches (5.2.0 rc3):
  redhat/Makefile                         |   90 +
  redhat/Makefile.common                  |   53 +
  redhat/README.tests                     |   39 +
- redhat/qemu-kvm.spec.template           | 3409 +++++++++++++++++++++++++++++++
+ redhat/qemu-kvm.spec.template           | 3402 +++++++++++++++++++++++
  redhat/scripts/extract_build_cmd.py     |    5 +-
  redhat/scripts/process-patches.sh       |   17 +-
  scripts/qemu-guest-agent/fsfreeze-hook  |    2 +-
@@ -151,7 +151,7 @@ Merged patches (5.2.0 rc3):
  scripts/systemtap/script.d/qemu_kvm.stp |    1 +
  tests/check-block.sh                    |    2 +
  ui/vnc.c                                |    2 +-
- 15 files changed, 3660 insertions(+), 16 deletions(-)
+ 15 files changed, 3653 insertions(+), 16 deletions(-)
  create mode 100644 README.systemtap
  create mode 100644 redhat/Makefile
  create mode 100644 redhat/Makefile.common
@@ -162,7 +162,7 @@ Merged patches (5.2.0 rc3):
 
 diff --git a/README.systemtap b/README.systemtap
 new file mode 100644
-index 0000000..ad913fc
+index 0000000000..ad913fc990
 --- /dev/null
 +++ b/README.systemtap
 @@ -0,0 +1,43 @@
@@ -210,7 +210,7 @@ index 0000000..ad913fc
 +3. Translate the trace record to readable format.
 +  # /usr/share/qemu-kvm/simpletrace.py --no-header /usr/share/qemu-kvm/trace-events /tmp/trace.log
 diff --git a/hw/s390x/s390-pci-vfio.c b/hw/s390x/s390-pci-vfio.c
-index 9296e1b..f70c5a8 100644
+index 9296e1bb6e..f70c5a8946 100644
 --- a/hw/s390x/s390-pci-vfio.c
 +++ b/hw/s390x/s390-pci-vfio.c
 @@ -28,7 +28,7 @@
@@ -232,10 +232,10 @@ index 9296e1b..f70c5a8 100644
      uint32_t argsz;
      int fd;
 diff --git a/meson.build b/meson.build
-index 5062407..c1db9b8 100644
+index e3386196ba..8c38b2ea36 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -1149,7 +1149,9 @@ if capstone_opt == 'internal'
+@@ -1148,7 +1148,9 @@ if capstone_opt == 'internal'
      # Include all configuration defines via a header file, which will wind up
      # as a dependency on the object file, and thus changes here will result
      # in a rebuild.
@@ -247,7 +247,7 @@ index 5062407..c1db9b8 100644
  
    libcapstone = static_library('capstone',
 diff --git a/scripts/qemu-guest-agent/fsfreeze-hook b/scripts/qemu-guest-agent/fsfreeze-hook
-index 13aafd4..e9b84ec 100755
+index 13aafd4845..e9b84ec028 100755
 --- a/scripts/qemu-guest-agent/fsfreeze-hook
 +++ b/scripts/qemu-guest-agent/fsfreeze-hook
 @@ -8,7 +8,7 @@
@@ -261,7 +261,7 @@ index 13aafd4..e9b84ec 100755
  is_ignored_file() {
 diff --git a/scripts/systemtap/conf.d/qemu_kvm.conf b/scripts/systemtap/conf.d/qemu_kvm.conf
 new file mode 100644
-index 0000000..372d816
+index 0000000000..372d8160a4
 --- /dev/null
 +++ b/scripts/systemtap/conf.d/qemu_kvm.conf
 @@ -0,0 +1,4 @@
@@ -271,13 +271,13 @@ index 0000000..372d816
 +qemu_kvm_OPT="-s4" # per-CPU buffer size, in megabytes
 diff --git a/scripts/systemtap/script.d/qemu_kvm.stp b/scripts/systemtap/script.d/qemu_kvm.stp
 new file mode 100644
-index 0000000..c04abf9
+index 0000000000..c04abf9449
 --- /dev/null
 +++ b/scripts/systemtap/script.d/qemu_kvm.stp
 @@ -0,0 +1 @@
 +probe qemu.kvm.simpletrace.handle_qmp_command,qemu.kvm.simpletrace.monitor_protocol_*,qemu.kvm.simpletrace.migrate_set_state {}
 diff --git a/tests/check-block.sh b/tests/check-block.sh
-index f6b1bda..645b550 100755
+index f6b1bda7b9..645b550af8 100755
 --- a/tests/check-block.sh
 +++ b/tests/check-block.sh
 @@ -58,6 +58,8 @@ if ! (sed --version | grep 'GNU sed') > /dev/null 2>&1 ; then
@@ -290,7 +290,7 @@ index f6b1bda..645b550 100755
  
  # QEMU_CHECK_BLOCK_AUTO is used to disable some unstable sub-tests
 diff --git a/ui/vnc.c b/ui/vnc.c
-index 4923505..eb5520e 100644
+index 49235056f7..eb5520ed73 100644
 --- a/ui/vnc.c
 +++ b/ui/vnc.c
 @@ -3982,7 +3982,7 @@ void vnc_display_open(const char *id, Error **errp)
@@ -303,5 +303,5 @@ index 4923505..eb5520e 100644
          if (saslErr != SASL_OK) {
              error_setg(errp, "Failed to initialize SASL auth: %s",
 -- 
-1.8.3.1
+2.18.4
 

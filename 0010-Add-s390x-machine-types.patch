@@ -1,4 +1,4 @@
-From 79dafd0d91aecadc163685311c220dc2d7a49add Mon Sep 17 00:00:00 2001
+From 36540969ad3b08f1964c71406f1fc14c0e5b47de Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:47:32 +0200
 Subject: Add s390x machine types
@@ -21,11 +21,11 @@ Merged patches (4.2.0):
 - a9b22e8 redhat: s390x: Add proper compatibility options for the -rhel7.6.0 machine
 - hw/s390x: Add the s390-ccw-virtio-rhel8.2.0 machine types (patch 92954)
 ---
- hw/s390x/s390-virtio-ccw.c | 71 +++++++++++++++++++++++++++++++++++++++++++++-
+ hw/s390x/s390-virtio-ccw.c | 71 +++++++++++++++++++++++++++++++++++++-
  1 file changed, 70 insertions(+), 1 deletion(-)
 
 diff --git a/hw/s390x/s390-virtio-ccw.c b/hw/s390x/s390-virtio-ccw.c
-index 4e140bb..b8dde7e 100644
+index 4e140bbead..b8dde7e4e1 100644
 --- a/hw/s390x/s390-virtio-ccw.c
 +++ b/hw/s390x/s390-virtio-ccw.c
 @@ -765,7 +765,7 @@ bool css_migration_enabled(void)
@@ -121,5 +121,5 @@ index 4e140bb..b8dde7e 100644
  static void ccw_machine_register_types(void)
  {
 -- 
-1.8.3.1
+2.18.4
 

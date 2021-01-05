@@ -1,0 +1,66 @@
+From e5c00782e6f609b4f25dc214825c6491def46e15 Mon Sep 17 00:00:00 2001
+From: Greg Kurz <gkurz@redhat.com>
+Date: Fri, 20 Nov 2020 14:00:32 -0500
+Subject: redhat: Add spapr_machine_rhel_default_class_options()
+
+RH-Author: Greg Kurz <gkurz@redhat.com>
+Message-id: <20201120140033.578472-3-gkurz@redhat.com>
+Patchwork-id: 99791
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH v2 2/3] redhat: Add spapr_machine_rhel_default_class_options()
+Bugzilla: 1893935
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: David Gibson <dgibson@redhat.com>
+
+RHEL may need to override some default property inherited from upstream.
+This is currently handled in the class_options() function of the latest
+machine type, and thus the defaults need to be carried around each time
+we add a new RHEL machine.
+
+Override the defaults in a dedicated function to be called by the
+latest RHEL machine type.
+
+Signed-off-by: Greg Kurz <gkurz@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/ppc/spapr.c | 17 +++++++++++++----
+ 1 file changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
+index 4a838cc955..1d7482b2fb 100644
+--- a/hw/ppc/spapr.c
++++ b/hw/ppc/spapr.c
+@@ -4961,6 +4961,17 @@ static void spapr_machine_2_1_class_options(MachineClass *mc)
+ DEFINE_SPAPR_MACHINE(2_1, "2.1", false);
+ #endif
+ 
++static void spapr_machine_rhel_default_class_options(MachineClass *mc)
++{
++    /*
++     * Defaults for the latest behaviour inherited from the base class
++     * can be overriden here for all pseries-rhel* machines.
++     */
++
++    /* Maximum supported VCPU count */
++    mc->max_cpus = 384;
++}
++
+ /*
+  * pseries-rhel8.3.0
+  * like pseries-5.1
+@@ -4968,10 +4979,8 @@ DEFINE_SPAPR_MACHINE(2_1, "2.1", false);
+ 
+ static void spapr_machine_rhel830_class_options(MachineClass *mc)
+ {
+-    /* Defaults for the latest behaviour inherited from the base class */
+-
+-    /* Maximum supported VCPU count for all pseries-rhel* machines */
+-    mc->max_cpus = 384;
++    /* The default machine type must apply the RHEL specific defaults */
++    spapr_machine_rhel_default_class_options(mc);
+ }
+ 
+ DEFINE_SPAPR_MACHINE(rhel830, "rhel8.3.0", true);
+-- 
+2.18.4
+

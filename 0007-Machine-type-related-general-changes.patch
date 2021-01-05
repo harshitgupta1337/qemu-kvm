@@ -1,4 +1,4 @@
-From c08267680d5cdede8c1b80591f294f8c0e8a2ddc Mon Sep 17 00:00:00 2001
+From b97fdd8e425f1c9a156ebdfbdce986d9351c0d19 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 11 Jan 2019 09:54:45 +0100
 Subject: Machine type related general changes
@@ -46,21 +46,21 @@ Merged patches (5.2.0 rc0):
  hw/acpi/ich9.c               |  15 +++
  hw/acpi/piix4.c              |   5 +-
  hw/arm/virt.c                |   2 +-
- hw/char/serial.c             |  16 ++++
- hw/core/machine.c            | 213 +++++++++++++++++++++++++++++++++++++++++++
+ hw/char/serial.c             |  16 +++
+ hw/core/machine.c            | 213 +++++++++++++++++++++++++++++++++++
  hw/display/vga-isa.c         |   2 +-
  hw/i386/pc_piix.c            |   2 +
  hw/i386/pc_q35.c             |   2 +
- hw/net/e1000e.c              |  21 +++++
+ hw/net/e1000e.c              |  21 ++++
  hw/net/rtl8139.c             |   4 +-
- hw/rtc/mc146818rtc.c         |   6 ++
- hw/smbios/smbios.c           |  46 +++++++++-
+ hw/rtc/mc146818rtc.c         |   6 +
+ hw/smbios/smbios.c           |  46 +++++++-
  hw/timer/i8254_common.c      |   2 +-
  hw/usb/hcd-uhci.c            |   4 +-
  hw/usb/hcd-xhci.c            |  20 ++++
  hw/usb/hcd-xhci.h            |   2 +
  include/hw/acpi/ich9.h       |   3 +
- include/hw/boards.h          |  27 ++++++
+ include/hw/boards.h          |  27 +++++
  include/hw/firmware/smbios.h |   5 +-
  include/hw/i386/pc.h         |   3 +
  include/hw/usb.h             |   4 +
@@ -69,7 +69,7 @@ Merged patches (5.2.0 rc0):
  23 files changed, 400 insertions(+), 11 deletions(-)
 
 diff --git a/hw/acpi/ich9.c b/hw/acpi/ich9.c
-index ac45ca4..0b35b35 100644
+index ac45ca4acb..0b35b35b28 100644
 --- a/hw/acpi/ich9.c
 +++ b/hw/acpi/ich9.c
 @@ -369,6 +369,18 @@ static void ich9_pm_set_enable_tco(Object *obj, bool value, Error **errp)
@@ -102,7 +102,7 @@ index ac45ca4..0b35b35 100644
                                    &pm->disable_s3, OBJ_PROP_FLAG_READWRITE);
      object_property_add_uint8_ptr(obj, ACPI_PM_PROP_S4_DISABLED,
 diff --git a/hw/acpi/piix4.c b/hw/acpi/piix4.c
-index 669be5b..2063131 100644
+index 669be5bbf6..2063131bcc 100644
 --- a/hw/acpi/piix4.c
 +++ b/hw/acpi/piix4.c
 @@ -277,6 +277,7 @@ static const VMStateDescription vmstate_acpi = {
@@ -125,7 +125,7 @@ index 669be5b..2063131 100644
      DEFINE_PROP_BOOL("acpi-pci-hotplug-with-bridge-support", PIIX4PMState,
                       use_acpi_hotplug_bridge, true),
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index 27dbeb5..c908b5f 100644
+index 27dbeb549e..c908b5fcf4 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
 @@ -1441,7 +1441,7 @@ static void virt_build_smbios(VirtMachineState *vms)
@@ -138,7 +138,7 @@ index 27dbeb5..c908b5f 100644
      smbios_get_tables(MACHINE(vms), NULL, 0, &smbios_tables, &smbios_tables_len,
                        &smbios_anchor, &smbios_anchor_len);
 diff --git a/hw/char/serial.c b/hw/char/serial.c
-index 97f7187..aeb207e 100644
+index 97f71879ff..aeb207ef73 100644
 --- a/hw/char/serial.c
 +++ b/hw/char/serial.c
 @@ -35,6 +35,7 @@
@@ -193,7 +193,7 @@ index 97f7187..aeb207e 100644
  }
  
 diff --git a/hw/core/machine.c b/hw/core/machine.c
-index d040804..19d50dd 100644
+index d0408049b5..19d50dde45 100644
 --- a/hw/core/machine.c
 +++ b/hw/core/machine.c
 @@ -28,6 +28,219 @@
@@ -417,7 +417,7 @@ index d040804..19d50dd 100644
      { "vhost-scsi", "num_queues", "1"},
      { "vhost-user-blk", "num-queues", "1"},
 diff --git a/hw/display/vga-isa.c b/hw/display/vga-isa.c
-index 90851e7..a91c5d7 100644
+index 90851e730b..a91c5d7467 100644
 --- a/hw/display/vga-isa.c
 +++ b/hw/display/vga-isa.c
 @@ -85,7 +85,7 @@ static void vga_isa_realizefn(DeviceState *dev, Error **errp)
@@ -430,7 +430,7 @@ index 90851e7..a91c5d7 100644
  };
  
 diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
-index 13d1628..9fcc5aa 100644
+index 13d1628f13..9fcc5aaf69 100644
 --- a/hw/i386/pc_piix.c
 +++ b/hw/i386/pc_piix.c
 @@ -179,6 +179,8 @@ static void pc_init1(MachineState *machine,
@@ -443,7 +443,7 @@ index 13d1628..9fcc5aa 100644
      }
  
 diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
-index a3f4959..f6c2ef4 100644
+index a3f4959c43..f6c2ef4e43 100644
 --- a/hw/i386/pc_q35.c
 +++ b/hw/i386/pc_q35.c
 @@ -198,6 +198,8 @@ static void pc_q35_init(MachineState *machine)
@@ -456,7 +456,7 @@ index a3f4959..f6c2ef4 100644
      }
  
 diff --git a/hw/net/e1000e.c b/hw/net/e1000e.c
-index a8a77ec..6d39c1f 100644
+index a8a77eca95..6d39c1f1c4 100644
 --- a/hw/net/e1000e.c
 +++ b/hw/net/e1000e.c
 @@ -80,6 +80,11 @@ struct E1000EState {
@@ -530,7 +530,7 @@ index a8a77ec..6d39c1f 100644
                          e1000e_prop_disable_vnet, bool),
      DEFINE_PROP_SIGNED("subsys_ven", E1000EState, subsys_ven,
 diff --git a/hw/net/rtl8139.c b/hw/net/rtl8139.c
-index ba5ace1..a2e6e83 100644
+index ba5ace1ab7..a2e6e83522 100644
 --- a/hw/net/rtl8139.c
 +++ b/hw/net/rtl8139.c
 @@ -3179,7 +3179,7 @@ static int rtl8139_pre_save(void *opaque)
@@ -553,7 +553,7 @@ index ba5ace1..a2e6e83 100644
          VMSTATE_UINT16(tally_counters.TxUndrn, RTL8139State),
  
 diff --git a/hw/rtc/mc146818rtc.c b/hw/rtc/mc146818rtc.c
-index 7a38540..377d861 100644
+index 7a38540cb9..377d861913 100644
 --- a/hw/rtc/mc146818rtc.c
 +++ b/hw/rtc/mc146818rtc.c
 @@ -43,6 +43,7 @@
@@ -577,7 +577,7 @@ index 7a38540..377d861 100644
  }
  
 diff --git a/hw/smbios/smbios.c b/hw/smbios/smbios.c
-index 6a3d397..232fd61 100644
+index 6a3d39793b..232fd61bf8 100644
 --- a/hw/smbios/smbios.c
 +++ b/hw/smbios/smbios.c
 @@ -56,6 +56,9 @@ static bool smbios_legacy = true;
@@ -659,7 +659,7 @@ index 6a3d397..232fd61 100644
      SMBIOS_SET_DEFAULT(type3.manufacturer, manufacturer);
      SMBIOS_SET_DEFAULT(type3.version, version);
 diff --git a/hw/timer/i8254_common.c b/hw/timer/i8254_common.c
-index 050875b..32935da 100644
+index 050875b497..32935da46c 100644
 --- a/hw/timer/i8254_common.c
 +++ b/hw/timer/i8254_common.c
 @@ -231,7 +231,7 @@ static const VMStateDescription vmstate_pit_common = {
@@ -672,7 +672,7 @@ index 050875b..32935da 100644
                               vmstate_pit_channel, PITChannelState),
          VMSTATE_INT64(channels[0].next_transition_time,
 diff --git a/hw/usb/hcd-uhci.c b/hw/usb/hcd-uhci.c
-index 27ca237..eb24e39 100644
+index 27ca237d71..eb24e39b81 100644
 --- a/hw/usb/hcd-uhci.c
 +++ b/hw/usb/hcd-uhci.c
 @@ -1221,12 +1221,14 @@ static void usb_uhci_common_realize(PCIDevice *dev, Error **errp)
@@ -692,7 +692,7 @@ index 27ca237..eb24e39 100644
      if (s->masterbus) {
          USBPort *ports[NB_PORTS];
 diff --git a/hw/usb/hcd-xhci.c b/hw/usb/hcd-xhci.c
-index 9ce7ca7..0af661c 100644
+index 9ce7ca706e..0af661ce1d 100644
 --- a/hw/usb/hcd-xhci.c
 +++ b/hw/usb/hcd-xhci.c
 @@ -3491,9 +3491,27 @@ static const VMStateDescription vmstate_xhci_slot = {
@@ -733,7 +733,7 @@ index 9ce7ca7..0af661c 100644
      }
  };
 diff --git a/hw/usb/hcd-xhci.h b/hw/usb/hcd-xhci.h
-index 02ebd76..dfda04b 100644
+index 02ebd76450..dfda04b125 100644
 --- a/hw/usb/hcd-xhci.h
 +++ b/hw/usb/hcd-xhci.h
 @@ -149,6 +149,8 @@ typedef struct XHCIEvent {
@@ -746,7 +746,7 @@ index 02ebd76..dfda04b 100644
  
  typedef struct XHCIInterrupter {
 diff --git a/include/hw/acpi/ich9.h b/include/hw/acpi/ich9.h
-index 54571c7..b3369da 100644
+index 54571c77e0..b3369dab9e 100644
 --- a/include/hw/acpi/ich9.h
 +++ b/include/hw/acpi/ich9.h
 @@ -61,6 +61,9 @@ typedef struct ICH9LPCPMRegs {
@@ -760,7 +760,7 @@ index 54571c7..b3369da 100644
  
  #define ACPI_PM_PROP_TCO_ENABLED "enable_tco"
 diff --git a/include/hw/boards.h b/include/hw/boards.h
-index a49e3a6..dd18c9e 100644
+index a49e3a6b44..dd18c9e94d 100644
 --- a/include/hw/boards.h
 +++ b/include/hw/boards.h
 @@ -367,4 +367,31 @@ extern const size_t hw_compat_2_2_len;
@@ -796,7 +796,7 @@ index a49e3a6..dd18c9e 100644
 +
  #endif
 diff --git a/include/hw/firmware/smbios.h b/include/hw/firmware/smbios.h
-index 02a0ced..67e38a1 100644
+index 02a0ced0a0..67e38a1b13 100644
 --- a/include/hw/firmware/smbios.h
 +++ b/include/hw/firmware/smbios.h
 @@ -267,7 +267,10 @@ void smbios_entry_add(QemuOpts *opts, Error **errp);
@@ -812,7 +812,7 @@ index 02a0ced..67e38a1 100644
  void smbios_get_tables(MachineState *ms,
                         const struct smbios_phys_mem_area *mem_array,
 diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
-index 911e460..ae6bf1d 100644
+index 911e460097..ae6bf1d209 100644
 --- a/include/hw/i386/pc.h
 +++ b/include/hw/i386/pc.h
 @@ -104,6 +104,9 @@ struct PCMachineClass {
@@ -826,7 +826,7 @@ index 911e460..ae6bf1d 100644
      /* RAM / address space compat: */
      bool gigabyte_align;
 diff --git a/include/hw/usb.h b/include/hw/usb.h
-index a70a72e..78b9043 100644
+index a70a72e917..78b90436c9 100644
 --- a/include/hw/usb.h
 +++ b/include/hw/usb.h
 @@ -570,4 +570,8 @@ int usb_get_quirks(uint16_t vendor_id, uint16_t product_id,
@@ -839,7 +839,7 @@ index a70a72e..78b9043 100644
 +
  #endif
 diff --git a/migration/migration.c b/migration/migration.c
-index 87a9b59..1bb8d01 100644
+index 87a9b59f83..1bb8d012e6 100644
 --- a/migration/migration.c
 +++ b/migration/migration.c
 @@ -134,6 +134,8 @@ enum mig_rp_message_type {
@@ -852,7 +852,7 @@ index 87a9b59..1bb8d01 100644
     migrations at once.  For now we don't need to add
     dynamic creation of migration */
 diff --git a/migration/migration.h b/migration/migration.h
-index d096b77..6134a53 100644
+index d096b77f74..6134a534b3 100644
 --- a/migration/migration.h
 +++ b/migration/migration.h
 @@ -364,6 +364,11 @@ bool check_dirty_bitmap_mig_alias_map(const BitmapMigrationNodeAliasList *bbm,
@@ -868,5 +868,5 @@ index d096b77..6134a53 100644
  #define qemu_ram_foreach_block \
    #warning "Use foreach_not_ignored_block in migration code"
 -- 
-1.8.3.1
+2.18.4
 

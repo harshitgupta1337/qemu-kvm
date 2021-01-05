@@ -1,4 +1,4 @@
-From 2621db7ae95fdf112a7e1798ae428a865ae55b59 Mon Sep 17 00:00:00 2001
+From 28d744b42d381b15254706f90fed3310ce4a5116 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 2 Sep 2020 09:39:41 +0200
 Subject: Enable make check
@@ -31,16 +31,19 @@ Rebase changes (5.2.0 rc0):
 - Disable cdrom tests (unsupported devices) on x86_64
 - disable fuzz test
 
+Rebaes changes (RHEL 9):
+- disable block-iothreads test
+
 Merged patches (4.0.0):
 - f7ffd13 Remove 7 qcow2 and luks iotests that are taking > 25 sec to run during the fast train build proce
 
 Merged patches (4.1.0-rc0):
 - 41288ff redhat: Remove raw iotest 205
 
-Conflicts:
-	redhat/qemu-kvm.spec.template
+Dissable problematic tests
 ---
  redhat/qemu-kvm.spec.template       |  4 ++--
+ tests/meson.build                   |  2 +-
  tests/qemu-iotests/051              | 12 ++++++------
  tests/qtest/boot-serial-test.c      |  6 +++++-
  tests/qtest/cdrom-test.c            |  2 ++
@@ -51,10 +54,23 @@ Conflicts:
  tests/qtest/prom-env-test.c         |  4 ++++
  tests/qtest/test-x86-cpuid-compat.c |  2 ++
  tests/qtest/usb-hcd-xhci-test.c     |  4 ++++
- 11 files changed, 35 insertions(+), 19 deletions(-)
+ 12 files changed, 36 insertions(+), 20 deletions(-)
 
+diff --git a/tests/meson.build b/tests/meson.build
+index afeb6be689..e562a0499e 100644
+--- a/tests/meson.build
++++ b/tests/meson.build
+@@ -136,7 +136,7 @@ if have_block
+     'test-blockjob': [testblock],
+     'test-blockjob-txn': [testblock],
+     'test-block-backend': [testblock],
+-    'test-block-iothread': [testblock],
++#    'test-block-iothread': [testblock],
+     'test-write-threshold': [testblock],
+     'test-crypto-hash': [crypto],
+     'test-crypto-hmac': [crypto],
 diff --git a/tests/qemu-iotests/051 b/tests/qemu-iotests/051
-index bee2607..61d25c4 100755
+index bee26075b2..61d25c4ed7 100755
 --- a/tests/qemu-iotests/051
 +++ b/tests/qemu-iotests/051
 @@ -183,11 +183,11 @@ run_qemu -drive if=virtio
@@ -88,7 +104,7 @@ index bee2607..61d25c4 100755
       *)
          ;;
 diff --git a/tests/qtest/boot-serial-test.c b/tests/qtest/boot-serial-test.c
-index b6b1c23..cefa1b3 100644
+index b6b1c23cd0..cefa1b38b7 100644
 --- a/tests/qtest/boot-serial-test.c
 +++ b/tests/qtest/boot-serial-test.c
 @@ -120,19 +120,23 @@ static testdef_t tests[] = {
@@ -117,7 +133,7 @@ index b6b1c23..cefa1b3 100644
      { "sparc", "LX", "", "TMS390S10" },
      { "sparc", "SS-4", "", "MB86904" },
 diff --git a/tests/qtest/cdrom-test.c b/tests/qtest/cdrom-test.c
-index 5af944a..cd5b8e0 100644
+index 5af944a5fb..cd5b8e0f16 100644
 --- a/tests/qtest/cdrom-test.c
 +++ b/tests/qtest/cdrom-test.c
 @@ -140,6 +140,7 @@ static void add_x86_tests(void)
@@ -137,7 +153,7 @@ index 5af944a..cd5b8e0 100644
  
  static void add_s390x_tests(void)
 diff --git a/tests/qtest/cpu-plug-test.c b/tests/qtest/cpu-plug-test.c
-index a1c6894..a8f0767 100644
+index a1c689414b..a8f076711c 100644
 --- a/tests/qtest/cpu-plug-test.c
 +++ b/tests/qtest/cpu-plug-test.c
 @@ -110,8 +110,8 @@ static void add_pseries_test_case(const char *mname)
@@ -152,7 +168,7 @@ index a1c6894..a8f0767 100644
      }
      data = g_new(PlugTestData, 1);
 diff --git a/tests/qtest/e1000-test.c b/tests/qtest/e1000-test.c
-index ea286d1..a1847ac 100644
+index ea286d1793..a1847ac8ed 100644
 --- a/tests/qtest/e1000-test.c
 +++ b/tests/qtest/e1000-test.c
 @@ -22,9 +22,11 @@ struct QE1000 {
@@ -168,7 +184,7 @@ index ea286d1..a1847ac 100644
  
  static void *e1000_get_driver(void *obj, const char *interface)
 diff --git a/tests/qtest/hd-geo-test.c b/tests/qtest/hd-geo-test.c
-index f7b7cfb..99cccf8 100644
+index f7b7cfbc2d..99cccf8638 100644
 --- a/tests/qtest/hd-geo-test.c
 +++ b/tests/qtest/hd-geo-test.c
 @@ -737,6 +737,7 @@ static void test_override_ide(void)
@@ -200,7 +216,7 @@ index f7b7cfb..99cccf8 100644
          qtest_add_func("hd-geo/override/zero_chs", test_override_zero_chs);
          qtest_add_func("hd-geo/override/scsi_hot_unplug",
 diff --git a/tests/qtest/meson.build b/tests/qtest/meson.build
-index c19f1c8..15ed460 100644
+index c19f1c8503..15ed460ff0 100644
 --- a/tests/qtest/meson.build
 +++ b/tests/qtest/meson.build
 @@ -51,16 +51,13 @@ qtests_i386 = \
@@ -249,7 +265,7 @@ index c19f1c8..15ed460 100644
     'cpu-plug-test',
     'migration-test']
 diff --git a/tests/qtest/prom-env-test.c b/tests/qtest/prom-env-test.c
-index f41d801..f8dc478 100644
+index f41d80154a..f8dc478ce8 100644
 --- a/tests/qtest/prom-env-test.c
 +++ b/tests/qtest/prom-env-test.c
 @@ -89,10 +89,14 @@ int main(int argc, char *argv[])
@@ -268,7 +284,7 @@ index f41d801..f8dc478 100644
          add_tests(sparc_machines);
      } else if (!strcmp(arch, "sparc64")) {
 diff --git a/tests/qtest/test-x86-cpuid-compat.c b/tests/qtest/test-x86-cpuid-compat.c
-index 7ca1883..983aa07 100644
+index 7ca1883a29..983aa0719a 100644
 --- a/tests/qtest/test-x86-cpuid-compat.c
 +++ b/tests/qtest/test-x86-cpuid-compat.c
 @@ -300,6 +300,7 @@ int main(int argc, char **argv)
@@ -288,7 +304,7 @@ index 7ca1883..983aa07 100644
      /* Test feature parsing */
      add_feature_test("x86/cpuid/features/plus",
 diff --git a/tests/qtest/usb-hcd-xhci-test.c b/tests/qtest/usb-hcd-xhci-test.c
-index 10ef9d2..3855873 100644
+index 10ef9d2a91..3855873050 100644
 --- a/tests/qtest/usb-hcd-xhci-test.c
 +++ b/tests/qtest/usb-hcd-xhci-test.c
 @@ -21,6 +21,7 @@ static void test_xhci_hotplug(void)
@@ -318,5 +334,5 @@ index 10ef9d2..3855873 100644
  
      qtest_start("-device nec-usb-xhci,id=xhci"
 -- 
-1.8.3.1
+2.18.4
 

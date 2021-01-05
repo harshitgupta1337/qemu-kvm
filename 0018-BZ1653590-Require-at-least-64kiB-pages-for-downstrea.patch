@@ -1,4 +1,4 @@
-From f0561c2a8caa9080f2849b5679816e2268ee420d Mon Sep 17 00:00:00 2001
+From 0619f89b5e0eb713e4d426c869e7a6a826a13728 Mon Sep 17 00:00:00 2001
 From: David Gibson <dgibson@redhat.com>
 Date: Wed, 6 Feb 2019 03:58:56 +0000
 Subject: BZ1653590: Require at least 64kiB pages for downstream guests & hosts
@@ -32,7 +32,7 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/hw/ppc/spapr_caps.c b/hw/ppc/spapr_caps.c
-index 9341e97..f11428e 100644
+index 9341e9782a..f11428eae9 100644
 --- a/hw/ppc/spapr_caps.c
 +++ b/hw/ppc/spapr_caps.c
 @@ -333,12 +333,19 @@ bool spapr_check_pagesize(SpaprMachineState *spapr, hwaddr pagesize,
@@ -56,5 +56,5 @@ index 9341e97..f11428e 100644
      spapr_check_pagesize(spapr, qemu_minrampagesize(), errp);
  }
 -- 
-1.8.3.1
+2.18.4
 

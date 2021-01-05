@@ -8,7 +8,7 @@
 %global have_gluster  1
 %global have_kvm_setup 0
 %global have_memlock_limits 0
-%global rcversion -rc3
+
 
 
 %ifnarch %{ix86} x86_64
@@ -64,7 +64,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.2.0
-Release: rc3.1%{?dist}
+Release: 2%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -73,7 +73,7 @@ URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
 
-Source0: http://wiki.qemu.org/download/qemu-5.2.0-rc3.tar.xz
+Source0: http://wiki.qemu.org/download/qemu-5.2.0.tar.xz
 
 # KSM control scripts
 Source4: ksm.service
@@ -117,7 +117,13 @@ Patch0016: 0016-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
 Patch0017: 0017-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0018: 0018-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0019: 0019-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
-Patch0020: 0020-Build-RHEL-9.patch
+Patch0021: 0021-redhat-Define-hw_compat_8_3.patch
+Patch0022: 0022-redhat-Add-spapr_machine_rhel_default_class_options.patch
+Patch0023: 0023-redhat-Define-pseries-rhel8.4.0-machine-type.patch
+Patch0024: 0024-redhat-s390x-add-rhel-8.4.0-compat-machine.patch
+Patch0027: 0027-block-vpc-Make-vpc_open-read-the-full-dynamic-header.patch
+Patch0028: 0028-GCC-11-warnings-hacks.patch
+Patch0029: 0029-Disable-problematic-tests-for-initial-build.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -247,13 +253,14 @@ hardware for a full system such as a PC and its associated peripherals.
 Summary: qemu-kvm core components
 Requires: %{name}-common = %{epoch}:%{version}-%{release}
 Requires: qemu-img = %{epoch}:%{version}-%{release}
-Conflicts: qemu-kiwi
-%ifarch %{ix86} x86_64
-Requires: edk2-ovmf
-%endif
-%ifarch aarch64
-Requires: edk2-aarch64
-%endif
+
+# Temporary disable edk2 dependency as there's no edk2 available yet
+#%ifarch %{ix86} x86_64
+#Requires: edk2-ovmf
+#%endif
+#%ifarch aarch64
+#Requires: edk2-aarch64
+#%endif
 
 %ifarch %{power64}
 Requires: SLOF >= %{SLOF_gittagdate}-1.git%{SLOF_gittagcommit}
@@ -418,7 +425,7 @@ mkdir slirp
 # XXX: ugly hack to copy source tree into a new folder.
 # it allows to build qemu-kiwi without touching the original source tree.
 # This is required as the build isolation is not 100% as we also have to
-# change the source tree when building qemu-kiwi. And, when we do that, 
+# change the source tree when building qemu-kiwi. And, when we do that,
 # calling "make check" on qemu-kvm see that change and behaves baddly.
 # Newer version of qemu allow us to create a better sollution, and this
 # hack can be dropped.
@@ -582,15 +589,12 @@ pushd %{qemu_kvm_build}
   --enable-attr \
 %ifarch %{ix86} x86_64
   --enable-avx2 \
-%else
 %endif
   --enable-cap-ng \
   --enable-capstone \
   --enable-coroutine-pool \
   --enable-curl \
   --enable-debug-info \
-  --disable-debug-tcg \
-  --disable-dmg \
   --enable-docs \
 %if 0%{have_fdt}
   --enable-fdt \
@@ -652,8 +656,8 @@ pushd %{qemu_kvm_build}
   --enable-vnc-sasl \
   --enable-werror \
   --enable-xkbcommon \
-  --disable-zstd \
   --without-default-devices
+
 
 echo "qemu-kvm config-host.mak contents:"
 echo "==="
@@ -702,6 +706,7 @@ find ../default-configs -name "*-rh-devices.mak" \
   --extra-ldflags="-Wl,--build-id -Wl,-z,relro -Wl,-z,now" \
   --extra-cflags="%{optflags}" \
   --with-pkgversion="%{name}-%{version}-%{release}" \
+  --with-suffix="%{name}" \
   --firmwarepath=%{_prefix}/share/qemu-firmware \
   --python=%{__python3} \
   --target-list="%{buildarch}" \
@@ -733,6 +738,7 @@ find ../default-configs -name "*-rh-devices.mak" \
 %ifnarch s390x
   --enable-numa \
 %endif
+  --enable-pie \
   --enable-seccomp \
   --enable-system \
   --enable-tcg \
@@ -746,6 +752,7 @@ find ../default-configs -name "*-rh-devices.mak" \
   --enable-werror \
   --enable-xkbcommon \
   --without-default-devices
+
 
 echo "qemu-kiki config-host.mak contents:"
 echo "==="
@@ -1101,25 +1108,6 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
     fi
 %endif
 
-%post -n qemu-kiwi
-# load kvm modules now, so we can make sure no reboot is needed.
-# If there's already a kvm module installed, we don't mess with it
-%udev_rules_update
-sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
-    udevadm trigger --subsystem-match=misc --sysname-match=kvm --action=add || :
-%if %{have_kvm_setup}
-    systemctl daemon-reload # Make sure it sees the new presets and unitfile
-    %systemd_post kvm-setup.service
-    if systemctl is-enabled kvm-setup.service > /dev/null; then
-        systemctl start kvm-setup.service
-    fi
-%endif
-
-%if %{have_kvm_setup}
-%preun -n qemu-kiwi
-%systemd_preun kvm-setup.service
-%endif
-
 %preun -n qemu-kvm-common
 %systemd_preun ksm.service
 %systemd_preun ksmtuned.service
@@ -1318,6 +1306,36 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 
 
 %changelog
+* Tue Jan 05 2021 Miroslav Rezanina <mrezanin@redhat.com> - 5.2.0-2.el9
+- Rebuild for RHEL 9
+
+* Tue Dec 15 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-2.el8
+- kvm-redhat-Define-hw_compat_8_3.patch [bz#1893935]
+- kvm-redhat-Add-spapr_machine_rhel_default_class_options.patch [bz#1893935]
+- kvm-redhat-Define-pseries-rhel8.4.0-machine-type.patch [bz#1893935]
+- kvm-redhat-s390x-add-rhel-8.4.0-compat-machine.patch [bz#1836282]
+- Resolves: bz#1836282
+  (New machine type for qemu-kvm on s390x in RHEL-AV)
+- Resolves: bz#1893935
+  (New machine type on RHEL-AV 8.4 for ppc64le)
+
+* Wed Dec 09 2020 Miroslav Rezanina <mrezanin@redhat.com> - 5.2.0-1.el8
+- Rebase to QEMU 5.2.0 [bz#1905933]
+- Resolves: bz#1905933
+  (Rebase qemu-kvm to version 5.2.0)
+
+* Tue Dec 01 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-16.el8
+- kvm-redhat-introduces-disable_everything-macro-into-the-.patch [bz#1884611]
+- kvm-redhat-scripts-extract_build_cmd.py-Avoid-listing-em.patch [bz#1884611]
+- kvm-redhat-Removing-unecessary-configurations.patch [bz#1884611]
+- kvm-redhat-Fixing-rh-local-build.patch [bz#1884611]
+- kvm-redhat-allow-Makefile-rh-prep-builddep-to-fail.patch [bz#1884611]
+- kvm-redhat-adding-rh-rpm-target.patch [bz#1884611]
+- kvm-redhat-move-shareable-files-from-qemu-kvm-core-to-qe.patch [bz#1884611]
+- kvm-redhat-Add-qemu-kiwi-subpackage.patch [bz#1884611]
+- Resolves: bz#1884611
+  (Build kata-specific version of qemu)
+
 * Mon Nov 16 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.1.0-15.el8
 - kvm-redhat-add-un-pre-install-systemd-hooks-for-qemu-ga.patch [bz#1882719]
 - kvm-rcu-Implement-drain_call_rcu.patch [bz#1812399 bz#1866707]

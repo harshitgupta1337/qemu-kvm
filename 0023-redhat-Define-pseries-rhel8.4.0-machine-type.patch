@@ -1,0 +1,70 @@
+From e5f8c128550c8e6020095152a9fa171cccc6aa18 Mon Sep 17 00:00:00 2001
+From: Greg Kurz <gkurz@redhat.com>
+Date: Fri, 20 Nov 2020 14:00:33 -0500
+Subject: redhat: Define pseries-rhel8.4.0 machine type
+
+RH-Author: Greg Kurz <gkurz@redhat.com>
+Message-id: <20201120140033.578472-4-gkurz@redhat.com>
+Patchwork-id: 99792
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH v2 3/3] redhat: Define pseries-rhel8.4.0 machine type
+Bugzilla: 1893935
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: David Gibson <dgibson@redhat.com>
+
+From: Greg Kurz <groug@kaod.org>
+
+Signed-off-by: Greg Kurz <gkurz@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/ppc/spapr.c | 25 ++++++++++++++++++++++---
+ 1 file changed, 22 insertions(+), 3 deletions(-)
+
+diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
+index 1d7482b2fb..4f61b64a21 100644
+--- a/hw/ppc/spapr.c
++++ b/hw/ppc/spapr.c
+@@ -4972,6 +4972,19 @@ static void spapr_machine_rhel_default_class_options(MachineClass *mc)
+     mc->max_cpus = 384;
+ }
+ 
++/*
++ * pseries-rhel8.4.0
++ * like pseries-5.2
++ */
++
++static void spapr_machine_rhel840_class_options(MachineClass *mc)
++{
++    /* The default machine type must apply the RHEL specific defaults */
++    spapr_machine_rhel_default_class_options(mc);
++}
++
++DEFINE_SPAPR_MACHINE(rhel840, "rhel8.4.0", true);
++
+ /*
+  * pseries-rhel8.3.0
+  * like pseries-5.1
+@@ -4979,11 +4992,17 @@ static void spapr_machine_rhel_default_class_options(MachineClass *mc)
+ 
+ static void spapr_machine_rhel830_class_options(MachineClass *mc)
+ {
+-    /* The default machine type must apply the RHEL specific defaults */
+-    spapr_machine_rhel_default_class_options(mc);
++    SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
++
++    spapr_machine_rhel840_class_options(mc);
++    compat_props_add(mc->compat_props, hw_compat_rhel_8_3,
++                     hw_compat_rhel_8_3_len);
++
++    /* from pseries-5.1 */
++    smc->pre_5_2_numa_associativity = true;
+ }
+ 
+-DEFINE_SPAPR_MACHINE(rhel830, "rhel8.3.0", true);
++DEFINE_SPAPR_MACHINE(rhel830, "rhel8.3.0", false);
+ 
+ /*
+  * pseries-rhel8.2.0
+-- 
+2.18.4
+

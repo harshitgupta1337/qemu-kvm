@@ -1,4 +1,4 @@
-From 3fb64e4127e2b74f0d93a51dd3709fe30adc1d23 Mon Sep 17 00:00:00 2001
+From 004d31cf0e8bb83374a85ecab59eb22683a1e361 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:10:31 +0200
 Subject: Add x86_64 machine types
@@ -49,17 +49,17 @@ Merged patches (5.2.0 rc0):
 - e2d3209 x86: lpc9: let firmware negotiate 'CPU hotplug with SMI' features (partialy)
 ---
  hw/i386/acpi-build.c |   3 +
- hw/i386/pc.c         | 273 ++++++++++++++++++++++++++++++++++++++++++++++++++-
- hw/i386/pc_piix.c    | 215 +++++++++++++++++++++++++++++++++++++++-
- hw/i386/pc_q35.c     | 185 +++++++++++++++++++++++++++++++++-
+ hw/i386/pc.c         | 273 ++++++++++++++++++++++++++++++++++++++++++-
+ hw/i386/pc_piix.c    | 215 +++++++++++++++++++++++++++++++++-
+ hw/i386/pc_q35.c     | 185 ++++++++++++++++++++++++++++-
  include/hw/boards.h  |   2 +
- include/hw/i386/pc.h |  36 +++++++
+ include/hw/i386/pc.h |  36 ++++++
  target/i386/cpu.c    |   3 +-
  target/i386/kvm.c    |   4 +
  8 files changed, 714 insertions(+), 7 deletions(-)
 
 diff --git a/hw/i386/acpi-build.c b/hw/i386/acpi-build.c
-index 1f5c211..b1082bd 100644
+index 1f5c211245..b1082bd412 100644
 --- a/hw/i386/acpi-build.c
 +++ b/hw/i386/acpi-build.c
 @@ -217,6 +217,9 @@ static void acpi_get_pm_info(MachineState *machine, AcpiPmInfo *pm)
@@ -73,7 +73,7 @@ index 1f5c211..b1082bd 100644
          pm->smi_on_cpuhp =
              !!(smi_features & BIT_ULL(ICH9_LPC_SMI_F_CPU_HOTPLUG_BIT));
 diff --git a/hw/i386/pc.c b/hw/i386/pc.c
-index 17b514d..f3fc695 100644
+index 17b514d1da..f3fc695fe2 100644
 --- a/hw/i386/pc.c
 +++ b/hw/i386/pc.c
 @@ -352,6 +352,271 @@ GlobalProperty pc_compat_1_4[] = {
@@ -378,7 +378,7 @@ index 17b514d..f3fc695 100644
      mc->wakeup = pc_machine_wakeup;
      hc->pre_plug = pc_machine_device_pre_plug_cb;
 diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
-index 9fcc5aa..815da79 100644
+index 9fcc5aaf69..815da79108 100644
 --- a/hw/i386/pc_piix.c
 +++ b/hw/i386/pc_piix.c
 @@ -54,6 +54,7 @@
@@ -622,7 +622,7 @@ index 9fcc5aa..815da79 100644
 +DEFINE_PC_MACHINE(rhel700, "pc-i440fx-rhel7.0.0", pc_init_rhel700,
 +                  pc_machine_rhel700_options);
 diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
-index f6c2ef4..3340008 100644
+index f6c2ef4e43..3340008c00 100644
 --- a/hw/i386/pc_q35.c
 +++ b/hw/i386/pc_q35.c
 @@ -195,8 +195,8 @@ static void pc_q35_init(MachineState *machine)
@@ -829,7 +829,7 @@ index f6c2ef4..3340008 100644
 +DEFINE_PC_MACHINE(q35_rhel730, "pc-q35-rhel7.3.0", pc_q35_init_rhel730,
 +                  pc_q35_machine_rhel730_options);
 diff --git a/include/hw/boards.h b/include/hw/boards.h
-index dd18c9e..4e4a54b 100644
+index dd18c9e94d..4e4a54b313 100644
 --- a/include/hw/boards.h
 +++ b/include/hw/boards.h
 @@ -202,6 +202,8 @@ struct MachineClass {
@@ -842,7 +842,7 @@ index dd18c9e..4e4a54b 100644
      bool smbus_no_migration_support;
      bool nvdimm_supported;
 diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
-index ae6bf1d..e2ba9a4 100644
+index ae6bf1d209..e2ba9a4b58 100644
 --- a/include/hw/i386/pc.h
 +++ b/include/hw/i386/pc.h
 @@ -125,6 +125,9 @@ struct PCMachineClass {
@@ -896,7 +896,7 @@ index ae6bf1d..e2ba9a4 100644
   * depending on QEMU versions up to QEMU 2.4.
   */
 diff --git a/target/i386/cpu.c b/target/i386/cpu.c
-index 5a8c960..dc592e9 100644
+index 5a8c96072e..dc592e990e 100644
 --- a/target/i386/cpu.c
 +++ b/target/i386/cpu.c
 @@ -1803,7 +1803,7 @@ static X86CPUDefinition builtin_x86_defs[] = {
@@ -917,7 +917,7 @@ index 5a8c960..dc592e9 100644
  };
  
 diff --git a/target/i386/kvm.c b/target/i386/kvm.c
-index a2934dd..19bc39b 100644
+index a2934dda02..19bc39b9e3 100644
 --- a/target/i386/kvm.c
 +++ b/target/i386/kvm.c
 @@ -3126,6 +3126,7 @@ static int kvm_get_msrs(X86CPU *cpu)
@@ -939,5 +939,5 @@ index a2934dd..19bc39b 100644
          case MSR_KVM_ASYNC_PF_INT:
              env->async_pf_int_msr = msrs[i].data;
 -- 
-1.8.3.1
+2.18.4
 

@@ -1,6 +1,6 @@
-From 03c528f8dd064ee0ac40bd37f686cd5616071fdf Mon Sep 17 00:00:00 2001
+From f04f3d3ab0bb9ffd06a16ee5157f08bcb4f5f459 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
-Date: Wed, 29 Jul 2020 07:48:57 +0200
+Date: Wed, 2 Dec 2020 07:38:31 +0100
 Subject: redhat: Adding slirp to the exploded tree
 
 RH-Author: Danilo de Paula <ddepaula@redhat.com>
@@ -48,82 +48,83 @@ Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
 
 Rebase notes (5.1.0-rc2):
   - Update slirp directory to commit ce94eba2042d52a0ba3d9e252ebce86715e94275 (used upstream)
+
+Rebase notes (5.2.0-rc4):
+  - Update slirp directory to commit 8f43a99191afb47ca3f3c6972f6306209f367ece (used upstream)
 ---
  .gitmodules                     |    3 -
  slirp/.clang-format             |   58 ++
  slirp/.gitignore                |   10 +
  slirp/.gitlab-ci.yml            |   27 +
- slirp/.gitpublish               |    3 +
- slirp/CHANGELOG.md              |   88 +++
+ slirp/CHANGELOG.md              |   88 ++
  slirp/COPYRIGHT                 |   62 ++
  slirp/Makefile                  |   62 ++
  slirp/README.md                 |   60 ++
  slirp/build-aux/git-version-gen |  158 ++++
  slirp/build-aux/meson-dist      |   16 +
- slirp/meson.build               |  134 ++++
- slirp/src/arp_table.c           |   92 +++
- slirp/src/bootp.c               |  369 ++++++++++
- slirp/src/bootp.h               |  129 ++++
- slirp/src/cksum.c               |  179 +++++
- slirp/src/debug.h               |   51 ++
- slirp/src/dhcpv6.c              |  224 ++++++
+ slirp/meson.build               |  134 +++
+ slirp/src/arp_table.c           |   92 ++
+ slirp/src/bootp.c               |  369 ++++++++
+ slirp/src/bootp.h               |  129 +++
+ slirp/src/cksum.c               |  179 ++++
+ slirp/src/debug.h               |   51 +
+ slirp/src/dhcpv6.c              |  224 +++++
  slirp/src/dhcpv6.h              |   68 ++
- slirp/src/dnssearch.c           |  306 ++++++++
- slirp/src/if.c                  |  213 ++++++
+ slirp/src/dnssearch.c           |  306 ++++++
+ slirp/src/if.c                  |  213 +++++
  slirp/src/if.h                  |   25 +
- slirp/src/ip.h                  |  242 ++++++
- slirp/src/ip6.h                 |  214 ++++++
- slirp/src/ip6_icmp.c            |  433 +++++++++++
- slirp/src/ip6_icmp.h            |  219 ++++++
- slirp/src/ip6_input.c           |   85 +++
+ slirp/src/ip.h                  |  242 +++++
+ slirp/src/ip6.h                 |  214 +++++
+ slirp/src/ip6_icmp.c            |  433 +++++++++
+ slirp/src/ip6_icmp.h            |  219 +++++
+ slirp/src/ip6_input.c           |   85 ++
  slirp/src/ip6_output.c          |   39 +
- slirp/src/ip_icmp.c             |  492 +++++++++++++
- slirp/src/ip_icmp.h             |  166 +++++
- slirp/src/ip_input.c            |  461 ++++++++++++
- slirp/src/ip_output.c           |  169 +++++
+ slirp/src/ip_icmp.c             |  492 ++++++++++
+ slirp/src/ip_icmp.h             |  166 ++++
+ slirp/src/ip_input.c            |  461 +++++++++
+ slirp/src/ip_output.c           |  169 ++++
  slirp/src/libslirp-version.h.in |   24 +
- slirp/src/libslirp.h            |  171 +++++
+ slirp/src/libslirp.h            |  171 ++++
  slirp/src/libslirp.map          |   30 +
  slirp/src/main.h                |   16 +
- slirp/src/mbuf.c                |  224 ++++++
- slirp/src/mbuf.h                |  127 ++++
- slirp/src/misc.c                |  390 ++++++++++
+ slirp/src/mbuf.c                |  224 +++++
+ slirp/src/mbuf.h                |  127 +++
+ slirp/src/misc.c                |  390 ++++++++
  slirp/src/misc.h                |   72 ++
- slirp/src/ncsi-pkt.h            |  445 +++++++++++
- slirp/src/ncsi.c                |  193 +++++
- slirp/src/ndp_table.c           |   87 +++
- slirp/src/sbuf.c                |  168 +++++
+ slirp/src/ncsi-pkt.h            |  445 +++++++++
+ slirp/src/ncsi.c                |  197 ++++
+ slirp/src/ndp_table.c           |   87 ++
+ slirp/src/sbuf.c                |  168 ++++
  slirp/src/sbuf.h                |   27 +
- slirp/src/slirp.c               | 1185 ++++++++++++++++++++++++++++++
- slirp/src/slirp.h               |  284 ++++++++
- slirp/src/socket.c              |  954 ++++++++++++++++++++++++
- slirp/src/socket.h              |  164 +++++
- slirp/src/state.c               |  379 ++++++++++
+ slirp/src/slirp.c               | 1189 ++++++++++++++++++++++++
+ slirp/src/slirp.h               |  284 ++++++
+ slirp/src/socket.c              |  954 +++++++++++++++++++
+ slirp/src/socket.h              |  164 ++++
+ slirp/src/state.c               |  379 ++++++++
  slirp/src/stream.c              |  120 +++
  slirp/src/stream.h              |   35 +
- slirp/src/tcp.h                 |  169 +++++
- slirp/src/tcp_input.c           | 1539 +++++++++++++++++++++++++++++++++++++++
- slirp/src/tcp_output.c          |  516 +++++++++++++
- slirp/src/tcp_subr.c            |  980 +++++++++++++++++++++++++
- slirp/src/tcp_timer.c           |  286 ++++++++
- slirp/src/tcp_timer.h           |  130 ++++
+ slirp/src/tcp.h                 |  169 ++++
+ slirp/src/tcp_input.c           | 1539 +++++++++++++++++++++++++++++++
+ slirp/src/tcp_output.c          |  516 +++++++++++
+ slirp/src/tcp_subr.c            |  980 ++++++++++++++++++++
+ slirp/src/tcp_timer.c           |  286 ++++++
+ slirp/src/tcp_timer.h           |  130 +++
  slirp/src/tcp_var.h             |  161 ++++
  slirp/src/tcpip.h               |  104 +++
- slirp/src/tftp.c                |  464 ++++++++++++
+ slirp/src/tftp.c                |  464 ++++++++++
  slirp/src/tftp.h                |   54 ++
- slirp/src/udp.c                 |  365 ++++++++++
- slirp/src/udp.h                 |   90 +++
- slirp/src/udp6.c                |  173 +++++
- slirp/src/util.c                |  428 +++++++++++
- slirp/src/util.h                |  189 +++++
+ slirp/src/udp.c                 |  365 ++++++++
+ slirp/src/udp.h                 |   90 ++
+ slirp/src/udp6.c                |  173 ++++
+ slirp/src/util.c                |  428 +++++++++
+ slirp/src/util.h                |  189 ++++
  slirp/src/version.c             |    8 +
- slirp/src/vmstate.c             |  444 +++++++++++
- slirp/src/vmstate.h             |  391 ++++++++++
- 70 files changed, 16440 insertions(+), 3 deletions(-)
+ slirp/src/vmstate.c             |  444 +++++++++
+ slirp/src/vmstate.h             |  391 ++++++++
+ 69 files changed, 16445 insertions(+), 3 deletions(-)
  create mode 100644 slirp/.clang-format
  create mode 100644 slirp/.gitignore
  create mode 100644 slirp/.gitlab-ci.yml
- create mode 100644 slirp/.gitpublish
  create mode 100644 slirp/CHANGELOG.md
  create mode 100644 slirp/COPYRIGHT
  create mode 100644 slirp/Makefile
@@ -192,7 +193,7 @@ Rebase notes (5.1.0-rc2):
 
 diff --git a/slirp/.clang-format b/slirp/.clang-format
 new file mode 100644
-index 0000000..17fb49f
+index 0000000000..17fb49fe65
 --- /dev/null
 +++ b/slirp/.clang-format
 @@ -0,0 +1,58 @@
@@ -256,7 +257,7 @@ index 0000000..17fb49f
 +...
 diff --git a/slirp/CHANGELOG.md b/slirp/CHANGELOG.md
 new file mode 100644
-index 0000000..67b0a74
+index 0000000000..67b0a74195
 --- /dev/null
 +++ b/slirp/CHANGELOG.md
 @@ -0,0 +1,88 @@
@@ -350,7 +351,7 @@ index 0000000..67b0a74
 +[4.0.0]: https://gitlab.freedesktop.org/slirp/libslirp/commits/v4.0.0
 diff --git a/slirp/COPYRIGHT b/slirp/COPYRIGHT
 new file mode 100644
-index 0000000..ed49512
+index 0000000000..ed49512dbc
 --- /dev/null
 +++ b/slirp/COPYRIGHT
 @@ -0,0 +1,62 @@
@@ -418,7 +419,7 @@ index 0000000..ed49512
 +copyrights.
 diff --git a/slirp/Makefile b/slirp/Makefile
 new file mode 100644
-index 0000000..8857b41
+index 0000000000..8857b4159b
 --- /dev/null
 +++ b/slirp/Makefile
 @@ -0,0 +1,62 @@
@@ -486,7 +487,7 @@ index 0000000..8857b41
 +-include $(DEPS)
 diff --git a/slirp/README.md b/slirp/README.md
 new file mode 100644
-index 0000000..dc11e5f
+index 0000000000..dc11e5f18b
 --- /dev/null
 +++ b/slirp/README.md
 @@ -0,0 +1,60 @@
@@ -552,7 +553,7 @@ index 0000000..dc11e5f
 +See the [COPYRIGHT](COPYRIGHT) file for details.
 diff --git a/slirp/build-aux/git-version-gen b/slirp/build-aux/git-version-gen
 new file mode 100755
-index 0000000..5617eb8
+index 0000000000..5617eb8d4e
 --- /dev/null
 +++ b/slirp/build-aux/git-version-gen
 @@ -0,0 +1,158 @@
@@ -716,7 +717,7 @@ index 0000000..5617eb8
 +# End:
 diff --git a/slirp/build-aux/meson-dist b/slirp/build-aux/meson-dist
 new file mode 100755
-index 0000000..80d534f
+index 0000000000..80d534fec6
 --- /dev/null
 +++ b/slirp/build-aux/meson-dist
 @@ -0,0 +1,16 @@
@@ -738,7 +739,7 @@ index 0000000..80d534f
 +echo "$1" > "$MESON_DIST_ROOT/.tarball-version"
 diff --git a/slirp/meson.build b/slirp/meson.build
 new file mode 100644
-index 0000000..3a27149
+index 0000000000..3a27149373
 --- /dev/null
 +++ b/slirp/meson.build
 @@ -0,0 +1,134 @@
@@ -878,7 +879,7 @@ index 0000000..3a27149
 +)
 diff --git a/slirp/src/arp_table.c b/slirp/src/arp_table.c
 new file mode 100644
-index 0000000..959e5b9
+index 0000000000..959e5b9ec0
 --- /dev/null
 +++ b/slirp/src/arp_table.c
 @@ -0,0 +1,92 @@
@@ -976,7 +977,7 @@ index 0000000..959e5b9
 +}
 diff --git a/slirp/src/bootp.c b/slirp/src/bootp.c
 new file mode 100644
-index 0000000..46e9681
+index 0000000000..46e96810ab
 --- /dev/null
 +++ b/slirp/src/bootp.c
 @@ -0,0 +1,369 @@
@@ -1351,7 +1352,7 @@ index 0000000..46e9681
 +}
 diff --git a/slirp/src/bootp.h b/slirp/src/bootp.h
 new file mode 100644
-index 0000000..a57fa51
+index 0000000000..a57fa51bcb
 --- /dev/null
 +++ b/slirp/src/bootp.h
 @@ -0,0 +1,129 @@
@@ -1486,7 +1487,7 @@ index 0000000..a57fa51
 +#endif
 diff --git a/slirp/src/cksum.c b/slirp/src/cksum.c
 new file mode 100644
-index 0000000..4d08380
+index 0000000000..4d08380a4e
 --- /dev/null
 +++ b/slirp/src/cksum.c
 @@ -0,0 +1,179 @@
@@ -1671,7 +1672,7 @@ index 0000000..4d08380
 +}
 diff --git a/slirp/src/debug.h b/slirp/src/debug.h
 new file mode 100644
-index 0000000..47712bd
+index 0000000000..47712bd78b
 --- /dev/null
 +++ b/slirp/src/debug.h
 @@ -0,0 +1,51 @@
@@ -1728,7 +1729,7 @@ index 0000000..47712bd
 +#endif /* DEBUG_H_ */
 diff --git a/slirp/src/dhcpv6.c b/slirp/src/dhcpv6.c
 new file mode 100644
-index 0000000..77b451b
+index 0000000000..77b451b910
 --- /dev/null
 +++ b/slirp/src/dhcpv6.c
 @@ -0,0 +1,224 @@
@@ -1958,7 +1959,7 @@ index 0000000..77b451b
 +}
 diff --git a/slirp/src/dhcpv6.h b/slirp/src/dhcpv6.h
 new file mode 100644
-index 0000000..d12c49b
+index 0000000000..d12c49b36c
 --- /dev/null
 +++ b/slirp/src/dhcpv6.h
 @@ -0,0 +1,68 @@
@@ -2032,7 +2033,7 @@ index 0000000..d12c49b
 +#endif
 diff --git a/slirp/src/dnssearch.c b/slirp/src/dnssearch.c
 new file mode 100644
-index 0000000..55497e8
+index 0000000000..55497e860e
 --- /dev/null
 +++ b/slirp/src/dnssearch.c
 @@ -0,0 +1,306 @@
@@ -2344,7 +2345,7 @@ index 0000000..55497e8
 +}
 diff --git a/slirp/src/if.c b/slirp/src/if.c
 new file mode 100644
-index 0000000..23190b5
+index 0000000000..23190b5593
 --- /dev/null
 +++ b/slirp/src/if.c
 @@ -0,0 +1,213 @@
@@ -2563,7 +2564,7 @@ index 0000000..23190b5
 +}
 diff --git a/slirp/src/if.h b/slirp/src/if.h
 new file mode 100644
-index 0000000..7cf9d27
+index 0000000000..7cf9d2750e
 --- /dev/null
 +++ b/slirp/src/if.h
 @@ -0,0 +1,25 @@
@@ -2594,7 +2595,7 @@ index 0000000..7cf9d27
 +#endif
 diff --git a/slirp/src/ip.h b/slirp/src/ip.h
 new file mode 100644
-index 0000000..e5d4aa8
+index 0000000000..e5d4aa8a6d
 --- /dev/null
 +++ b/slirp/src/ip.h
 @@ -0,0 +1,242 @@
@@ -2842,7 +2843,7 @@ index 0000000..e5d4aa8
 +#endif
 diff --git a/slirp/src/ip6.h b/slirp/src/ip6.h
 new file mode 100644
-index 0000000..0630309
+index 0000000000..0630309d29
 --- /dev/null
 +++ b/slirp/src/ip6.h
 @@ -0,0 +1,214 @@
@@ -3062,7 +3063,7 @@ index 0000000..0630309
 +#endif
 diff --git a/slirp/src/ip6_icmp.c b/slirp/src/ip6_icmp.c
 new file mode 100644
-index 0000000..d9c872b
+index 0000000000..d9c872bc97
 --- /dev/null
 +++ b/slirp/src/ip6_icmp.c
 @@ -0,0 +1,433 @@
@@ -3501,7 +3502,7 @@ index 0000000..d9c872b
 +}
 diff --git a/slirp/src/ip6_icmp.h b/slirp/src/ip6_icmp.h
 new file mode 100644
-index 0000000..c37e60f
+index 0000000000..c37e60f28d
 --- /dev/null
 +++ b/slirp/src/ip6_icmp.h
 @@ -0,0 +1,219 @@
@@ -3726,7 +3727,7 @@ index 0000000..c37e60f
 +#endif
 diff --git a/slirp/src/ip6_input.c b/slirp/src/ip6_input.c
 new file mode 100644
-index 0000000..a83e4f8
+index 0000000000..a83e4f8e3d
 --- /dev/null
 +++ b/slirp/src/ip6_input.c
 @@ -0,0 +1,85 @@
@@ -3817,7 +3818,7 @@ index 0000000..a83e4f8
 +}
 diff --git a/slirp/src/ip6_output.c b/slirp/src/ip6_output.c
 new file mode 100644
-index 0000000..b861106
+index 0000000000..b86110662c
 --- /dev/null
 +++ b/slirp/src/ip6_output.c
 @@ -0,0 +1,39 @@
@@ -3862,7 +3863,7 @@ index 0000000..b861106
 +}
 diff --git a/slirp/src/ip_icmp.c b/slirp/src/ip_icmp.c
 new file mode 100644
-index 0000000..13a0e55
+index 0000000000..13a0e55085
 --- /dev/null
 +++ b/slirp/src/ip_icmp.c
 @@ -0,0 +1,492 @@
@@ -4360,7 +4361,7 @@ index 0000000..13a0e55
 +}
 diff --git a/slirp/src/ip_icmp.h b/slirp/src/ip_icmp.h
 new file mode 100644
-index 0000000..84707db
+index 0000000000..84707db247
 --- /dev/null
 +++ b/slirp/src/ip_icmp.h
 @@ -0,0 +1,166 @@
@@ -4532,7 +4533,7 @@ index 0000000..84707db
 +#endif
 diff --git a/slirp/src/ip_input.c b/slirp/src/ip_input.c
 new file mode 100644
-index 0000000..7f017a2
+index 0000000000..7f017a238a
 --- /dev/null
 +++ b/slirp/src/ip_input.c
 @@ -0,0 +1,461 @@
@@ -4999,7 +5000,7 @@ index 0000000..7f017a2
 +}
 diff --git a/slirp/src/ip_output.c b/slirp/src/ip_output.c
 new file mode 100644
-index 0000000..22916a3
+index 0000000000..22916a37df
 --- /dev/null
 +++ b/slirp/src/ip_output.c
 @@ -0,0 +1,169 @@
@@ -5174,7 +5175,7 @@ index 0000000..22916a3
 +}
 diff --git a/slirp/src/libslirp-version.h.in b/slirp/src/libslirp-version.h.in
 new file mode 100644
-index 0000000..faa6c85
+index 0000000000..faa6c85952
 --- /dev/null
 +++ b/slirp/src/libslirp-version.h.in
 @@ -0,0 +1,24 @@
@@ -5204,7 +5205,7 @@ index 0000000..faa6c85
 +#endif /* LIBSLIRP_VERSION_H_ */
 diff --git a/slirp/src/libslirp.h b/slirp/src/libslirp.h
 new file mode 100644
-index 0000000..fb4c7e8
+index 0000000000..fb4c7e882c
 --- /dev/null
 +++ b/slirp/src/libslirp.h
 @@ -0,0 +1,171 @@
@@ -5381,7 +5382,7 @@ index 0000000..fb4c7e8
 +#endif /* LIBSLIRP_H */
 diff --git a/slirp/src/libslirp.map b/slirp/src/libslirp.map
 new file mode 100644
-index 0000000..72aab91
+index 0000000000..72aab912f4
 --- /dev/null
 +++ b/slirp/src/libslirp.map
 @@ -0,0 +1,30 @@
@@ -5417,7 +5418,7 @@ index 0000000..72aab91
 +} SLIRP_4.1;
 diff --git a/slirp/src/main.h b/slirp/src/main.h
 new file mode 100644
-index 0000000..3b3f883
+index 0000000000..3b3f883703
 --- /dev/null
 +++ b/slirp/src/main.h
 @@ -0,0 +1,16 @@
@@ -5439,7 +5440,7 @@ index 0000000..3b3f883
 +#endif
 diff --git a/slirp/src/mbuf.c b/slirp/src/mbuf.c
 new file mode 100644
-index 0000000..54ec721
+index 0000000000..54ec721eb5
 --- /dev/null
 +++ b/slirp/src/mbuf.c
 @@ -0,0 +1,224 @@
@@ -5669,7 +5670,7 @@ index 0000000..54ec721
 +}
 diff --git a/slirp/src/mbuf.h b/slirp/src/mbuf.h
 new file mode 100644
-index 0000000..546e785
+index 0000000000..546e7852c5
 --- /dev/null
 +++ b/slirp/src/mbuf.h
 @@ -0,0 +1,127 @@
@@ -5802,7 +5803,7 @@ index 0000000..546e785
 +#endif
 diff --git a/slirp/src/misc.c b/slirp/src/misc.c
 new file mode 100644
-index 0000000..e6bc0a2
+index 0000000000..e6bc0a207d
 --- /dev/null
 +++ b/slirp/src/misc.c
 @@ -0,0 +1,390 @@
@@ -6199,7 +6200,7 @@ index 0000000..e6bc0a2
 \ No newline at end of file
 diff --git a/slirp/src/misc.h b/slirp/src/misc.h
 new file mode 100644
-index 0000000..81b370c
+index 0000000000..81b370cfb1
 --- /dev/null
 +++ b/slirp/src/misc.h
 @@ -0,0 +1,72 @@
@@ -6277,7 +6278,7 @@ index 0000000..81b370c
 +#endif
 diff --git a/slirp/src/ncsi-pkt.h b/slirp/src/ncsi-pkt.h
 new file mode 100644
-index 0000000..7795ad8
+index 0000000000..7795ad83ee
 --- /dev/null
 +++ b/slirp/src/ncsi-pkt.h
 @@ -0,0 +1,445 @@
@@ -6728,10 +6729,10 @@ index 0000000..7795ad8
 +#endif /* NCSI_PKT_H */
 diff --git a/slirp/src/ncsi.c b/slirp/src/ncsi.c
 new file mode 100644
-index 0000000..3c1dfef
+index 0000000000..75dcc08356
 --- /dev/null
 +++ b/slirp/src/ncsi.c
-@@ -0,0 +1,193 @@
+@@ -0,0 +1,197 @@
 +/* SPDX-License-Identifier: BSD-3-Clause */
 +/*
 + * NC-SI (Network Controller Sideband Interface) "echo" model
@@ -6882,6 +6883,10 @@ index 0000000..3c1dfef
 +    uint32_t checksum;
 +    uint32_t *pchecksum;
 +
++    if (pkt_len < ETH_HLEN + sizeof(struct ncsi_pkt_hdr)) {
++        return; /* packet too short */
++    }
++
 +    memset(ncsi_reply, 0, sizeof(ncsi_reply));
 +
 +    memset(reh->h_dest, 0xff, ETH_ALEN);
@@ -6927,7 +6932,7 @@ index 0000000..3c1dfef
 +}
 diff --git a/slirp/src/ndp_table.c b/slirp/src/ndp_table.c
 new file mode 100644
-index 0000000..110d6ea
+index 0000000000..110d6ea0e4
 --- /dev/null
 +++ b/slirp/src/ndp_table.c
 @@ -0,0 +1,87 @@
@@ -7020,7 +7025,7 @@ index 0000000..110d6ea
 +}
 diff --git a/slirp/src/sbuf.c b/slirp/src/sbuf.c
 new file mode 100644
-index 0000000..2fb9176
+index 0000000000..2fb9176144
 --- /dev/null
 +++ b/slirp/src/sbuf.c
 @@ -0,0 +1,168 @@
@@ -7194,7 +7199,7 @@ index 0000000..2fb9176
 +}
 diff --git a/slirp/src/sbuf.h b/slirp/src/sbuf.h
 new file mode 100644
-index 0000000..01886fb
+index 0000000000..01886fbd01
 --- /dev/null
 +++ b/slirp/src/sbuf.h
 @@ -0,0 +1,27 @@
@@ -7227,10 +7232,10 @@ index 0000000..01886fb
 +#endif
 diff --git a/slirp/src/slirp.c b/slirp/src/slirp.c
 new file mode 100644
-index 0000000..dba7c98
+index 0000000000..9be58e2add
 --- /dev/null
 +++ b/slirp/src/slirp.c
-@@ -0,0 +1,1185 @@
+@@ -0,0 +1,1189 @@
 +/* SPDX-License-Identifier: MIT */
 +/*
 + * libslirp glue
@@ -7989,6 +7994,10 @@ index 0000000..dba7c98
 +        return;
 +    }
 +
++    if (pkt_len < ETH_HLEN + sizeof(struct slirp_arphdr)) {
++        return; /* packet too short */
++    }
++
 +    ar_op = ntohs(ah->ar_op);
 +    switch (ar_op) {
 +    case ARPOP_REQUEST:
@@ -8418,7 +8427,7 @@ index 0000000..dba7c98
 +}
 diff --git a/slirp/src/slirp.h b/slirp/src/slirp.h
 new file mode 100644
-index 0000000..763a65b
+index 0000000000..763a65b9ef
 --- /dev/null
 +++ b/slirp/src/slirp.h
 @@ -0,0 +1,284 @@
@@ -8708,7 +8717,7 @@ index 0000000..763a65b
 +#endif
 diff --git a/slirp/src/socket.c b/slirp/src/socket.c
 new file mode 100644
-index 0000000..1e385df
+index 0000000000..1e385df0d8
 --- /dev/null
 +++ b/slirp/src/socket.c
 @@ -0,0 +1,954 @@
@@ -9668,7 +9677,7 @@ index 0000000..1e385df
 +}
 diff --git a/slirp/src/socket.h b/slirp/src/socket.h
 new file mode 100644
-index 0000000..a6a1e5e
+index 0000000000..a6a1e5e214
 --- /dev/null
 +++ b/slirp/src/socket.h
 @@ -0,0 +1,164 @@
@@ -9838,7 +9847,7 @@ index 0000000..a6a1e5e
 +#endif /* SLIRP_SOCKET_H */
 diff --git a/slirp/src/state.c b/slirp/src/state.c
 new file mode 100644
-index 0000000..22af77b
+index 0000000000..22af77b256
 --- /dev/null
 +++ b/slirp/src/state.c
 @@ -0,0 +1,379 @@
@@ -10223,7 +10232,7 @@ index 0000000..22af77b
 +}
 diff --git a/slirp/src/stream.c b/slirp/src/stream.c
 new file mode 100644
-index 0000000..6cf326f
+index 0000000000..6cf326f669
 --- /dev/null
 +++ b/slirp/src/stream.c
 @@ -0,0 +1,120 @@
@@ -10349,7 +10358,7 @@ index 0000000..6cf326f
 +}
 diff --git a/slirp/src/stream.h b/slirp/src/stream.h
 new file mode 100644
-index 0000000..08bb5b6
+index 0000000000..08bb5b6610
 --- /dev/null
 +++ b/slirp/src/stream.h
 @@ -0,0 +1,35 @@
@@ -10390,7 +10399,7 @@ index 0000000..08bb5b6
 +#endif /* STREAM_H_ */
 diff --git a/slirp/src/tcp.h b/slirp/src/tcp.h
 new file mode 100644
-index 0000000..70a9760
+index 0000000000..70a9760664
 --- /dev/null
 +++ b/slirp/src/tcp.h
 @@ -0,0 +1,169 @@
@@ -10565,7 +10574,7 @@ index 0000000..70a9760
 +#endif
 diff --git a/slirp/src/tcp_input.c b/slirp/src/tcp_input.c
 new file mode 100644
-index 0000000..d55b0c8
+index 0000000000..d55b0c81dc
 --- /dev/null
 +++ b/slirp/src/tcp_input.c
 @@ -0,0 +1,1539 @@
@@ -12110,7 +12119,7 @@ index 0000000..d55b0c8
 +}
 diff --git a/slirp/src/tcp_output.c b/slirp/src/tcp_output.c
 new file mode 100644
-index 0000000..383fe31
+index 0000000000..383fe31dcf
 --- /dev/null
 +++ b/slirp/src/tcp_output.c
 @@ -0,0 +1,516 @@
@@ -12632,7 +12641,7 @@ index 0000000..383fe31
 +}
 diff --git a/slirp/src/tcp_subr.c b/slirp/src/tcp_subr.c
 new file mode 100644
-index 0000000..a1016d9
+index 0000000000..a1016d90df
 --- /dev/null
 +++ b/slirp/src/tcp_subr.c
 @@ -0,0 +1,980 @@
@@ -13618,7 +13627,7 @@ index 0000000..a1016d9
 +}
 diff --git a/slirp/src/tcp_timer.c b/slirp/src/tcp_timer.c
 new file mode 100644
-index 0000000..102023e
+index 0000000000..102023e7cd
 --- /dev/null
 +++ b/slirp/src/tcp_timer.c
 @@ -0,0 +1,286 @@
@@ -13910,7 +13919,7 @@ index 0000000..102023e
 +}
 diff --git a/slirp/src/tcp_timer.h b/slirp/src/tcp_timer.h
 new file mode 100644
-index 0000000..584a559
+index 0000000000..584a5594e4
 --- /dev/null
 +++ b/slirp/src/tcp_timer.h
 @@ -0,0 +1,130 @@
@@ -14046,7 +14055,7 @@ index 0000000..584a559
 +#endif
 diff --git a/slirp/src/tcp_var.h b/slirp/src/tcp_var.h
 new file mode 100644
-index 0000000..c8da8cb
+index 0000000000..c8da8cbd16
 --- /dev/null
 +++ b/slirp/src/tcp_var.h
 @@ -0,0 +1,161 @@
@@ -14213,7 +14222,7 @@ index 0000000..c8da8cb
 +#endif
 diff --git a/slirp/src/tcpip.h b/slirp/src/tcpip.h
 new file mode 100644
-index 0000000..d3df021
+index 0000000000..d3df021493
 --- /dev/null
 +++ b/slirp/src/tcpip.h
 @@ -0,0 +1,104 @@
@@ -14323,7 +14332,7 @@ index 0000000..d3df021
 +#endif
 diff --git a/slirp/src/tftp.c b/slirp/src/tftp.c
 new file mode 100644
-index 0000000..c6950ee
+index 0000000000..c6950ee10f
 --- /dev/null
 +++ b/slirp/src/tftp.c
 @@ -0,0 +1,464 @@
@@ -14793,7 +14802,7 @@ index 0000000..c6950ee
 +}
 diff --git a/slirp/src/tftp.h b/slirp/src/tftp.h
 new file mode 100644
-index 0000000..6d75478
+index 0000000000..6d75478e83
 --- /dev/null
 +++ b/slirp/src/tftp.h
 @@ -0,0 +1,54 @@
@@ -14853,7 +14862,7 @@ index 0000000..6d75478
 +#endif
 diff --git a/slirp/src/udp.c b/slirp/src/udp.c
 new file mode 100644
-index 0000000..0ad44d7
+index 0000000000..0ad44d7c03
 --- /dev/null
 +++ b/slirp/src/udp.c
 @@ -0,0 +1,365 @@
@@ -15224,7 +15233,7 @@ index 0000000..0ad44d7
 +}
 diff --git a/slirp/src/udp.h b/slirp/src/udp.h
 new file mode 100644
-index 0000000..c3b83fd
+index 0000000000..c3b83fdc56
 --- /dev/null
 +++ b/slirp/src/udp.h
 @@ -0,0 +1,90 @@
@@ -15320,7 +15329,7 @@ index 0000000..c3b83fd
 +#endif
 diff --git a/slirp/src/udp6.c b/slirp/src/udp6.c
 new file mode 100644
-index 0000000..6f9486b
+index 0000000000..6f9486bbca
 --- /dev/null
 +++ b/slirp/src/udp6.c
 @@ -0,0 +1,173 @@
@@ -15499,7 +15508,7 @@ index 0000000..6f9486b
 +}
 diff --git a/slirp/src/util.c b/slirp/src/util.c
 new file mode 100644
-index 0000000..d3ed5fa
+index 0000000000..d3ed5faf8b
 --- /dev/null
 +++ b/slirp/src/util.c
 @@ -0,0 +1,428 @@
@@ -15933,7 +15942,7 @@ index 0000000..d3ed5fa
 +}
 diff --git a/slirp/src/util.h b/slirp/src/util.h
 new file mode 100644
-index 0000000..d67b3d0
+index 0000000000..d67b3d0de9
 --- /dev/null
 +++ b/slirp/src/util.h
 @@ -0,0 +1,189 @@
@@ -16128,7 +16137,7 @@ index 0000000..d67b3d0
 +#endif
 diff --git a/slirp/src/version.c b/slirp/src/version.c
 new file mode 100644
-index 0000000..93e0be9
+index 0000000000..93e0be9c24
 --- /dev/null
 +++ b/slirp/src/version.c
 @@ -0,0 +1,8 @@
@@ -16142,7 +16151,7 @@ index 0000000..93e0be9
 +}
 diff --git a/slirp/src/vmstate.c b/slirp/src/vmstate.c
 new file mode 100644
-index 0000000..68cc172
+index 0000000000..68cc1729c5
 --- /dev/null
 +++ b/slirp/src/vmstate.c
 @@ -0,0 +1,444 @@
@@ -16592,7 +16601,7 @@ index 0000000..68cc172
 +}
 diff --git a/slirp/src/vmstate.h b/slirp/src/vmstate.h
 new file mode 100644
-index 0000000..94c6a4b
+index 0000000000..94c6a4bc7b
 --- /dev/null
 +++ b/slirp/src/vmstate.h
 @@ -0,0 +1,391 @@
@@ -16988,5 +16997,5 @@ index 0000000..94c6a4b
 +
 +#endif
 -- 
-1.8.3.1
+2.18.4
 

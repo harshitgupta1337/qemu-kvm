@@ -1,4 +1,4 @@
-From 57f949e002928186b80562fe517e1d83464c24fd Mon Sep 17 00:00:00 2001
+From fcf44f2334a6d82709b9c64d45fa2ab1aec595b9 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 12:53:31 +0200
 Subject: Add aarch64 machine types
@@ -50,12 +50,12 @@ Merged patches (5.2.0 rc0):
 - 6d7ba66 machine types/numa: set numa_mem_supported on old machine types (partialy)
 - 25c5644 machine_types/numa: compatibility for auto_enable_numa_with_memdev (partialy)
 ---
- hw/arm/virt.c         | 191 +++++++++++++++++++++++++++++++++++++++++++++++++-
- include/hw/arm/virt.h |   8 +++
+ hw/arm/virt.c         | 191 +++++++++++++++++++++++++++++++++++++++++-
+ include/hw/arm/virt.h |   8 ++
  2 files changed, 196 insertions(+), 3 deletions(-)
 
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index c908b5f..21e0485 100644
+index c908b5fcf4..21e0485ac5 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
 @@ -79,6 +79,7 @@
@@ -316,7 +316,7 @@ index c908b5f..21e0485 100644
 +}
 +DEFINE_RHEL_MACHINE(8, 2, 0)
 diff --git a/include/hw/arm/virt.h b/include/hw/arm/virt.h
-index aad6d69..745b76b 100644
+index aad6d69841..745b76b186 100644
 --- a/include/hw/arm/virt.h
 +++ b/include/hw/arm/virt.h
 @@ -167,9 +167,17 @@ struct VirtMachineState {
@@ -338,5 +338,5 @@ index aad6d69..745b76b 100644
  bool virt_is_acpi_enabled(VirtMachineState *vms);
  
 -- 
-1.8.3.1
+2.18.4
 

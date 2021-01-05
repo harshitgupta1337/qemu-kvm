@@ -1,4 +1,4 @@
-From 965f17e40984c06f87be2dad8100f4742412cc05 Mon Sep 17 00:00:00 2001
+From 06a8855e3b36996d4478219c008986877a253674 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:27:13 +0200
 Subject: Add ppc64 machine types
@@ -40,7 +40,7 @@ Merged patches (5.2.0 rc0):
 - 1ab8783 redhat: update pseries-rhel8.2.0 machine type
 - b162af531a target/ppc: Add experimental option for enabling secure guests
 ---
- hw/ppc/spapr.c          | 337 ++++++++++++++++++++++++++++++++++++++++++++++++
+ hw/ppc/spapr.c          | 337 ++++++++++++++++++++++++++++++++++++++++
  hw/ppc/spapr_cpu_core.c |  13 ++
  include/hw/ppc/spapr.h  |   4 +
  target/ppc/compat.c     |  13 +-
@@ -50,7 +50,7 @@ Merged patches (5.2.0 rc0):
  7 files changed, 407 insertions(+), 1 deletion(-)
 
 diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
-index 12a012d..4a838cc 100644
+index 12a012d9dd..4a838cc955 100644
 --- a/hw/ppc/spapr.c
 +++ b/hw/ppc/spapr.c
 @@ -1585,6 +1585,9 @@ static void spapr_machine_reset(MachineState *machine)
@@ -461,7 +461,7 @@ index 12a012d..4a838cc 100644
  static void spapr_machine_register_types(void)
  {
 diff --git a/hw/ppc/spapr_cpu_core.c b/hw/ppc/spapr_cpu_core.c
-index 55d36e0..008074b 100644
+index 55d36e0069..008074bae0 100644
 --- a/hw/ppc/spapr_cpu_core.c
 +++ b/hw/ppc/spapr_cpu_core.c
 @@ -24,6 +24,7 @@
@@ -499,7 +499,7 @@ index 55d36e0..008074b 100644
          qdev_unrealize(DEVICE(cpu));
          return false;
 diff --git a/include/hw/ppc/spapr.h b/include/hw/ppc/spapr.h
-index 2e89e36..ba2d814 100644
+index 2e89e36cfb..ba2d81404b 100644
 --- a/include/hw/ppc/spapr.h
 +++ b/include/hw/ppc/spapr.h
 @@ -140,6 +140,7 @@ struct SpaprMachineClass {
@@ -521,7 +521,7 @@ index 2e89e36..ba2d814 100644
      char *kvm_type;
      char *host_model;
 diff --git a/target/ppc/compat.c b/target/ppc/compat.c
-index 7949a24..f207a9b 100644
+index 7949a24f5a..f207a9ba01 100644
 --- a/target/ppc/compat.c
 +++ b/target/ppc/compat.c
 @@ -114,8 +114,19 @@ static const CompatInfo *compat_by_pvr(uint32_t pvr)
@@ -546,7 +546,7 @@ index 7949a24..f207a9b 100644
      const CompatInfo *compat = compat_by_pvr(compat_pvr);
      const CompatInfo *min = compat_by_pvr(min_compat_pvr);
 diff --git a/target/ppc/cpu.h b/target/ppc/cpu.h
-index 2609e40..21c63b5 100644
+index 2609e4082e..21c63b5360 100644
 --- a/target/ppc/cpu.h
 +++ b/target/ppc/cpu.h
 @@ -1347,6 +1347,7 @@ static inline int cpu_mmu_index(CPUPPCState *env, bool ifetch)
@@ -558,7 +558,7 @@ index 2609e40..21c63b5 100644
                        uint32_t min_compat_pvr, uint32_t max_compat_pvr);
  bool ppc_type_check_compat(const char *cputype, uint32_t compat_pvr,
 diff --git a/target/ppc/kvm.c b/target/ppc/kvm.c
-index daf690a..9bf3449 100644
+index daf690a678..9bf3449adb 100644
 --- a/target/ppc/kvm.c
 +++ b/target/ppc/kvm.c
 @@ -89,6 +89,7 @@ static int cap_ppc_count_cache_flush_assist;
@@ -614,7 +614,7 @@ index daf690a..9bf3449 100644
 +    }
 +}
 diff --git a/target/ppc/kvm_ppc.h b/target/ppc/kvm_ppc.h
-index 73ce2bc..1239b84 100644
+index 73ce2bc951..1239b841fd 100644
 --- a/target/ppc/kvm_ppc.h
 +++ b/target/ppc/kvm_ppc.h
 @@ -40,6 +40,7 @@ target_ulong kvmppc_configure_v3_mmu(PowerPCCPU *cpu,
@@ -652,5 +652,5 @@ index 73ce2bc..1239b84 100644
  {
      return -1;
 -- 
-1.8.3.1
+2.18.4
 
