@@ -1,4 +1,4 @@
-From e5c00782e6f609b4f25dc214825c6491def46e15 Mon Sep 17 00:00:00 2001
+From 943c936df3b6b5c3197ad727f2105e61778e749a Mon Sep 17 00:00:00 2001
 From: Greg Kurz <gkurz@redhat.com>
 Date: Fri, 20 Nov 2020 14:00:32 -0500
 Subject: redhat: Add spapr_machine_rhel_default_class_options()

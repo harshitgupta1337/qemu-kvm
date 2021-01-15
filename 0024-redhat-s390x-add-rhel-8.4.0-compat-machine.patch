@@ -1,4 +1,4 @@
-From a4ce96735ad8f1e07ded93e39e32e22bd9ac00ba Mon Sep 17 00:00:00 2001
+From a6ae745cceee1acc3667f5ba5e007ca6c083f8a8 Mon Sep 17 00:00:00 2001
 From: Cornelia Huck <cohuck@redhat.com>
 Date: Tue, 1 Dec 2020 17:53:41 -0500
 Subject: redhat: s390x: add rhel-8.4.0 compat machine

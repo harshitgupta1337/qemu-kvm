@@ -1,0 +1,138 @@
+From 8773f3688ca87e5e7da2e1a5170d0bde9a54eae0 Mon Sep 17 00:00:00 2001
+From: Miroslav Rezanina <mrezanin@redhat.com>
+Date: Fri, 15 Jan 2021 09:38:53 +0100
+Subject: tcg: Restrict tcg_out_op() to arrays of TCG_MAX_OP_ARGS elements
+
+---
+ tcg/aarch64/tcg-target.c.inc |  3 ++-
+ tcg/i386/tcg-target.c.inc    |  6 ++++--
+ tcg/ppc/tcg-target.c.inc     |  8 +++++---
+ tcg/s390/tcg-target.c.inc    |  3 ++-
+ tcg/tcg.c                    | 19 +++++++++++--------
+ 5 files changed, 24 insertions(+), 15 deletions(-)
+
+diff --git a/tcg/aarch64/tcg-target.c.inc b/tcg/aarch64/tcg-target.c.inc
+index 26f71cb599..ce8689e889 100644
+--- a/tcg/aarch64/tcg-target.c.inc
++++ b/tcg/aarch64/tcg-target.c.inc
+@@ -2271,7 +2271,8 @@ static void tcg_out_op(TCGContext *s, TCGOpcode opc,
+ 
+ static void tcg_out_vec_op(TCGContext *s, TCGOpcode opc,
+                            unsigned vecl, unsigned vece,
+-                           const TCGArg *args, const int *const_args)
++                           const TCGArg args[TCG_MAX_OP_ARGS],
++                           const int const_args[TCG_MAX_OP_ARGS])
+ {
+     static const AArch64Insn cmp_insn[16] = {
+         [TCG_COND_EQ] = I3616_CMEQ,
+diff --git a/tcg/i386/tcg-target.c.inc b/tcg/i386/tcg-target.c.inc
+index d8797ed398..0e557d177a 100644
+--- a/tcg/i386/tcg-target.c.inc
++++ b/tcg/i386/tcg-target.c.inc
+@@ -2242,7 +2242,8 @@ static void tcg_out_qemu_st(TCGContext *s, const TCGArg *args, bool is64)
+ }
+ 
+ static inline void tcg_out_op(TCGContext *s, TCGOpcode opc,
+-                              const TCGArg *args, const int *const_args)
++                              const TCGArg args[TCG_MAX_OP_ARGS],
++                              const int const_args[TCG_MAX_OP_ARGS])
+ {
+     TCGArg a0, a1, a2;
+     int c, const_a2, vexop, rexw = 0;
+@@ -2679,7 +2680,8 @@ static inline void tcg_out_op(TCGContext *s, TCGOpcode opc,
+ 
+ static void tcg_out_vec_op(TCGContext *s, TCGOpcode opc,
+                            unsigned vecl, unsigned vece,
+-                           const TCGArg *args, const int *const_args)
++                           const TCGArg args[TCG_MAX_OP_ARGS],
++                           const int const_args[TCG_MAX_OP_ARGS])
+ {
+     static int const add_insn[4] = {
+         OPC_PADDB, OPC_PADDW, OPC_PADDD, OPC_PADDQ
+diff --git a/tcg/ppc/tcg-target.c.inc b/tcg/ppc/tcg-target.c.inc
+index 18ee989f95..b2bc1fc0c4 100644
+--- a/tcg/ppc/tcg-target.c.inc
++++ b/tcg/ppc/tcg-target.c.inc
+@@ -2353,8 +2353,9 @@ static void tcg_target_qemu_prologue(TCGContext *s)
+     tcg_out32(s, BCLR | BO_ALWAYS);
+ }
+ 
+-static void tcg_out_op(TCGContext *s, TCGOpcode opc, const TCGArg *args,
+-                       const int *const_args)
++static void tcg_out_op(TCGContext *s, TCGOpcode opc,
++                       const TCGArg args[TCG_MAX_OP_ARGS],
++                       const int const_args[TCG_MAX_OP_ARGS])
+ {
+     TCGArg a0, a1, a2;
+     int c;
+@@ -3151,7 +3152,8 @@ static bool tcg_out_dupm_vec(TCGContext *s, TCGType type, unsigned vece,
+ 
+ static void tcg_out_vec_op(TCGContext *s, TCGOpcode opc,
+                            unsigned vecl, unsigned vece,
+-                           const TCGArg *args, const int *const_args)
++                           const TCGArg args[TCG_MAX_OP_ARGS],
++                           const int const_args[TCG_MAX_OP_ARGS])
+ {
+     static const uint32_t
+         add_op[4] = { VADDUBM, VADDUHM, VADDUWM, VADDUDM },
+diff --git a/tcg/s390/tcg-target.c.inc b/tcg/s390/tcg-target.c.inc
+index c5e096449b..79753c8af7 100644
+--- a/tcg/s390/tcg-target.c.inc
++++ b/tcg/s390/tcg-target.c.inc
+@@ -1746,7 +1746,8 @@ static void tcg_out_qemu_st(TCGContext* s, TCGReg data_reg, TCGReg addr_reg,
+         case glue(glue(INDEX_op_,x),_i64)
+ 
+ static inline void tcg_out_op(TCGContext *s, TCGOpcode opc,
+-                const TCGArg *args, const int *const_args)
++                              const TCGArg args[TCG_MAX_OP_ARGS],
++                              const int const_args[TCG_MAX_OP_ARGS])
+ {
+     S390Opcode op, op2;
+     TCGArg a0, a1, a2;
+diff --git a/tcg/tcg.c b/tcg/tcg.c
+index 43c6cf8f52..2d0116d29f 100644
+--- a/tcg/tcg.c
++++ b/tcg/tcg.c
+@@ -109,8 +109,9 @@ static void tcg_out_ld(TCGContext *s, TCGType type, TCGReg ret, TCGReg arg1,
+ static bool tcg_out_mov(TCGContext *s, TCGType type, TCGReg ret, TCGReg arg);
+ static void tcg_out_movi(TCGContext *s, TCGType type,
+                          TCGReg ret, tcg_target_long arg);
+-static void tcg_out_op(TCGContext *s, TCGOpcode opc, const TCGArg *args,
+-                       const int *const_args);
++static void tcg_out_op(TCGContext *s, TCGOpcode opc,
++                       const TCGArg args[TCG_MAX_OP_ARGS],
++                       const int const_args[TCG_MAX_OP_ARGS]);
+ #if TCG_TARGET_MAYBE_vec
+ static bool tcg_out_dup_vec(TCGContext *s, TCGType type, unsigned vece,
+                             TCGReg dst, TCGReg src);
+@@ -118,9 +119,10 @@ static bool tcg_out_dupm_vec(TCGContext *s, TCGType type, unsigned vece,
+                              TCGReg dst, TCGReg base, intptr_t offset);
+ static void tcg_out_dupi_vec(TCGContext *s, TCGType type,
+                              TCGReg dst, tcg_target_long arg);
+-static void tcg_out_vec_op(TCGContext *s, TCGOpcode opc, unsigned vecl,
+-                           unsigned vece, const TCGArg *args,
+-                           const int *const_args);
++static void tcg_out_vec_op(TCGContext *s, TCGOpcode opc,
++                           unsigned vecl, unsigned vece,
++                           const TCGArg args[TCG_MAX_OP_ARGS],
++                           const int const_args[TCG_MAX_OP_ARGS]);
+ #else
+ static inline bool tcg_out_dup_vec(TCGContext *s, TCGType type, unsigned vece,
+                                    TCGReg dst, TCGReg src)
+@@ -137,9 +139,10 @@ static inline void tcg_out_dupi_vec(TCGContext *s, TCGType type,
+ {
+     g_assert_not_reached();
+ }
+-static inline void tcg_out_vec_op(TCGContext *s, TCGOpcode opc, unsigned vecl,
+-                                  unsigned vece, const TCGArg *args,
+-                                  const int *const_args)
++static inline void tcg_out_vec_op(TCGContext *s, TCGOpcode opc,
++                                  unsigned vecl, unsigned vece,
++                                  const TCGArg args[TCG_MAX_OP_ARGS],
++                                  const int const_args[TCG_MAX_OP_ARGS])
+ {
+     g_assert_not_reached();
+ }
+-- 
+2.18.4
+

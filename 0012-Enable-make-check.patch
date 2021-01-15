@@ -1,4 +1,4 @@
-From 28d744b42d381b15254706f90fed3310ce4a5116 Mon Sep 17 00:00:00 2001
+From 7b8ca8c1cbd3763900e3e472556116c9832e06f8 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 2 Sep 2020 09:39:41 +0200
 Subject: Enable make check
@@ -31,19 +31,16 @@ Rebase changes (5.2.0 rc0):
 - Disable cdrom tests (unsupported devices) on x86_64
 - disable fuzz test
 
-Rebaes changes (RHEL 9):
-- disable block-iothreads test
-
 Merged patches (4.0.0):
 - f7ffd13 Remove 7 qcow2 and luks iotests that are taking > 25 sec to run during the fast train build proce
 
 Merged patches (4.1.0-rc0):
 - 41288ff redhat: Remove raw iotest 205
 
-Dissable problematic tests
+Conflicts:
+	redhat/qemu-kvm.spec.template
 ---
  redhat/qemu-kvm.spec.template       |  4 ++--
- tests/meson.build                   |  2 +-
  tests/qemu-iotests/051              | 12 ++++++------
  tests/qtest/boot-serial-test.c      |  6 +++++-
  tests/qtest/cdrom-test.c            |  2 ++
@@ -54,21 +51,8 @@ Dissable problematic tests
  tests/qtest/prom-env-test.c         |  4 ++++
  tests/qtest/test-x86-cpuid-compat.c |  2 ++
  tests/qtest/usb-hcd-xhci-test.c     |  4 ++++
- 12 files changed, 36 insertions(+), 20 deletions(-)
+ 11 files changed, 35 insertions(+), 19 deletions(-)
 
-diff --git a/tests/meson.build b/tests/meson.build
-index afeb6be689..e562a0499e 100644
---- a/tests/meson.build
-+++ b/tests/meson.build
-@@ -136,7 +136,7 @@ if have_block
-     'test-blockjob': [testblock],
-     'test-blockjob-txn': [testblock],
-     'test-block-backend': [testblock],
--    'test-block-iothread': [testblock],
-+#    'test-block-iothread': [testblock],
-     'test-write-threshold': [testblock],
-     'test-crypto-hash': [crypto],
-     'test-crypto-hmac': [crypto],
 diff --git a/tests/qemu-iotests/051 b/tests/qemu-iotests/051
 index bee26075b2..61d25c4ed7 100755
 --- a/tests/qemu-iotests/051

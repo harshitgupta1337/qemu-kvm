@@ -1,4 +1,4 @@
-From c615fb7d219b7b88f6517d6772d92e233007aff3 Mon Sep 17 00:00:00 2001
+From 091f9e47dc4609bfded5474cfe2797777cdd56f1 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 8 Jul 2020 08:35:50 +0200
 Subject: Use qemu-kvm in documentation instead of qemu-system-<arch>

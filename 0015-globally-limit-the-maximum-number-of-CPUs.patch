@@ -1,4 +1,4 @@
-From 6eddce7d3e8cd95c4b848fe3f7c5ac27854dc0da Mon Sep 17 00:00:00 2001
+From 9585c8927744d8b07b317063ef788e1f01773f0e Mon Sep 17 00:00:00 2001
 From: Andrew Jones <drjones@redhat.com>
 Date: Tue, 21 Jan 2014 10:46:52 +0100
 Subject: globally limit the maximum number of CPUs

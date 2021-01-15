@@ -1,4 +1,4 @@
-From bd9e5c1703ef16727db863ba79f46ae9cb81cbfd Mon Sep 17 00:00:00 2001
+From fa0063ba67071384d8c749cee8f4f4e5bbc8ef91 Mon Sep 17 00:00:00 2001
 From: Greg Kurz <gkurz@redhat.com>
 Date: Fri, 20 Nov 2020 14:00:31 -0500
 Subject: redhat: Define hw_compat_8_3

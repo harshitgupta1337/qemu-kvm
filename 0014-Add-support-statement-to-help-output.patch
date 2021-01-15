@@ -1,4 +1,4 @@
-From f63ec823f8df7024f33c145b88a2b50c589cc633 Mon Sep 17 00:00:00 2001
+From f69c3b855ec419b4afe240bbd039141a59aad808 Mon Sep 17 00:00:00 2001
 From: Eduardo Habkost <ehabkost@redhat.com>
 Date: Wed, 4 Dec 2013 18:53:17 +0100
 Subject: Add support statement to -help output

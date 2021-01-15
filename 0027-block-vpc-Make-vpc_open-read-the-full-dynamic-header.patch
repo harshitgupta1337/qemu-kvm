@@ -1,4 +1,4 @@
-From 8d3c826bca23d64cbb2f71bd3b506b43fc2b1c70 Mon Sep 17 00:00:00 2001
+From 974af930d4e5cae5611bb2e3a5ac18d3bda15a68 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Thu, 17 Dec 2020 17:58:43 +0100
 Subject: block/vpc: Make vpc_open() read the full dynamic header

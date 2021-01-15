@@ -1,4 +1,4 @@
-From e5f8c128550c8e6020095152a9fa171cccc6aa18 Mon Sep 17 00:00:00 2001
+From 030b5e6fba510b8b9f8c8690ef6ea63f71628d25 Mon Sep 17 00:00:00 2001
 From: Greg Kurz <gkurz@redhat.com>
 Date: Fri, 20 Nov 2020 14:00:33 -0500
 Subject: redhat: Define pseries-rhel8.4.0 machine type

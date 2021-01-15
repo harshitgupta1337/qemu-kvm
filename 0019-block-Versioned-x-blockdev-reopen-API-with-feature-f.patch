@@ -1,4 +1,4 @@
-From e7321dc3f2159d2f4b7f93bd0f7ebb89752e8604 Mon Sep 17 00:00:00 2001
+From 989cfded8fdd5df3b6b1f1a304ca16c128d7561b Mon Sep 17 00:00:00 2001
 From: Kevin Wolf <kwolf@redhat.com>
 Date: Fri, 13 Mar 2020 12:34:32 +0000
 Subject: block: Versioned x-blockdev-reopen API with feature flag

@@ -64,7 +64,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.2.0
-Release: 2%{?dist}
+Release: 2.1%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -124,6 +124,11 @@ Patch0024: 0024-redhat-s390x-add-rhel-8.4.0-compat-machine.patch
 Patch0027: 0027-block-vpc-Make-vpc_open-read-the-full-dynamic-header.patch
 Patch0028: 0028-GCC-11-warnings-hacks.patch
 Patch0029: 0029-Disable-problematic-tests-for-initial-build.patch
+Patch0030: 0030-Revert-GCC-11-warnings-hacks.patch
+Patch0031: 0031-s390x-Use-strpadcpy-for-copying-vm-name.patch
+Patch0032: 0032-tcg-Restrict-tcg_out_op-to-arrays-of-TCG_MAX_OP_ARGS.patch
+Patch0033: 0033-net-eth-Simplify-_eth_get_rss_ex_dst_addr.patch
+Patch0034: 0034-net-eth-Fix-stack-buffer-overflow-in.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -253,14 +258,12 @@ hardware for a full system such as a PC and its associated peripherals.
 Summary: qemu-kvm core components
 Requires: %{name}-common = %{epoch}:%{version}-%{release}
 Requires: qemu-img = %{epoch}:%{version}-%{release}
-
-# Temporary disable edk2 dependency as there's no edk2 available yet
-#%ifarch %{ix86} x86_64
-#Requires: edk2-ovmf
-#%endif
-#%ifarch aarch64
-#Requires: edk2-aarch64
-#%endif
+%ifarch %{ix86} x86_64
+Requires: edk2-ovmf
+%endif
+%ifarch aarch64
+Requires: edk2-aarch64
+%endif
 
 %ifarch %{power64}
 Requires: SLOF >= %{SLOF_gittagdate}-1.git%{SLOF_gittagcommit}
@@ -1306,9 +1309,6 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 
 
 %changelog
-* Tue Jan 05 2021 Miroslav Rezanina <mrezanin@redhat.com> - 5.2.0-2.el9
-- Rebuild for RHEL 9
-
 * Tue Dec 15 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-2.el8
 - kvm-redhat-Define-hw_compat_8_3.patch [bz#1893935]
 - kvm-redhat-Add-spapr_machine_rhel_default_class_options.patch [bz#1893935]

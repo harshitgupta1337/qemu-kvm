@@ -1,0 +1,84 @@
+From adbabd33e81f46c6b29c4b940c053e562e4f55fd Mon Sep 17 00:00:00 2001
+From: Miroslav Rezanina <mrezanin@redhat.com>
+Date: Fri, 15 Jan 2021 09:28:59 +0100
+Subject: s390x: Use strpadcpy for copying vm name
+
+Using strncpy with length equal to the size of target array, GCC 11
+reports following warning:
+
+  warning: '__builtin_strncpy' specified bound 256 equals destination size [-Wstringop-truncation]
+
+We can prevent this warning by using strpadcpy that copies string
+up to specified length, zeroes target array after copied string
+and does not raise warning when length is equal to target array
+size (and ending '\0' is discarded).
+
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ target/s390x/kvm.c         | 12 +++++-------
+ target/s390x/misc_helper.c |  7 +++++--
+ 2 files changed, 10 insertions(+), 9 deletions(-)
+
+diff --git a/target/s390x/kvm.c b/target/s390x/kvm.c
+index 1839cc6648..c08b5bc2de 100644
+--- a/target/s390x/kvm.c
++++ b/target/s390x/kvm.c
+@@ -29,6 +29,7 @@
+ #include "internal.h"
+ #include "kvm_s390x.h"
+ #include "sysemu/kvm_int.h"
++#include "qemu/cutils.h"
+ #include "qapi/error.h"
+ #include "qemu/error-report.h"
+ #include "qemu/timer.h"
+@@ -1910,18 +1911,15 @@ static void insert_stsi_3_2_2(S390CPU *cpu, __u64 addr, uint8_t ar)
+                                                     strlen(qemu_name)));
+     }
+     sysib.vm[0].ext_name_encoding = 2; /* 2 = UTF-8 */
+-    memset(sysib.ext_names[0], 0, sizeof(sysib.ext_names[0]));
+     /* If hypervisor specifies zero Extended Name in STSI322 SYSIB, it's
+      * considered by s390 as not capable of providing any Extended Name.
+      * Therefore if no name was specified on qemu invocation, we go with the
+      * same "KVMguest" default, which KVM has filled into short name field.
+      */
+-    if (qemu_name) {
+-        strncpy((char *)sysib.ext_names[0], qemu_name,
+-                sizeof(sysib.ext_names[0]));
+-    } else {
+-        strcpy((char *)sysib.ext_names[0], "KVMguest");
+-    }
++    strpadcpy((char *)sysib.ext_names[0],
++              sizeof(sysib.ext_names[0]),
++              qemu_name ?: "KVMguest", '\0');
++
+     /* Insert UUID */
+     memcpy(sysib.vm[0].uuid, &qemu_uuid, sizeof(sysib.vm[0].uuid));
+ 
+diff --git a/target/s390x/misc_helper.c b/target/s390x/misc_helper.c
+index 58dbc023eb..7ea90d414a 100644
+--- a/target/s390x/misc_helper.c
++++ b/target/s390x/misc_helper.c
+@@ -19,6 +19,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
++#include "qemu/cutils.h"
+ #include "qemu/main-loop.h"
+ #include "cpu.h"
+ #include "internal.h"
+@@ -369,8 +370,10 @@ uint32_t HELPER(stsi)(CPUS390XState *env, uint64_t a0, uint64_t r0, uint64_t r1)
+                 ebcdic_put(sysib.sysib_322.vm[0].name, qemu_name,
+                            MIN(sizeof(sysib.sysib_322.vm[0].name),
+                                strlen(qemu_name)));
+-                strncpy((char *)sysib.sysib_322.ext_names[0], qemu_name,
+-                        sizeof(sysib.sysib_322.ext_names[0]));
++                strpadcpy((char *)sysib.sysib_322.ext_names[0],
++                          sizeof(sysib.sysib_322.ext_names[0]),
++                          qemu_name, '\0');
++
+             } else {
+                 ebcdic_put(sysib.sysib_322.vm[0].name, "TCGguest", 8);
+                 strcpy((char *)sysib.sysib_322.ext_names[0], "TCGguest");
+-- 
+2.18.4
+
