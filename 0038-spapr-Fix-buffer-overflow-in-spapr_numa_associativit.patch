@@ -1,0 +1,131 @@
+From d66ae008007853df7d3a24bd2d5e7494f53f007c Mon Sep 17 00:00:00 2001
+From: Greg Kurz <gkurz@redhat.com>
+Date: Thu, 7 Jan 2021 10:10:20 -0500
+Subject: spapr: Fix buffer overflow in spapr_numa_associativity_init()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Greg Kurz <gkurz@redhat.com>
+Message-id: <20210107101020.579456-2-gkurz@redhat.com>
+Patchwork-id: 100515
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 1/1] spapr: Fix buffer overflow in spapr_numa_associativity_init()
+Bugzilla: 1908693
+RH-Acked-by: David Gibson <dgibson@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+From: Greg Kurz <groug@kaod.org>
+
+Running a guest with 128 NUMA nodes crashes QEMU:
+
+../../util/error.c:59: error_setv: Assertion `*errp == NULL' failed.
+
+The crash happens when setting the FWNMI migration blocker:
+
+2861	    if (spapr_get_cap(spapr, SPAPR_CAP_FWNMI) == SPAPR_CAP_ON) {
+2862	        /* Create the error string for live migration blocker */
+2863	        error_setg(&spapr->fwnmi_migration_blocker,
+2864	            "A machine check is being handled during migration. The handler"
+2865	            "may run and log hardware error on the destination");
+2866	    }
+
+Inspection reveals that papr->fwnmi_migration_blocker isn't NULL:
+
+(gdb) p spapr->fwnmi_migration_blocker
+$1 = (Error *) 0x8000000004000000
+
+Since this is the only place where papr->fwnmi_migration_blocker is
+set, this means someone wrote there in our back. Further analysis
+points to spapr_numa_associativity_init(), especially the part
+that initializes the associative arrays for NVLink GPUs:
+
+    max_nodes_with_gpus = nb_numa_nodes + NVGPU_MAX_NUM;
+
+ie. max_nodes_with_gpus = 128 + 6, but the array isn't sized to
+accommodate the 6 extra nodes:
+
+struct SpaprMachineState {
+    .
+    .
+    .
+    uint32_t numa_assoc_array[MAX_NODES][NUMA_ASSOC_SIZE];
+
+    Error *fwnmi_migration_blocker;
+};
+
+and the following loops happily overwrite spapr->fwnmi_migration_blocker,
+and probably more:
+
+    for (i = nb_numa_nodes; i < max_nodes_with_gpus; i++) {
+        spapr->numa_assoc_array[i][0] = cpu_to_be32(MAX_DISTANCE_REF_POINTS);
+
+        for (j = 1; j < MAX_DISTANCE_REF_POINTS; j++) {
+            uint32_t gpu_assoc = smc->pre_5_1_assoc_refpoints ?
+                                 SPAPR_GPU_NUMA_ID : cpu_to_be32(i);
+            spapr->numa_assoc_array[i][j] = gpu_assoc;
+        }
+
+        spapr->numa_assoc_array[i][MAX_DISTANCE_REF_POINTS] = cpu_to_be32(i);
+    }
+
+Fix the size of the array. This requires "hw/ppc/spapr.h" to see
+NVGPU_MAX_NUM. Including "hw/pci-host/spapr.h" introduces a
+circular dependency that breaks the build, so this moves the
+definition of NVGPU_MAX_NUM to "hw/ppc/spapr.h" instead.
+
+Reported-by: Min Deng <mdeng@redhat.com>
+BugLink: https://bugzilla.redhat.com/show_bug.cgi?id=1908693
+Fixes: dd7e1d7ae431 ("spapr_numa: move NVLink2 associativity handling to spapr_numa.c")
+Cc: danielhb413@gmail.com
+Signed-off-by: Greg Kurz <groug@kaod.org>
+Message-Id: <160829960428.734871.12634150161215429514.stgit@bahia.lan>
+Reviewed-by: Daniel Henrique Barboza <danielhb413@gmail.com>
+Signed-off-by: David Gibson <david@gibson.dropbear.id.au>
+(cherry picked from commit 30499fdd9883026e106d74e8199e2f1311fd4011)
+Signed-off-by: Greg Kurz <gkurz@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ include/hw/pci-host/spapr.h | 2 --
+ include/hw/ppc/spapr.h      | 5 ++++-
+ 2 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/include/hw/pci-host/spapr.h b/include/hw/pci-host/spapr.h
+index 4f58f0223b..bd014823a9 100644
+--- a/include/hw/pci-host/spapr.h
++++ b/include/hw/pci-host/spapr.h
+@@ -115,8 +115,6 @@ struct SpaprPhbState {
+ #define SPAPR_PCI_NV2RAM64_WIN_BASE  SPAPR_PCI_LIMIT
+ #define SPAPR_PCI_NV2RAM64_WIN_SIZE  (2 * TiB) /* For up to 6 GPUs 256GB each */
+ 
+-/* Max number of these GPUsper a physical box */
+-#define NVGPU_MAX_NUM                6
+ /* Max number of NVLinks per GPU in any physical box */
+ #define NVGPU_MAX_LINKS              3
+ 
+diff --git a/include/hw/ppc/spapr.h b/include/hw/ppc/spapr.h
+index ba2d81404b..28bbf07f8f 100644
+--- a/include/hw/ppc/spapr.h
++++ b/include/hw/ppc/spapr.h
+@@ -112,6 +112,9 @@ typedef enum {
+ #define NUMA_ASSOC_SIZE            (MAX_DISTANCE_REF_POINTS + 1)
+ #define VCPU_ASSOC_SIZE            (NUMA_ASSOC_SIZE + 1)
+ 
++/* Max number of these GPUsper a physical box */
++#define NVGPU_MAX_NUM                6
++
+ typedef struct SpaprCapabilities SpaprCapabilities;
+ struct SpaprCapabilities {
+     uint8_t caps[SPAPR_CAP_NUM];
+@@ -243,7 +246,7 @@ struct SpaprMachineState {
+     unsigned gpu_numa_id;
+     SpaprTpmProxy *tpm_proxy;
+ 
+-    uint32_t numa_assoc_array[MAX_NODES][NUMA_ASSOC_SIZE];
++    uint32_t numa_assoc_array[MAX_NODES + NVGPU_MAX_NUM][NUMA_ASSOC_SIZE];
+ 
+     Error *fwnmi_migration_blocker;
+ };
+-- 
+2.18.4
+

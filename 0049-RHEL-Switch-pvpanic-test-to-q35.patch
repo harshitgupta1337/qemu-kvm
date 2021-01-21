@@ -1,0 +1,47 @@
+From c489d2cd175e879071a3c5504a17d7f656dd7b06 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Tue, 8 Dec 2020 16:27:15 -0500
+Subject: RHEL: Switch pvpanic test to q35
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-id: <20201208162716.30836-3-dgilbert@redhat.com>
+Patchwork-id: 100360
+O-Subject: [RHEL-av-8.4.0 qemu-kvm PATCH v2 2/3] RHEL: Switch pvpanic test to q35
+Bugzilla: 1885555
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Juan Quintela <quintela@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+
+Since b1b0393c3c5 the pvpanic test checks for a different
+result (3) expecting it to get that on new machine types.
+But, downstream, our 'pc' machine type is old, so switch the
+test to q35, so it gets the new behaviour it's expecting.
+
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ tests/qtest/pvpanic-test.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/tests/qtest/pvpanic-test.c b/tests/qtest/pvpanic-test.c
+index 016b32ebee..f0a7282b47 100644
+--- a/tests/qtest/pvpanic-test.c
++++ b/tests/qtest/pvpanic-test.c
+@@ -17,7 +17,8 @@ static void test_panic(void)
+     QDict *response, *data;
+     QTestState *qts;
+ 
+-    qts = qtest_init("-device pvpanic");
++    /* RHEL: Use q35 */
++    qts = qtest_init("-M q35 -device pvpanic");
+ 
+     val = qtest_inb(qts, 0x505);
+     g_assert_cmpuint(val, ==, 3);
+-- 
+2.18.4
+

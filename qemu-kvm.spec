@@ -64,7 +64,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.2.0
-Release: 2.1%{?dist}
+Release: 3%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -129,11 +129,26 @@ Patch0031: 0031-s390x-Use-strpadcpy-for-copying-vm-name.patch
 Patch0032: 0032-tcg-Restrict-tcg_out_op-to-arrays-of-TCG_MAX_OP_ARGS.patch
 Patch0033: 0033-net-eth-Simplify-_eth_get_rss_ex_dst_addr.patch
 Patch0034: 0034-net-eth-Fix-stack-buffer-overflow-in.patch
+Patch0035: 0035-block-nvme-Implement-fake-truncate-coroutine.patch
+Patch0037: 0037-build-system-use-b_staticpic-false.patch
+Patch0038: 0038-spapr-Fix-buffer-overflow-in-spapr_numa_associativit.patch
+Patch0039: 0039-usb-hcd-xhci-pci-Fixup-capabilities-ordering-again.patch
+Patch0040: 0040-qga-commands-posix-Send-CCW-address-on-s390x-with-th.patch
+Patch0041: 0041-AArch64-machine-types-cleanup.patch
+Patch0042: 0042-hw-arm-virt-Add-8.4-Machine-type.patch
+Patch0044: 0044-memory-Rename-memory_region_notify_one-to-memory_reg.patch
+Patch0045: 0045-memory-Add-IOMMUTLBEvent.patch
+Patch0046: 0046-memory-Add-IOMMU_NOTIFIER_DEVIOTLB_UNMAP-IOMMUTLBNot.patch
+Patch0047: 0047-intel_iommu-Skip-page-walking-on-device-iotlb-invali.patch
+Patch0048: 0048-memory-Skip-bad-range-assertion-if-notifier-is-DEVIO.patch
+Patch0049: 0049-RHEL-Switch-pvpanic-test-to-q35.patch
+Patch0050: 0050-8.4-x86-machine-type.patch
+Patch0051: 0051-memory-clamp-cached-translation-in-case-it-points-to.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
 BuildRequires: ninja-build
-BuildRequires: meson
+BuildRequires: meson >= 0.55.3-3
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
 BuildRequires: which
@@ -580,7 +595,7 @@ pushd %{qemu_kvm_build}
   --with-pkgversion="%{name}-%{version}-%{release}" \
   --with-suffix="%{name}" \
   --firmwarepath=%{_prefix}/share/qemu-firmware \
-  --python=%{__python3} \
+  --meson="%{__meson}" \
   --target-list="%{buildarch}" \
   --block-drv-rw-whitelist=%{block_drivers_list} \
   --audio-drv-list= \
@@ -711,7 +726,7 @@ find ../default-configs -name "*-rh-devices.mak" \
   --with-pkgversion="%{name}-%{version}-%{release}" \
   --with-suffix="%{name}" \
   --firmwarepath=%{_prefix}/share/qemu-firmware \
-  --python=%{__python3} \
+  --meson="%{__meson}" \
   --target-list="%{buildarch}" \
   --block-drv-rw-whitelist=%{block_drivers_list} \
   --audio-drv-list= \
@@ -1309,6 +1324,45 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 
 
 %changelog
+* Mon Jan 18 2021 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-3.el8
+- kvm-block-nvme-Implement-fake-truncate-coroutine.patch [bz#1848834]
+- kvm-spec-find-system-python-via-meson.patch [bz#1899619]
+- kvm-build-system-use-b_staticpic-false.patch [bz#1899619]
+- kvm-spapr-Fix-buffer-overflow-in-spapr_numa_associativit.patch [bz#1908693]
+- kvm-usb-hcd-xhci-pci-Fixup-capabilities-ordering-again.patch [bz#1912846]
+- kvm-qga-commands-posix-Send-CCW-address-on-s390x-with-th.patch [bz#1755075]
+- kvm-AArch64-machine-types-cleanup.patch [bz#1895276]
+- kvm-hw-arm-virt-Add-8.4-Machine-type.patch [bz#1895276]
+- kvm-udev-kvm-check-remove-the-exceeded-subscription-limi.patch [bz#1914463]
+- kvm-memory-Rename-memory_region_notify_one-to-memory_reg.patch [bz#1845758]
+- kvm-memory-Add-IOMMUTLBEvent.patch [bz#1845758]
+- kvm-memory-Add-IOMMU_NOTIFIER_DEVIOTLB_UNMAP-IOMMUTLBNot.patch [bz#1845758]
+- kvm-intel_iommu-Skip-page-walking-on-device-iotlb-invali.patch [bz#1845758]
+- kvm-memory-Skip-bad-range-assertion-if-notifier-is-DEVIO.patch [bz#1845758]
+- kvm-RHEL-Switch-pvpanic-test-to-q35.patch [bz#1885555]
+- kvm-8.4-x86-machine-type.patch [bz#1885555]
+- kvm-memory-clamp-cached-translation-in-case-it-points-to.patch [bz#1904392]
+- Resolves: bz#1848834
+  (Failed to create luks format image on NVMe device)
+- Resolves: bz#1899619
+  (QEMU 5.2 is built with PIC objects instead of PIE)
+- Resolves: bz#1908693
+  ([ppc64le]boot up a guest with 128 numa nodes ,qemu got coredump)
+- Resolves: bz#1912846
+  (qemu-kvm: Failed to load xhci:parent_obj during migration)
+- Resolves: bz#1755075
+  ([qemu-guest-agent] fsinfo doesn't return disk info on s390x)
+- Resolves: bz#1895276
+  (Machine types update for aarch64 for QEMU 5.2.0)
+- Resolves: bz#1914463
+  (Remove KVM guest count and limit info message)
+- Resolves: bz#1845758
+  (qemu core dumped: qemu-kvm: /builddir/build/BUILD/qemu-4.2.0/memory.c:1928: memory_region_notify_one: Assertion `entry->iova >= notifier->start && entry_end <= notifier->end' failed.)
+- Resolves: bz#1885555
+  (8.4 machine types for x86)
+- Resolves: bz#1904392
+  (CVE-2020-27821 virt:8.4/qemu-kvm: QEMU: heap buffer overflow in msix_table_mmio_write() in hw/pci/msix.c [rhel-av-8])
+
 * Tue Dec 15 2020 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-2.el8
 - kvm-redhat-Define-hw_compat_8_3.patch [bz#1893935]
 - kvm-redhat-Add-spapr_machine_rhel_default_class_options.patch [bz#1893935]

@@ -32,14 +32,6 @@
 #define COUNT_MSG \
     "%d %s now active"
 
-#define SUBSCRIPTION_MSG \
-    "%d %s now active; your Red Hat Enterprise Linux subscription" \
-    " limit is %d guests. Please review your Red Hat Enterprise Linux" \
-    " subscription agreement or contact your Red Hat" \
-    " support representative for more information. You" \
-    " may review the Red Hat Enterprise subscription" \
-    " limits at http://www.redhat.com/rhel-virt-limits"
-
 int get_threshold_from_file(FILE *fp)
 {
     static const char key[] = "THRESHOLD=";
@@ -139,13 +131,6 @@ void emit_count_message(int count)
     closelog();
 }
 
-void emit_subscription_message(int count, int threshold)
-{
-    openlog(FACILITY, LOG_CONS, LOG_USER);
-    syslog(LOG_WARNING, SUBSCRIPTION_MSG, count, guest(count), threshold);
-    closelog();
-}
-
 int main(int argc, char **argv)
 {
     int count, threshold;
@@ -157,10 +142,8 @@ int main(int argc, char **argv)
     threshold = get_threshold();
 
     if (!strcmp(argv[2], "create")) {
-        if (threshold == 0) {
+        if (threshold == 0 || count > threshold) {
             emit_count_message(count);
-        } else if (count > threshold) {
-            emit_subscription_message(count, threshold);
         }
     } else {
         if (count >= threshold) {

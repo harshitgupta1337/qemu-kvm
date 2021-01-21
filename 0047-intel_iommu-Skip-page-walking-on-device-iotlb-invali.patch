@@ -1,0 +1,57 @@
+From add80ba59a85aca4c5e2619dee95557d2ec14169 Mon Sep 17 00:00:00 2001
+From: eperezma <eperezma@redhat.com>
+Date: Mon, 11 Jan 2021 14:36:14 -0500
+Subject: intel_iommu: Skip page walking on device iotlb invalidations
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: eperezma <eperezma@redhat.com>
+Message-id: <20210111143615.303645-5-eperezma@redhat.com>
+Patchwork-id: 100572
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 4/5] intel_iommu: Skip page walking on device iotlb invalidations
+Bugzilla: 1845758
+RH-Acked-by: Xiao Wang <jasowang@redhat.com>
+RH-Acked-by: David Hildenbrand <david@redhat.com>
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+
+Although they didn't reach the notifier because of the filtering in
+memory_region_notify_iommu_one, the vt-d was still splitting huge
+memory invalidations in chunks. Skipping it.
+
+This improves performance in case of netperf with vhost-net:
+* TCP_STREAM: From 1923.6Mbit/s to 2175.13Mbit/s (13%)
+* TCP_RR: From 8464.73 trans/s to 8932.703333 trans/s (5.5%)
+* UDP_RR: From 8562.08 trans/s to 9005.62/s (5.1%)
+* UDP_STREAM: No change observed (insignificant 0.1% improvement)
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Acked-by: Jason Wang <jasowang@redhat.com>
+Message-Id: <20201116165506.31315-5-eperezma@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit f7701e2c7983b680790af47117577b285b6a1aed)
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/i386/intel_iommu.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/hw/i386/intel_iommu.c b/hw/i386/intel_iommu.c
+index edc3090f91..0cc71e4057 100644
+--- a/hw/i386/intel_iommu.c
++++ b/hw/i386/intel_iommu.c
+@@ -1478,6 +1478,10 @@ static int vtd_sync_shadow_page_table(VTDAddressSpace *vtd_as)
+     VTDContextEntry ce;
+     IOMMUNotifier *n;
+ 
++    if (!(vtd_as->iommu.iommu_notify_flags & IOMMU_NOTIFIER_IOTLB_EVENTS)) {
++        return 0;
++    }
++
+     ret = vtd_dev_to_context_entry(vtd_as->iommu_state,
+                                    pci_bus_num(vtd_as->bus),
+                                    vtd_as->devfn, &ce);
+-- 
+2.18.4
+
