@@ -64,7 +64,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.2.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -144,6 +144,7 @@ Patch0048: 0048-memory-Skip-bad-range-assertion-if-notifier-is-DEVIO.patch
 Patch0049: 0049-RHEL-Switch-pvpanic-test-to-q35.patch
 Patch0050: 0050-8.4-x86-machine-type.patch
 Patch0051: 0051-memory-clamp-cached-translation-in-case-it-points-to.patch
+Patch0054: 0054-Drop-bogus-IPv6-messages.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -281,7 +282,7 @@ Requires: edk2-aarch64
 %endif
 
 %ifarch %{power64}
-Requires: SLOF >= %{SLOF_gittagdate}-1.git%{SLOF_gittagcommit}
+Requires: SLOF
 %endif
 Requires: libseccomp >= 2.4.0
 # For compressed guest memory dumps
@@ -1324,6 +1325,11 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 
 
 %changelog
+* Wed Jan 27 2021 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-4.el8
+- kvm-Drop-bogus-IPv6-messages.patch [bz#1918061]
+- Resolves: bz#1918061
+  (CVE-2020-10756 virt:rhel/qemu-kvm: QEMU: slirp: networking out-of-bounds read information disclosure vulnerability [rhel-av-8])
+
 * Mon Jan 18 2021 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-3.el8
 - kvm-block-nvme-Implement-fake-truncate-coroutine.patch [bz#1848834]
 - kvm-spec-find-system-python-via-meson.patch [bz#1899619]
