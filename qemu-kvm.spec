@@ -64,7 +64,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.2.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -145,6 +145,16 @@ Patch0049: 0049-RHEL-Switch-pvpanic-test-to-q35.patch
 Patch0050: 0050-8.4-x86-machine-type.patch
 Patch0051: 0051-memory-clamp-cached-translation-in-case-it-points-to.patch
 Patch0054: 0054-Drop-bogus-IPv6-messages.patch
+# For bz#1914069 - [ppc64le] have this fix for rhel8.4 av (spapr: Allow memory unplug to always succeed)
+Patch55: kvm-spapr-Allow-memory-unplug-to-always-succeed.patch
+# For bz#1914069 - [ppc64le] have this fix for rhel8.4 av (spapr: Allow memory unplug to always succeed)
+Patch56: kvm-spapr-Improve-handling-of-memory-unplug-with-old-gue.patch
+# For bz#1838738 - [Intel 8.4 FEAT] qemu-kvm Sapphire Rapids (SPR) New Instructions (NIs) - Fast Train
+Patch57: kvm-x86-cpu-Add-AVX512_FP16-cpu-feature.patch
+# For bz#1904268 - [RFE] [HPEMC] qemu-kvm: support up to 710 VCPUs
+Patch58: kvm-q35-Increase-max_cpus-to-710-on-pc-q35-rhel8-machine.patch
+# For bz#1922170 - Enable vfio-ccw in AV
+Patch59: kvm-config-enable-VFIO_CCW.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1325,6 +1335,21 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 
 
 %changelog
+* Tue Feb 02 2021 Eduardo Lima (Etrunko) <elima@redhat.com> - 5.2.0-5.el8
+- kvm-spapr-Allow-memory-unplug-to-always-succeed.patch [bz#1914069]
+- kvm-spapr-Improve-handling-of-memory-unplug-with-old-gue.patch [bz#1914069]
+- kvm-x86-cpu-Add-AVX512_FP16-cpu-feature.patch [bz#1838738]
+- kvm-q35-Increase-max_cpus-to-710-on-pc-q35-rhel8-machine.patch [bz#1904268]
+- kvm-config-enable-VFIO_CCW.patch [bz#1922170]
+- Resolves: bz#1914069
+  ([ppc64le] have this fix for rhel8.4 av (spapr: Allow memory unplug to always succeed))
+- Resolves: bz#1838738
+  ([Intel 8.4 FEAT] qemu-kvm Sapphire Rapids (SPR) New Instructions (NIs) - Fast Train)
+- Resolves: bz#1904268
+  ([RFE] [HPEMC] qemu-kvm: support up to 710 VCPUs)
+- Resolves: bz#1922170
+  (Enable vfio-ccw in AV)
+
 * Wed Jan 27 2021 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-4.el8
 - kvm-Drop-bogus-IPv6-messages.patch [bz#1918061]
 - Resolves: bz#1918061

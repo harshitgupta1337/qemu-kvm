@@ -1,0 +1,45 @@
+From 8fa6654712c7cba73fd1c8d93b094d90c1757000 Mon Sep 17 00:00:00 2001
+From: Eduardo Habkost <ehabkost@redhat.com>
+Date: Tue, 26 Jan 2021 23:46:44 -0500
+Subject: [PATCH 4/5] q35: Increase max_cpus to 710 on pc-q35-rhel8* machine
+ types
+
+RH-Author: Eduardo Habkost <ehabkost@redhat.com>
+Message-id: <20210126234644.3091529-1-ehabkost@redhat.com>
+Patchwork-id: 100791
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH] q35: Increase max_cpus to 710 on pc-q35-rhel8* machine types
+Bugzilla: 1904268
+RH-Acked-by: Daniel P. Berrange <berrange@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1904268
+Upstream: not applicable
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=34536802
+
+The original goal was to support 1024 VCPUs, but 710 VCPUs is the
+maximum number we can reach before hitting SMBIOS table size
+limits.
+
+Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
+Signed-off-by: Eduardo Lima (Etrunko) <etrunko@redhat.com>
+---
+ hw/i386/pc_q35.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
+index 5acb47afcf..72854192a9 100644
+--- a/hw/i386/pc_q35.c
++++ b/hw/i386/pc_q35.c
+@@ -589,7 +589,7 @@ static void pc_q35_machine_rhel_options(MachineClass *m)
+     machine_class_allow_dynamic_sysbus_dev(m, TYPE_INTEL_IOMMU_DEVICE);
+     machine_class_allow_dynamic_sysbus_dev(m, TYPE_RAMFB_DEVICE);
+     m->alias = "q35";
+-    m->max_cpus = 512;
++    m->max_cpus = 710;
+     compat_props_add(m->compat_props, pc_rhel_compat, pc_rhel_compat_len);
+ }
+ 
+-- 
+2.18.4
+

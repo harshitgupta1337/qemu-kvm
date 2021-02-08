@@ -1,0 +1,71 @@
+From 5840880e2ed3747464242e0559a6cf7ec4e55a11 Mon Sep 17 00:00:00 2001
+From: "plai@redhat.com" <plai@redhat.com>
+Date: Thu, 21 Jan 2021 17:43:53 -0500
+Subject: [PATCH 3/5] x86/cpu: Add AVX512_FP16 cpu feature
+
+RH-Author: plai@redhat.com
+Message-id: <20210121174353.16032-1-plai@redhat.com>
+Patchwork-id: 100758
+O-Subject: [RHEL8.4 AV qemu-kvm PATCH] x86/cpu: Add AVX512_FP16 cpu feature
+Bugzilla: 1838738
+RH-Acked-by: Eduardo Habkost <ehabkost@redhat.com>
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+RH-Acked-by: Bandan Das <bsd@redhat.com>
+
+From: Cathy Zhang <cathy.zhang@intel.com>
+
+BZ https://bugzilla.redhat.com/show_bug.cgi?id=1838738
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=34299228
+        x86 https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=34299267
+Branch rhel-av-8.4.0
+
+Tested on intel-eaglestream-spr-01.khw1.lab.eng.bos.redhat.com.
+All flags found as expected
+    avx512_vp2intersect,  serialize, and avx512_fp16
+except:
+    tsxldtrk
+
+Cpuid reports CPUID.(7.0).EDX[16] isn't enabled on this CPU.
+Leaf            Subleaf        EAX                  EBX               ECX                   EDX
+00000007 00000000:  00000001 ....  f3bfbfef ....  fa417f5e ^.A.  ff8c4532 2E..
+
+Already in rhel-av-8.4.0 (rebased to v5.2.0 ):
+  353f98c9a x86/cpu: Enable AVX512_VP2INTERSECT cpu feature
+  5dd13f2a5 target/i386: Add SERIALIZE cpu feature
+  b3c7344e3 target/i386: Enable TSX Suspend Load Address Tracking feature
+
+Signed-off-by: Eduardo Lima (Etrunko) <etrunko@redhat.com>
+---
+ target/i386/cpu.c | 2 +-
+ target/i386/cpu.h | 2 ++
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index dc592e990e..f944b41573 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -977,7 +977,7 @@ static FeatureWordInfo feature_word_info[FEATURE_WORDS] = {
+             "avx512-vp2intersect", NULL, "md-clear", NULL,
+             NULL, NULL, "serialize", NULL,
+             "tsx-ldtrk", NULL, NULL /* pconfig */, NULL,
+-            NULL, NULL, NULL, NULL,
++            NULL, NULL, NULL, "avx512-fp16",
+             NULL, NULL, "spec-ctrl", "stibp",
+             NULL, "arch-capabilities", "core-capability", "ssbd",
+         },
+diff --git a/target/i386/cpu.h b/target/i386/cpu.h
+index 88e8586f8f..a3db7e3c6c 100644
+--- a/target/i386/cpu.h
++++ b/target/i386/cpu.h
+@@ -783,6 +783,8 @@ typedef uint64_t FeatureWordArray[FEATURE_WORDS];
+ #define CPUID_7_0_EDX_SERIALIZE         (1U << 14)
+ /* TSX Suspend Load Address Tracking instruction */
+ #define CPUID_7_0_EDX_TSX_LDTRK         (1U << 16)
++/* AVX512_FP16 instruction */
++#define CPUID_7_0_EDX_AVX512_FP16       (1U << 23)
+ /* Speculation Control */
+ #define CPUID_7_0_EDX_SPEC_CTRL         (1U << 26)
+ /* Single Thread Indirect Branch Predictors */
+-- 
+2.18.4
+

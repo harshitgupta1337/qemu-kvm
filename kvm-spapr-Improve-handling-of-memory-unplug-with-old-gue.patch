@@ -1,0 +1,168 @@
+From cd719765bd751142c4040ee7daf615b859fb3e9d Mon Sep 17 00:00:00 2001
+From: Greg Kurz <gkurz@redhat.com>
+Date: Tue, 19 Jan 2021 15:20:44 -0500
+Subject: [PATCH 2/5] spapr: Improve handling of memory unplug with old guests
+
+RH-Author: Greg Kurz <gkurz@redhat.com>
+Message-id: <20210119152044.1019191-3-gkurz@redhat.com>
+Patchwork-id: 100691
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 2/2] spapr: Improve handling of memory unplug with old guests
+Bugzilla: 1914069
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: David Gibson <dgibson@redhat.com>
+
+From: Greg Kurz <groug@kaod.org>
+
+Since commit 1e8b5b1aa16b ("spapr: Allow memory unplug to always succeed")
+trying to unplug memory from a guest that doesn't support it (eg. rhel6)
+no longer generates an error like it used to. Instead, it leaves the
+memory around : only a subsequent reboot or manual use of drmgr within
+the guest can complete the hot-unplug sequence. A flag was added to
+SpaprMachineClass so that this new behavior only applies to the default
+machine type.
+
+We can do better. CAS processes all pending hot-unplug requests. This
+means that we don't really care about what the guest supports if
+the hot-unplug request happens before CAS.
+
+All guests that we care for, even old ones, set enough bits in OV5
+that lead to a non-empty bitmap in spapr->ov5_cas. Use that as a
+heuristic to decide if CAS has already occured or not.
+
+Always accept unplug requests that happen before CAS since CAS will
+process them. Restore the previous behavior of rejecting them after
+CAS when we know that the guest doesn't support memory hot-unplug.
+
+This behavior is suitable for all machine types : this allows to
+drop the pre_6_0_memory_unplug flag.
+
+Fixes: 1e8b5b1aa16b ("spapr: Allow memory unplug to always succeed")
+Signed-off-by: Greg Kurz <groug@kaod.org>
+Message-Id: <161012708715.801107.11418801796987916516.stgit@bahia.lan>
+Reviewed-by: Daniel Henrique Barboza <danielhb413@gmail.com>
+Signed-off-by: David Gibson <david@gibson.dropbear.id.au>
+(cherry picked from commit 73598c75df0585e039825e642adede21912dabc7)
+Signed-off-by: Greg Kurz <gkurz@redhat.com>
+
+Conflicts:
+	hw/ppc/spapr.c
+
+Conflict around the removal of pre_6_0_memory_unplug, which was only
+partially backported from upstream 1e8b5b1aa16b.
+
+Signed-off-by: Eduardo Lima (Etrunko) <etrunko@redhat.com>
+---
+ hw/ppc/spapr.c              | 21 +++++++++++++--------
+ hw/ppc/spapr_events.c       |  3 +--
+ hw/ppc/spapr_ovec.c         |  7 +++++++
+ include/hw/ppc/spapr.h      |  2 +-
+ include/hw/ppc/spapr_ovec.h |  1 +
+ 5 files changed, 23 insertions(+), 11 deletions(-)
+
+diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
+index 65a647134a..a67df8cb26 100644
+--- a/hw/ppc/spapr.c
++++ b/hw/ppc/spapr.c
+@@ -4056,6 +4056,18 @@ static void spapr_machine_device_unplug(HotplugHandler *hotplug_dev,
+     }
+ }
+ 
++bool spapr_memory_hot_unplug_supported(SpaprMachineState *spapr)
++{
++    return spapr_ovec_test(spapr->ov5_cas, OV5_HP_EVT) ||
++        /*
++         * CAS will process all pending unplug requests.
++         *
++         * HACK: a guest could theoretically have cleared all bits in OV5,
++         * but none of the guests we care for do.
++         */
++        spapr_ovec_empty(spapr->ov5_cas);
++}
++
+ static void spapr_machine_device_unplug_request(HotplugHandler *hotplug_dev,
+                                                 DeviceState *dev, Error **errp)
+ {
+@@ -4064,16 +4076,9 @@ static void spapr_machine_device_unplug_request(HotplugHandler *hotplug_dev,
+     SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
+ 
+     if (object_dynamic_cast(OBJECT(dev), TYPE_PC_DIMM)) {
+-        if (!smc->pre_6_0_memory_unplug ||
+-            spapr_ovec_test(sms->ov5_cas, OV5_HP_EVT)) {
++        if (spapr_memory_hot_unplug_supported(sms)) {
+             spapr_memory_unplug_request(hotplug_dev, dev, errp);
+         } else {
+-            /* NOTE: this means there is a window after guest reset, prior to
+-             * CAS negotiation, where unplug requests will fail due to the
+-             * capability not being detected yet. This is a bit different than
+-             * the case with PCI unplug, where the events will be queued and
+-             * eventually handled by the guest after boot
+-             */
+             error_setg(errp, "Memory hot unplug not supported for this guest");
+         }
+     } else if (object_dynamic_cast(OBJECT(dev), TYPE_SPAPR_CPU_CORE)) {
+diff --git a/hw/ppc/spapr_events.c b/hw/ppc/spapr_events.c
+index c30123177b..80b918ff5f 100644
+--- a/hw/ppc/spapr_events.c
++++ b/hw/ppc/spapr_events.c
+@@ -659,8 +659,7 @@ static void spapr_hotplug_req_event(uint8_t hp_id, uint8_t hp_action,
+         /* we should not be using count_indexed value unless the guest
+          * supports dedicated hotplug event source
+          */
+-        g_assert(!SPAPR_MACHINE_GET_CLASS(spapr)->pre_6_0_memory_unplug ||
+-                 spapr_ovec_test(spapr->ov5_cas, OV5_HP_EVT));
++        g_assert(spapr_memory_hot_unplug_supported(spapr));
+         hp->drc_id.count_indexed.count =
+             cpu_to_be32(drc_id->count_indexed.count);
+         hp->drc_id.count_indexed.index =
+diff --git a/hw/ppc/spapr_ovec.c b/hw/ppc/spapr_ovec.c
+index dd003f1763..b2567caa5c 100644
+--- a/hw/ppc/spapr_ovec.c
++++ b/hw/ppc/spapr_ovec.c
+@@ -125,6 +125,13 @@ bool spapr_ovec_test(SpaprOptionVector *ov, long bitnr)
+     return test_bit(bitnr, ov->bitmap) ? true : false;
+ }
+ 
++bool spapr_ovec_empty(SpaprOptionVector *ov)
++{
++    g_assert(ov);
++
++    return bitmap_empty(ov->bitmap, OV_MAXBITS);
++}
++
+ static void guest_byte_to_bitmap(uint8_t entry, unsigned long *bitmap,
+                                  long bitmap_offset)
+ {
+diff --git a/include/hw/ppc/spapr.h b/include/hw/ppc/spapr.h
+index 4941fe9b4f..5952942362 100644
+--- a/include/hw/ppc/spapr.h
++++ b/include/hw/ppc/spapr.h
+@@ -142,7 +142,6 @@ struct SpaprMachineClass {
+     hwaddr rma_limit;          /* clamp the RMA to this size */
+     bool pre_5_1_assoc_refpoints;
+     bool pre_5_2_numa_associativity;
+-    bool pre_6_0_memory_unplug;
+ 
+     bool has_power9_support;
+     void (*phb_placement)(SpaprMachineState *spapr, uint32_t index,
+@@ -954,4 +953,5 @@ bool spapr_check_pagesize(SpaprMachineState *spapr, hwaddr pagesize,
+ 
+ void spapr_set_all_lpcrs(target_ulong value, target_ulong mask);
+ hwaddr spapr_get_rtas_addr(void);
++bool spapr_memory_hot_unplug_supported(SpaprMachineState *spapr);
+ #endif /* HW_SPAPR_H */
+diff --git a/include/hw/ppc/spapr_ovec.h b/include/hw/ppc/spapr_ovec.h
+index d4dee9e06a..48b716a060 100644
+--- a/include/hw/ppc/spapr_ovec.h
++++ b/include/hw/ppc/spapr_ovec.h
+@@ -71,6 +71,7 @@ void spapr_ovec_cleanup(SpaprOptionVector *ov);
+ void spapr_ovec_set(SpaprOptionVector *ov, long bitnr);
+ void spapr_ovec_clear(SpaprOptionVector *ov, long bitnr);
+ bool spapr_ovec_test(SpaprOptionVector *ov, long bitnr);
++bool spapr_ovec_empty(SpaprOptionVector *ov);
+ SpaprOptionVector *spapr_ovec_parse_vector(target_ulong table_addr, int vector);
+ int spapr_dt_ovec(void *fdt, int fdt_offset,
+                   SpaprOptionVector *ov, const char *name);
+-- 
+2.18.4
+

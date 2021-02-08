@@ -1,0 +1,42 @@
+From f6e6416e8267d302ba5ec40c2a26bc25cc0d1d55 Mon Sep 17 00:00:00 2001
+From: Cornelia Huck <cohuck@redhat.com>
+Date: Fri, 29 Jan 2021 14:40:05 -0500
+Subject: [PATCH 5/5] config: enable VFIO_CCW
+
+RH-Author: Cornelia Huck <cohuck@redhat.com>
+Message-id: <20210129144005.698097-1-cohuck@redhat.com>
+Patchwork-id: 100941
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH] config: enable VFIO_CCW
+Bugzilla: 1922170
+RH-Acked-by: Alex Williamson <alex.williamson@redhat.com>
+RH-Acked-by: David Hildenbrand <david@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+
+BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1922170
+BRANCH: rhel-av-8.4.0
+UPSTREAM: n/a
+BREW: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=34609010
+
+Enable vfio-ccw in RHEL AV builds.
+
+Signed-off-by: Cornelia Huck <cohuck@redhat.com>
+Signed-off-by: Eduardo Lima (Etrunko) <etrunko@redhat.com>
+---
+ default-configs/devices/s390x-rh-devices.mak | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/default-configs/devices/s390x-rh-devices.mak b/default-configs/devices/s390x-rh-devices.mak
+index c3c73fe752..08a15f3e01 100644
+--- a/default-configs/devices/s390x-rh-devices.mak
++++ b/default-configs/devices/s390x-rh-devices.mak
+@@ -9,6 +9,7 @@ CONFIG_SCSI=y
+ CONFIG_TERMINAL3270=y
+ CONFIG_VFIO=y
+ CONFIG_VFIO_AP=y
++CONFIG_VFIO_CCW=y
+ CONFIG_VFIO_PCI=y
+ CONFIG_VHOST_USER=y
+ CONFIG_VIRTIO_CCW=y
+-- 
+2.18.4
+
