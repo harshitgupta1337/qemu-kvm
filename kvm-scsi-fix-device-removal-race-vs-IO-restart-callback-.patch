@@ -1,0 +1,62 @@
+From 3b537ab3eb342af4222a8cf825062d17893cd18f Mon Sep 17 00:00:00 2001
+From: Maxim Levitsky <mlevitsk@redhat.com>
+Date: Wed, 27 Jan 2021 11:47:54 -0500
+Subject: [PATCH 1/7] scsi: fix device removal race vs IO restart callback on
+ resume
+
+RH-Author: Maxim Levitsky <mlevitsk@redhat.com>
+Message-id: <20210127114754.477582-2-mlevitsk@redhat.com>
+Patchwork-id: 100795
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 1/1] scsi: fix device removal race vs IO restart callback on resume
+Bugzilla: 1854811
+RH-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: John Snow <jsnow@redhat.com>
+
+There is (mostly theoretical) race between removal of a scsi device and
+scsi_dma_restart_bh.
+
+It used to be easier to hit this race prior to my / Paulo's patch series
+that added rcu to scsi bus device handling code, but IMHO this race
+should still be possible to hit, at least in theory.
+
+Buglink: https://bugzilla.redhat.com/show_bug.cgi?id=1854811
+
+Fix it anyway with a patch that was proposed by Paulo in the above bugzilla.
+
+Suggested-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Maxim Levitsky <mlevitsk@redhat.com>
+Message-Id: <20201210125929.1136390-2-mlevitsk@redhat.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+(cherry picked from commit cfd4e36352d4426221aa94da44a172da1aaa741b)
+Signed-off-by: Maxim Levitsky <mlevitsk@redhat.com>
+Signed-off-by: Eduardo Lima (Etrunko) <etrunko@redhat.com>
+---
+ hw/scsi/scsi-bus.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/hw/scsi/scsi-bus.c b/hw/scsi/scsi-bus.c
+index b901e701f0..edb5c3492a 100644
+--- a/hw/scsi/scsi-bus.c
++++ b/hw/scsi/scsi-bus.c
+@@ -170,6 +170,8 @@ static void scsi_dma_restart_bh(void *opaque)
+         scsi_req_unref(req);
+     }
+     aio_context_release(blk_get_aio_context(s->conf.blk));
++    /* Drop the reference that was acquired in scsi_dma_restart_cb */
++    object_unref(OBJECT(s));
+ }
+ 
+ void scsi_req_retry(SCSIRequest *req)
+@@ -188,6 +190,8 @@ static void scsi_dma_restart_cb(void *opaque, int running, RunState state)
+     }
+     if (!s->bh) {
+         AioContext *ctx = blk_get_aio_context(s->conf.blk);
++        /* The reference is dropped in scsi_dma_restart_bh.*/
++        object_ref(OBJECT(s));
+         s->bh = aio_bh_new(ctx, scsi_dma_restart_bh, s);
+         qemu_bh_schedule(s->bh);
+     }
+-- 
+2.18.4
+

@@ -64,7 +64,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.2.0
-Release: 5%{?dist}
+Release: 6%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -155,6 +155,16 @@ Patch57: kvm-x86-cpu-Add-AVX512_FP16-cpu-feature.patch
 Patch58: kvm-q35-Increase-max_cpus-to-710-on-pc-q35-rhel8-machine.patch
 # For bz#1922170 - Enable vfio-ccw in AV
 Patch59: kvm-config-enable-VFIO_CCW.patch
+# For bz#1854811 - scsi-bus.c: use-after-free due to race between device unplug and I/O operation causes guest crash
+Patch60: kvm-scsi-fix-device-removal-race-vs-IO-restart-callback-.patch
+# For bz#1907264 - systemtap: invalid or missing conversion specifier at the trace event vhost_vdpa_set_log_base
+Patch61: kvm-tracetool-also-strip-l-and-ll-from-systemtap-format-.patch
+# For bz#1834152 - [aarch64] QEMU SMMUv3 device: Support range invalidation
+Patch63: kvm-hw-arm-smmuv3-Fix-addr_mask-for-range-based-invalida.patch
+# For bz#1925028 - vsmmuv3/vhost and virtio-iommu/vhost regression
+Patch65: kvm-vhost-Unbreak-SMMU-and-virtio-iommu-on-dev-iotlb-sup.patch
+# For bz#1902537 - The default fsfreeze-hook path from man page and qemu-ga --help command are different
+Patch66: kvm-docs-set-CONFDIR-when-running-sphinx.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -284,6 +294,7 @@ hardware for a full system such as a PC and its associated peripherals.
 Summary: qemu-kvm core components
 Requires: %{name}-common = %{epoch}:%{version}-%{release}
 Requires: qemu-img = %{epoch}:%{version}-%{release}
+Recommends: qemu-kvm-docs
 %ifarch %{ix86} x86_64
 Requires: edk2-ovmf
 %endif
@@ -326,6 +337,12 @@ Requires: qemu-kvm-common = %{epoch}:%{version}-%{release}
 qemu-kiwi is a version of qemu-kvm with a restricted set of features
 intended for use by specific applications.
 It's experimental and unsupported.
+
+%package -n qemu-kvm-docs
+Summary: qemu-kvm documentation
+
+%description -n qemu-kvm-docs
+qemu-kvm-docs provides documentation files regarding qemu-kvm.
 
 %package -n qemu-img
 Summary: QEMU command line tool for manipulating disk images
@@ -613,7 +630,7 @@ pushd %{qemu_kvm_build}
   --block-drv-ro-whitelist=vmdk,vhdx,vpc,https,ssh \
   --with-coroutine=ucontext \
   --with-git=git \
-  --tls-priority=NORMAL \
+  --tls-priority=@QEMU,SYSTEM \
   %{disable_everything} \
   --enable-attr \
 %ifarch %{ix86} x86_64
@@ -744,7 +761,7 @@ find ../default-configs -name "*-rh-devices.mak" \
   --block-drv-ro-whitelist=vmdk,vhdx,vpc,https,ssh \
   --with-coroutine=ucontext \
   --with-git=git \
-  --tls-priority=NORMAL \
+  --tls-priority=@QEMU,SYSTEM \
   %{disable_everything} \
   --enable-attr \
 %ifarch %{ix86} x86_64
@@ -1158,8 +1175,7 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %files
 # Deliberately empty
 
-
-%files -n qemu-kvm-common
+%files -n qemu-kvm-docs
 %defattr(-,root,root)
 %dir %{qemudocdir}
 %doc %{qemudocdir}/README.rst
@@ -1173,6 +1189,9 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %doc %{qemudocdir}/system/*
 %doc %{qemudocdir}/tools/*
 %doc %{qemudocdir}/user/*
+
+%files -n qemu-kvm-common
+%defattr(-,root,root)
 %{_mandir}/man7/qemu-qmp-ref.7*
 %{_mandir}/man7/qemu-cpu-models.7*
 %{_bindir}/qemu-keymap
@@ -1335,6 +1354,31 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 
 
 %changelog
+* Fri Feb 12 2021 Miroslav Rezanina <mrezanin@redhat.com> - 5.2.0-6.el8
+- kvm-scsi-fix-device-removal-race-vs-IO-restart-callback-.patch [bz#1854811]
+- kvm-tracetool-also-strip-l-and-ll-from-systemtap-format-.patch [bz#1907264]
+- kvm-redhat-moving-all-documentation-files-to-qemu-kvm-do.patch [bz#1881170 bz#1924766]
+- kvm-hw-arm-smmuv3-Fix-addr_mask-for-range-based-invalida.patch [bz#1834152]
+- kvm-redhat-makes-qemu-respect-system-s-crypto-profile.patch [bz#1902219]
+- kvm-vhost-Unbreak-SMMU-and-virtio-iommu-on-dev-iotlb-sup.patch [bz#1925028]
+- kvm-docs-set-CONFDIR-when-running-sphinx.patch [bz#1902537]
+- Resolves: bz#1854811
+  (scsi-bus.c: use-after-free due to race between device unplug and I/O operation causes guest crash)
+- Resolves: bz#1907264
+  (systemtap: invalid or missing conversion specifier at the trace event vhost_vdpa_set_log_base)
+- Resolves: bz#1881170
+  (split documentation from the qemu-kvm-core package to its own subpackage)
+- Resolves: bz#1924766
+  (split documentation from the qemu-kvm-core package to its own subpackage [av-8.4.0])
+- Resolves: bz#1834152
+  ([aarch64] QEMU SMMUv3 device: Support range invalidation)
+- Resolves: bz#1902219
+  (QEMU doesn't honour system crypto policies)
+- Resolves: bz#1925028
+  (vsmmuv3/vhost and virtio-iommu/vhost regression)
+- Resolves: bz#1902537
+  (The default fsfreeze-hook path from man page and qemu-ga --help command are different)
+
 * Tue Feb 02 2021 Eduardo Lima (Etrunko) <elima@redhat.com> - 5.2.0-5.el8
 - kvm-spapr-Allow-memory-unplug-to-always-succeed.patch [bz#1914069]
 - kvm-spapr-Improve-handling-of-memory-unplug-with-old-gue.patch [bz#1914069]

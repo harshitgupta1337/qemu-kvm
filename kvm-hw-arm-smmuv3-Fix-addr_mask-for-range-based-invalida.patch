@@ -1,0 +1,66 @@
+From 9768ea83a3f23f112514ad34d4abcd6e9590bb71 Mon Sep 17 00:00:00 2001
+From: Auger Eric <eric.auger@redhat.com>
+Date: Wed, 3 Feb 2021 20:31:27 -0500
+Subject: [PATCH 4/7] hw/arm/smmuv3: Fix addr_mask for range-based invalidation
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Auger Eric <eric.auger@redhat.com>
+Message-id: <20210203203127.3613-1-eric.auger@redhat.com>
+Patchwork-id: 100971
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH] hw/arm/smmuv3: Fix addr_mask for range-based invalidation
+Bugzilla: 1834152
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+From: Zenghui Yu <yuzenghui@huawei.com>
+
+BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1834152
+BRANCH: rhel-av-8.4.0
+UPSTREAM: yes
+BREW: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=34711554
+
+When handling guest range-based IOTLB invalidation, we should decode the TG
+field into the corresponding translation granule size so that we can pass
+the correct invalidation range to backend. Set @granule to (tg * 2 + 10) to
+properly emulate the architecture.
+
+Fixes: d52915616c05 ("hw/arm/smmuv3: Get prepared for range invalidation")
+Signed-off-by: Zenghui Yu <yuzenghui@huawei.com>
+Acked-by: Eric Auger <eric.auger@redhat.com>
+Message-id: 20210130043220.1345-1-yuzenghui@huawei.com
+Signed-off-by: Peter Maydell <peter.maydell@linaro.org>
+(cherry picked from commit dcda883cd21125c699419a3fc0fe182ea989d9c4)
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+Signed-off-by: Eduardo Lima (Etrunko) <etrunko@redhat.com>
+---
+ hw/arm/smmuv3.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/hw/arm/smmuv3.c b/hw/arm/smmuv3.c
+index bbca0e9f20..98b99d4fe8 100644
+--- a/hw/arm/smmuv3.c
++++ b/hw/arm/smmuv3.c
+@@ -801,7 +801,7 @@ static void smmuv3_notify_iova(IOMMUMemoryRegion *mr,
+ {
+     SMMUDevice *sdev = container_of(mr, SMMUDevice, iommu);
+     IOMMUTLBEvent event;
+-    uint8_t granule = tg;
++    uint8_t granule;
+ 
+     if (!tg) {
+         SMMUEventInfo event = {.inval_ste_allowed = true};
+@@ -821,6 +821,8 @@ static void smmuv3_notify_iova(IOMMUMemoryRegion *mr,
+             return;
+         }
+         granule = tt->granule_sz;
++    } else {
++        granule = tg * 2 + 10;
+     }
+ 
+     event.type = IOMMU_NOTIFIER_UNMAP;
+-- 
+2.18.4
+

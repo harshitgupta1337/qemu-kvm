@@ -1,0 +1,56 @@
+From 16130479cc03434a85111608d9d2b0e179dc8b98 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marc-Andr=C3=A9=20Lureau?= <marcandre.lureau@redhat.com>
+Date: Mon, 8 Feb 2021 09:37:30 -0500
+Subject: [PATCH 7/7] docs: set CONFDIR when running sphinx
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Marc-André Lureau <marcandre.lureau@redhat.com>
+Message-id: <20210208093730.1166952-1-marcandre.lureau@redhat.com>
+Patchwork-id: 101004
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH] docs: set CONFDIR when running sphinx
+Bugzilla: 1902537
+RH-Acked-by: Eduardo Lima (Etrunko) <etrunko@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+
+From: Marc-AndrÃ© Lureau <marcandre.lureau@redhat.com>
+
+The default configuration path /etc/qemu can be overriden with configure
+options, and the generated documentation used to reflect it.
+
+Fixes regression introduced in commit
+f8aa24ea9a82da38370470c6bc0eaa393999edfe ("meson: sphinx-build").
+
+Fixes: https://bugzilla.redhat.com/show_bug.cgi?id=1902537
+Signed-off-by: Marc-AndrÃ© Lureau <marcandre.lureau@redhat.com>
+Message-Id: <20201201183704.299697-1-marcandre.lureau@redhat.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+
+BZ: https://bugzilla.redhat.com/show_bug.cgi?id=1902537
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=34816282
+
+(cherry picked from commit daf07a6714b111340fe2d0234d1a5287d6ebe0ec)
+Signed-off-by: Marc-AndrÃ© Lureau <marcandre.lureau@redhat.com>
+Signed-off-by: Eduardo Lima (Etrunko) <etrunko@redhat.com>
+---
+ docs/meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/docs/meson.build b/docs/meson.build
+index ebd85d59f9..bb8fe4c9e4 100644
+--- a/docs/meson.build
++++ b/docs/meson.build
+@@ -9,7 +9,7 @@ endif
+ # Check if tools are available to build documentation.
+ build_docs = false
+ if sphinx_build.found()
+-  SPHINX_ARGS = [sphinx_build]
++  SPHINX_ARGS = ['env', 'CONFDIR=' + qemu_confdir, sphinx_build]
+   # If we're making warnings fatal, apply this to Sphinx runs as well
+   if get_option('werror')
+     SPHINX_ARGS += [ '-W' ]
+-- 
+2.18.4
+
