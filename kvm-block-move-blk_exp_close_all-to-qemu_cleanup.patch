@@ -1,0 +1,101 @@
+From 661245e1baf416570295fad0db1fdd5ad8485e33 Mon Sep 17 00:00:00 2001
+From: Sergio Lopez Pascual <slp@redhat.com>
+Date: Thu, 11 Feb 2021 14:42:08 -0300
+Subject: [PATCH 6/6] block: move blk_exp_close_all() to qemu_cleanup()
+
+RH-Author: Sergio Lopez Pascual <slp@redhat.com>
+Message-id: <20210211144208.58930-6-slp@redhat.com>
+Patchwork-id: 101052
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 5/5] block: move blk_exp_close_all() to qemu_cleanup()
+Bugzilla: 1918966 1918968
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Eric Blake <eblake@redhat.com>
+
+Move blk_exp_close_all() from bdrv_close() to qemu_cleanup(), before
+bdrv_drain_all_begin().
+
+Export drivers may have coroutines yielding at some point in the block
+layer, so we need to shut them down before draining the block layer,
+as otherwise they may get stuck blk_wait_while_drained().
+
+RHBZ: https://bugzilla.redhat.com/show_bug.cgi?id=1900505
+Signed-off-by: Sergio Lopez <slp@redhat.com>
+Message-Id: <20210201125032.44713-3-slp@redhat.com>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit 1895b977f9a69419ae45cfc25805f71efae32eaf)
+Signed-off-by: Sergio Lopez <slp@redhat.com>
+Signed-off-by: Eduardo Lima (Etrunko) <etrunko@redhat.com>
+---
+ block.c                              | 1 -
+ qemu-nbd.c                           | 1 +
+ softmmu/vl.c                         | 9 +++++++++
+ storage-daemon/qemu-storage-daemon.c | 1 +
+ 4 files changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/block.c b/block.c
+index 8bfa446f9c..57c60efc7f 100644
+--- a/block.c
++++ b/block.c
+@@ -4472,7 +4472,6 @@ static void bdrv_close(BlockDriverState *bs)
+ void bdrv_close_all(void)
+ {
+     assert(job_next(NULL) == NULL);
+-    blk_exp_close_all();
+ 
+     /* Drop references from requests still in flight, such as canceled block
+      * jobs whose AIO context has not been polled yet */
+diff --git a/qemu-nbd.c b/qemu-nbd.c
+index a7075c5419..1d337b7504 100644
+--- a/qemu-nbd.c
++++ b/qemu-nbd.c
+@@ -509,6 +509,7 @@ static const char *socket_activation_validate_opts(const char *device,
+ static void qemu_nbd_shutdown(void)
+ {
+     job_cancel_sync_all();
++    blk_exp_close_all();
+     bdrv_close_all();
+ }
+ 
+diff --git a/softmmu/vl.c b/softmmu/vl.c
+index 065d52e8dc..3244ee5e12 100644
+--- a/softmmu/vl.c
++++ b/softmmu/vl.c
+@@ -66,6 +66,7 @@
+ #include "qemu/log.h"
+ #include "sysemu/blockdev.h"
+ #include "hw/block/block.h"
++#include "block/export.h"
+ #include "migration/misc.h"
+ #include "migration/snapshot.h"
+ #include "migration/global_state.h"
+@@ -4526,6 +4527,14 @@ void qemu_cleanup(void)
+      */
+     migration_shutdown();
+ 
++    /*
++     * Close the exports before draining the block layer. The export
++     * drivers may have coroutines yielding on it, so we need to clean
++     * them up before the drain, as otherwise they may be get stuck in
++     * blk_wait_while_drained().
++     */
++    blk_exp_close_all();
++
+     /*
+      * We must cancel all block jobs while the block layer is drained,
+      * or cancelling will be affected by throttling and thus may block
+diff --git a/storage-daemon/qemu-storage-daemon.c b/storage-daemon/qemu-storage-daemon.c
+index e0c87edbdd..d8d172cc60 100644
+--- a/storage-daemon/qemu-storage-daemon.c
++++ b/storage-daemon/qemu-storage-daemon.c
+@@ -314,6 +314,7 @@ int main(int argc, char *argv[])
+         main_loop_wait(false);
+     }
+ 
++    blk_exp_close_all();
+     bdrv_drain_all_begin();
+     bdrv_close_all();
+ 
+-- 
+2.27.0
+

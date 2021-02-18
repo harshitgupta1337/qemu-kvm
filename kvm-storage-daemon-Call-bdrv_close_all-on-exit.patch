@@ -1,0 +1,48 @@
+From b1883ddf10c2ec31ac72866494687d8897535a82 Mon Sep 17 00:00:00 2001
+From: Sergio Lopez Pascual <slp@redhat.com>
+Date: Thu, 11 Feb 2021 14:42:07 -0300
+Subject: [PATCH 5/6] storage-daemon: Call bdrv_close_all() on exit
+
+RH-Author: Sergio Lopez Pascual <slp@redhat.com>
+Message-id: <20210211144208.58930-5-slp@redhat.com>
+Patchwork-id: 101048
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 4/5] storage-daemon: Call bdrv_close_all() on exit
+Bugzilla: 1918966 1918968
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Eric Blake <eblake@redhat.com>
+
+From: Max Reitz <mreitz@redhat.com>
+
+Otherwise, exports and block devices are not properly shut down and
+closed, unless the users explicitly issues blockdev-del and
+block-export-del commands for each of them.
+
+Signed-off-by: Max Reitz <mreitz@redhat.com>
+Reviewed-by: Kevin Wolf <kwolf@redhat.com>
+Message-Id: <20201027190600.192171-17-mreitz@redhat.com>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit b55a3c8860b763b62b2cc2f4a6f55379977bbde5)
+Signed-off-by: Sergio Lopez <slp@redhat.com>
+Signed-off-by: Eduardo Lima (Etrunko) <etrunko@redhat.com>
+---
+ storage-daemon/qemu-storage-daemon.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/storage-daemon/qemu-storage-daemon.c b/storage-daemon/qemu-storage-daemon.c
+index 7c914b0dc1..e0c87edbdd 100644
+--- a/storage-daemon/qemu-storage-daemon.c
++++ b/storage-daemon/qemu-storage-daemon.c
+@@ -314,6 +314,9 @@ int main(int argc, char *argv[])
+         main_loop_wait(false);
+     }
+ 
++    bdrv_drain_all_begin();
++    bdrv_close_all();
++
+     monitor_cleanup();
+     qemu_chr_cleanup();
+     user_creatable_cleanup();
+-- 
+2.27.0
+

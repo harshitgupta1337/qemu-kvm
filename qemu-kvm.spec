@@ -64,7 +64,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.2.0
-Release: 6%{?dist}
+Release: 7%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -165,6 +165,23 @@ Patch63: kvm-hw-arm-smmuv3-Fix-addr_mask-for-range-based-invalida.patch
 Patch65: kvm-vhost-Unbreak-SMMU-and-virtio-iommu-on-dev-iotlb-sup.patch
 # For bz#1902537 - The default fsfreeze-hook path from man page and qemu-ga --help command are different
 Patch66: kvm-docs-set-CONFDIR-when-running-sphinx.patch
+# For bz#1903521 - hot unplug vhost-user cause qemu crash: qemu-kvm: ../softmmu/memory.c:2818: do_address_space_destroy: Assertion `QTAILQ_EMPTY(&as->listeners)' failed.
+Patch67: kvm-virtio-Add-corresponding-memory_listener_unregister-.patch
+# For bz#1918966 - [incremental_backup] qemu aborts if guest reboot during backup when using virtio-blk: "aio_co_schedule: Co-routine was already scheduled in 'aio_co_schedule'"
+# For bz#1918968 - [incremental_backup] qemu deadlock after poweroff in guest during backup in nbd_export_close_all()
+Patch68: kvm-block-Honor-blk_set_aio_context-context-requirements.patch
+# For bz#1918966 - [incremental_backup] qemu aborts if guest reboot during backup when using virtio-blk: "aio_co_schedule: Co-routine was already scheduled in 'aio_co_schedule'"
+# For bz#1918968 - [incremental_backup] qemu deadlock after poweroff in guest during backup in nbd_export_close_all()
+Patch69: kvm-nbd-server-Quiesce-coroutines-on-context-switch.patch
+# For bz#1918966 - [incremental_backup] qemu aborts if guest reboot during backup when using virtio-blk: "aio_co_schedule: Co-routine was already scheduled in 'aio_co_schedule'"
+# For bz#1918968 - [incremental_backup] qemu deadlock after poweroff in guest during backup in nbd_export_close_all()
+Patch70: kvm-block-Avoid-processing-BDS-twice-in-bdrv_set_aio_con.patch
+# For bz#1918966 - [incremental_backup] qemu aborts if guest reboot during backup when using virtio-blk: "aio_co_schedule: Co-routine was already scheduled in 'aio_co_schedule'"
+# For bz#1918968 - [incremental_backup] qemu deadlock after poweroff in guest during backup in nbd_export_close_all()
+Patch71: kvm-storage-daemon-Call-bdrv_close_all-on-exit.patch
+# For bz#1918966 - [incremental_backup] qemu aborts if guest reboot during backup when using virtio-blk: "aio_co_schedule: Co-routine was already scheduled in 'aio_co_schedule'"
+# For bz#1918968 - [incremental_backup] qemu deadlock after poweroff in guest during backup in nbd_export_close_all()
+Patch72: kvm-block-move-blk_exp_close_all-to-qemu_cleanup.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1354,6 +1371,21 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 
 
 %changelog
+* Fri Feb 12 2021 Eduardo Lima (Etrunko) <elima@redhat.com> - 5.2.0-7.el8
+- kvm-virtio-Add-corresponding-memory_listener_unregister-.patch [bz#1903521]
+- kvm-block-Honor-blk_set_aio_context-context-requirements.patch [bz#1918966 bz#1918968]
+- kvm-nbd-server-Quiesce-coroutines-on-context-switch.patch [bz#1918966 bz#1918968]
+- kvm-block-Avoid-processing-BDS-twice-in-bdrv_set_aio_con.patch [bz#1918966 bz#1918968]
+- kvm-storage-daemon-Call-bdrv_close_all-on-exit.patch [bz#1918966 bz#1918968]
+- kvm-block-move-blk_exp_close_all-to-qemu_cleanup.patch [bz#1918966 bz#1918968]
+- Resolves: bz#1903521
+  (hot unplug vhost-user cause qemu crash: qemu-kvm: ../softmmu/memory.c:2818: do_address_space_destroy: Assertion `QTAILQ_EMPTY(&as->listeners)' failed.)
+- Resolves: bz#1918966
+  ([incremental_backup] qemu aborts if guest reboot during backup when using virtio-blk: "aio_co_schedule: Co-routine was already scheduled in 'aio_co_schedule'")
+- Resolves: bz#1918968
+  ([incremental_backup] qemu deadlock after poweroff in guest during backup in nbd_export_close_all())
+
+
 * Fri Feb 12 2021 Miroslav Rezanina <mrezanin@redhat.com> - 5.2.0-6.el8
 - kvm-scsi-fix-device-removal-race-vs-IO-restart-callback-.patch [bz#1854811]
 - kvm-tracetool-also-strip-l-and-ll-from-systemtap-format-.patch [bz#1907264]
