@@ -64,7 +64,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.2.0
-Release: 7%{?dist}
+Release: 10%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -182,6 +182,108 @@ Patch71: kvm-storage-daemon-Call-bdrv_close_all-on-exit.patch
 # For bz#1918966 - [incremental_backup] qemu aborts if guest reboot during backup when using virtio-blk: "aio_co_schedule: Co-routine was already scheduled in 'aio_co_schedule'"
 # For bz#1918968 - [incremental_backup] qemu deadlock after poweroff in guest during backup in nbd_export_close_all()
 Patch72: kvm-block-move-blk_exp_close_all-to-qemu_cleanup.patch
+# For bz#1887883 - qemu blocks client progress with various NBD actions
+Patch73: kvm-block-nbd-only-detach-existing-iochannel-from-aio_co.patch
+# For bz#1887883 - qemu blocks client progress with various NBD actions
+Patch74: kvm-block-nbd-only-enter-connection-coroutine-if-it-s-pr.patch
+# For bz#1887883 - qemu blocks client progress with various NBD actions
+Patch75: kvm-nbd-make-nbd_read-return-EIO-on-error.patch
+# For bz#1907255 - Migrate failed with vhost-vsock-pci from RHEL-AV 8.3.1 to RHEL-AV 8.2.1
+Patch76: kvm-virtio-move-use-disabled-flag-property-to-hw_compat_.patch
+# For bz#1920740 - CVE-2020-35517 virt:8.4/qemu-kvm: QEMU: virtiofsd: potential privileged host device access from guest [rhel-av-8.4.0]
+Patch77: kvm-virtiofsd-extract-lo_do_open-from-lo_open.patch
+# For bz#1920740 - CVE-2020-35517 virt:8.4/qemu-kvm: QEMU: virtiofsd: potential privileged host device access from guest [rhel-av-8.4.0]
+Patch78: kvm-virtiofsd-optionally-return-inode-pointer-from-lo_do.patch
+# For bz#1920740 - CVE-2020-35517 virt:8.4/qemu-kvm: QEMU: virtiofsd: potential privileged host device access from guest [rhel-av-8.4.0]
+Patch79: kvm-virtiofsd-prevent-opening-of-special-files-CVE-2020-.patch
+# For bz#1920941 - [ppc64le] [AV]--disk cdimage.iso,bus=usb fails to boot
+Patch80: kvm-spapr-Adjust-firmware-path-of-PCI-devices.patch
+# For bz#1917830 - Add romsize property to qemu-kvm
+Patch81: kvm-pci-reject-too-large-ROMs.patch
+# For bz#1917830 - Add romsize property to qemu-kvm
+Patch82: kvm-pci-add-romsize-property.patch
+# For bz#1917826 - Add extra device support to qemu-kvm, but not to rhel machine types
+Patch83: kvm-redhat-Add-some-devices-for-exporting-upstream-machi.patch
+# For bz#1880299 - vhost-user mq connection fails to restart after kill host testpmd which acts as vhost-user client
+Patch84: kvm-vhost-Check-for-valid-vdev-in-vhost_backend_handle_i.patch
+# For bz#1901323 - QSD (QEMU Storage Daemon): basic support - TechPreview
+Patch85: kvm-docs-generate-qemu-storage-daemon-qmp-ref-7-man-page.patch
+# For bz#1901323 - QSD (QEMU Storage Daemon): basic support - TechPreview
+Patch86: kvm-docs-add-qemu-storage-daemon-1-man-page.patch
+# For bz#1901323 - QSD (QEMU Storage Daemon): basic support - TechPreview
+Patch87: kvm-docs-Add-qemu-storage-daemon-1-manpage-to-meson.buil.patch
+# For bz#1901323 - QSD (QEMU Storage Daemon): basic support - TechPreview
+Patch88: kvm-qemu-storage-daemon-Enable-object-add.patch
+# For bz#1930033 - enable vhost-user-blk device [TechPreview]
+Patch90: kvm-default-configs-Enable-vhost-user-blk.patch
+# For bz#1925345 - qemu-nbd needs larger backlog for Unix socket listen()
+Patch91: kvm-qemu-nbd-Use-SOMAXCONN-for-socket-listen-backlog.patch
+# For bz#1917654 - [failover vf migration][RHEL84 vm] After start a vm with a failover vf + a failover virtio net device, the failvoer vf do not exist in the vm
+Patch92: kvm-pcie-don-t-set-link-state-active-if-the-slot-is-empt.patch
+# For bz#1930757 - Allow control of block-dirty-bitmap persistence via 'block-bitmap-mapping'
+Patch93: kvm-migration-dirty-bitmap-Use-struct-for-alias-map-inne.patch
+# For bz#1930757 - Allow control of block-dirty-bitmap persistence via 'block-bitmap-mapping'
+Patch94: kvm-migration-dirty-bitmap-Allow-control-of-bitmap-persi.patch
+# For bz#1930757 - Allow control of block-dirty-bitmap persistence via 'block-bitmap-mapping'
+Patch95: kvm-qemu-iotests-300-Add-test-case-for-modifying-persist.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch96: kvm-failover-fix-indentantion.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch97: kvm-failover-Use-always-atomics-for-primary_should_be_hi.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch98: kvm-failover-primary-bus-is-only-used-once-and-where-it-.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch99: kvm-failover-Remove-unused-parameter.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch100: kvm-failover-Remove-external-partially_hotplugged-proper.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch101: kvm-failover-qdev_device_add-returns-err-or-dev-set.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch102: kvm-failover-Rename-bool-to-failover_primary_hidden.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch103: kvm-failover-g_strcmp0-knows-how-to-handle-NULL.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch104: kvm-failover-Remove-primary_device_opts.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch105: kvm-failover-remove-standby_id-variable.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch106: kvm-failover-Remove-primary_device_dict.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch107: kvm-failover-Remove-memory-leak.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch108: kvm-failover-simplify-virtio_net_find_primary.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch109: kvm-failover-should_be_hidden-should-take-a-bool.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch110: kvm-failover-Rename-function-to-hide_device.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch111: kvm-failover-virtio_net_connect_failover_devices-does-no.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch112: kvm-failover-Rename-to-failover_find_primary_device.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch113: kvm-failover-simplify-qdev_device_add-failover-case.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch114: kvm-failover-simplify-qdev_device_add.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch115: kvm-failover-make-sure-that-id-always-exist.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch116: kvm-failover-remove-failover_find_primary_device-error-p.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch117: kvm-failover-split-failover_find_primary_device_id.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch118: kvm-failover-We-don-t-need-to-cache-primary_device_id-an.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch119: kvm-failover-Caller-of-this-two-functions-already-have-p.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch120: kvm-failover-simplify-failover_unplug_primary.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch121: kvm-failover-Remove-primary_dev-member.patch
+# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
+Patch122: kvm-virtio-net-add-missing-object_unref.patch
+# For bz#1926785 - [RFE] AMD Milan - Add KVM/support for EPYC-Milan CPU Model - Fast Train
+Patch123: kvm-x86-cpu-Populate-SVM-CPUID-feature-bits.patch
+# For bz#1926785 - [RFE] AMD Milan - Add KVM/support for EPYC-Milan CPU Model - Fast Train
+Patch124: kvm-i386-Add-the-support-for-AMD-EPYC-3rd-generation-pro.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1045,9 +1147,6 @@ rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/QEMU,cgthree.bin
 rm -rf ${RPM_BUILD_ROOT}%{_bindir}/ivshmem-client
 rm -rf ${RPM_BUILD_ROOT}%{_bindir}/ivshmem-server
 
-# Remove qemu-storage-daemon
-rm -rf ${RPM_BUILD_ROOT}%{_bindir}/qemu-storage-daemon
-
 # Remove efi roms
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/efi*.rom
 
@@ -1333,8 +1432,11 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %{_bindir}/qemu-img
 %{_bindir}/qemu-io
 %{_bindir}/qemu-nbd
+%{_bindir}/qemu-storage-daemon
 %{_mandir}/man1/qemu-img.1*
 %{_mandir}/man8/qemu-nbd.8*
+%{_mandir}/man1/qemu-storage-daemon.1*
+%{_mandir}/man7/qemu-storage-daemon-qmp-ref.7*
 
 %files -n qemu-guest-agent
 %defattr(-,root,root,-)
@@ -1371,6 +1473,92 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 
 
 %changelog
+* Wed Mar 03 2021 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-10.el8
+- kvm-migration-dirty-bitmap-Use-struct-for-alias-map-inne.patch [bz#1930757]
+- kvm-migration-dirty-bitmap-Allow-control-of-bitmap-persi.patch [bz#1930757]
+- kvm-qemu-iotests-300-Add-test-case-for-modifying-persist.patch [bz#1930757]
+- kvm-failover-fix-indentantion.patch [bz#1819991]
+- kvm-failover-Use-always-atomics-for-primary_should_be_hi.patch [bz#1819991]
+- kvm-failover-primary-bus-is-only-used-once-and-where-it-.patch [bz#1819991]
+- kvm-failover-Remove-unused-parameter.patch [bz#1819991]
+- kvm-failover-Remove-external-partially_hotplugged-proper.patch [bz#1819991]
+- kvm-failover-qdev_device_add-returns-err-or-dev-set.patch [bz#1819991]
+- kvm-failover-Rename-bool-to-failover_primary_hidden.patch [bz#1819991]
+- kvm-failover-g_strcmp0-knows-how-to-handle-NULL.patch [bz#1819991]
+- kvm-failover-Remove-primary_device_opts.patch [bz#1819991]
+- kvm-failover-remove-standby_id-variable.patch [bz#1819991]
+- kvm-failover-Remove-primary_device_dict.patch [bz#1819991]
+- kvm-failover-Remove-memory-leak.patch [bz#1819991]
+- kvm-failover-simplify-virtio_net_find_primary.patch [bz#1819991]
+- kvm-failover-should_be_hidden-should-take-a-bool.patch [bz#1819991]
+- kvm-failover-Rename-function-to-hide_device.patch [bz#1819991]
+- kvm-failover-virtio_net_connect_failover_devices-does-no.patch [bz#1819991]
+- kvm-failover-Rename-to-failover_find_primary_device.patch [bz#1819991]
+- kvm-failover-simplify-qdev_device_add-failover-case.patch [bz#1819991]
+- kvm-failover-simplify-qdev_device_add.patch [bz#1819991]
+- kvm-failover-make-sure-that-id-always-exist.patch [bz#1819991]
+- kvm-failover-remove-failover_find_primary_device-error-p.patch [bz#1819991]
+- kvm-failover-split-failover_find_primary_device_id.patch [bz#1819991]
+- kvm-failover-We-don-t-need-to-cache-primary_device_id-an.patch [bz#1819991]
+- kvm-failover-Caller-of-this-two-functions-already-have-p.patch [bz#1819991]
+- kvm-failover-simplify-failover_unplug_primary.patch [bz#1819991]
+- kvm-failover-Remove-primary_dev-member.patch [bz#1819991]
+- kvm-virtio-net-add-missing-object_unref.patch [bz#1819991]
+- kvm-x86-cpu-Populate-SVM-CPUID-feature-bits.patch [bz#1926785]
+- kvm-i386-Add-the-support-for-AMD-EPYC-3rd-generation-pro.patch [bz#1926785]
+- Resolves: bz#1930757
+  (Allow control of block-dirty-bitmap persistence via 'block-bitmap-mapping')
+- Resolves: bz#1819991
+  (Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug)
+- Resolves: bz#1926785
+  ([RFE] AMD Milan - Add KVM/support for EPYC-Milan CPU Model - Fast Train)
+
+* Mon Mar 01 2021 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-9.el8
+- kvm-docs-generate-qemu-storage-daemon-qmp-ref-7-man-page.patch [bz#1901323]
+- kvm-docs-add-qemu-storage-daemon-1-man-page.patch [bz#1901323]
+- kvm-docs-Add-qemu-storage-daemon-1-manpage-to-meson.buil.patch [bz#1901323]
+- kvm-qemu-storage-daemon-Enable-object-add.patch [bz#1901323]
+- kvm-spec-Package-qemu-storage-daemon.patch [bz#1901323]
+- kvm-default-configs-Enable-vhost-user-blk.patch [bz#1930033]
+- kvm-qemu-nbd-Use-SOMAXCONN-for-socket-listen-backlog.patch [bz#1925345]
+- kvm-pcie-don-t-set-link-state-active-if-the-slot-is-empt.patch [bz#1917654]
+- Resolves: bz#1901323
+  (QSD (QEMU Storage Daemon): basic support - TechPreview)
+- Resolves: bz#1930033
+  (enable vhost-user-blk device)
+- Resolves: bz#1925345
+  (qemu-nbd needs larger backlog for Unix socket listen())
+- Resolves: bz#1917654
+  ([failover vf migration][RHEL84 vm] After start a vm with a failover vf + a failover virtio net device, the failvoer vf do not exist in the vm)
+
+* Fri Feb 19 2021 Eduardo Lima (Etrunko) <elima@redhat.com> - 5.2.0-8.el8
+- kvm-block-nbd-only-detach-existing-iochannel-from-aio_co.patch [bz#1887883]
+- kvm-block-nbd-only-enter-connection-coroutine-if-it-s-pr.patch [bz#1887883]
+- kvm-nbd-make-nbd_read-return-EIO-on-error.patch [bz#1887883]
+- kvm-virtio-move-use-disabled-flag-property-to-hw_compat_.patch [bz#1907255]
+- kvm-virtiofsd-extract-lo_do_open-from-lo_open.patch [bz#1920740]
+- kvm-virtiofsd-optionally-return-inode-pointer-from-lo_do.patch [bz#1920740]
+- kvm-virtiofsd-prevent-opening-of-special-files-CVE-2020-.patch [bz#1920740]
+- kvm-spapr-Adjust-firmware-path-of-PCI-devices.patch [bz#1920941]
+- kvm-pci-reject-too-large-ROMs.patch [bz#1917830]
+- kvm-pci-add-romsize-property.patch [bz#1917830]
+- kvm-redhat-Add-some-devices-for-exporting-upstream-machi.patch [bz#1917826]
+- kvm-vhost-Check-for-valid-vdev-in-vhost_backend_handle_i.patch [bz#1880299]
+- Resolves: bz#1887883
+  (qemu blocks client progress with various NBD actions)
+- Resolves: bz#1907255
+  (Migrate failed with vhost-vsock-pci from RHEL-AV 8.3.1 to RHEL-AV 8.2.1)
+- Resolves: bz#1920740
+  (CVE-2020-35517 virt:8.4/qemu-kvm: QEMU: virtiofsd: potential privileged host device access from guest [rhel-av-8.4.0])
+- Resolves: bz#1920941
+  ([ppc64le] [AV]--disk cdimage.iso,bus=usb fails to boot)
+- Resolves: bz#1917830
+  (Add romsize property to qemu-kvm)
+- Resolves: bz#1917826
+  (Add extra device support to qemu-kvm, but not to rhel machine types)
+- Resolves: bz#1880299
+  (vhost-user mq connection fails to restart after kill host testpmd which acts as vhost-user client)
+
 * Fri Feb 12 2021 Eduardo Lima (Etrunko) <elima@redhat.com> - 5.2.0-7.el8
 - kvm-virtio-Add-corresponding-memory_listener_unregister-.patch [bz#1903521]
 - kvm-block-Honor-blk_set_aio_context-context-requirements.patch [bz#1918966 bz#1918968]

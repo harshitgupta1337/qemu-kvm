@@ -1,0 +1,146 @@
+From 20eb8dc4f6679e3325e1f1f434b17e2dc6a60eee Mon Sep 17 00:00:00 2001
+From: Laurent Vivier <lvivier@redhat.com>
+Date: Thu, 25 Feb 2021 21:42:47 -0500
+Subject: [PATCH 20/54] pcie: don't set link state active if the slot is empty
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+Message-id: <20210225214247.1336554-1-lvivier@redhat.com>
+Patchwork-id: 101211
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH] pcie: don't set link state active if the slot is empty
+Bugzilla: 1917654
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+RH-Acked-by: Alex Williamson <alex.williamson@redhat.com>
+
+BZ: https://bugzilla.redhat.com/1917654
+BRANCH: rhel-av-8.4.0
+UPSTREAM: Merged
+BREW: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=35163495
+
+When the pcie slot is initialized, by default PCI_EXP_LNKSTA_DLLLA
+(Data Link Layer Link Active) is set in PCI_EXP_LNKSTA
+(Link Status) without checking if the slot is empty or not.
+
+This is confusing for the kernel because as it sees the link is up
+it tries to read the vendor ID and fails:
+
+(From https://bugzilla.kernel.org/show_bug.cgi?id=211691)
+
+[    1.661105] pcieport 0000:00:02.2: pciehp: Slot Capabilities      : 0x0002007b
+[    1.661115] pcieport 0000:00:02.2: pciehp: Slot Status            : 0x0010
+[    1.661123] pcieport 0000:00:02.2: pciehp: Slot Control           : 0x07c0
+[    1.661138] pcieport 0000:00:02.2: pciehp: Slot #0 AttnBtn+ PwrCtrl+ MRL- AttnInd+ PwrInd+ HotPlug+ Surprise+ Interlock+ NoCompl- IbPresDis- LLActRep+
+[    1.662581] pcieport 0000:00:02.2: pciehp: pciehp_get_power_status: SLOTCTRL 6c value read 7c0
+[    1.662597] pcieport 0000:00:02.2: pciehp: pciehp_check_link_active: lnk_status = 2204
+[    1.662703] pcieport 0000:00:02.2: pciehp: pending interrupts 0x0010 from Slot Status
+[    1.662706] pcieport 0000:00:02.2: pciehp: pcie_enable_notification: SLOTCTRL 6c write cmd 1031
+[    1.662730] pcieport 0000:00:02.2: pciehp: pciehp_check_link_active: lnk_status = 2204
+[    1.662748] pcieport 0000:00:02.2: pciehp: pciehp_check_link_active: lnk_status = 2204
+[    1.662750] pcieport 0000:00:02.2: pciehp: Slot(0-2): Link Up
+[    2.896132] pcieport 0000:00:02.2: pciehp: pciehp_check_link_status: lnk_status = 2204
+[    2.896135] pcieport 0000:00:02.2: pciehp: Slot(0-2): No device found
+[    2.896900] pcieport 0000:00:02.2: pciehp: pending interrupts 0x0010 from Slot Status
+[    2.896903] pcieport 0000:00:02.2: pciehp: pciehp_power_off_slot: SLOTCTRL 6c write cmd 400
+[    3.656901] pcieport 0000:00:02.2: pciehp: pending interrupts 0x0009 from Slot Status
+
+This is really a problem with virtio-net failover that hotplugs a VFIO
+card during the boot process. The kernel can shutdown the slot while
+QEMU is hotplugging it, and this likely ends by an automatic unplug of
+the card. At the end of the boot sequence the card has disappeared.
+
+To fix that, don't set the "Link Active" state in the init function, but
+rely on the plug function to do it, as the mechanism has already been
+introduced by 2f2b18f60bf1.
+
+Fixes: 2f2b18f60bf1 ("pcie: set link state inactive/active after hot unplug/plug")
+Cc: zhengxiang9@huawei.com
+Fixes: 3d67447fe7c2 ("pcie: Fill PCIESlot link fields to support higher speeds and widths")
+Cc: alex.williamson@redhat.com
+Fixes: b2101eae63ea ("pcie: Set the "link active" in the link status register")
+Cc: benh@kernel.crashing.org
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Message-Id: <20210212135250.2738750-5-lvivier@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit df72184ec15829053b3bb5a0d5801773b6d9ec25)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/pci/pcie.c | 19 +++++++++----------
+ 1 file changed, 9 insertions(+), 10 deletions(-)
+
+diff --git a/hw/pci/pcie.c b/hw/pci/pcie.c
+index d4010cf8f3..a733e2fb87 100644
+--- a/hw/pci/pcie.c
++++ b/hw/pci/pcie.c
+@@ -75,11 +75,6 @@ pcie_cap_v1_fill(PCIDevice *dev, uint8_t port, uint8_t type, uint8_t version)
+                  QEMU_PCI_EXP_LNKSTA_NLW(QEMU_PCI_EXP_LNK_X1) |
+                  QEMU_PCI_EXP_LNKSTA_CLS(QEMU_PCI_EXP_LNK_2_5GT));
+ 
+-    if (dev->cap_present & QEMU_PCIE_LNKSTA_DLLLA) {
+-        pci_word_test_and_set_mask(exp_cap + PCI_EXP_LNKSTA,
+-                                   PCI_EXP_LNKSTA_DLLLA);
+-    }
+-
+     /* We changed link status bits over time, and changing them across
+      * migrations is generally fine as hardware changes them too.
+      * Let's not bother checking.
+@@ -125,8 +120,7 @@ static void pcie_cap_fill_slot_lnk(PCIDevice *dev)
+          */
+         pci_long_test_and_set_mask(exp_cap + PCI_EXP_LNKCAP,
+                                    PCI_EXP_LNKCAP_DLLLARC);
+-        pci_word_test_and_set_mask(exp_cap + PCI_EXP_LNKSTA,
+-                                   PCI_EXP_LNKSTA_DLLLA);
++        /* the PCI_EXP_LNKSTA_DLLLA will be set in the hotplug function */
+ 
+         /*
+          * Target Link Speed defaults to the highest link speed supported by
+@@ -427,6 +421,7 @@ void pcie_cap_slot_plug_cb(HotplugHandler *hotplug_dev, DeviceState *dev,
+     PCIDevice *hotplug_pdev = PCI_DEVICE(hotplug_dev);
+     uint8_t *exp_cap = hotplug_pdev->config + hotplug_pdev->exp.exp_cap;
+     PCIDevice *pci_dev = PCI_DEVICE(dev);
++    uint32_t lnkcap = pci_get_long(exp_cap + PCI_EXP_LNKCAP);
+ 
+     /* Don't send event when device is enabled during qemu machine creation:
+      * it is present on boot, no hotplug event is necessary. We do send an
+@@ -434,7 +429,8 @@ void pcie_cap_slot_plug_cb(HotplugHandler *hotplug_dev, DeviceState *dev,
+     if (!dev->hotplugged) {
+         pci_word_test_and_set_mask(exp_cap + PCI_EXP_SLTSTA,
+                                    PCI_EXP_SLTSTA_PDS);
+-        if (pci_dev->cap_present & QEMU_PCIE_LNKSTA_DLLLA) {
++        if (pci_dev->cap_present & QEMU_PCIE_LNKSTA_DLLLA ||
++            (lnkcap & PCI_EXP_LNKCAP_DLLLARC)) {
+             pci_word_test_and_set_mask(exp_cap + PCI_EXP_LNKSTA,
+                                        PCI_EXP_LNKSTA_DLLLA);
+         }
+@@ -448,7 +444,8 @@ void pcie_cap_slot_plug_cb(HotplugHandler *hotplug_dev, DeviceState *dev,
+     if (pci_get_function_0(pci_dev)) {
+         pci_word_test_and_set_mask(exp_cap + PCI_EXP_SLTSTA,
+                                    PCI_EXP_SLTSTA_PDS);
+-        if (pci_dev->cap_present & QEMU_PCIE_LNKSTA_DLLLA) {
++        if (pci_dev->cap_present & QEMU_PCIE_LNKSTA_DLLLA ||
++            (lnkcap & PCI_EXP_LNKCAP_DLLLARC)) {
+             pci_word_test_and_set_mask(exp_cap + PCI_EXP_LNKSTA,
+                                        PCI_EXP_LNKSTA_DLLLA);
+         }
+@@ -640,6 +637,7 @@ void pcie_cap_slot_write_config(PCIDevice *dev,
+     uint32_t pos = dev->exp.exp_cap;
+     uint8_t *exp_cap = dev->config + pos;
+     uint16_t sltsta = pci_get_word(exp_cap + PCI_EXP_SLTSTA);
++    uint32_t lnkcap = pci_get_long(exp_cap + PCI_EXP_LNKCAP);
+ 
+     if (ranges_overlap(addr, len, pos + PCI_EXP_SLTSTA, 2)) {
+         /*
+@@ -695,7 +693,8 @@ void pcie_cap_slot_write_config(PCIDevice *dev,
+ 
+         pci_word_test_and_clear_mask(exp_cap + PCI_EXP_SLTSTA,
+                                      PCI_EXP_SLTSTA_PDS);
+-        if (dev->cap_present & QEMU_PCIE_LNKSTA_DLLLA) {
++        if (dev->cap_present & QEMU_PCIE_LNKSTA_DLLLA ||
++            (lnkcap & PCI_EXP_LNKCAP_DLLLARC)) {
+             pci_word_test_and_clear_mask(exp_cap + PCI_EXP_LNKSTA,
+                                          PCI_EXP_LNKSTA_DLLLA);
+         }
+-- 
+2.27.0
+

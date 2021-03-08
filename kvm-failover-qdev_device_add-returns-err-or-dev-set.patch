@@ -1,0 +1,55 @@
+From 63f2415d2cee7bcf24e7f3dc515c5155731071e6 Mon Sep 17 00:00:00 2001
+From: Laurent Vivier <lvivier@redhat.com>
+Date: Thu, 25 Feb 2021 23:14:26 -0500
+Subject: [PATCH 29/54] failover: qdev_device_add() returns err or dev set
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+Message-id: <20210225231447.2187738-7-lvivier@redhat.com>
+Patchwork-id: 101252
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH v2 06/27] failover: qdev_device_add() returns err or dev set
+Bugzilla: 1819991
+RH-Acked-by: Juan Quintela <quintela@redhat.com>
+RH-Acked-by: Jens Freimann <jfreimann@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+
+From: Juan Quintela <quintela@redhat.com>
+
+BZ: https://bugzilla.redhat.com/1819991
+BRANCH: rhel-av-8.4.0
+UPSTREAM: Merged
+
+Never both.
+
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+Message-Id: <20201118083748.1328-8-quintela@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit 3d1c7a9782d19052505aabc8f2c134ccd6f3f3fb)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/net/virtio-net.c | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/hw/net/virtio-net.c b/hw/net/virtio-net.c
+index 6ca85627d8..3e82108d42 100644
+--- a/hw/net/virtio-net.c
++++ b/hw/net/virtio-net.c
+@@ -803,13 +803,6 @@ static void failover_add_primary(VirtIONet *n, Error **errp)
+         if (err) {
+             qemu_opts_del(n->primary_device_opts);
+         }
+-        if (n->primary_dev) {
+-            if (err) {
+-                qdev_unplug(n->primary_dev, &err);
+-                qdev_set_id(n->primary_dev, "");
+-
+-            }
+-        }
+     } else {
+         error_setg(errp, "Primary device not found");
+         error_append_hint(errp, "Virtio-net failover will not work. Make "
+-- 
+2.27.0
+

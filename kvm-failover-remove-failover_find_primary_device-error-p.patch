@@ -1,0 +1,72 @@
+From 96883a1a05766ac6c1a2a064f40aab6c0bd54861 Mon Sep 17 00:00:00 2001
+From: Laurent Vivier <lvivier@redhat.com>
+Date: Thu, 25 Feb 2021 23:14:41 -0500
+Subject: [PATCH 44/54] failover: remove failover_find_primary_device() error
+ parameter
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+Message-id: <20210225231447.2187738-22-lvivier@redhat.com>
+Patchwork-id: 101265
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH v2 21/27] failover: remove failover_find_primary_device() error parameter
+Bugzilla: 1819991
+RH-Acked-by: Juan Quintela <quintela@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Jens Freimann <jfreimann@redhat.com>
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+
+From: Juan Quintela <quintela@redhat.com>
+
+BZ: https://bugzilla.redhat.com/1819991
+BRANCH: rhel-av-8.4.0
+UPSTREAM: Merged
+
+It can never give one error.
+
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+Message-Id: <20201118083748.1328-23-quintela@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit 0a0a27d66bcb275e5b984d8758880a7eff75464e)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/net/virtio-net.c | 9 +++------
+ 1 file changed, 3 insertions(+), 6 deletions(-)
+
+diff --git a/hw/net/virtio-net.c b/hw/net/virtio-net.c
+index c708c03cf6..b994796734 100644
+--- a/hw/net/virtio-net.c
++++ b/hw/net/virtio-net.c
+@@ -832,7 +832,7 @@ static int is_my_primary(void *opaque, QemuOpts *opts, Error **errp)
+  * @n: VirtIONet device
+  * @errp: returns an error if this function fails
+  */
+-static DeviceState *failover_find_primary_device(VirtIONet *n, Error **errp)
++static DeviceState *failover_find_primary_device(VirtIONet *n)
+ {
+     Error *err = NULL;
+ 
+@@ -897,10 +897,7 @@ static void virtio_net_set_features(VirtIODevice *vdev, uint64_t features)
+         qatomic_set(&n->failover_primary_hidden, false);
+         failover_add_primary(n, &err);
+         if (err) {
+-            n->primary_dev = failover_find_primary_device(n, &err);
+-            if (err) {
+-                goto out_err;
+-            }
++            n->primary_dev = failover_find_primary_device(n);
+             failover_add_primary(n, &err);
+             if (err) {
+                 goto out_err;
+@@ -3121,7 +3118,7 @@ static void virtio_net_handle_migration_primary(VirtIONet *n,
+     should_be_hidden = qatomic_read(&n->failover_primary_hidden);
+ 
+     if (!n->primary_dev) {
+-        n->primary_dev = failover_find_primary_device(n, &err);
++        n->primary_dev = failover_find_primary_device(n);
+         if (!n->primary_dev) {
+             return;
+         }
+-- 
+2.27.0
+

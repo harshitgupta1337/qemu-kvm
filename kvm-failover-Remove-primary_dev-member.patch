@@ -1,0 +1,158 @@
+From 52dce3568320900c79e34eb2093058e5c3f60aa9 Mon Sep 17 00:00:00 2001
+From: Laurent Vivier <lvivier@redhat.com>
+Date: Thu, 25 Feb 2021 23:14:46 -0500
+Subject: [PATCH 49/54] failover: Remove primary_dev member
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+Message-id: <20210225231447.2187738-27-lvivier@redhat.com>
+Patchwork-id: 101250
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH v2 26/27] failover: Remove primary_dev member
+Bugzilla: 1819991
+RH-Acked-by: Juan Quintela <quintela@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Jens Freimann <jfreimann@redhat.com>
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+
+From: Juan Quintela <quintela@redhat.com>
+
+BZ: https://bugzilla.redhat.com/1819991
+BRANCH: rhel-av-8.4.0
+UPSTREAM: Merged
+
+Only three uses remained, and we can remove them on that case.
+
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+Message-Id: <20201118083748.1328-28-quintela@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit 21e8709b29cd981c74565e75276ed476c954cbbf)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/net/virtio-net.c            | 55 +++++++++++++++-------------------
+ include/hw/virtio/virtio-net.h |  1 -
+ 2 files changed, 24 insertions(+), 32 deletions(-)
+
+diff --git a/hw/net/virtio-net.c b/hw/net/virtio-net.c
+index 9203d81780..044ac95f6f 100644
+--- a/hw/net/virtio-net.c
++++ b/hw/net/virtio-net.c
+@@ -832,13 +832,31 @@ static char *failover_find_primary_device_id(VirtIONet *n)
+     return fid.id;
+ }
+ 
++/**
++ * Find the primary device for this failover virtio-net
++ *
++ * @n: VirtIONet device
++ * @errp: returns an error if this function fails
++ */
++static DeviceState *failover_find_primary_device(VirtIONet *n)
++{
++    char *id = failover_find_primary_device_id(n);
++
++    if (!id) {
++        return NULL;
++    }
++
++    return qdev_find_recursive(sysbus_get_default(), id);
++}
++
+ static void failover_add_primary(VirtIONet *n, Error **errp)
+ {
+     Error *err = NULL;
+     QemuOpts *opts;
+     char *id;
++    DeviceState *dev = failover_find_primary_device(n);
+ 
+-    if (n->primary_dev) {
++    if (dev) {
+         return;
+     }
+ 
+@@ -848,7 +866,7 @@ static void failover_add_primary(VirtIONet *n, Error **errp)
+     }
+     opts = qemu_opts_find(qemu_find_opts("device"), id);
+     if (opts) {
+-        n->primary_dev = qdev_device_add(opts, &err);
++        dev = qdev_device_add(opts, &err);
+         if (err) {
+             qemu_opts_del(opts);
+         }
+@@ -861,23 +879,6 @@ static void failover_add_primary(VirtIONet *n, Error **errp)
+     error_propagate(errp, err);
+ }
+ 
+-/**
+- * Find the primary device for this failover virtio-net
+- *
+- * @n: VirtIONet device
+- * @errp: returns an error if this function fails
+- */
+-static DeviceState *failover_find_primary_device(VirtIONet *n)
+-{
+-    char *id = failover_find_primary_device_id(n);
+-
+-    if (!id) {
+-        return NULL;
+-    }
+-
+-    return qdev_find_recursive(sysbus_get_default(), id);
+-}
+-
+ static void virtio_net_set_features(VirtIODevice *vdev, uint64_t features)
+ {
+     VirtIONet *n = VIRTIO_NET(vdev);
+@@ -933,19 +934,9 @@ static void virtio_net_set_features(VirtIODevice *vdev, uint64_t features)
+         qatomic_set(&n->failover_primary_hidden, false);
+         failover_add_primary(n, &err);
+         if (err) {
+-            n->primary_dev = failover_find_primary_device(n);
+-            failover_add_primary(n, &err);
+-            if (err) {
+-                goto out_err;
+-            }
++            warn_report_err(err);
+         }
+     }
+-    return;
+-
+-out_err:
+-    if (err) {
+-        warn_report_err(err);
+-    }
+ }
+ 
+ static int virtio_net_handle_rx_mode(VirtIONet *n, uint8_t cmd,
+@@ -3420,13 +3411,15 @@ static int virtio_net_pre_save(void *opaque)
+ static bool primary_unplug_pending(void *opaque)
+ {
+     DeviceState *dev = opaque;
++    DeviceState *primary;
+     VirtIODevice *vdev = VIRTIO_DEVICE(dev);
+     VirtIONet *n = VIRTIO_NET(vdev);
+ 
+     if (!virtio_vdev_has_feature(vdev, VIRTIO_NET_F_STANDBY)) {
+         return false;
+     }
+-    return n->primary_dev ? n->primary_dev->pending_deleted_event : false;
++    primary = failover_find_primary_device(n);
++    return primary ? primary->pending_deleted_event : false;
+ }
+ 
+ static bool dev_unplug_pending(void *opaque)
+diff --git a/include/hw/virtio/virtio-net.h b/include/hw/virtio/virtio-net.h
+index efef64e02f..7e96d193aa 100644
+--- a/include/hw/virtio/virtio-net.h
++++ b/include/hw/virtio/virtio-net.h
+@@ -202,7 +202,6 @@ struct VirtIONet {
+     AnnounceTimer announce_timer;
+     bool needs_vnet_hdr_swap;
+     bool mtu_bypass_backend;
+-    DeviceState *primary_dev;
+     /* primary failover device is hidden*/
+     bool failover_primary_hidden;
+     bool failover;
+-- 
+2.27.0
+

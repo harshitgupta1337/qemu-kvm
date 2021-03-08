@@ -1,0 +1,128 @@
+From 2e3e87787776632d521ec5f08758973d42fc208e Mon Sep 17 00:00:00 2001
+From: Laurent Vivier <lvivier@redhat.com>
+Date: Thu, 25 Feb 2021 23:14:42 -0500
+Subject: [PATCH 45/54] failover: split failover_find_primary_device_id()
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+Message-id: <20210225231447.2187738-23-lvivier@redhat.com>
+Patchwork-id: 101244
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH v2 22/27] failover: split failover_find_primary_device_id()
+Bugzilla: 1819991
+RH-Acked-by: Juan Quintela <quintela@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Jens Freimann <jfreimann@redhat.com>
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+
+From: Juan Quintela <quintela@redhat.com>
+
+BZ: https://bugzilla.redhat.com/1819991
+BRANCH: rhel-av-8.4.0
+UPSTREAM: Merged
+
+So we can calculate the device id when we need it.
+
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+Message-Id: <20201118083748.1328-24-quintela@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit f5e1847ba50a8d1adf66c0cf312e53c162e52487)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/net/virtio-net.c | 63 +++++++++++++++++++++++++++++++++------------
+ 1 file changed, 47 insertions(+), 16 deletions(-)
+
+diff --git a/hw/net/virtio-net.c b/hw/net/virtio-net.c
+index b994796734..2c502c13fd 100644
+--- a/hw/net/virtio-net.c
++++ b/hw/net/virtio-net.c
+@@ -788,6 +788,49 @@ static inline uint64_t virtio_net_supported_guest_offloads(VirtIONet *n)
+     return virtio_net_guest_offloads_by_features(vdev->guest_features);
+ }
+ 
++typedef struct {
++    VirtIONet *n;
++    char *id;
++} FailoverId;
++
++/**
++ * Set the id of the failover primary device
++ *
++ * @opaque: FailoverId to setup
++ * @opts: opts for device we are handling
++ * @errp: returns an error if this function fails
++ */
++static int failover_set_primary(void *opaque, QemuOpts *opts, Error **errp)
++{
++    FailoverId *fid = opaque;
++    const char *standby_id = qemu_opt_get(opts, "failover_pair_id");
++
++    if (g_strcmp0(standby_id, fid->n->netclient_name) == 0) {
++        fid->id = g_strdup(opts->id);
++        return 1;
++    }
++
++    return 0;
++}
++
++/**
++ * Find the primary device id for this failover virtio-net
++ *
++ * @n: VirtIONet device
++ * @errp: returns an error if this function fails
++ */
++static char *failover_find_primary_device_id(VirtIONet *n)
++{
++    Error *err = NULL;
++    FailoverId fid;
++
++    if (!qemu_opts_foreach(qemu_find_opts("device"),
++                           failover_set_primary, &fid, &err)) {
++        return NULL;
++    }
++    return fid.id;
++}
++
+ static void failover_add_primary(VirtIONet *n, Error **errp)
+ {
+     Error *err = NULL;
+@@ -812,20 +855,6 @@ static void failover_add_primary(VirtIONet *n, Error **errp)
+     error_propagate(errp, err);
+ }
+ 
+-static int is_my_primary(void *opaque, QemuOpts *opts, Error **errp)
+-{
+-    VirtIONet *n = opaque;
+-    int ret = 0;
+-    const char *standby_id = qemu_opt_get(opts, "failover_pair_id");
+-
+-    if (g_strcmp0(standby_id, n->netclient_name) == 0) {
+-        n->primary_device_id = g_strdup(opts->id);
+-        ret = 1;
+-    }
+-
+-    return ret;
+-}
+-
+ /**
+  * Find the primary device for this failover virtio-net
+  *
+@@ -834,11 +863,13 @@ static int is_my_primary(void *opaque, QemuOpts *opts, Error **errp)
+  */
+ static DeviceState *failover_find_primary_device(VirtIONet *n)
+ {
+-    Error *err = NULL;
++    char *id = failover_find_primary_device_id(n);
+ 
+-    if (!qemu_opts_foreach(qemu_find_opts("device"), is_my_primary, n, &err)) {
++    if (!id) {
+         return NULL;
+     }
++    n->primary_device_id = g_strdup(id);
++
+     return qdev_find_recursive(sysbus_get_default(), n->primary_device_id);
+ }
+ 
+-- 
+2.27.0
+

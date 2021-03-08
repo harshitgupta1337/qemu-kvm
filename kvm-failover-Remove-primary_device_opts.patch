@@ -1,0 +1,110 @@
+From ec36f213983c0ea89fe8db8b44d1105df0bd3dc2 Mon Sep 17 00:00:00 2001
+From: Laurent Vivier <lvivier@redhat.com>
+Date: Thu, 25 Feb 2021 23:14:29 -0500
+Subject: [PATCH 32/54] failover: Remove primary_device_opts
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+Message-id: <20210225231447.2187738-10-lvivier@redhat.com>
+Patchwork-id: 101259
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH v2 09/27] failover: Remove primary_device_opts
+Bugzilla: 1819991
+RH-Acked-by: Juan Quintela <quintela@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Jens Freimann <jfreimann@redhat.com>
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+
+From: Juan Quintela <quintela@redhat.com>
+
+BZ: https://bugzilla.redhat.com/1819991
+BRANCH: rhel-av-8.4.0
+UPSTREAM: Merged
+
+It was really only used once, in failover_add_primary().  Just search
+for it on global opts when it is needed.
+
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+Message-Id: <20201118083748.1328-11-quintela@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit 19e49bc2e984bd065719fc3595f35368b3ae87cd)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/net/virtio-net.c            | 21 +++++----------------
+ include/hw/virtio/virtio-net.h |  1 -
+ 2 files changed, 5 insertions(+), 17 deletions(-)
+
+diff --git a/hw/net/virtio-net.c b/hw/net/virtio-net.c
+index e334f05352..2a99b0e0f6 100644
+--- a/hw/net/virtio-net.c
++++ b/hw/net/virtio-net.c
+@@ -791,17 +791,17 @@ static inline uint64_t virtio_net_supported_guest_offloads(VirtIONet *n)
+ static void failover_add_primary(VirtIONet *n, Error **errp)
+ {
+     Error *err = NULL;
++    QemuOpts *opts;
+ 
+     if (n->primary_dev) {
+         return;
+     }
+ 
+-    n->primary_device_opts = qemu_opts_find(qemu_find_opts("device"),
+-                                            n->primary_device_id);
+-    if (n->primary_device_opts) {
+-        n->primary_dev = qdev_device_add(n->primary_device_opts, &err);
++    opts = qemu_opts_find(qemu_find_opts("device"), n->primary_device_id);
++    if (opts) {
++        n->primary_dev = qdev_device_add(opts, &err);
+         if (err) {
+-            qemu_opts_del(n->primary_device_opts);
++            qemu_opts_del(opts);
+         }
+     } else {
+         error_setg(errp, "Primary device not found");
+@@ -856,7 +856,6 @@ static DeviceState *virtio_connect_failover_devices(VirtIONet *n, Error **errp)
+     prim_dev = virtio_net_find_primary(n, &err);
+     if (prim_dev) {
+         n->primary_device_id = g_strdup(prim_dev->id);
+-        n->primary_device_opts = prim_dev->opts;
+     } else {
+         error_propagate(errp, err);
+     }
+@@ -3113,14 +3112,6 @@ static bool failover_replug_primary(VirtIONet *n, Error **errp)
+     if (!pdev->partially_hotplugged) {
+         return true;
+     }
+-    if (!n->primary_device_opts) {
+-        n->primary_device_opts = qemu_opts_from_qdict(qemu_find_opts("device"),
+-                                                      n->primary_device_dict,
+-                                                      errp);
+-        if (!n->primary_device_opts) {
+-            return false;
+-        }
+-    }
+     primary_bus = n->primary_dev->parent_bus;
+     if (!primary_bus) {
+         error_setg(errp, "virtio_net: couldn't find primary bus");
+@@ -3211,8 +3202,6 @@ static int virtio_net_primary_should_be_hidden(DeviceListener *listener,
+         goto out;
+     }
+ 
+-    n->primary_device_opts = device_opts;
+-
+     /* failover_primary_hidden is set during feature negotiation */
+     hide = qatomic_read(&n->failover_primary_hidden);
+ 
+diff --git a/include/hw/virtio/virtio-net.h b/include/hw/virtio/virtio-net.h
+index ca68be759f..7159e6c0a0 100644
+--- a/include/hw/virtio/virtio-net.h
++++ b/include/hw/virtio/virtio-net.h
+@@ -202,7 +202,6 @@ struct VirtIONet {
+     AnnounceTimer announce_timer;
+     bool needs_vnet_hdr_swap;
+     bool mtu_bypass_backend;
+-    QemuOpts *primary_device_opts;
+     QDict *primary_device_dict;
+     DeviceState *primary_dev;
+     char *primary_device_id;
+-- 
+2.27.0
+

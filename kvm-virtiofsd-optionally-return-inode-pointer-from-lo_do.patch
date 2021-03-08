@@ -1,0 +1,121 @@
+From 24833a2db44e39ec7652779a0fa2e70983b9cb4e Mon Sep 17 00:00:00 2001
+From: Stefan Hajnoczi <stefanha@redhat.com>
+Date: Wed, 10 Feb 2021 11:15:17 -0300
+Subject: [PATCH 06/54] virtiofsd: optionally return inode pointer from
+ lo_do_lookup()
+
+RH-Author: Stefan Hajnoczi <stefanha@redhat.com>
+Message-id: <20210210111518.228148-3-stefanha@redhat.com>
+Patchwork-id: 101033
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 2/3] virtiofsd: optionally return inode pointer from lo_do_lookup()
+Bugzilla: 1920740
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+RH-Acked-by: Greg Kurz <gkurz@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+
+lo_do_lookup() finds an existing inode or allocates a new one. It
+increments nlookup so that the inode stays alive until the client
+releases it.
+
+Existing callers don't need the struct lo_inode so the function doesn't
+return it. Extend the function to optionally return the inode. The next
+commit will need it.
+
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Reviewed-by: Greg Kurz <groug@kaod.org>
+Message-Id: <20210204150208.367837-3-stefanha@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit 22d2ece71e533310da31f2857ebc4a00d91968b3)
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Signed-off-by: Eduardo Lima (Etrunko) <etrunko@redhat.com>
+---
+ tools/virtiofsd/passthrough_ll.c | 29 +++++++++++++++++++++--------
+ 1 file changed, 21 insertions(+), 8 deletions(-)
+
+diff --git a/tools/virtiofsd/passthrough_ll.c b/tools/virtiofsd/passthrough_ll.c
+index 218e20e9d7..2bd050b620 100644
+--- a/tools/virtiofsd/passthrough_ll.c
++++ b/tools/virtiofsd/passthrough_ll.c
+@@ -843,11 +843,13 @@ static int do_statx(struct lo_data *lo, int dirfd, const char *pathname,
+ }
+ 
+ /*
+- * Increments nlookup and caller must release refcount using
+- * lo_inode_put(&parent).
++ * Increments nlookup on the inode on success. unref_inode_lolocked() must be
++ * called eventually to decrement nlookup again. If inodep is non-NULL, the
++ * inode pointer is stored and the caller must call lo_inode_put().
+  */
+ static int lo_do_lookup(fuse_req_t req, fuse_ino_t parent, const char *name,
+-                        struct fuse_entry_param *e)
++                        struct fuse_entry_param *e,
++                        struct lo_inode **inodep)
+ {
+     int newfd;
+     int res;
+@@ -857,6 +859,10 @@ static int lo_do_lookup(fuse_req_t req, fuse_ino_t parent, const char *name,
+     struct lo_inode *inode = NULL;
+     struct lo_inode *dir = lo_inode(req, parent);
+ 
++    if (inodep) {
++        *inodep = NULL;
++    }
++
+     /*
+      * name_to_handle_at() and open_by_handle_at() can reach here with fuse
+      * mount point in guest, but we don't have its inode info in the
+@@ -924,7 +930,14 @@ static int lo_do_lookup(fuse_req_t req, fuse_ino_t parent, const char *name,
+         pthread_mutex_unlock(&lo->mutex);
+     }
+     e->ino = inode->fuse_ino;
+-    lo_inode_put(lo, &inode);
++
++    /* Transfer ownership of inode pointer to caller or drop it */
++    if (inodep) {
++        *inodep = inode;
++    } else {
++        lo_inode_put(lo, &inode);
++    }
++
+     lo_inode_put(lo, &dir);
+ 
+     fuse_log(FUSE_LOG_DEBUG, "  %lli/%s -> %lli\n", (unsigned long long)parent,
+@@ -959,7 +972,7 @@ static void lo_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
+         return;
+     }
+ 
+-    err = lo_do_lookup(req, parent, name, &e);
++    err = lo_do_lookup(req, parent, name, &e, NULL);
+     if (err) {
+         fuse_reply_err(req, err);
+     } else {
+@@ -1067,7 +1080,7 @@ static void lo_mknod_symlink(fuse_req_t req, fuse_ino_t parent,
+         goto out;
+     }
+ 
+-    saverr = lo_do_lookup(req, parent, name, &e);
++    saverr = lo_do_lookup(req, parent, name, &e, NULL);
+     if (saverr) {
+         goto out;
+     }
+@@ -1544,7 +1557,7 @@ static void lo_do_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
+ 
+         if (plus) {
+             if (!is_dot_or_dotdot(name)) {
+-                err = lo_do_lookup(req, ino, name, &e);
++                err = lo_do_lookup(req, ino, name, &e, NULL);
+                 if (err) {
+                     goto error;
+                 }
+@@ -1742,7 +1755,7 @@ static void lo_create(fuse_req_t req, fuse_ino_t parent, const char *name,
+         }
+ 
+         fi->fh = fh;
+-        err = lo_do_lookup(req, parent, name, &e);
++        err = lo_do_lookup(req, parent, name, &e, NULL);
+     }
+     if (lo->cache == CACHE_NONE) {
+         fi->direct_io = 1;
+-- 
+2.27.0
+

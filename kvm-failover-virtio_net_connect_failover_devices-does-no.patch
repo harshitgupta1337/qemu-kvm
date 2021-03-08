@@ -1,0 +1,80 @@
+From 385df1f898e08c9cf0c90e543978cc68ee0c1097 Mon Sep 17 00:00:00 2001
+From: Laurent Vivier <lvivier@redhat.com>
+Date: Thu, 25 Feb 2021 23:14:36 -0500
+Subject: [PATCH 39/54] failover: virtio_net_connect_failover_devices() does
+ nothing
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+Message-id: <20210225231447.2187738-17-lvivier@redhat.com>
+Patchwork-id: 101254
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH v2 16/27] failover: virtio_net_connect_failover_devices() does nothing
+Bugzilla: 1819991
+RH-Acked-by: Juan Quintela <quintela@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Jens Freimann <jfreimann@redhat.com>
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+
+From: Juan Quintela <quintela@redhat.com>
+
+BZ: https://bugzilla.redhat.com/1819991
+BRANCH: rhel-av-8.4.0
+UPSTREAM: Merged
+
+It just calls virtio_net_find_primary(), so just update the callers.
+
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+Message-Id: <20201118083748.1328-18-quintela@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit 0763db4f2df3a92336d78e8b68a665f7d1a1bc66)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/net/virtio-net.c | 17 ++---------------
+ 1 file changed, 2 insertions(+), 15 deletions(-)
+
+diff --git a/hw/net/virtio-net.c b/hw/net/virtio-net.c
+index 747614ff2a..c6200b924e 100644
+--- a/hw/net/virtio-net.c
++++ b/hw/net/virtio-net.c
+@@ -836,19 +836,6 @@ static DeviceState *virtio_net_find_primary(VirtIONet *n, Error **errp)
+     return qdev_find_recursive(sysbus_get_default(), n->primary_device_id);
+ }
+ 
+-static DeviceState *virtio_connect_failover_devices(VirtIONet *n, Error **errp)
+-{
+-    DeviceState *prim_dev = NULL;
+-    Error *err = NULL;
+-
+-    prim_dev = virtio_net_find_primary(n, &err);
+-    if (!prim_dev) {
+-        error_propagate(errp, err);
+-    }
+-
+-    return prim_dev;
+-}
+-
+ static void virtio_net_set_features(VirtIODevice *vdev, uint64_t features)
+ {
+     VirtIONet *n = VIRTIO_NET(vdev);
+@@ -904,7 +891,7 @@ static void virtio_net_set_features(VirtIODevice *vdev, uint64_t features)
+         qatomic_set(&n->failover_primary_hidden, false);
+         failover_add_primary(n, &err);
+         if (err) {
+-            n->primary_dev = virtio_connect_failover_devices(n, &err);
++            n->primary_dev = virtio_net_find_primary(n, &err);
+             if (err) {
+                 goto out_err;
+             }
+@@ -3128,7 +3115,7 @@ static void virtio_net_handle_migration_primary(VirtIONet *n,
+     should_be_hidden = qatomic_read(&n->failover_primary_hidden);
+ 
+     if (!n->primary_dev) {
+-        n->primary_dev = virtio_connect_failover_devices(n, &err);
++        n->primary_dev = virtio_net_find_primary(n, &err);
+         if (!n->primary_dev) {
+             return;
+         }
+-- 
+2.27.0
+

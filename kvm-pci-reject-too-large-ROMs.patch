@@ -1,0 +1,89 @@
+From a6e34aa76d86319d15355fd55fa6d12eb49a816f Mon Sep 17 00:00:00 2001
+From: Peter Xu <peterx@redhat.com>
+Date: Wed, 10 Feb 2021 17:04:44 -0300
+Subject: [PATCH 09/54] pci: reject too large ROMs
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Peter Xu <peterx@redhat.com>
+Message-id: <20210210170445.128304-2-peterx@redhat.com>
+Patchwork-id: 101039
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 1/2] pci: reject too large ROMs
+Bugzilla: 1917830
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+RH-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
+
+From: Paolo Bonzini <pbonzini@redhat.com>
+
+get_image_size() returns an int64_t, which pci_add_option_rom() assigns
+to an "int" without any range checking.  A 32-bit BAR could be up to
+2 GiB in size, so reject anything above it.  In order to accomodate
+a rounded-up size of 2 GiB, change pci_patch_ids's size argument
+to unsigned.
+
+Conflicts:
+  hw/pci/pci.c: missing 2c65db5e58d ("vl: extract softmmu/datadir.c") so
+  there's no "#include <qemu/datadir.h>" yet
+
+Reviewed-by: Peter Xu <peterx@redhat.com>
+Reviewed-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Reviewed-by: Laszlo Ersek <lersek@redhat.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Message-Id: <20210203131828.156467-2-pbonzini@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+Reviewed-by: David Edmondson <david.edmondson@oracle.com>
+(cherry picked from commit 7c16b5bbb6c0f797945327d17e4be60f25a4427d)
+Signed-off-by: Peter Xu <peterx@redhat.com>
+Signed-off-by: Eduardo Lima (Etrunko) <etrunko@redhat.com>
+---
+ hw/pci/pci.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/hw/pci/pci.c b/hw/pci/pci.c
+index 0131d9d02c..e4caad33c5 100644
+--- a/hw/pci/pci.c
++++ b/hw/pci/pci.c
+@@ -24,6 +24,7 @@
+ 
+ #include "qemu/osdep.h"
+ #include "qemu-common.h"
++#include "qemu/units.h"
+ #include "hw/irq.h"
+ #include "hw/pci/pci.h"
+ #include "hw/pci/pci_bridge.h"
+@@ -2256,7 +2257,7 @@ static uint8_t pci_find_capability_at_offset(PCIDevice *pdev, uint8_t offset)
+ 
+ /* Patch the PCI vendor and device ids in a PCI rom image if necessary.
+    This is needed for an option rom which is used for more than one device. */
+-static void pci_patch_ids(PCIDevice *pdev, uint8_t *ptr, int size)
++static void pci_patch_ids(PCIDevice *pdev, uint8_t *ptr, uint32_t size)
+ {
+     uint16_t vendor_id;
+     uint16_t device_id;
+@@ -2314,7 +2315,7 @@ static void pci_patch_ids(PCIDevice *pdev, uint8_t *ptr, int size)
+ static void pci_add_option_rom(PCIDevice *pdev, bool is_default_rom,
+                                Error **errp)
+ {
+-    int size;
++    int64_t size;
+     char *path;
+     void *ptr;
+     char name[32];
+@@ -2364,6 +2365,11 @@ static void pci_add_option_rom(PCIDevice *pdev, bool is_default_rom,
+         error_setg(errp, "romfile \"%s\" is empty", pdev->romfile);
+         g_free(path);
+         return;
++    } else if (size > 2 * GiB) {
++        error_setg(errp, "romfile \"%s\" too large (size cannot exceed 2 GiB)",
++                   pdev->romfile);
++        g_free(path);
++        return;
+     }
+     size = pow2ceil(size);
+ 
+-- 
+2.27.0
+

@@ -1,0 +1,113 @@
+From 6d228bc32fa1e6c9619dc99dc10bfa3a9116bbf0 Mon Sep 17 00:00:00 2001
+From: Laurent Vivier <lvivier@redhat.com>
+Date: Thu, 25 Feb 2021 23:14:27 -0500
+Subject: [PATCH 30/54] failover: Rename bool to failover_primary_hidden
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+Message-id: <20210225231447.2187738-8-lvivier@redhat.com>
+Patchwork-id: 101260
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH v2 07/27] failover: Rename bool to failover_primary_hidden
+Bugzilla: 1819991
+RH-Acked-by: Juan Quintela <quintela@redhat.com>
+RH-Acked-by: Jens Freimann <jfreimann@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+
+From: Juan Quintela <quintela@redhat.com>
+
+BZ: https://bugzilla.redhat.com/1819991
+BRANCH: rhel-av-8.4.0
+UPSTREAM: Merged
+
+You should not use passive naming variables.
+And once there, be able to search for them.
+
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+Message-Id: <20201118083748.1328-9-quintela@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit e2bde83e23d3cfc1d90911c74500fd2e3b0b04fa)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/net/virtio-net.c            | 14 +++++++-------
+ include/hw/virtio/virtio-net.h |  3 ++-
+ 2 files changed, 9 insertions(+), 8 deletions(-)
+
+diff --git a/hw/net/virtio-net.c b/hw/net/virtio-net.c
+index 3e82108d42..c221671852 100644
+--- a/hw/net/virtio-net.c
++++ b/hw/net/virtio-net.c
+@@ -916,7 +916,7 @@ static void virtio_net_set_features(VirtIODevice *vdev, uint64_t features)
+ 
+     if (virtio_has_feature(features, VIRTIO_NET_F_STANDBY)) {
+         qapi_event_send_failover_negotiated(n->netclient_name);
+-        qatomic_set(&n->primary_should_be_hidden, false);
++        qatomic_set(&n->failover_primary_hidden, false);
+         failover_add_primary(n, &err);
+         if (err) {
+             n->primary_dev = virtio_connect_failover_devices(n, &err);
+@@ -3127,7 +3127,7 @@ static bool failover_replug_primary(VirtIONet *n, Error **errp)
+         return false;
+     }
+     qdev_set_parent_bus(n->primary_dev, primary_bus, &error_abort);
+-    qatomic_set(&n->primary_should_be_hidden, false);
++    qatomic_set(&n->failover_primary_hidden, false);
+     hotplug_ctrl = qdev_get_hotplug_handler(n->primary_dev);
+     if (hotplug_ctrl) {
+         hotplug_handler_pre_plug(hotplug_ctrl, n->primary_dev, &err);
+@@ -3148,7 +3148,7 @@ static void virtio_net_handle_migration_primary(VirtIONet *n,
+     bool should_be_hidden;
+     Error *err = NULL;
+ 
+-    should_be_hidden = qatomic_read(&n->primary_should_be_hidden);
++    should_be_hidden = qatomic_read(&n->failover_primary_hidden);
+ 
+     if (!n->primary_dev) {
+         n->primary_dev = virtio_connect_failover_devices(n, &err);
+@@ -3163,7 +3163,7 @@ static void virtio_net_handle_migration_primary(VirtIONet *n,
+                                qdev_get_vmsd(n->primary_dev),
+                                n->primary_dev);
+             qapi_event_send_unplug_primary(n->primary_device_id);
+-            qatomic_set(&n->primary_should_be_hidden, true);
++            qatomic_set(&n->failover_primary_hidden, true);
+         } else {
+             warn_report("couldn't unplug primary device");
+         }
+@@ -3213,8 +3213,8 @@ static int virtio_net_primary_should_be_hidden(DeviceListener *listener,
+ 
+     n->primary_device_opts = device_opts;
+ 
+-    /* primary_should_be_hidden is set during feature negotiation */
+-    hide = qatomic_read(&n->primary_should_be_hidden);
++    /* failover_primary_hidden is set during feature negotiation */
++    hide = qatomic_read(&n->failover_primary_hidden);
+ 
+     if (n->primary_device_dict) {
+         g_free(n->primary_device_id);
+@@ -3271,7 +3271,7 @@ static void virtio_net_device_realize(DeviceState *dev, Error **errp)
+     if (n->failover) {
+         n->primary_listener.should_be_hidden =
+             virtio_net_primary_should_be_hidden;
+-        qatomic_set(&n->primary_should_be_hidden, true);
++        qatomic_set(&n->failover_primary_hidden, true);
+         device_listener_register(&n->primary_listener);
+         n->migration_state.notify = virtio_net_migration_state_notifier;
+         add_migration_state_change_notifier(&n->migration_state);
+diff --git a/include/hw/virtio/virtio-net.h b/include/hw/virtio/virtio-net.h
+index c8da637d40..ca68be759f 100644
+--- a/include/hw/virtio/virtio-net.h
++++ b/include/hw/virtio/virtio-net.h
+@@ -207,7 +207,8 @@ struct VirtIONet {
+     DeviceState *primary_dev;
+     char *primary_device_id;
+     char *standby_id;
+-    bool primary_should_be_hidden;
++    /* primary failover device is hidden*/
++    bool failover_primary_hidden;
+     bool failover;
+     DeviceListener primary_listener;
+     Notifier migration_state;
+-- 
+2.27.0
+

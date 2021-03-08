@@ -1,0 +1,89 @@
+From 7822f8042e26cca6c1307e26c6f08d5f99636d90 Mon Sep 17 00:00:00 2001
+From: Laurent Vivier <lvivier@redhat.com>
+Date: Thu, 25 Feb 2021 23:14:39 -0500
+Subject: [PATCH 42/54] failover: simplify qdev_device_add()
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+Message-id: <20210225231447.2187738-20-lvivier@redhat.com>
+Patchwork-id: 101256
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH v2 19/27] failover: simplify qdev_device_add()
+Bugzilla: 1819991
+RH-Acked-by: Juan Quintela <quintela@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Jens Freimann <jfreimann@redhat.com>
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+
+From: Juan Quintela <quintela@redhat.com>
+
+BZ: https://bugzilla.redhat.com/1819991
+BRANCH: rhel-av-8.4.0
+UPSTREAM: Merged
+
+We don't need to walk the opts by hand.  qmp_opt_get() already does
+that.  And then we can remove the functions that did that walk.
+
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+Message-Id: <20201118083748.1328-21-quintela@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit 2e28095369f4eab516852fd49dde17c3bfd782f9)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ softmmu/qdev-monitor.c | 32 ++++++--------------------------
+ 1 file changed, 6 insertions(+), 26 deletions(-)
+
+diff --git a/softmmu/qdev-monitor.c b/softmmu/qdev-monitor.c
+index 12b7540f17..0e10f0466f 100644
+--- a/softmmu/qdev-monitor.c
++++ b/softmmu/qdev-monitor.c
+@@ -572,28 +572,6 @@ void qdev_set_id(DeviceState *dev, const char *id)
+     }
+ }
+ 
+-static int is_failover_device(void *opaque, const char *name, const char *value,
+-                              Error **errp)
+-{
+-    if (strcmp(name, "failover_pair_id") == 0) {
+-        QemuOpts *opts = opaque;
+-
+-        if (qdev_should_hide_device(opts)) {
+-            return 1;
+-        }
+-    }
+-
+-    return 0;
+-}
+-
+-static bool should_hide_device(QemuOpts *opts)
+-{
+-    if (qemu_opt_foreach(opts, is_failover_device, opts, NULL) == 0) {
+-        return false;
+-    }
+-    return true;
+-}
+-
+ DeviceState *qdev_device_add(QemuOpts *opts, Error **errp)
+ {
+     DeviceClass *dc;
+@@ -634,11 +612,13 @@ DeviceState *qdev_device_add(QemuOpts *opts, Error **errp)
+         }
+     }
+ 
+-    if (should_hide_device(opts)) {
+-        if (bus && !qbus_is_hotpluggable(bus)) {
+-            error_setg(errp, QERR_BUS_NO_HOTPLUG, bus->name);
++    if (qemu_opt_get(opts, "failover_pair_id")) {
++        if (qdev_should_hide_device(opts)) {
++            if (bus && !qbus_is_hotpluggable(bus)) {
++                error_setg(errp, QERR_BUS_NO_HOTPLUG, bus->name);
++            }
++            return NULL;
+         }
+-        return NULL;
+     }
+ 
+     if (qdev_hotplug && bus && !qbus_is_hotpluggable(bus)) {
+-- 
+2.27.0
+

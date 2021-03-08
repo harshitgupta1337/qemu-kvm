@@ -1,0 +1,111 @@
+From 5425716387734e0a782ac633021cd85eb4d4b914 Mon Sep 17 00:00:00 2001
+From: Kevin Wolf <kwolf@redhat.com>
+Date: Tue, 16 Feb 2021 16:19:39 -0500
+Subject: [PATCH 13/54] docs: generate qemu-storage-daemon-qmp-ref(7) man page
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+Message-id: <20210216161943.126728-2-kwolf@redhat.com>
+Patchwork-id: 101101
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 1/5] docs: generate qemu-storage-daemon-qmp-ref(7) man page
+Bugzilla: 1901323
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+
+From: Stefan Hajnoczi <stefanha@redhat.com>
+
+Although individual qemu-storage-daemon QMP commands are identical to
+QEMU QMP commands, qemu-storage-daemon only supports a subset of QEMU's
+QMP commands. Generate a manual page of just the commands supported by
+qemu-storage-daemon so that users know exactly what is available in
+qemu-storage-daemon.
+
+Add an h1 heading in storage-daemon/qapi/qapi-schema.json so that
+block-core.json is at the h2 heading level.
+
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Message-Id: <20201209103802.350848-2-stefanha@redhat.com>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit 23c02ace3508dba5f781ed9ecfde400e462f3a37)
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ docs/interop/conf.py                         |  2 ++
+ docs/interop/index.rst                       |  1 +
+ docs/interop/qemu-storage-daemon-qmp-ref.rst | 13 +++++++++++++
+ docs/meson.build                             |  1 +
+ storage-daemon/qapi/qapi-schema.json         |  3 +++
+ 5 files changed, 20 insertions(+)
+ create mode 100644 docs/interop/qemu-storage-daemon-qmp-ref.rst
+
+diff --git a/docs/interop/conf.py b/docs/interop/conf.py
+index 2634ca3410..f4370aaa13 100644
+--- a/docs/interop/conf.py
++++ b/docs/interop/conf.py
+@@ -23,4 +23,6 @@ man_pages = [
+      [], 7),
+     ('qemu-qmp-ref', 'qemu-qmp-ref', 'QEMU QMP Reference Manual',
+      [], 7),
++    ('qemu-storage-daemon-qmp-ref', 'qemu-storage-daemon-qmp-ref',
++     'QEMU Storage Daemon QMP Reference Manual', [], 7),
+ ]
+diff --git a/docs/interop/index.rst b/docs/interop/index.rst
+index cd78d679d8..95d56495f6 100644
+--- a/docs/interop/index.rst
++++ b/docs/interop/index.rst
+@@ -20,6 +20,7 @@ Contents:
+    qemu-ga
+    qemu-ga-ref
+    qemu-qmp-ref
++   qemu-storage-daemon-qmp-ref
+    vhost-user
+    vhost-user-gpu
+    vhost-vdpa
+diff --git a/docs/interop/qemu-storage-daemon-qmp-ref.rst b/docs/interop/qemu-storage-daemon-qmp-ref.rst
+new file mode 100644
+index 0000000000..caf9dad23a
+--- /dev/null
++++ b/docs/interop/qemu-storage-daemon-qmp-ref.rst
+@@ -0,0 +1,13 @@
++QEMU Storage Daemon QMP Reference Manual
++========================================
++
++..
++   TODO: the old Texinfo manual used to note that this manual
++   is GPL-v2-or-later. We should make that reader-visible
++   both here and in our Sphinx manuals more generally.
++
++..
++   TODO: display the QEMU version, both here and in our Sphinx manuals
++   more generally.
++
++.. qapi-doc:: storage-daemon/qapi/qapi-schema.json
+diff --git a/docs/meson.build b/docs/meson.build
+index bb8fe4c9e4..71641b4fe0 100644
+--- a/docs/meson.build
++++ b/docs/meson.build
+@@ -56,6 +56,7 @@ if build_docs
+         'qemu-ga.8': (have_tools ? 'man8' : ''),
+         'qemu-ga-ref.7': 'man7',
+         'qemu-qmp-ref.7': 'man7',
++        'qemu-storage-daemon-qmp-ref.7': (have_tools ? 'man7' : ''),
+     },
+     'tools': {
+         'qemu-img.1': (have_tools ? 'man1' : ''),
+diff --git a/storage-daemon/qapi/qapi-schema.json b/storage-daemon/qapi/qapi-schema.json
+index c6ad5ae1e3..28117c3aac 100644
+--- a/storage-daemon/qapi/qapi-schema.json
++++ b/storage-daemon/qapi/qapi-schema.json
+@@ -15,6 +15,9 @@
+ 
+ { 'include': '../../qapi/pragma.json' }
+ 
++##
++# = Block devices
++##
+ { 'include': '../../qapi/block-core.json' }
+ { 'include': '../../qapi/block-export.json' }
+ { 'include': '../../qapi/char.json' }
+-- 
+2.27.0
+

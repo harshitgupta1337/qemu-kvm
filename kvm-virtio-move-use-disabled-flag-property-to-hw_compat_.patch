@@ -1,0 +1,87 @@
+From 4a1b30af56f99b9fe7ecdd47aa9691fed5d3a0c3 Mon Sep 17 00:00:00 2001
+From: Stefano Garzarella <sgarzare@redhat.com>
+Date: Tue, 9 Feb 2021 17:15:33 -0300
+Subject: [PATCH 04/54] virtio: move 'use-disabled-flag' property to
+ hw_compat_4_2
+
+RH-Author: Stefano Garzarella <sgarzare@redhat.com>
+Message-id: <20210209171533.133268-2-sgarzare@redhat.com>
+Patchwork-id: 101012
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 1/1] virtio: move 'use-disabled-flag' property to hw_compat_4_2
+Bugzilla: 1907255
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+
+Commit 9d7bd0826f introduced a new 'use-disabled-flag' property
+set to true by default.
+To allow the migration, we set this property to false in the hw_compat,
+but in the wrong place (hw_compat_4_1).
+
+Since commit 9d7bd0826f was released with QEMU 5.0, we move
+'use-disabled-flag' property to hw_compat_4_2, so 4.2 machine types
+will have the pre-patch behavior and the migration can work.
+
+The issue was discovered with vhost-vsock device and 4.2 machine
+type without running any kernel in the VM:
+    $ qemu-4.2 -M pc-q35-4.2,accel=kvm \
+        -device vhost-vsock-pci,guest-cid=4 \
+        -monitor stdio -incoming tcp:0:3333
+
+    $ qemu-5.2 -M pc-q35-4.2,accel=kvm \
+        -device vhost-vsock-pci,guest-cid=3 \
+        -monitor stdio
+    (qemu) migrate -d tcp:0:3333
+
+    # qemu-4.2 output
+    qemu-system-x86_64: Failed to load virtio-vhost_vsock:virtio
+    qemu-system-x86_64: error while loading state for instance 0x0 of device '0000:00:03.0/virtio-vhost_vsock'
+    qemu-system-x86_64: load of migration failed: No such file or directory
+
+Reported-by: Jing Zhao <jinzhao@redhat.com>
+Buglink: https://bugzilla.redhat.com/show_bug.cgi?id=1907255
+Fixes: 9d7bd0826f ("virtio-pci: disable vring processing when bus-mastering is disabled")
+Cc: mdroth@linux.vnet.ibm.com
+CC: qemu-stable@nongnu.org
+Signed-off-by: Stefano Garzarella <sgarzare@redhat.com>
+Message-Id: <20210108171252.209502-1-sgarzare@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit c126b4c57e0164549de606ca35d1512762051083)
+[sgarzare: add 'use-disabled-flag' property to hw_compat_rhel_8_2]
+Signed-off-by: Stefano Garzarella <sgarzare@redhat.com>
+Signed-off-by: Eduardo Lima (Etrunko) <etrunko@redhat.com>
+---
+ hw/core/machine.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/hw/core/machine.c b/hw/core/machine.c
+index 68495b9411..92398966a4 100644
+--- a/hw/core/machine.c
++++ b/hw/core/machine.c
+@@ -77,6 +77,8 @@ GlobalProperty hw_compat_rhel_8_2[] = {
+     { "qxl-vga", "revision", "4" },
+     /* hw_compat_rhel_8_2 from hw_compat_4_2 */
+     { "fw_cfg", "acpi-mr-restore", "false" },
++    /* hw_compat_rhel_8_2 from hw_compat_4_2 */
++    { "virtio-device", "use-disabled-flag", "false" },
+     /* hw_compat_rhel_8_2 from hw_compat_5_0 */
+     { "pci-host-bridge", "x-config-reg-migration-enabled", "off" },
+     /* hw_compat_rhel_8_2 from hw_compat_5_0 */
+@@ -298,12 +300,12 @@ GlobalProperty hw_compat_4_2[] = {
+     { "qxl", "revision", "4" },
+     { "qxl-vga", "revision", "4" },
+     { "fw_cfg", "acpi-mr-restore", "false" },
++    { "virtio-device", "use-disabled-flag", "false" },
+ };
+ const size_t hw_compat_4_2_len = G_N_ELEMENTS(hw_compat_4_2);
+ 
+ GlobalProperty hw_compat_4_1[] = {
+     { "virtio-pci", "x-pcie-flr-init", "off" },
+-    { "virtio-device", "use-disabled-flag", "false" },
+ };
+ const size_t hw_compat_4_1_len = G_N_ELEMENTS(hw_compat_4_1);
+ 
+-- 
+2.27.0
+

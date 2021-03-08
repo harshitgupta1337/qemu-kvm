@@ -1,0 +1,124 @@
+From ed5dbeb52152217fc7fe9023327dbacfac8b2322 Mon Sep 17 00:00:00 2001
+From: Eric Blake <eblake@redhat.com>
+Date: Mon, 8 Feb 2021 22:57:00 -0300
+Subject: [PATCH 02/54] block/nbd: only enter connection coroutine if it's
+ present
+
+RH-Author: Eric Blake <eblake@redhat.com>
+Message-id: <20210208225701.110110-3-eblake@redhat.com>
+Patchwork-id: 101008
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH v4 2/3] block/nbd: only enter connection coroutine if it's present
+Bugzilla: 1887883
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Sergio Lopez Pascual <slp@redhat.com>
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+
+From: Roman Kagan <rvkagan@yandex-team.ru>
+
+When an NBD block driver state is moved from one aio_context to another
+(e.g. when doing a drain in a migration thread),
+nbd_client_attach_aio_context_bh is executed that enters the connection
+coroutine.
+
+However, the assumption that ->connection_co is always present here
+appears incorrect: the connection may have encountered an error other
+than -EIO in the underlying transport, and thus may have decided to quit
+rather than keep trying to reconnect, and therefore it may have
+terminated the connection coroutine.  As a result an attempt to reassign
+the client in this state (NBD_CLIENT_QUIT) to a different aio_context
+leads to a null pointer dereference:
+
+  #0  qio_channel_detach_aio_context (ioc=0x0)
+      at /build/qemu-gYtjVn/qemu-5.0.1/io/channel.c:452
+  #1  0x0000562a242824b3 in bdrv_detach_aio_context (bs=0x562a268d6a00)
+      at /build/qemu-gYtjVn/qemu-5.0.1/block.c:6151
+  #2  bdrv_set_aio_context_ignore (bs=bs@entry=0x562a268d6a00,
+      new_context=new_context@entry=0x562a260c9580,
+      ignore=ignore@entry=0x7feeadc9b780)
+      at /build/qemu-gYtjVn/qemu-5.0.1/block.c:6230
+  #3  0x0000562a24282969 in bdrv_child_try_set_aio_context
+      (bs=bs@entry=0x562a268d6a00, ctx=0x562a260c9580,
+      ignore_child=<optimized out>, errp=<optimized out>)
+      at /build/qemu-gYtjVn/qemu-5.0.1/block.c:6332
+  #4  0x0000562a242bb7db in blk_do_set_aio_context (blk=0x562a2735d0d0,
+      new_context=0x562a260c9580,
+      update_root_node=update_root_node@entry=true, errp=errp@entry=0x0)
+      at /build/qemu-gYtjVn/qemu-5.0.1/block/block-backend.c:1989
+  #5  0x0000562a242be0bd in blk_set_aio_context (blk=<optimized out>,
+      new_context=<optimized out>, errp=errp@entry=0x0)
+      at /build/qemu-gYtjVn/qemu-5.0.1/block/block-backend.c:2010
+  #6  0x0000562a23fbd953 in virtio_blk_data_plane_stop (vdev=<optimized
+      out>)
+      at /build/qemu-gYtjVn/qemu-5.0.1/hw/block/dataplane/virtio-blk.c:292
+  #7  0x0000562a241fc7bf in virtio_bus_stop_ioeventfd (bus=0x562a260dbf08)
+      at /build/qemu-gYtjVn/qemu-5.0.1/hw/virtio/virtio-bus.c:245
+  #8  0x0000562a23fefb2e in virtio_vmstate_change (opaque=0x562a260dbf90,
+      running=0, state=<optimized out>)
+      at /build/qemu-gYtjVn/qemu-5.0.1/hw/virtio/virtio.c:3220
+  #9  0x0000562a2402ebfd in vm_state_notify (running=running@entry=0,
+      state=state@entry=RUN_STATE_FINISH_MIGRATE)
+      at /build/qemu-gYtjVn/qemu-5.0.1/softmmu/vl.c:1275
+  #10 0x0000562a23f7bc02 in do_vm_stop (state=RUN_STATE_FINISH_MIGRATE,
+      send_stop=<optimized out>)
+      at /build/qemu-gYtjVn/qemu-5.0.1/cpus.c:1032
+  #11 0x0000562a24209765 in migration_completion (s=0x562a260e83a0)
+      at /build/qemu-gYtjVn/qemu-5.0.1/migration/migration.c:2914
+  #12 migration_iteration_run (s=0x562a260e83a0)
+      at /build/qemu-gYtjVn/qemu-5.0.1/migration/migration.c:3275
+  #13 migration_thread (opaque=opaque@entry=0x562a260e83a0)
+      at /build/qemu-gYtjVn/qemu-5.0.1/migration/migration.c:3439
+  #14 0x0000562a2435ca96 in qemu_thread_start (args=<optimized out>)
+      at /build/qemu-gYtjVn/qemu-5.0.1/util/qemu-thread-posix.c:519
+  #15 0x00007feed31466ba in start_thread (arg=0x7feeadc9c700)
+      at pthread_create.c:333
+  #16 0x00007feed2e7c41d in __GI___sysctl (name=0x0, nlen=608471908,
+      oldval=0x562a2452b138, oldlenp=0x0, newval=0x562a2452c5e0
+      <__func__.28102>, newlen=0)
+      at ../sysdeps/unix/sysv/linux/sysctl.c:30
+  #17 0x0000000000000000 in ?? ()
+
+Fix it by checking that the connection coroutine is non-null before
+trying to enter it.  If it is null, no entering is needed, as the
+connection is probably going down anyway.
+
+Signed-off-by: Roman Kagan <rvkagan@yandex-team.ru>
+Reviewed-by: Vladimir Sementsov-Ogievskiy <vsementsov@virtuozzo.com>
+Message-Id: <20210129073859.683063-3-rvkagan@yandex-team.ru>
+Signed-off-by: Eric Blake <eblake@redhat.com>
+(cherry picked from commit ddde5ee769fcc84b96f879d7b94f35268f69ca3b)
+Signed-off-by: Eric Blake <eblake@redhat.com>
+Signed-off-by: Eduardo Lima (Etrunko) <etrunko@redhat.com>
+---
+ block/nbd.c | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/block/nbd.c b/block/nbd.c
+index ed7b6df10b..1bdba9fc49 100644
+--- a/block/nbd.c
++++ b/block/nbd.c
+@@ -249,13 +249,15 @@ static void nbd_client_attach_aio_context_bh(void *opaque)
+     BlockDriverState *bs = opaque;
+     BDRVNBDState *s = (BDRVNBDState *)bs->opaque;
+ 
+-    /*
+-     * The node is still drained, so we know the coroutine has yielded in
+-     * nbd_read_eof(), the only place where bs->in_flight can reach 0, or it is
+-     * entered for the first time. Both places are safe for entering the
+-     * coroutine.
+-     */
+-    qemu_aio_coroutine_enter(bs->aio_context, s->connection_co);
++    if (s->connection_co) {
++        /*
++         * The node is still drained, so we know the coroutine has yielded in
++         * nbd_read_eof(), the only place where bs->in_flight can reach 0, or
++         * it is entered for the first time. Both places are safe for entering
++         * the coroutine.
++         */
++        qemu_aio_coroutine_enter(bs->aio_context, s->connection_co);
++    }
+     bdrv_dec_in_flight(bs);
+ }
+ 
+-- 
+2.27.0
+

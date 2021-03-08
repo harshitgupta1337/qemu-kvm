@@ -1,0 +1,39 @@
+From 5aadfd88a3438cee837d2e7e96fa0801d885d119 Mon Sep 17 00:00:00 2001
+From: Kevin Wolf <kwolf@redhat.com>
+Date: Fri, 19 Feb 2021 16:14:09 -0500
+Subject: [PATCH 18/54] default-configs: Enable vhost-user-blk
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+Message-id: <20210219161409.53788-2-kwolf@redhat.com>
+Patchwork-id: 101166
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 1/1] default-configs: Enable vhost-user-blk
+Bugzilla: 1930033
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+
+Now that we have qemu-storage-daemon with a vhost-user-blk export,
+we want to be able to use that in guests. So enable vhost-user-blk in
+our build configuration.
+
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ default-configs/devices/x86_64-rh-devices.mak | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/default-configs/devices/x86_64-rh-devices.mak b/default-configs/devices/x86_64-rh-devices.mak
+index e80877d4e2..993e2c1d2f 100644
+--- a/default-configs/devices/x86_64-rh-devices.mak
++++ b/default-configs/devices/x86_64-rh-devices.mak
+@@ -87,6 +87,7 @@ CONFIG_VGA=y
+ CONFIG_VGA_CIRRUS=y
+ CONFIG_VGA_PCI=y
+ CONFIG_VHOST_USER=y
++CONFIG_VHOST_USER_BLK=y
+ CONFIG_VIRTIO_PCI=y
+ CONFIG_VIRTIO_VGA=y
+ CONFIG_VMMOUSE=y
+-- 
+2.27.0
+

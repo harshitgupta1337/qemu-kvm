@@ -1,0 +1,154 @@
+From b76dbfedc47366039a08f68de82792b9c70a6be9 Mon Sep 17 00:00:00 2001
+From: Peter Krempa <pkrempa@redhat.com>
+Date: Mon, 22 Feb 2021 13:35:06 -0500
+Subject: [PATCH 23/54] qemu-iotests: 300: Add test case for modifying
+ persistence of bitmap
+
+RH-Author: Peter Krempa <pkrempa@redhat.com>
+Message-id: <a63403a45bdb082d5bd339f5161dd177d8374f74.1614000630.git.pkrempa@redhat.com>
+Patchwork-id: 101172
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 3/3] qemu-iotests: 300: Add test case for modifying persistence of bitmap
+Bugzilla: 1930757
+RH-Acked-by: John Snow <jsnow@redhat.com>
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Eric Blake <eblake@redhat.com>
+
+Verify that the modification of the bitmap persistence over migration
+which is controlled via BitmapMigrationBitmapAliasTransform works
+properly.
+
+Based on TestCrossAliasMigration
+
+Signed-off-by: Peter Krempa <pkrempa@redhat.com>
+Message-Id: <d9c8e9827e9b6001b2dd1b92e64aab858e6d2a86.1613150869.git.pkrempa@redhat.com>
+Reviewed-by: Eric Blake <eblake@redhat.com>
+[eblake: Adjust test for explicit read_zeroes=False]
+Signed-off-by: Eric Blake <eblake@redhat.com>
+(cherry picked from commit ca4bfec41d56a1154da89b105048b3462361d0f0)
+
+https://bugzilla.redhat.com/show_bug.cgi?id=1930757
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ tests/qemu-iotests/300     | 93 ++++++++++++++++++++++++++++++++++++++
+ tests/qemu-iotests/300.out |  4 +-
+ 2 files changed, 95 insertions(+), 2 deletions(-)
+
+diff --git a/tests/qemu-iotests/300 b/tests/qemu-iotests/300
+index 5b75121b84..b25d8b04c0 100755
+--- a/tests/qemu-iotests/300
++++ b/tests/qemu-iotests/300
+@@ -588,6 +588,99 @@ class TestCrossAliasMigration(TestDirtyBitmapMigration):
+         self.verify_dest_has_all_bitmaps()
+         self.verify_dest_error(None)
+ 
++class TestAliasTransformMigration(TestDirtyBitmapMigration):
++    """
++    Tests the 'transform' option which modifies bitmap persistence on migration.
++    """
++
++    src_node_name = 'node-a'
++    dst_node_name = 'node-b'
++    src_bmap_name = 'bmap-a'
++    dst_bmap_name = 'bmap-b'
++
++    def setUp(self) -> None:
++        TestDirtyBitmapMigration.setUp(self)
++
++        # Now create another block device and let both have two bitmaps each
++        result = self.vm_a.qmp('blockdev-add',
++                               node_name='node-b', driver='null-co',
++                               read_zeroes=False)
++        self.assert_qmp(result, 'return', {})
++
++        result = self.vm_b.qmp('blockdev-add',
++                               node_name='node-a', driver='null-co',
++                               read_zeroes=False)
++        self.assert_qmp(result, 'return', {})
++
++        bmaps_to_add = (('node-a', 'bmap-b'),
++                        ('node-b', 'bmap-a'),
++                        ('node-b', 'bmap-b'))
++
++        for (node, bmap) in bmaps_to_add:
++            result = self.vm_a.qmp('block-dirty-bitmap-add',
++                                   node=node, name=bmap)
++            self.assert_qmp(result, 'return', {})
++
++    @staticmethod
++    def transform_mapping() -> BlockBitmapMapping:
++        return [
++            {
++                'node-name': 'node-a',
++                'alias': 'node-a',
++                'bitmaps': [
++                    {
++                        'name': 'bmap-a',
++                        'alias': 'bmap-a',
++                        'transform':
++                            {
++                                'persistent': True
++                            }
++                    },
++                    {
++                        'name': 'bmap-b',
++                        'alias': 'bmap-b'
++                    }
++                ]
++            },
++            {
++                'node-name': 'node-b',
++                'alias': 'node-b',
++                'bitmaps': [
++                    {
++                        'name': 'bmap-a',
++                        'alias': 'bmap-a'
++                    },
++                    {
++                        'name': 'bmap-b',
++                        'alias': 'bmap-b'
++                    }
++                ]
++            }
++        ]
++
++    def verify_dest_bitmap_state(self) -> None:
++        bitmaps = self.vm_b.query_bitmaps()
++
++        for node in bitmaps:
++            bitmaps[node] = sorted(((bmap['name'], bmap['persistent']) for bmap in bitmaps[node]))
++
++        self.assertEqual(bitmaps,
++                         {'node-a': [('bmap-a', True), ('bmap-b', False)],
++                          'node-b': [('bmap-a', False), ('bmap-b', False)]})
++
++    def test_transform_on_src(self) -> None:
++        self.set_mapping(self.vm_a, self.transform_mapping())
++
++        self.migrate()
++        self.verify_dest_bitmap_state()
++        self.verify_dest_error(None)
++
++    def test_transform_on_dst(self) -> None:
++        self.set_mapping(self.vm_b, self.transform_mapping())
++
++        self.migrate()
++        self.verify_dest_bitmap_state()
++        self.verify_dest_error(None)
+ 
+ if __name__ == '__main__':
+     iotests.main(supported_protocols=['file'])
+diff --git a/tests/qemu-iotests/300.out b/tests/qemu-iotests/300.out
+index cafb8161f7..12e9ab7d57 100644
+--- a/tests/qemu-iotests/300.out
++++ b/tests/qemu-iotests/300.out
+@@ -1,5 +1,5 @@
+-.....................................
++.......................................
+ ----------------------------------------------------------------------
+-Ran 37 tests
++Ran 39 tests
+ 
+ OK
+-- 
+2.27.0
+
