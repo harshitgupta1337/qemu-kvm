@@ -64,7 +64,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.2.0
-Release: 10%{?dist}
+Release: 11%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -284,6 +284,14 @@ Patch122: kvm-virtio-net-add-missing-object_unref.patch
 Patch123: kvm-x86-cpu-Populate-SVM-CPUID-feature-bits.patch
 # For bz#1926785 - [RFE] AMD Milan - Add KVM/support for EPYC-Milan CPU Model - Fast Train
 Patch124: kvm-i386-Add-the-support-for-AMD-EPYC-3rd-generation-pro.patch
+# For bz#1932190 - Timeout when dump the screen from 2nd VGA
+Patch125: kvm-qxl-set-qxl.ssd.dcl.con-on-secondary-devices.patch
+# For bz#1932190 - Timeout when dump the screen from 2nd VGA
+Patch126: kvm-qxl-also-notify-the-rendering-is-done-when-skipping-.patch
+# For bz#1935071 - CVE-2021-20263 virt:8.4/qemu-kvm: QEMU: virtiofsd: 'security.capabilities' is not dropped with xattrmap option [rhel-av-8]
+Patch127: kvm-virtiofsd-Save-error-code-early-at-the-failure-calls.patch
+# For bz#1935071 - CVE-2021-20263 virt:8.4/qemu-kvm: QEMU: virtiofsd: 'security.capabilities' is not dropped with xattrmap option [rhel-av-8]
+Patch128: kvm-virtiofs-drop-remapped-security.capability-xattr-as-.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1473,6 +1481,16 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 
 
 %changelog
+* Mon Mar 15 2021 Miroslav Rezanina <mrezanin@redhat.com> - 5.2.0-11.el9
+- kvm-qxl-set-qxl.ssd.dcl.con-on-secondary-devices.patch [bz#1932190]
+- kvm-qxl-also-notify-the-rendering-is-done-when-skipping-.patch [bz#1932190]
+- kvm-virtiofsd-Save-error-code-early-at-the-failure-calls.patch [bz#1935071]
+- kvm-virtiofs-drop-remapped-security.capability-xattr-as-.patch [bz#1935071]
+- Resolves: bz#1932190
+  (Timeout when dump the screen from 2nd VGA)
+- Resolves: bz#1935071
+  (CVE-2021-20263 virt:8.4/qemu-kvm: QEMU: virtiofsd: 'security.capabilities' is not dropped with xattrmap option [rhel-av-8])
+
 * Wed Mar 03 2021 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-10.el8
 - kvm-migration-dirty-bitmap-Use-struct-for-alias-map-inne.patch [bz#1930757]
 - kvm-migration-dirty-bitmap-Allow-control-of-bitmap-persi.patch [bz#1930757]
