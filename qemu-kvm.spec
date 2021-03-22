@@ -53,6 +53,12 @@
 #Versions of various parts:
 
 %global requires_all_modules                                     \
+%if %{have_spice}                                                \
+Requires: %{name}-ui-spice = %{epoch}:%{version}-%{release}      \
+%endif                                                           \
+%if %{have_opengl}                                               \
+Requires: %{name}-ui-opengl = %{epoch}:%{version}-%{release}     \
+%endif                                                           \
 Requires: %{name}-block-curl = %{epoch}:%{version}-%{release}    \
 %if %{have_gluster}                                              \
 Requires: %{name}-block-gluster = %{epoch}:%{version}-%{release} \
@@ -64,7 +70,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.2.0
-Release: 11%{?dist}
+Release: 14%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -292,6 +298,32 @@ Patch126: kvm-qxl-also-notify-the-rendering-is-done-when-skipping-.patch
 Patch127: kvm-virtiofsd-Save-error-code-early-at-the-failure-calls.patch
 # For bz#1935071 - CVE-2021-20263 virt:8.4/qemu-kvm: QEMU: virtiofsd: 'security.capabilities' is not dropped with xattrmap option [rhel-av-8]
 Patch128: kvm-virtiofs-drop-remapped-security.capability-xattr-as-.patch
+# For bz#1927530 - RHEL8 Hypervisor - OVIRT  - Issues seen on a virtualization guest with direct passthrough LUNS  pausing when a host gets a Thin threshold warning
+Patch129: kvm-scsi-disk-move-scsi_handle_rw_error-earlier.patch
+# For bz#1927530 - RHEL8 Hypervisor - OVIRT  - Issues seen on a virtualization guest with direct passthrough LUNS  pausing when a host gets a Thin threshold warning
+Patch130: kvm-scsi-disk-do-not-complete-requests-early-for-rerror-.patch
+# For bz#1927530 - RHEL8 Hypervisor - OVIRT  - Issues seen on a virtualization guest with direct passthrough LUNS  pausing when a host gets a Thin threshold warning
+Patch131: kvm-scsi-introduce-scsi_sense_from_errno.patch
+# For bz#1927530 - RHEL8 Hypervisor - OVIRT  - Issues seen on a virtualization guest with direct passthrough LUNS  pausing when a host gets a Thin threshold warning
+Patch132: kvm-scsi-disk-pass-SCSI-status-to-scsi_handle_rw_error.patch
+# For bz#1927530 - RHEL8 Hypervisor - OVIRT  - Issues seen on a virtualization guest with direct passthrough LUNS  pausing when a host gets a Thin threshold warning
+Patch133: kvm-scsi-disk-pass-guest-recoverable-errors-through-even.patch
+# For bz#1936948 - CVE-2021-20221 virt:av/qemu-kvm: qemu: out-of-bound heap buffer access via an interrupt ID field [rhel-av-8.4.0]
+Patch134: kvm-hw-intc-arm_gic-Fix-interrupt-ID-in-GICD_SGIR-regist.patch
+# For bz#1934158 - Windows guest looses network connectivity when NIC was configured with static IP
+Patch135: kvm-i386-acpi-restore-device-paths-for-pre-5.1-vms.patch
+# For bz#1937004 - vhost-user-blk server endianness and input validation fixes
+Patch136: kvm-vhost-user-blk-fix-blkcfg-num_queues-endianness.patch
+# For bz#1937004 - vhost-user-blk server endianness and input validation fixes
+Patch137: kvm-block-export-fix-blk_size-double-byteswap.patch
+# For bz#1937004 - vhost-user-blk server endianness and input validation fixes
+Patch138: kvm-block-export-use-VIRTIO_BLK_SECTOR_BITS.patch
+# For bz#1937004 - vhost-user-blk server endianness and input validation fixes
+Patch139: kvm-block-export-fix-vhost-user-blk-export-sector-number.patch
+# For bz#1937004 - vhost-user-blk server endianness and input validation fixes
+Patch140: kvm-block-export-port-virtio-blk-discard-write-zeroes-in.patch
+# For bz#1937004 - vhost-user-blk server endianness and input validation fixes
+Patch141: kvm-block-export-port-virtio-blk-read-write-range-check.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -397,9 +429,6 @@ BuildRequires: binutils >= 2.27-16
 BuildRequires: pkgconfig(epoxy)
 BuildRequires: pkgconfig(libdrm)
 BuildRequires: pkgconfig(gbm)
-Requires:      mesa-libGL
-Requires:      mesa-libEGL
-Requires:      mesa-dri-drivers
 %endif
 
 BuildRequires: perl-Test-Harness
@@ -583,6 +612,32 @@ This package provides the additional SSH block driver for QEMU.
 
 Install this package if you want to access remote disks using
 the Secure Shell (SSH) protocol.
+
+
+%if %{have_spice}
+%package  ui-spice
+Summary: QEMU spice support
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+%if %{have_opengl}
+Requires: %{name}-ui-opengl%{?_isa} = %{epoch}:%{version}-%{release}
+%endif
+
+%description ui-spice
+This package provides spice support.
+%endif
+
+
+%if %{have_opengl}
+%package  ui-opengl
+Summary: QEMU opengl support
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+Requires: mesa-libGL
+Requires: mesa-libEGL
+Requires: mesa-dri-drivers
+
+%description ui-opengl
+This package provides opengl support.
+%endif
 
 
 %prep
@@ -1361,7 +1416,6 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
     %{_datadir}/%{name}/kvmvapic.bin
     %{_datadir}/%{name}/sgabios.bin
     %{_datadir}/%{name}/pvh.bin
-    %{_libdir}/qemu-kvm/ui-egl-headless.so
 %endif
 %ifarch s390x
     %{_datadir}/%{name}/s390-ccw.img
@@ -1411,21 +1465,9 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %if %{have_usbredir}
     %{_libdir}/qemu-kvm/hw-usb-redirect.so
 %endif
-%if 0%{have_spice}
-    %{_libdir}/qemu-kvm/hw-usb-smartcard.so
-    %{_libdir}/qemu-kvm/audio-spice.so
-    %{_libdir}/qemu-kvm/ui-spice-core.so
-    %{_libdir}/qemu-kvm/chardev-spice.so
-%endif
-%ifarch x86_64
-    %{_libdir}/qemu-kvm/hw-display-qxl.so
-%endif
 %{_libdir}/qemu-kvm/hw-display-virtio-gpu.so
 %ifnarch s390x
     %{_libdir}/qemu-kvm/hw-display-virtio-gpu-pci.so
-%endif
-%if 0%{have_opengl}
-    %{_libdir}/qemu-kvm/ui-opengl.so
 %endif
 
 %files -n qemu-kiwi
@@ -1479,9 +1521,57 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %files block-ssh
 %{_libdir}/qemu-kvm/block-ssh.so
 
+%if 0%{have_spice}
+%files ui-spice
+    %{_libdir}/qemu-kvm/hw-usb-smartcard.so
+    %{_libdir}/qemu-kvm/audio-spice.so
+    %{_libdir}/qemu-kvm/ui-spice-core.so
+    %{_libdir}/qemu-kvm/chardev-spice.so
+%ifarch x86_64
+    %{_libdir}/qemu-kvm/hw-display-qxl.so
+%endif
+%endif
+
+%if 0%{have_opengl}
+%files ui-opengl
+    %{_libdir}/qemu-kvm/ui-egl-headless.so
+    %{_libdir}/qemu-kvm/ui-opengl.so
+%endif
+
 
 %changelog
-* Mon Mar 15 2021 Miroslav Rezanina <mrezanin@redhat.com> - 5.2.0-11.el9
+* Sat Mar 20 2021 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-14.el8
+- kvm-vhost-user-blk-fix-blkcfg-num_queues-endianness.patch [bz#1937004]
+- kvm-block-export-fix-blk_size-double-byteswap.patch [bz#1937004]
+- kvm-block-export-use-VIRTIO_BLK_SECTOR_BITS.patch [bz#1937004]
+- kvm-block-export-fix-vhost-user-blk-export-sector-number.patch [bz#1937004]
+- kvm-block-export-port-virtio-blk-discard-write-zeroes-in.patch [bz#1937004]
+- kvm-block-export-port-virtio-blk-read-write-range-check.patch [bz#1937004]
+- kvm-spec-ui-spice-sub-package.patch [bz#1936373]
+- kvm-spec-ui-opengl-sub-package.patch [bz#1936373]
+- Resolves: bz#1937004
+  (vhost-user-blk server endianness and input validation fixes)
+- Resolves: bz#1936373
+  (move spice & opengl modules to rpm subpackages)
+
+* Tue Mar 16 2021 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-13.el8
+- kvm-i386-acpi-restore-device-paths-for-pre-5.1-vms.patch [bz#1934158]
+- Resolves: bz#1934158
+  (Windows guest looses network connectivity when NIC was configured with static IP)
+
+* Mon Mar 15 2021 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-12.el8
+- kvm-scsi-disk-move-scsi_handle_rw_error-earlier.patch [bz#1927530]
+- kvm-scsi-disk-do-not-complete-requests-early-for-rerror-.patch [bz#1927530]
+- kvm-scsi-introduce-scsi_sense_from_errno.patch [bz#1927530]
+- kvm-scsi-disk-pass-SCSI-status-to-scsi_handle_rw_error.patch [bz#1927530]
+- kvm-scsi-disk-pass-guest-recoverable-errors-through-even.patch [bz#1927530]
+- kvm-hw-intc-arm_gic-Fix-interrupt-ID-in-GICD_SGIR-regist.patch [bz#1936948]
+- Resolves: bz#1927530
+  (RHEL8 Hypervisor - OVIRT  - Issues seen on a virtualization guest with direct passthrough LUNS  pausing when a host gets a Thin threshold warning)
+- Resolves: bz#1936948
+  (CVE-2021-20221 virt:av/qemu-kvm: qemu: out-of-bound heap buffer access via an interrupt ID field [rhel-av-8.4.0])
+
+* Mon Mar 08 2021 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-11.el8
 - kvm-qxl-set-qxl.ssd.dcl.con-on-secondary-devices.patch [bz#1932190]
 - kvm-qxl-also-notify-the-rendering-is-done-when-skipping-.patch [bz#1932190]
 - kvm-virtiofsd-Save-error-code-early-at-the-failure-calls.patch [bz#1935071]

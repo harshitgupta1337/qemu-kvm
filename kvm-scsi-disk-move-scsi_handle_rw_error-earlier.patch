@@ -1,0 +1,222 @@
+From c029d041853805ba612d27886f769c0e004c35e6 Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Mon, 8 Mar 2021 10:48:58 -0500
+Subject: [PATCH 01/15] scsi-disk: move scsi_handle_rw_error earlier
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Paolo Bonzini <pbonzini@redhat.com>
+Message-id: <20210308104902.149906-2-pbonzini@redhat.com>
+Patchwork-id: 101307
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 1/5] scsi-disk: move scsi_handle_rw_error earlier
+Bugzilla: 1927530
+RH-Acked-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+
+Remove the forward declaration.
+
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+(cherry picked from commit f95f61c2c9618fae7d8ea4c1d63e7416884bad52)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/scsi/scsi-disk.c | 168 ++++++++++++++++++++++----------------------
+ 1 file changed, 83 insertions(+), 85 deletions(-)
+
+diff --git a/hw/scsi/scsi-disk.c b/hw/scsi/scsi-disk.c
+index 90841ad791..cecdea2640 100644
+--- a/hw/scsi/scsi-disk.c
++++ b/hw/scsi/scsi-disk.c
+@@ -110,8 +110,6 @@ struct SCSIDiskState {
+     uint16_t rotation_rate;
+ };
+ 
+-static bool scsi_handle_rw_error(SCSIDiskReq *r, int error, bool acct_failed);
+-
+ static void scsi_free_request(SCSIRequest *req)
+ {
+     SCSIDiskReq *r = DO_UPCAST(SCSIDiskReq, req, req);
+@@ -181,6 +179,89 @@ static void scsi_disk_load_request(QEMUFile *f, SCSIRequest *req)
+     qemu_iovec_init_external(&r->qiov, &r->iov, 1);
+ }
+ 
++/*
++ * scsi_handle_rw_error has two return values.  False means that the error
++ * must be ignored, true means that the error has been processed and the
++ * caller should not do anything else for this request.  Note that
++ * scsi_handle_rw_error always manages its reference counts, independent
++ * of the return value.
++ */
++static bool scsi_handle_rw_error(SCSIDiskReq *r, int error, bool acct_failed)
++{
++    bool is_read = (r->req.cmd.mode == SCSI_XFER_FROM_DEV);
++    SCSIDiskState *s = DO_UPCAST(SCSIDiskState, qdev, r->req.dev);
++    SCSIDiskClass *sdc = (SCSIDiskClass *) object_get_class(OBJECT(s));
++    BlockErrorAction action = blk_get_error_action(s->qdev.conf.blk,
++                                                   is_read, error);
++
++    if (action == BLOCK_ERROR_ACTION_REPORT) {
++        if (acct_failed) {
++            block_acct_failed(blk_get_stats(s->qdev.conf.blk), &r->acct);
++        }
++        switch (error) {
++        case 0:
++            /* A passthrough command has run and has produced sense data; check
++             * whether the error has to be handled by the guest or should rather
++             * pause the host.
++             */
++            assert(r->status && *r->status);
++            if (scsi_sense_buf_is_guest_recoverable(r->req.sense, sizeof(r->req.sense))) {
++                /* These errors are handled by guest. */
++                sdc->update_sense(&r->req);
++                scsi_req_complete(&r->req, *r->status);
++                return true;
++            }
++            error = scsi_sense_buf_to_errno(r->req.sense, sizeof(r->req.sense));
++            break;
++#ifdef CONFIG_LINUX
++            /* These errno mapping are specific to Linux.  For more information:
++             * - scsi_decide_disposition in drivers/scsi/scsi_error.c
++             * - scsi_result_to_blk_status in drivers/scsi/scsi_lib.c
++             * - blk_errors[] in block/blk-core.c
++             */
++        case EBADE:
++            /* DID_NEXUS_FAILURE -> BLK_STS_NEXUS.  */
++            scsi_req_complete(&r->req, RESERVATION_CONFLICT);
++            break;
++        case ENODATA:
++            /* DID_MEDIUM_ERROR -> BLK_STS_MEDIUM.  */
++            scsi_check_condition(r, SENSE_CODE(READ_ERROR));
++            break;
++        case EREMOTEIO:
++            /* DID_TARGET_FAILURE -> BLK_STS_TARGET.  */
++            scsi_req_complete(&r->req, HARDWARE_ERROR);
++            break;
++#endif
++        case ENOMEDIUM:
++            scsi_check_condition(r, SENSE_CODE(NO_MEDIUM));
++            break;
++        case ENOMEM:
++            scsi_check_condition(r, SENSE_CODE(TARGET_FAILURE));
++            break;
++        case EINVAL:
++            scsi_check_condition(r, SENSE_CODE(INVALID_FIELD));
++            break;
++        case ENOSPC:
++            scsi_check_condition(r, SENSE_CODE(SPACE_ALLOC_FAILED));
++            break;
++        default:
++            scsi_check_condition(r, SENSE_CODE(IO_ERROR));
++            break;
++        }
++    }
++
++    blk_error_action(s->qdev.conf.blk, action, is_read, error);
++    if (action == BLOCK_ERROR_ACTION_IGNORE) {
++        scsi_req_complete(&r->req, 0);
++        return true;
++    }
++
++    if (action == BLOCK_ERROR_ACTION_STOP) {
++        scsi_req_retry(&r->req);
++    }
++    return true;
++}
++
+ static bool scsi_disk_req_check_error(SCSIDiskReq *r, int ret, bool acct_failed)
+ {
+     if (r->req.io_canceled) {
+@@ -427,89 +508,6 @@ static void scsi_read_data(SCSIRequest *req)
+     }
+ }
+ 
+-/*
+- * scsi_handle_rw_error has two return values.  False means that the error
+- * must be ignored, true means that the error has been processed and the
+- * caller should not do anything else for this request.  Note that
+- * scsi_handle_rw_error always manages its reference counts, independent
+- * of the return value.
+- */
+-static bool scsi_handle_rw_error(SCSIDiskReq *r, int error, bool acct_failed)
+-{
+-    bool is_read = (r->req.cmd.mode == SCSI_XFER_FROM_DEV);
+-    SCSIDiskState *s = DO_UPCAST(SCSIDiskState, qdev, r->req.dev);
+-    SCSIDiskClass *sdc = (SCSIDiskClass *) object_get_class(OBJECT(s));
+-    BlockErrorAction action = blk_get_error_action(s->qdev.conf.blk,
+-                                                   is_read, error);
+-
+-    if (action == BLOCK_ERROR_ACTION_REPORT) {
+-        if (acct_failed) {
+-            block_acct_failed(blk_get_stats(s->qdev.conf.blk), &r->acct);
+-        }
+-        switch (error) {
+-        case 0:
+-            /* A passthrough command has run and has produced sense data; check
+-             * whether the error has to be handled by the guest or should rather
+-             * pause the host.
+-             */
+-            assert(r->status && *r->status);
+-            if (scsi_sense_buf_is_guest_recoverable(r->req.sense, sizeof(r->req.sense))) {
+-                /* These errors are handled by guest. */
+-                sdc->update_sense(&r->req);
+-                scsi_req_complete(&r->req, *r->status);
+-                return true;
+-            }
+-            error = scsi_sense_buf_to_errno(r->req.sense, sizeof(r->req.sense));
+-            break;
+-#ifdef CONFIG_LINUX
+-            /* These errno mapping are specific to Linux.  For more information:
+-             * - scsi_decide_disposition in drivers/scsi/scsi_error.c
+-             * - scsi_result_to_blk_status in drivers/scsi/scsi_lib.c
+-             * - blk_errors[] in block/blk-core.c
+-             */
+-        case EBADE:
+-            /* DID_NEXUS_FAILURE -> BLK_STS_NEXUS.  */
+-            scsi_req_complete(&r->req, RESERVATION_CONFLICT);
+-            break;
+-        case ENODATA:
+-            /* DID_MEDIUM_ERROR -> BLK_STS_MEDIUM.  */
+-            scsi_check_condition(r, SENSE_CODE(READ_ERROR));
+-            break;
+-        case EREMOTEIO:
+-            /* DID_TARGET_FAILURE -> BLK_STS_TARGET.  */
+-            scsi_req_complete(&r->req, HARDWARE_ERROR);
+-            break;
+-#endif
+-        case ENOMEDIUM:
+-            scsi_check_condition(r, SENSE_CODE(NO_MEDIUM));
+-            break;
+-        case ENOMEM:
+-            scsi_check_condition(r, SENSE_CODE(TARGET_FAILURE));
+-            break;
+-        case EINVAL:
+-            scsi_check_condition(r, SENSE_CODE(INVALID_FIELD));
+-            break;
+-        case ENOSPC:
+-            scsi_check_condition(r, SENSE_CODE(SPACE_ALLOC_FAILED));
+-            break;
+-        default:
+-            scsi_check_condition(r, SENSE_CODE(IO_ERROR));
+-            break;
+-        }
+-    }
+-
+-    blk_error_action(s->qdev.conf.blk, action, is_read, error);
+-    if (action == BLOCK_ERROR_ACTION_IGNORE) {
+-        scsi_req_complete(&r->req, 0);
+-        return true;
+-    }
+-
+-    if (action == BLOCK_ERROR_ACTION_STOP) {
+-        scsi_req_retry(&r->req);
+-    }
+-    return true;
+-}
+-
+ static void scsi_write_complete_noio(SCSIDiskReq *r, int ret)
+ {
+     uint32_t n;
+-- 
+2.27.0
+
