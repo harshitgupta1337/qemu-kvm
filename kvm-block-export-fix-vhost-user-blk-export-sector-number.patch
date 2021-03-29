@@ -1,0 +1,53 @@
+From e158a830fa229937fcb2ef755b50695abd64533a Mon Sep 17 00:00:00 2001
+From: Stefan Hajnoczi <stefanha@redhat.com>
+Date: Mon, 15 Mar 2021 18:16:27 -0400
+Subject: [PATCH 11/15] block/export: fix vhost-user-blk export sector number
+ calculation
+
+RH-Author: Stefan Hajnoczi <stefanha@redhat.com>
+Message-id: <20210315181629.212884-5-stefanha@redhat.com>
+Patchwork-id: 101341
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 4/6] block/export: fix vhost-user-blk export sector number calculation
+Bugzilla: 1937004
+RH-Acked-by: Danilo de Paula <ddepaula@redhat.com>
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Max Reitz <mreitz@redhat.com>
+
+The driver is supposed to honor the blk_size field but the protocol
+still uses 512-byte sector numbers. It is incorrect to multiply
+req->sector_num by blk_size.
+
+VIRTIO 1.1 5.2.5 Device Initialization says:
+
+  blk_size can be read to determine the optimal sector size for the
+  driver to use. This does not affect the units used in the protocol
+  (always 512 bytes), but awareness of the correct value can affect
+  performance.
+
+Fixes: 3578389bcf76c824a5d82e6586a6f0c71e56f2aa ("block/export: vhost-user block device backend server")
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Message-Id: <20210223144653.811468-10-stefanha@redhat.com>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit e44362ce317bcc46d409ed6c4a5ed2b46804bcbf)
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ block/export/vhost-user-blk-server.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/block/export/vhost-user-blk-server.c b/block/export/vhost-user-blk-server.c
+index feb139e067..bb07f499c8 100644
+--- a/block/export/vhost-user-blk-server.c
++++ b/block/export/vhost-user-blk-server.c
+@@ -144,7 +144,7 @@ static void coroutine_fn vu_blk_virtio_process_req(void *opaque)
+             break;
+         }
+ 
+-        int64_t offset = req->sector_num * vexp->blk_size;
++        int64_t offset = req->sector_num << VIRTIO_BLK_SECTOR_BITS;
+         QEMUIOVector qiov;
+         if (is_write) {
+             qemu_iovec_init_external(&qiov, out_iov, out_num);
+-- 
+2.27.0
+

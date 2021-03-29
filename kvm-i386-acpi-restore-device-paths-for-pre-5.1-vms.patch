@@ -1,0 +1,177 @@
+From 1f6e36fd98ba0610a438c2352117c5b1ed4f01ba Mon Sep 17 00:00:00 2001
+From: Igor Mammedov <imammedo@redhat.com>
+Date: Mon, 8 Mar 2021 18:10:41 -0500
+Subject: [PATCH 07/15] i386/acpi: restore device paths for pre-5.1 vms
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Igor Mammedov <imammedo@redhat.com>
+Message-id: <20210308181041.2427279-1-imammedo@redhat.com>
+Patchwork-id: 101321
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH] i386/acpi: restore device paths for pre-5.1 vms
+Bugzilla: 1934158
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+RH-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1934158
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=35317870
+Upstream: 0a343a5add75f9f90c65e932863d57ddbcb28f5c
+
+  From: Vitaly Cheptsov <cheptsov@ispras.ru>
+  Date:   Mon Mar 1 22:59:18 2021 +0300
+
+  After fixing the _UID value for the primary PCI root bridge in
+  af1b80ae it was discovered that this change updates Windows
+  configuration in an incompatible way causing network configuration
+  failure unless DHCP is used. More details provided on the list:
+
+  https://lists.gnu.org/archive/html/qemu-devel/2021-02/msg08484.html
+
+  This change reverts the _UID update from 1 to 0 for q35 and i440fx
+  VMs before version 5.2 to maintain the original behaviour when
+  upgrading.
+
+  Cc: qemu-stable@nongnu.org
+  Cc: qemu-devel@nongnu.org
+  Reported-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+  Suggested-by: Michael S. Tsirkin <mst@redhat.com>
+  Signed-off-by: Vitaly Cheptsov <cheptsov@ispras.ru>
+  Message-Id: <20210301195919.9333-1-cheptsov@ispras.ru>
+  Tested-by: Thomas Lamprecht <t.lamprecht@proxmox.com>
+  Reviewed-by: Igor Mammedov <imammedo@redhat.com>
+  Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+  Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+  Fixes: af1b80ae56c9 ("i386/acpi: fix inconsistent QEMU/OVMF device paths")
+
+(cherry picked from commit 0a343a5add75f9f90c65e932863d57ddbcb28f5c)
+Signed-off-by: Igor Mammedov <imammedo@redhat.com>
+
+Notes:
+clean cherrypick +
+adding the same quirk to RHEL's pc(7.6)/q35(8.3) machine types
+to preserve old UID. pc-q35-rhel8.4.0 will have new UID as defined
+by spec (but since it's not been released yet there is no risk of
+breaking [non]existing Windows deployments and new installations
+should pickup new PCI device enumeration just fine)
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/i386/acpi-build.c | 4 ++--
+ hw/i386/pc_piix.c    | 5 +++++
+ hw/i386/pc_q35.c     | 5 +++++
+ include/hw/i386/pc.h | 1 +
+ 4 files changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/hw/i386/acpi-build.c b/hw/i386/acpi-build.c
+index b1082bd412..be6a260b85 100644
+--- a/hw/i386/acpi-build.c
++++ b/hw/i386/acpi-build.c
+@@ -1516,7 +1516,7 @@ build_dsdt(GArray *table_data, BIOSLinker *linker,
+         dev = aml_device("PCI0");
+         aml_append(dev, aml_name_decl("_HID", aml_eisaid("PNP0A03")));
+         aml_append(dev, aml_name_decl("_ADR", aml_int(0)));
+-        aml_append(dev, aml_name_decl("_UID", aml_int(0)));
++        aml_append(dev, aml_name_decl("_UID", aml_int(pcmc->pci_root_uid)));
+         aml_append(sb_scope, dev);
+         aml_append(dsdt, sb_scope);
+ 
+@@ -1533,7 +1533,7 @@ build_dsdt(GArray *table_data, BIOSLinker *linker,
+         aml_append(dev, aml_name_decl("_HID", aml_eisaid("PNP0A08")));
+         aml_append(dev, aml_name_decl("_CID", aml_eisaid("PNP0A03")));
+         aml_append(dev, aml_name_decl("_ADR", aml_int(0)));
+-        aml_append(dev, aml_name_decl("_UID", aml_int(0)));
++        aml_append(dev, aml_name_decl("_UID", aml_int(pcmc->pci_root_uid)));
+         aml_append(dev, build_q35_osc_method());
+         aml_append(sb_scope, dev);
+ 
+diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
+index 6e1f1ba082..819fb5fed9 100644
+--- a/hw/i386/pc_piix.c
++++ b/hw/i386/pc_piix.c
+@@ -421,6 +421,7 @@ static void pc_i440fx_machine_options(MachineClass *m)
+ {
+     PCMachineClass *pcmc = PC_MACHINE_CLASS(m);
+     pcmc->default_nic_model = "e1000";
++    pcmc->pci_root_uid = 0;
+ 
+     m->family = "pc_piix";
+     m->desc = "Standard PC (i440FX + PIIX, 1996)";
+@@ -452,6 +453,7 @@ static void pc_i440fx_5_1_machine_options(MachineClass *m)
+     compat_props_add(m->compat_props, hw_compat_5_1, hw_compat_5_1_len);
+     compat_props_add(m->compat_props, pc_compat_5_1, pc_compat_5_1_len);
+     pcmc->kvmclock_create_always = false;
++    pcmc->pci_root_uid = 1;
+ }
+ 
+ DEFINE_I440FX_MACHINE(v5_1, "pc-i440fx-5.1", NULL,
+@@ -1020,6 +1022,7 @@ static void pc_machine_rhel7_options(MachineClass *m)
+     m->family = "pc_piix_Y";
+     m->default_machine_opts = "firmware=bios-256k.bin,hpet=off";
+     pcmc->default_nic_model = "e1000";
++    pcmc->pci_root_uid = 0;
+     m->default_display = "std";
+     m->no_parallel = 1;
+     m->numa_mem_supported = true;
+@@ -1046,6 +1049,8 @@ static void pc_machine_rhel760_options(MachineClass *m)
+     pcmc->pvh_enabled = false;
+     pcmc->default_cpu_version = CPU_VERSION_LEGACY;
+     pcmc->kvmclock_create_always = false;
++    /* From pc_i440fx_5_1_machine_options() */
++    pcmc->pci_root_uid = 1;
+     compat_props_add(m->compat_props, hw_compat_rhel_8_3,
+                      hw_compat_rhel_8_3_len);
+     compat_props_add(m->compat_props, pc_rhel_8_3_compat,
+diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
+index a8c0496c9f..f848f1484e 100644
+--- a/hw/i386/pc_q35.c
++++ b/hw/i386/pc_q35.c
+@@ -332,6 +332,7 @@ static void pc_q35_machine_options(MachineClass *m)
+ {
+     PCMachineClass *pcmc = PC_MACHINE_CLASS(m);
+     pcmc->default_nic_model = "e1000e";
++    pcmc->pci_root_uid = 0;
+ 
+     m->family = "pc_q35";
+     m->desc = "Standard PC (Q35 + ICH9, 2009)";
+@@ -367,6 +368,7 @@ static void pc_q35_5_1_machine_options(MachineClass *m)
+     compat_props_add(m->compat_props, hw_compat_5_1, hw_compat_5_1_len);
+     compat_props_add(m->compat_props, pc_compat_5_1, pc_compat_5_1_len);
+     pcmc->kvmclock_create_always = false;
++    pcmc->pci_root_uid = 1;
+ }
+ 
+ DEFINE_Q35_MACHINE(v5_1, "pc-q35-5.1", NULL,
+@@ -578,6 +580,7 @@ static void pc_q35_machine_rhel_options(MachineClass *m)
+ {
+     PCMachineClass *pcmc = PC_MACHINE_CLASS(m);
+     pcmc->default_nic_model = "e1000e";
++    pcmc->pci_root_uid = 0;
+     m->family = "pc_q35_Z";
+     m->units_per_default_bus = 1;
+     m->default_machine_opts = "firmware=bios-256k.bin,hpet=off";
+@@ -630,6 +633,8 @@ static void pc_q35_machine_rhel830_options(MachineClass *m)
+                      pc_rhel_8_3_compat_len);
+     /* From pc_q35_5_1_machine_options() */
+     pcmc->kvmclock_create_always = false;
++    /* From pc_q35_5_1_machine_options() */
++    pcmc->pci_root_uid = 1;
+ }
+ 
+ DEFINE_PC_MACHINE(q35_rhel830, "pc-q35-rhel8.3.0", pc_q35_init_rhel830,
+diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
+index 68091bea98..d2efc65cec 100644
+--- a/include/hw/i386/pc.h
++++ b/include/hw/i386/pc.h
+@@ -99,6 +99,7 @@ struct PCMachineClass {
+     int legacy_acpi_table_size;
+     unsigned acpi_data_size;
+     bool do_not_add_smb_acpi;
++    int pci_root_uid;
+ 
+     /* SMBIOS compat: */
+     bool smbios_defaults;
+-- 
+2.27.0
+

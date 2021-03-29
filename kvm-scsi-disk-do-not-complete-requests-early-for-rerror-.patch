@@ -1,0 +1,50 @@
+From 570d5034b8c6124df1830857144dc1ac08c13d06 Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Mon, 8 Mar 2021 10:48:59 -0500
+Subject: [PATCH 02/15] scsi-disk: do not complete requests early for
+ rerror/werror=ignore
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Paolo Bonzini <pbonzini@redhat.com>
+Message-id: <20210308104902.149906-3-pbonzini@redhat.com>
+Patchwork-id: 101309
+O-Subject: [RHEL-AV-8.4.0 qemu-kvm PATCH 2/5] scsi-disk: do not complete requests early for rerror/werror=ignore
+Bugzilla: 1927530
+RH-Acked-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+
+When requested to ignore errors, just do nothing and let the
+request complete normally.  This means that the request will
+be accounted correctly.
+
+This is what commit 40dce4ee61 ("scsi-disk: fix rerror/werror=ignore",
+2018-10-19) was supposed to do:
+
+Fixes: 40dce4ee61 ("scsi-disk: fix rerror/werror=ignore", 2018-10-19)
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+(cherry picked from commit 424740def9a42da88550410de9a41ef07cc4a010)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+---
+ hw/scsi/scsi-disk.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/hw/scsi/scsi-disk.c b/hw/scsi/scsi-disk.c
+index cecdea2640..e8de15f549 100644
+--- a/hw/scsi/scsi-disk.c
++++ b/hw/scsi/scsi-disk.c
+@@ -252,8 +252,7 @@ static bool scsi_handle_rw_error(SCSIDiskReq *r, int error, bool acct_failed)
+ 
+     blk_error_action(s->qdev.conf.blk, action, is_read, error);
+     if (action == BLOCK_ERROR_ACTION_IGNORE) {
+-        scsi_req_complete(&r->req, 0);
+-        return true;
++        return false;
+     }
+ 
+     if (action == BLOCK_ERROR_ACTION_STOP) {
+-- 
+2.27.0
+
