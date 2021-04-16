@@ -70,7 +70,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.2.0
-Release: 14%{?dist}
+Release: 15%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -1540,6 +1540,9 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 
 
 %changelog
+* Fri Apr 16 2021 Mohan Boddu <mboddu@redhat.com> - 15:5.2.0-15
+- Rebuilt for RHEL 9 BETA on Apr 15th 2021. Related: rhbz#1947937
+
 * Sat Mar 20 2021 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 5.2.0-14.el8
 - kvm-vhost-user-blk-fix-blkcfg-num_queues-endianness.patch [bz#1937004]
 - kvm-block-export-fix-blk_size-double-byteswap.patch [bz#1937004]
