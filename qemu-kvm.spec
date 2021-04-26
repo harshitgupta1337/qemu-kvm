@@ -70,7 +70,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 5.2.0
-Release: 15%{?dist}
+Release: 16%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -458,18 +458,12 @@ Requires: edk2-ovmf
 Requires: edk2-aarch64
 %endif
 
-%ifarch %{power64}
-Requires: SLOF
-%endif
 Requires: libseccomp >= 2.4.0
 # For compressed guest memory dumps
 Requires: lzo snappy
 %if %{have_kvm_setup}
 Requires(post): systemd-units
 Requires(preun): systemd-units
-    %ifarch %{power64}
-Requires: powerpc-utils
-    %endif
 %endif
 Requires: libusbx >= 1.0.23
 %if %{have_usbredir}
@@ -650,6 +644,7 @@ mkdir slirp
 %global qemu_kvm_build qemu_kvm_build
 %global qemu_kiwi_build qemu_kiwi_src/build
 
+%ifnarch %{power64}
 # XXX: ugly hack to copy source tree into a new folder.
 # it allows to build qemu-kiwi without touching the original source tree.
 # This is required as the build isolation is not 100% as we also have to
@@ -660,8 +655,8 @@ mkdir slirp
 cp -fpr . ../qemu_kiwi_src
 mv  ../qemu_kiwi_src ./qemu_kiwi_src
 mkdir -p %{qemu_kiwi_build}
+%endif
 mkdir -p %{qemu_kvm_build}
-
 
 %build
 %global buildarch %{kvm_target}-softmmu
@@ -892,6 +887,21 @@ echo "==="
 cat config-host.mak
 echo "==="
 
+%ifarch %{power64}
+make V=1 %{?_smp_mflags} $buildldflags qemu-img
+make V=1 %{?_smp_mflags} $buildldflags qemu-io
+make V=1 %{?_smp_mflags} $buildldflags qemu-nbd
+make V=1 %{?_smp_mflags} $buildldflags storage-daemon/qemu-storage-daemon
+
+make V=1 %{?_smp_mflags} $buildldflags docs/qemu-img.1
+make V=1 %{?_smp_mflags} $buildldflags docs/qemu-nbd.8
+make V=1 %{?_smp_mflags} $buildldflags docs/qemu-storage-daemon.1
+make V=1 %{?_smp_mflags} $buildldflags docs/qemu-storage-daemon-qmp-ref.7
+
+make V=1 %{?_smp_mflags} $buildldflags qga/qemu-ga
+make V=1 %{?_smp_mflags} $buildldflags docs/qemu-ga.8
+%else
+
 make V=1 %{?_smp_mflags} $buildldflags
 
 # Setup back compat qemu-kvm binary
@@ -1002,13 +1012,31 @@ make V=1 %{?_smp_mflags} $buildldflags
   trace/trace-events-all > qemu-kiwi-simpletrace.stp
 
 cp -a %{kvm_target}-softmmu/qemu-system-%{kvm_target} qemu-kiwi
+%endif
 popd
 
 %install
 pushd %{qemu_kvm_build}
+
 %define _udevdir %(pkg-config --variable=udevdir udev)
 %define _udevrulesdir %{_udevdir}/rules.d
 
+%ifarch %{power64}
+install -D -p -m 0755 qemu-img $RPM_BUILD_ROOT%{_bindir}/qemu-img
+install -D -p -m 0755 qemu-io $RPM_BUILD_ROOT%{_bindir}/qemu-io
+install -D -p -m 0755 qemu-nbd $RPM_BUILD_ROOT%{_bindir}/qemu-nbd
+install -D -p -m 0755 storage-daemon/qemu-storage-daemon $RPM_BUILD_ROOT%{_bindir}/qemu-storage-daemon
+
+mkdir -p $RPM_BUILD_ROOT%{_mandir}/man1/
+mkdir -p $RPM_BUILD_ROOT%{_mandir}/man7/
+mkdir -p $RPM_BUILD_ROOT%{_mandir}/man8/
+
+install -D -p -m 644 docs/qemu-img.1* $RPM_BUILD_ROOT%{_mandir}/man1
+install -D -p -m 644 docs/qemu-nbd.8* $RPM_BUILD_ROOT%{_mandir}/man8
+install -D -p -p -m 644 docs/qemu-storage-daemon.1* $RPM_BUILD_ROOT%{_mandir}/man1
+install -D -p -p -m 644 docs/qemu-storage-daemon-qmp-ref.7* $RPM_BUILD_ROOT%{_mandir}/man7
+install -D -p -m 644 docs/qemu-ga.8* $RPM_BUILD_ROOT%{_mandir}/man8
+%else
 install -D -p -m 0644 %{SOURCE4} $RPM_BUILD_ROOT%{_unitdir}/ksm.service
 install -D -p -m 0644 %{SOURCE5} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/ksm
 install -D -p -m 0755 ksmctl $RPM_BUILD_ROOT%{_libexecdir}/ksmctl
@@ -1068,11 +1096,12 @@ make DESTDIR=$RPM_BUILD_ROOT \
     install
 
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset
+%endif
 
 # Install qemu-guest-agent service and udev rules
-install -m 0644 %{_sourcedir}/qemu-guest-agent.service %{buildroot}%{_unitdir}
-install -m 0644 %{_sourcedir}/qemu-ga.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/qemu-ga
-install -m 0644 %{_sourcedir}/99-qemu-guest-agent.rules %{buildroot}%{_udevrulesdir}
+install -D -m 0644 %{_sourcedir}/qemu-guest-agent.service %{buildroot}%{_unitdir}/qemu-guest-agent.service
+install -D -m 0644 %{_sourcedir}/qemu-ga.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/qemu-ga
+install -D -m 0644 %{_sourcedir}/99-qemu-guest-agent.rules %{buildroot}%{_udevrulesdir}/99-qemu-guest-agent.rules
 
 # - the fsfreeze hook script:
 install -D --preserve-timestamps \
@@ -1099,6 +1128,7 @@ mkdir -p -v $RPM_BUILD_ROOT%{_localstatedir}/log/qemu-ga/
 mkdir -p $RPM_BUILD_ROOT%{_bindir}
 install -c -m 0755  qga/qemu-ga ${RPM_BUILD_ROOT}%{_bindir}/qemu-ga
 
+%ifnarch %{power64}
 mkdir -p $RPM_BUILD_ROOT%{_mandir}/man8
 
 install -m 0755 %{kvm_target}-softmmu/qemu-system-%{kvm_target} $RPM_BUILD_ROOT%{_libexecdir}/qemu-kvm
@@ -1343,6 +1373,7 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %postun -n qemu-kvm-common
 %systemd_postun_with_restart ksm.service
 %systemd_postun_with_restart ksmtuned.service
+%endif
 
 %post -n qemu-guest-agent
 %systemd_post qemu-guest-agent.service
@@ -1351,6 +1382,7 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %postun -n qemu-guest-agent
 %systemd_postun_with_restart qemu-guest-agent.service
 
+%ifnarch %{power64}
 %files
 # Deliberately empty
 
@@ -1476,6 +1508,7 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %{_datadir}/systemtap/tapset/qemu-kiwi.stp
 %{_datadir}/systemtap/tapset/qemu-kiwi-log.stp
 %{_datadir}/systemtap/tapset/qemu-kiwi-simpletrace.stp
+%endif
 
 %files -n qemu-img
 %defattr(-,root,root)
@@ -1501,6 +1534,7 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %{_datadir}/%{name}/qemu-ga
 %dir %{_localstatedir}/log/qemu-ga
 
+%ifnarch %{power64}
 %files tests
 %{testsdir}
 
@@ -1537,9 +1571,14 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
     %{_libdir}/qemu-kvm/ui-egl-headless.so
     %{_libdir}/qemu-kvm/ui-opengl.so
 %endif
-
+%endif
 
 %changelog
+* Mon Apr 26 2021 Miroslav Rezanina <mrezanin@redhat.com> - 5.2.0-16
+- kvm-Limit-build-on-Power-to-qemu-img-and-qemu-ga-only.patch [bz#1944056]
+- Resolves: bz#1944056
+  (Do not build qemu-kvm for Power)
+
 * Fri Apr 16 2021 Mohan Boddu <mboddu@redhat.com> - 15:5.2.0-15
 - Rebuilt for RHEL 9 BETA on Apr 15th 2021. Related: rhbz#1947937
 
