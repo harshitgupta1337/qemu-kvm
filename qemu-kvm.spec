@@ -69,8 +69,8 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
-Version: 5.2.0
-Release: 16%{?dist}
+Version: 6.0.0
+Release: 1%{?rcversion}%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -79,7 +79,7 @@ URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
 
-Source0: http://wiki.qemu.org/download/qemu-5.2.0.tar.xz
+Source0: http://wiki.qemu.org/download/qemu-6.0.0.tar.xz
 
 # KSM control scripts
 Source4: ksm.service
@@ -107,223 +107,21 @@ Source35: udev-kvm-check.c
 Source36: README.tests
 
 
-Patch0001: 0001-redhat-Adding-slirp-to-the-exploded-tree.patch
-Patch0005: 0005-Initial-redhat-build.patch
-Patch0006: 0006-Enable-disable-devices-for-RHEL.patch
-Patch0007: 0007-Machine-type-related-general-changes.patch
-Patch0008: 0008-Add-aarch64-machine-types.patch
-Patch0009: 0009-Add-ppc64-machine-types.patch
-Patch0010: 0010-Add-s390x-machine-types.patch
-Patch0011: 0011-Add-x86_64-machine-types.patch
-Patch0012: 0012-Enable-make-check.patch
-Patch0013: 0013-vfio-cap-number-of-devices-that-can-be-assigned.patch
-Patch0014: 0014-Add-support-statement-to-help-output.patch
-Patch0015: 0015-globally-limit-the-maximum-number-of-CPUs.patch
-Patch0016: 0016-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
-Patch0017: 0017-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
-Patch0018: 0018-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
-Patch0019: 0019-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
-Patch0021: 0021-redhat-Define-hw_compat_8_3.patch
-Patch0022: 0022-redhat-Add-spapr_machine_rhel_default_class_options.patch
-Patch0023: 0023-redhat-Define-pseries-rhel8.4.0-machine-type.patch
-Patch0024: 0024-redhat-s390x-add-rhel-8.4.0-compat-machine.patch
-Patch0027: 0027-block-vpc-Make-vpc_open-read-the-full-dynamic-header.patch
-Patch0028: 0028-GCC-11-warnings-hacks.patch
-Patch0029: 0029-Disable-problematic-tests-for-initial-build.patch
-Patch0030: 0030-Revert-GCC-11-warnings-hacks.patch
-Patch0031: 0031-s390x-Use-strpadcpy-for-copying-vm-name.patch
-Patch0032: 0032-tcg-Restrict-tcg_out_op-to-arrays-of-TCG_MAX_OP_ARGS.patch
-Patch0033: 0033-net-eth-Simplify-_eth_get_rss_ex_dst_addr.patch
-Patch0034: 0034-net-eth-Fix-stack-buffer-overflow-in.patch
-Patch0035: 0035-block-nvme-Implement-fake-truncate-coroutine.patch
-Patch0037: 0037-build-system-use-b_staticpic-false.patch
-Patch0038: 0038-spapr-Fix-buffer-overflow-in-spapr_numa_associativit.patch
-Patch0039: 0039-usb-hcd-xhci-pci-Fixup-capabilities-ordering-again.patch
-Patch0040: 0040-qga-commands-posix-Send-CCW-address-on-s390x-with-th.patch
-Patch0041: 0041-AArch64-machine-types-cleanup.patch
-Patch0042: 0042-hw-arm-virt-Add-8.4-Machine-type.patch
-Patch0044: 0044-memory-Rename-memory_region_notify_one-to-memory_reg.patch
-Patch0045: 0045-memory-Add-IOMMUTLBEvent.patch
-Patch0046: 0046-memory-Add-IOMMU_NOTIFIER_DEVIOTLB_UNMAP-IOMMUTLBNot.patch
-Patch0047: 0047-intel_iommu-Skip-page-walking-on-device-iotlb-invali.patch
-Patch0048: 0048-memory-Skip-bad-range-assertion-if-notifier-is-DEVIO.patch
-Patch0049: 0049-RHEL-Switch-pvpanic-test-to-q35.patch
-Patch0050: 0050-8.4-x86-machine-type.patch
-Patch0051: 0051-memory-clamp-cached-translation-in-case-it-points-to.patch
-Patch0054: 0054-Drop-bogus-IPv6-messages.patch
-# For bz#1914069 - [ppc64le] have this fix for rhel8.4 av (spapr: Allow memory unplug to always succeed)
-Patch55: kvm-spapr-Allow-memory-unplug-to-always-succeed.patch
-# For bz#1914069 - [ppc64le] have this fix for rhel8.4 av (spapr: Allow memory unplug to always succeed)
-Patch56: kvm-spapr-Improve-handling-of-memory-unplug-with-old-gue.patch
-# For bz#1838738 - [Intel 8.4 FEAT] qemu-kvm Sapphire Rapids (SPR) New Instructions (NIs) - Fast Train
-Patch57: kvm-x86-cpu-Add-AVX512_FP16-cpu-feature.patch
-# For bz#1904268 - [RFE] [HPEMC] qemu-kvm: support up to 710 VCPUs
-Patch58: kvm-q35-Increase-max_cpus-to-710-on-pc-q35-rhel8-machine.patch
-# For bz#1922170 - Enable vfio-ccw in AV
-Patch59: kvm-config-enable-VFIO_CCW.patch
-# For bz#1854811 - scsi-bus.c: use-after-free due to race between device unplug and I/O operation causes guest crash
-Patch60: kvm-scsi-fix-device-removal-race-vs-IO-restart-callback-.patch
-# For bz#1907264 - systemtap: invalid or missing conversion specifier at the trace event vhost_vdpa_set_log_base
-Patch61: kvm-tracetool-also-strip-l-and-ll-from-systemtap-format-.patch
-# For bz#1834152 - [aarch64] QEMU SMMUv3 device: Support range invalidation
-Patch63: kvm-hw-arm-smmuv3-Fix-addr_mask-for-range-based-invalida.patch
-# For bz#1925028 - vsmmuv3/vhost and virtio-iommu/vhost regression
-Patch65: kvm-vhost-Unbreak-SMMU-and-virtio-iommu-on-dev-iotlb-sup.patch
-# For bz#1902537 - The default fsfreeze-hook path from man page and qemu-ga --help command are different
-Patch66: kvm-docs-set-CONFDIR-when-running-sphinx.patch
-# For bz#1903521 - hot unplug vhost-user cause qemu crash: qemu-kvm: ../softmmu/memory.c:2818: do_address_space_destroy: Assertion `QTAILQ_EMPTY(&as->listeners)' failed.
-Patch67: kvm-virtio-Add-corresponding-memory_listener_unregister-.patch
-# For bz#1918966 - [incremental_backup] qemu aborts if guest reboot during backup when using virtio-blk: "aio_co_schedule: Co-routine was already scheduled in 'aio_co_schedule'"
-# For bz#1918968 - [incremental_backup] qemu deadlock after poweroff in guest during backup in nbd_export_close_all()
-Patch68: kvm-block-Honor-blk_set_aio_context-context-requirements.patch
-# For bz#1918966 - [incremental_backup] qemu aborts if guest reboot during backup when using virtio-blk: "aio_co_schedule: Co-routine was already scheduled in 'aio_co_schedule'"
-# For bz#1918968 - [incremental_backup] qemu deadlock after poweroff in guest during backup in nbd_export_close_all()
-Patch69: kvm-nbd-server-Quiesce-coroutines-on-context-switch.patch
-# For bz#1918966 - [incremental_backup] qemu aborts if guest reboot during backup when using virtio-blk: "aio_co_schedule: Co-routine was already scheduled in 'aio_co_schedule'"
-# For bz#1918968 - [incremental_backup] qemu deadlock after poweroff in guest during backup in nbd_export_close_all()
-Patch70: kvm-block-Avoid-processing-BDS-twice-in-bdrv_set_aio_con.patch
-# For bz#1918966 - [incremental_backup] qemu aborts if guest reboot during backup when using virtio-blk: "aio_co_schedule: Co-routine was already scheduled in 'aio_co_schedule'"
-# For bz#1918968 - [incremental_backup] qemu deadlock after poweroff in guest during backup in nbd_export_close_all()
-Patch71: kvm-storage-daemon-Call-bdrv_close_all-on-exit.patch
-# For bz#1918966 - [incremental_backup] qemu aborts if guest reboot during backup when using virtio-blk: "aio_co_schedule: Co-routine was already scheduled in 'aio_co_schedule'"
-# For bz#1918968 - [incremental_backup] qemu deadlock after poweroff in guest during backup in nbd_export_close_all()
-Patch72: kvm-block-move-blk_exp_close_all-to-qemu_cleanup.patch
-# For bz#1887883 - qemu blocks client progress with various NBD actions
-Patch73: kvm-block-nbd-only-detach-existing-iochannel-from-aio_co.patch
-# For bz#1887883 - qemu blocks client progress with various NBD actions
-Patch74: kvm-block-nbd-only-enter-connection-coroutine-if-it-s-pr.patch
-# For bz#1887883 - qemu blocks client progress with various NBD actions
-Patch75: kvm-nbd-make-nbd_read-return-EIO-on-error.patch
-# For bz#1907255 - Migrate failed with vhost-vsock-pci from RHEL-AV 8.3.1 to RHEL-AV 8.2.1
-Patch76: kvm-virtio-move-use-disabled-flag-property-to-hw_compat_.patch
-# For bz#1920740 - CVE-2020-35517 virt:8.4/qemu-kvm: QEMU: virtiofsd: potential privileged host device access from guest [rhel-av-8.4.0]
-Patch77: kvm-virtiofsd-extract-lo_do_open-from-lo_open.patch
-# For bz#1920740 - CVE-2020-35517 virt:8.4/qemu-kvm: QEMU: virtiofsd: potential privileged host device access from guest [rhel-av-8.4.0]
-Patch78: kvm-virtiofsd-optionally-return-inode-pointer-from-lo_do.patch
-# For bz#1920740 - CVE-2020-35517 virt:8.4/qemu-kvm: QEMU: virtiofsd: potential privileged host device access from guest [rhel-av-8.4.0]
-Patch79: kvm-virtiofsd-prevent-opening-of-special-files-CVE-2020-.patch
-# For bz#1920941 - [ppc64le] [AV]--disk cdimage.iso,bus=usb fails to boot
-Patch80: kvm-spapr-Adjust-firmware-path-of-PCI-devices.patch
-# For bz#1917830 - Add romsize property to qemu-kvm
-Patch81: kvm-pci-reject-too-large-ROMs.patch
-# For bz#1917830 - Add romsize property to qemu-kvm
-Patch82: kvm-pci-add-romsize-property.patch
-# For bz#1917826 - Add extra device support to qemu-kvm, but not to rhel machine types
-Patch83: kvm-redhat-Add-some-devices-for-exporting-upstream-machi.patch
-# For bz#1880299 - vhost-user mq connection fails to restart after kill host testpmd which acts as vhost-user client
-Patch84: kvm-vhost-Check-for-valid-vdev-in-vhost_backend_handle_i.patch
-# For bz#1901323 - QSD (QEMU Storage Daemon): basic support - TechPreview
-Patch85: kvm-docs-generate-qemu-storage-daemon-qmp-ref-7-man-page.patch
-# For bz#1901323 - QSD (QEMU Storage Daemon): basic support - TechPreview
-Patch86: kvm-docs-add-qemu-storage-daemon-1-man-page.patch
-# For bz#1901323 - QSD (QEMU Storage Daemon): basic support - TechPreview
-Patch87: kvm-docs-Add-qemu-storage-daemon-1-manpage-to-meson.buil.patch
-# For bz#1901323 - QSD (QEMU Storage Daemon): basic support - TechPreview
-Patch88: kvm-qemu-storage-daemon-Enable-object-add.patch
-# For bz#1930033 - enable vhost-user-blk device [TechPreview]
-Patch90: kvm-default-configs-Enable-vhost-user-blk.patch
-# For bz#1925345 - qemu-nbd needs larger backlog for Unix socket listen()
-Patch91: kvm-qemu-nbd-Use-SOMAXCONN-for-socket-listen-backlog.patch
-# For bz#1917654 - [failover vf migration][RHEL84 vm] After start a vm with a failover vf + a failover virtio net device, the failvoer vf do not exist in the vm
-Patch92: kvm-pcie-don-t-set-link-state-active-if-the-slot-is-empt.patch
-# For bz#1930757 - Allow control of block-dirty-bitmap persistence via 'block-bitmap-mapping'
-Patch93: kvm-migration-dirty-bitmap-Use-struct-for-alias-map-inne.patch
-# For bz#1930757 - Allow control of block-dirty-bitmap persistence via 'block-bitmap-mapping'
-Patch94: kvm-migration-dirty-bitmap-Allow-control-of-bitmap-persi.patch
-# For bz#1930757 - Allow control of block-dirty-bitmap persistence via 'block-bitmap-mapping'
-Patch95: kvm-qemu-iotests-300-Add-test-case-for-modifying-persist.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch96: kvm-failover-fix-indentantion.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch97: kvm-failover-Use-always-atomics-for-primary_should_be_hi.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch98: kvm-failover-primary-bus-is-only-used-once-and-where-it-.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch99: kvm-failover-Remove-unused-parameter.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch100: kvm-failover-Remove-external-partially_hotplugged-proper.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch101: kvm-failover-qdev_device_add-returns-err-or-dev-set.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch102: kvm-failover-Rename-bool-to-failover_primary_hidden.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch103: kvm-failover-g_strcmp0-knows-how-to-handle-NULL.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch104: kvm-failover-Remove-primary_device_opts.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch105: kvm-failover-remove-standby_id-variable.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch106: kvm-failover-Remove-primary_device_dict.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch107: kvm-failover-Remove-memory-leak.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch108: kvm-failover-simplify-virtio_net_find_primary.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch109: kvm-failover-should_be_hidden-should-take-a-bool.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch110: kvm-failover-Rename-function-to-hide_device.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch111: kvm-failover-virtio_net_connect_failover_devices-does-no.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch112: kvm-failover-Rename-to-failover_find_primary_device.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch113: kvm-failover-simplify-qdev_device_add-failover-case.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch114: kvm-failover-simplify-qdev_device_add.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch115: kvm-failover-make-sure-that-id-always-exist.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch116: kvm-failover-remove-failover_find_primary_device-error-p.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch117: kvm-failover-split-failover_find_primary_device_id.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch118: kvm-failover-We-don-t-need-to-cache-primary_device_id-an.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch119: kvm-failover-Caller-of-this-two-functions-already-have-p.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch120: kvm-failover-simplify-failover_unplug_primary.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch121: kvm-failover-Remove-primary_dev-member.patch
-# For bz#1819991 - Hostdev type interface with net failover enabled exists in domain xml and doesn't reattach to host after hot-unplug
-Patch122: kvm-virtio-net-add-missing-object_unref.patch
-# For bz#1926785 - [RFE] AMD Milan - Add KVM/support for EPYC-Milan CPU Model - Fast Train
-Patch123: kvm-x86-cpu-Populate-SVM-CPUID-feature-bits.patch
-# For bz#1926785 - [RFE] AMD Milan - Add KVM/support for EPYC-Milan CPU Model - Fast Train
-Patch124: kvm-i386-Add-the-support-for-AMD-EPYC-3rd-generation-pro.patch
-# For bz#1932190 - Timeout when dump the screen from 2nd VGA
-Patch125: kvm-qxl-set-qxl.ssd.dcl.con-on-secondary-devices.patch
-# For bz#1932190 - Timeout when dump the screen from 2nd VGA
-Patch126: kvm-qxl-also-notify-the-rendering-is-done-when-skipping-.patch
-# For bz#1935071 - CVE-2021-20263 virt:8.4/qemu-kvm: QEMU: virtiofsd: 'security.capabilities' is not dropped with xattrmap option [rhel-av-8]
-Patch127: kvm-virtiofsd-Save-error-code-early-at-the-failure-calls.patch
-# For bz#1935071 - CVE-2021-20263 virt:8.4/qemu-kvm: QEMU: virtiofsd: 'security.capabilities' is not dropped with xattrmap option [rhel-av-8]
-Patch128: kvm-virtiofs-drop-remapped-security.capability-xattr-as-.patch
-# For bz#1927530 - RHEL8 Hypervisor - OVIRT  - Issues seen on a virtualization guest with direct passthrough LUNS  pausing when a host gets a Thin threshold warning
-Patch129: kvm-scsi-disk-move-scsi_handle_rw_error-earlier.patch
-# For bz#1927530 - RHEL8 Hypervisor - OVIRT  - Issues seen on a virtualization guest with direct passthrough LUNS  pausing when a host gets a Thin threshold warning
-Patch130: kvm-scsi-disk-do-not-complete-requests-early-for-rerror-.patch
-# For bz#1927530 - RHEL8 Hypervisor - OVIRT  - Issues seen on a virtualization guest with direct passthrough LUNS  pausing when a host gets a Thin threshold warning
-Patch131: kvm-scsi-introduce-scsi_sense_from_errno.patch
-# For bz#1927530 - RHEL8 Hypervisor - OVIRT  - Issues seen on a virtualization guest with direct passthrough LUNS  pausing when a host gets a Thin threshold warning
-Patch132: kvm-scsi-disk-pass-SCSI-status-to-scsi_handle_rw_error.patch
-# For bz#1927530 - RHEL8 Hypervisor - OVIRT  - Issues seen on a virtualization guest with direct passthrough LUNS  pausing when a host gets a Thin threshold warning
-Patch133: kvm-scsi-disk-pass-guest-recoverable-errors-through-even.patch
-# For bz#1936948 - CVE-2021-20221 virt:av/qemu-kvm: qemu: out-of-bound heap buffer access via an interrupt ID field [rhel-av-8.4.0]
-Patch134: kvm-hw-intc-arm_gic-Fix-interrupt-ID-in-GICD_SGIR-regist.patch
-# For bz#1934158 - Windows guest looses network connectivity when NIC was configured with static IP
-Patch135: kvm-i386-acpi-restore-device-paths-for-pre-5.1-vms.patch
-# For bz#1937004 - vhost-user-blk server endianness and input validation fixes
-Patch136: kvm-vhost-user-blk-fix-blkcfg-num_queues-endianness.patch
-# For bz#1937004 - vhost-user-blk server endianness and input validation fixes
-Patch137: kvm-block-export-fix-blk_size-double-byteswap.patch
-# For bz#1937004 - vhost-user-blk server endianness and input validation fixes
-Patch138: kvm-block-export-use-VIRTIO_BLK_SECTOR_BITS.patch
-# For bz#1937004 - vhost-user-blk server endianness and input validation fixes
-Patch139: kvm-block-export-fix-vhost-user-blk-export-sector-number.patch
-# For bz#1937004 - vhost-user-blk server endianness and input validation fixes
-Patch140: kvm-block-export-port-virtio-blk-discard-write-zeroes-in.patch
-# For bz#1937004 - vhost-user-blk server endianness and input validation fixes
-Patch141: kvm-block-export-port-virtio-blk-read-write-range-check.patch
+Patch0004: 0004-Initial-redhat-build.patch
+Patch0005: 0005-Enable-disable-devices-for-RHEL.patch
+Patch0006: 0006-Machine-type-related-general-changes.patch
+Patch0007: 0007-Add-aarch64-machine-types.patch
+Patch0008: 0008-Add-ppc64-machine-types.patch
+Patch0009: 0009-Add-s390x-machine-types.patch
+Patch0010: 0010-Add-x86_64-machine-types.patch
+Patch0011: 0011-Enable-make-check.patch
+Patch0012: 0012-vfio-cap-number-of-devices-that-can-be-assigned.patch
+Patch0013: 0013-Add-support-statement-to-help-output.patch
+Patch0014: 0014-globally-limit-the-maximum-number-of-CPUs.patch
+Patch0015: 0015-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
+Patch0016: 0016-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
+Patch0017: 0017-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
+Patch0018: 0018-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -432,6 +230,7 @@ BuildRequires: pkgconfig(gbm)
 %endif
 
 BuildRequires: perl-Test-Harness
+BuildRequires: libslirp-devel
 
 Requires: qemu-kvm-core = %{epoch}:%{version}-%{release}
 
@@ -478,15 +277,6 @@ qemu-kvm is an open source virtualizer that provides hardware
 emulation for the KVM hypervisor. qemu-kvm acts as a virtual
 machine monitor together with the KVM kernel modules, and emulates the
 hardware for a full system such as a PC and its associated peripherals.
-
-%package -n qemu-kiwi
-Summary: qemu-kiwi components
-Requires: qemu-kvm-common = %{epoch}:%{version}-%{release}
-
-%description -n qemu-kiwi
-qemu-kiwi is a version of qemu-kvm with a restricted set of features
-intended for use by specific applications.
-It's experimental and unsupported.
 
 %package -n qemu-kvm-docs
 Summary: qemu-kvm documentation
@@ -635,28 +425,16 @@ This package provides opengl support.
 
 
 %prep
-%setup -n qemu-%{version}%{?rcversion}
-# Remove slirp content in scratchbuilds because it's being applyed as a patch
-rm -fr slirp
-mkdir slirp
+%if 0%{?rcversion}
+%setup -n qemu-%{version}-%{?rcversion}
+%else
+%setup -n qemu-%{version}
+%endif
 %autopatch -p1
 
 %global qemu_kvm_build qemu_kvm_build
-%global qemu_kiwi_build qemu_kiwi_src/build
-
-%ifnarch %{power64}
-# XXX: ugly hack to copy source tree into a new folder.
-# it allows to build qemu-kiwi without touching the original source tree.
-# This is required as the build isolation is not 100% as we also have to
-# change the source tree when building qemu-kiwi. And, when we do that,
-# calling "make check" on qemu-kvm see that change and behaves baddly.
-# Newer version of qemu allow us to create a better sollution, and this
-# hack can be dropped.
-cp -fpr . ../qemu_kiwi_src
-mv  ../qemu_kiwi_src ./qemu_kiwi_src
-mkdir -p %{qemu_kiwi_build}
-%endif
 mkdir -p %{qemu_kvm_build}
+
 
 %build
 %global buildarch %{kvm_target}-softmmu
@@ -682,6 +460,8 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --disable-bzip2                  \\\
   --disable-cap-ng                 \\\
   --disable-capstone               \\\
+  --disable-cfi                    \\\
+  --disable-cfi-debug              \\\
   --disable-cloop                  \\\
   --disable-cocoa                  \\\
   --disable-coroutine-pool         \\\
@@ -694,8 +474,10 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --disable-dmg                    \\\
   --disable-docs                   \\\
   --disable-fdt                    \\\
+  --disable-fuse                   \\\
+  --disable-fuse-lseek             \\\
   --disable-gcrypt                 \\\
-  --disable-git-update             \\\
+  --disable-gio                    \\\
   --disable-glusterfs              \\\
   --disable-gnutls                 \\\
   --disable-gtk                    \\\
@@ -718,6 +500,7 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --disable-linux-io-uring         \\\
   --disable-linux-user             \\\
   --disable-live-block-migration   \\\
+  --disable-lto                    \\\
   --disable-lzfse                  \\\
   --disable-lzo                    \\\
   --disable-malloc-trim            \\\
@@ -725,6 +508,7 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --disable-modules                \\\
   --disable-module-upgrades        \\\
   --disable-mpath                  \\\
+  --disable-multiprocess           \\\
   --disable-netmap                 \\\
   --disable-nettle                 \\\
   --disable-numa                   \\\
@@ -745,6 +529,7 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --disable-sdl-image              \\\
   --disable-seccomp                \\\
   --disable-sheepdog               \\\
+  --disable-slirp                  \\\
   --disable-smartcard              \\\
   --disable-snappy                 \\\
   --disable-sparse                 \\\
@@ -783,7 +568,8 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --disable-xen-pci-passthrough    \\\
   --disable-xfsctl                 \\\
   --disable-xkbcommon              \\\
-  --disable-zstd
+  --disable-zstd                   \\\
+  --with-git-submodules=ignore
 
 pushd %{qemu_kvm_build}
 ../configure  \
@@ -854,6 +640,7 @@ pushd %{qemu_kvm_build}
   --enable-rdma \
 %endif
   --enable-seccomp \
+  --enable-slirp=system \
   --enable-snappy \
 %if 0%{have_spice}
   --enable-smartcard \
@@ -907,117 +694,25 @@ make V=1 %{?_smp_mflags} $buildldflags
 # Setup back compat qemu-kvm binary
 %{__python3} scripts/tracetool.py --backend dtrace --format stap \
   --group=all --binary %{_libexecdir}/qemu-kvm --probe-prefix qemu.kvm \
-  trace/trace-events-all > qemu-kvm.stp
+  trace/trace-events-all qemu-kvm.stp
 
 %{__python3} scripts/tracetool.py --backends=dtrace --format=log-stap \
   --group=all --binary %{_libexecdir}/qemu-kvm --probe-prefix qemu.kvm \
-  trace/trace-events-all > qemu-kvm-log.stp
+  trace/trace-events-all qemu-kvm-log.stp
 
 %{__python3} scripts/tracetool.py --backend dtrace --format simpletrace-stap \
   --group=all --binary %{_libexecdir}/qemu-kvm --probe-prefix qemu.kvm \
-  trace/trace-events-all > qemu-kvm-simpletrace.stp
+  trace/trace-events-all qemu-kvm-simpletrace.stp
 
 cp -a %{kvm_target}-softmmu/qemu-system-%{kvm_target} qemu-kvm
 
 gcc %{SOURCE6} $RPM_OPT_FLAGS $RPM_LD_FLAGS -o ksmctl
 gcc %{SOURCE35} $RPM_OPT_FLAGS $RPM_LD_FLAGS -o udev-kvm-check
-
-popd
-echo "Starting qemu-kiwi build"
-
-pushd %{qemu_kiwi_build}
-# XXX: removing QXL and CONFIG_TPM.* mak configuration,
-# which causes problem with the config options used by qemu-kiwi.
-# Ideally we should be able to do this at configure time.
-find ../default-configs -name "*-rh-devices.mak" \
-         -exec sed -i '/CONFIG_QXL=/d' {} \;
-find ../default-configs -name "*-rh-devices.mak" \
-         -exec sed -i '/CONFIG_TPM.*=/d' {} \;
-
-../configure  \
-  --prefix="%{_prefix}" \
-  --libdir="%{_libdir}" \
-  --sysconfdir="%{_sysconfdir}" \
-  --interp-prefix=%{_prefix}/qemu-%M \
-  --localstatedir="%{_localstatedir}" \
-  --libexecdir="%{_libexecdir}" \
-  --extra-ldflags="-Wl,--build-id -Wl,-z,relro -Wl,-z,now" \
-  --extra-cflags="%{optflags}" \
-  --with-pkgversion="%{name}-%{version}-%{release}" \
-  --with-suffix="%{name}" \
-  --firmwarepath=%{_prefix}/share/qemu-firmware \
-  --meson="%{__meson}" \
-  --target-list="%{buildarch}" \
-  --block-drv-rw-whitelist=%{block_drivers_list} \
-  --audio-drv-list= \
-  --block-drv-ro-whitelist=vmdk,vhdx,vpc,https,ssh \
-  --with-coroutine=ucontext \
-  --with-git=git \
-  --tls-priority=@QEMU,SYSTEM \
-  %{disable_everything} \
-  --enable-attr \
-%ifarch %{ix86} x86_64
-  --enable-avx2 \
-%endif
-  --enable-cap-ng \
-  --enable-coroutine-pool \
-  --enable-debug-info \
-%if 0%{have_fdt}
-  --enable-fdt \
-%endif
-  --enable-kvm \
-%ifarch x86_64
-  --enable-libpmem \
-%endif
-  --enable-linux-aio \
-  --enable-libudev \
-  --enable-malloc-trim \
-  --enable-mpath \
-%ifnarch s390x
-  --enable-numa \
-%endif
-  --enable-pie \
-  --enable-seccomp \
-  --enable-system \
-  --enable-tcg \
-  --enable-trace-backend=dtrace \
-  --enable-vhost-kernel \
-  --enable-vhost-net \
-  --enable-vhost-user \
-  --enable-vhost-user-blk-server \
-  --enable-vhost-vdpa \
-  --enable-vhost-vsock \
-  --enable-werror \
-  --enable-xkbcommon \
-  --without-default-devices
-
-
-echo "qemu-kiki config-host.mak contents:"
-echo "==="
-cat config-host.mak
-echo "==="
-
-make V=1 %{?_smp_mflags} $buildldflags
-
-%{__python3} scripts/tracetool.py --backend dtrace --format stap \
-  --group=all --binary %{_libexecdir}/qemu-kiwi --probe-prefix qemu.kvm \
-  trace/trace-events-all > qemu-kiwi.stp
-
-%{__python3} scripts/tracetool.py --backends=dtrace --format=log-stap \
-  --group=all --binary %{_libexecdir}/qemu-kiwi --probe-prefix qemu.kvm \
-  trace/trace-events-all > qemu-kiwi-log.stp
-
-%{__python3} scripts/tracetool.py --backend dtrace --format simpletrace-stap \
-  --group=all --binary %{_libexecdir}/qemu-kiwi --probe-prefix qemu.kvm \
-  trace/trace-events-all > qemu-kiwi-simpletrace.stp
-
-cp -a %{kvm_target}-softmmu/qemu-system-%{kvm_target} qemu-kiwi
 %endif
 popd
 
 %install
 pushd %{qemu_kvm_build}
-
 %define _udevdir %(pkg-config --variable=udevdir udev)
 %define _udevrulesdir %{_udevdir}/rules.d
 
@@ -1218,11 +913,16 @@ rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/npcm7xx_bootrom.bin
 
 rm -rf ${RPM_BUILD_ROOT}%{_libdir}/qemu-kvm/ui-spice-app.so
 
+# Remove virtfs-proxy-helper files
+rm -rf ${RPM_BUILD_ROOT}%{_libexecdir}/virtfs-proxy-helper
+rm -rf ${RPM_BUILD_ROOT}%{_mandir}/man1/virtfs-proxy-helper*
+
 %ifarch s390x
     # Use the s390-ccw.img that we've just built, not the pre-built one
     install -m 0644 pc-bios/s390-ccw/s390-ccw.img $RPM_BUILD_ROOT%{_datadir}/%{name}/
 %else
     rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/s390-netboot.img
+    rm -rf ${RPM_BUILD_ROOT}%{_libdir}/qemu-kvm/hw-s390x-virtio-gpu-ccw.so
 %endif
 
 %ifnarch x86_64
@@ -1316,27 +1016,16 @@ rm -rf $RPM_BUILD_ROOT%{qemudocdir}/interop/.buildinfo
 rm -rf $RPM_BUILD_ROOT%{qemudocdir}/system/.buildinfo
 rm -rf $RPM_BUILD_ROOT%{qemudocdir}/tools/.buildinfo
 rm -rf $RPM_BUILD_ROOT%{qemudocdir}/user/.buildinfo
+rm -rf $RPM_BUILD_ROOT%{qemudocdir}/devel/.buildinfo
+rm -rf $RPM_BUILD_ROOT%{qemudocdir}/.buildinfo
 
 # Remove spec
 rm -rf $RPM_BUILD_ROOT%{qemudocdir}/specs
-
-popd
-
-pushd %{qemu_kiwi_build}
-install -m 0755 %{kvm_target}-softmmu/qemu-system-%{kvm_target} $RPM_BUILD_ROOT%{_libexecdir}/qemu-kiwi
-install -m 0644 qemu-kiwi.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
-install -m 0644 qemu-kiwi-log.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
-install -m 0644 qemu-kiwi-simpletrace.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
 popd
 
 %check
 pushd %{qemu_kvm_build}
 echo "Testing qemu-kvm-build"
-export DIFF=diff; make check V=1
-popd
-
-echo "Testing qemu-kiwi"
-pushd %{qemu_kiwi_build}
 export DIFF=diff; make check V=1
 popd
 
@@ -1389,6 +1078,10 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %files -n qemu-kvm-docs
 %defattr(-,root,root)
 %dir %{qemudocdir}
+%doc %{qemudocdir}/genindex.html
+%doc %{qemudocdir}/search.html
+%doc %{qemudocdir}/objects.inv
+%doc %{qemudocdir}/searchindex.js
 %doc %{qemudocdir}/README.rst
 %doc %{qemudocdir}/COPYING
 %doc %{qemudocdir}/COPYING.LIB
@@ -1400,6 +1093,8 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %doc %{qemudocdir}/system/*
 %doc %{qemudocdir}/tools/*
 %doc %{qemudocdir}/user/*
+%doc %{qemudocdir}/devel/*
+%doc %{qemudocdir}/_static/*
 
 %files -n qemu-kvm-common
 %defattr(-,root,root)
@@ -1498,16 +1193,11 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
     %{_libdir}/qemu-kvm/hw-usb-redirect.so
 %endif
 %{_libdir}/qemu-kvm/hw-display-virtio-gpu.so
-%ifnarch s390x
+%ifarch s390x
+    %{_libdir}/qemu-kvm/hw-s390x-virtio-gpu-ccw.so
+%else
     %{_libdir}/qemu-kvm/hw-display-virtio-gpu-pci.so
 %endif
-
-%files -n qemu-kiwi
-%defattr(-,root,root)
-%{_libexecdir}/qemu-kiwi
-%{_datadir}/systemtap/tapset/qemu-kiwi.stp
-%{_datadir}/systemtap/tapset/qemu-kiwi-log.stp
-%{_datadir}/systemtap/tapset/qemu-kiwi-simpletrace.stp
 %endif
 
 %files -n qemu-img
@@ -1574,6 +1264,10 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %endif
 
 %changelog
+* Fri Apr 30 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-1
+- Rebase to QEMU 6.0
+- Resolves: bz#1872569
+
 * Mon Apr 26 2021 Miroslav Rezanina <mrezanin@redhat.com> - 5.2.0-16
 - kvm-Limit-build-on-Power-to-qemu-img-and-qemu-ga-only.patch [bz#1944056]
 - Resolves: bz#1944056
@@ -1723,8 +1417,7 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 - Resolves: bz#1918968
   ([incremental_backup] qemu deadlock after poweroff in guest during backup in nbd_export_close_all())
 
-
-* Fri Feb 12 2021 Miroslav Rezanina <mrezanin@redhat.com> - 5.2.0-6.el8
+* Tue Feb 09 2021 Eduardo Lima (Etrunko) <elima@redhat.com> - 5.2.0-6.el8
 - kvm-scsi-fix-device-removal-race-vs-IO-restart-callback-.patch [bz#1854811]
 - kvm-tracetool-also-strip-l-and-ll-from-systemtap-format-.patch [bz#1907264]
 - kvm-redhat-moving-all-documentation-files-to-qemu-kvm-do.patch [bz#1881170 bz#1924766]

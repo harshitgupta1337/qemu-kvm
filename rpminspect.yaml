@@ -1,0 +1,5 @@
+---
+elf:
+        exclude_path:(^/usr/share/qemu-kvm/s390-ccw.img$)|(^/usr/share/qemu-kvm/s390-netboot.img$)
+inspections:
+        badfuncs: off

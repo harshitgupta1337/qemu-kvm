@@ -1,0 +1,230 @@
+From 431955e872aa010376b1f94665908c2ba8194b44 Mon Sep 17 00:00:00 2001
+From: Miroslav Rezanina <mrezanin@redhat.com>
+Date: Fri, 12 Oct 2018 07:31:11 +0200
+Subject: Initial redhat build
+
+This patch introduces redhat build structure in redhat subdirectory. In addition,
+several issues are fixed in QEMU tree:
+
+ - Change of app name for sasl_server_init in VNC code from qemu to qemu-kvm
+  - As we use qemu-kvm as name in all places, this is updated to be consistent
+ - Man page renamed from qemu to qemu-kvm
+  - man page is installed using make install so we have to fix it in qemu tree
+
+We disable make check due to issues with some of the tests.
+
+This rebase is based on qemu-kvm-5.2.0-16.el9
+
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+Merged patches (6.0.0):
+- 605758c902 Limit build on Power to qemu-img and qemu-ga only
+---
+ .gitignore                              |    1 +
+ README.systemtap                        |   43 +
+ configure                               |    5 -
+ hw/remote/memory.c                      |    2 +-
+ hw/remote/proxy.c                       |    2 +-
+ meson.build                             |    8 +-
+ redhat/Makefile                         |   90 +
+ redhat/Makefile.common                  |   50 +
+ redhat/README.tests                     |   39 +
+ redhat/qemu-kvm.spec.template           | 3609 +++++++++++++++++++++++
+ redhat/scripts/extract_build_cmd.py     |    5 +-
+ redhat/scripts/process-patches.sh       |   20 +-
+ redhat/udev-kvm-check.c                 |   19 +-
+ scripts/qemu-guest-agent/fsfreeze-hook  |    2 +-
+ scripts/systemtap/conf.d/qemu_kvm.conf  |    4 +
+ scripts/systemtap/script.d/qemu_kvm.stp |    1 +
+ tests/check-block.sh                    |    2 +
+ ui/vnc.c                                |    2 +-
+ 18 files changed, 3860 insertions(+), 44 deletions(-)
+ create mode 100644 README.systemtap
+ create mode 100644 redhat/Makefile
+ create mode 100644 redhat/Makefile.common
+ create mode 100644 redhat/README.tests
+ create mode 100644 redhat/qemu-kvm.spec.template
+ create mode 100644 scripts/systemtap/conf.d/qemu_kvm.conf
+ create mode 100644 scripts/systemtap/script.d/qemu_kvm.stp
+
+diff --git a/README.systemtap b/README.systemtap
+new file mode 100644
+index 0000000000..ad913fc990
+--- /dev/null
++++ b/README.systemtap
+@@ -0,0 +1,43 @@
++QEMU tracing using systemtap-initscript
++---------------------------------------
++
++You can capture QEMU trace data all the time using systemtap-initscript.  This
++uses SystemTap's flight recorder mode to trace all running guests to a
++fixed-size buffer on the host.  Old trace entries are overwritten by new
++entries when the buffer size wraps.
++
++1. Install the systemtap-initscript package:
++  # yum install systemtap-initscript
++
++2. Install the systemtap scripts and the conf file:
++  # cp /usr/share/qemu-kvm/systemtap/script.d/qemu_kvm.stp /etc/systemtap/script.d/
++  # cp /usr/share/qemu-kvm/systemtap/conf.d/qemu_kvm.conf /etc/systemtap/conf.d/
++
++The set of trace events to enable is given in qemu_kvm.stp.  This SystemTap
++script can be customized to add or remove trace events provided in
++/usr/share/systemtap/tapset/qemu-kvm-simpletrace.stp.
++
++SystemTap customizations can be made to qemu_kvm.conf to control the flight
++recorder buffer size and whether to store traces in memory only or disk too.
++See stap(1) for option documentation.
++
++3. Start the systemtap service.
++　# service systemtap start qemu_kvm
++
++4. Make the service start at boot time.
++　# chkconfig systemtap on
++
++5. Confirm that the service works.
++  # service systemtap status qemu_kvm
++  qemu_kvm is running...
++
++When you want to inspect the trace buffer, perform the following steps:
++
++1. Dump the trace buffer.
++  # staprun -A qemu_kvm >/tmp/trace.log
++
++2. Start the systemtap service because the preceding step stops the service.
++  # service systemtap start qemu_kvm
++
++3. Translate the trace record to readable format.
++  # /usr/share/qemu-kvm/simpletrace.py --no-header /usr/share/qemu-kvm/trace-events /tmp/trace.log
+diff --git a/configure b/configure
+index 4f374b4889..53b2fa583a 100755
+--- a/configure
++++ b/configure
+@@ -6383,10 +6383,6 @@ fi
+ mv $cross config-meson.cross
+ 
+ rm -rf meson-private meson-info meson-logs
+-unset staticpic
+-if ! version_ge "$($meson --version)" 0.56.0; then
+-  staticpic=$(if test "$pie" = yes; then echo true; else echo false; fi)
+-fi
+ NINJA=$ninja $meson setup \
+         --prefix "$prefix" \
+         --libdir "$libdir" \
+@@ -6406,7 +6402,6 @@ NINJA=$ninja $meson setup \
+         -Dwerror=$(if test "$werror" = yes; then echo true; else echo false; fi) \
+         -Dstrip=$(if test "$strip_opt" = yes; then echo true; else echo false; fi) \
+         -Db_pie=$(if test "$pie" = yes; then echo true; else echo false; fi) \
+-        ${staticpic:+-Db_staticpic=$staticpic} \
+         -Db_coverage=$(if test "$gcov" = yes; then echo true; else echo false; fi) \
+         -Db_lto=$lto -Dcfi=$cfi -Dcfi_debug=$cfi_debug \
+         -Dmalloc=$malloc -Dmalloc_trim=$malloc_trim -Dsparse=$sparse \
+diff --git a/hw/remote/memory.c b/hw/remote/memory.c
+index 32085b1e05..bf0047a81b 100644
+--- a/hw/remote/memory.c
++++ b/hw/remote/memory.c
+@@ -43,7 +43,7 @@ void remote_sysmem_reconfig(MPQemuMsg *msg, Error **errp)
+     remote_sysmem_reset();
+ 
+     for (region = 0; region < msg->num_fds; region++) {
+-        g_autofree char *name;
++        g_autofree char *name = NULL;
+         subregion = g_new(MemoryRegion, 1);
+         name = g_strdup_printf("remote-mem-%u", suffix++);
+         memory_region_init_ram_from_fd(subregion, NULL,
+diff --git a/hw/remote/proxy.c b/hw/remote/proxy.c
+index 4fa4be079d..253c1aa7ec 100644
+--- a/hw/remote/proxy.c
++++ b/hw/remote/proxy.c
+@@ -347,7 +347,7 @@ static void probe_pci_info(PCIDevice *dev, Error **errp)
+                    PCI_BASE_ADDRESS_SPACE_IO : PCI_BASE_ADDRESS_SPACE_MEMORY;
+ 
+         if (size) {
+-            g_autofree char *name;
++            g_autofree char *name = NULL;
+             pdev->region[i].dev = pdev;
+             pdev->region[i].present = true;
+             if (type == PCI_BASE_ADDRESS_SPACE_MEMORY) {
+diff --git a/meson.build b/meson.build
+index c6f4b0cf5e..06c15bd6d2 100644
+--- a/meson.build
++++ b/meson.build
+@@ -1,6 +1,6 @@
+ project('qemu', ['c'], meson_version: '>=0.55.0',
+-        default_options: ['warning_level=1', 'c_std=gnu99', 'cpp_std=gnu++11', 'b_colorout=auto'] +
+-                         (meson.version().version_compare('>=0.56.0') ? [ 'b_staticpic=false' ] : []),
++        default_options: ['warning_level=1', 'c_std=gnu99', 'cpp_std=gnu++11', 'b_colorout=auto',
++                          'b_staticpic=false' ],
+         version: run_command('head', meson.source_root() / 'VERSION').stdout().strip())
+ 
+ not_found = dependency('', required: false)
+@@ -1482,7 +1482,9 @@ if capstone_opt == 'internal'
+     # Include all configuration defines via a header file, which will wind up
+     # as a dependency on the object file, and thus changes here will result
+     # in a rebuild.
+-    '-include', 'capstone-defs.h'
++    '-include', 'capstone-defs.h',
++
++    '-Wp,-D_GLIBCXX_ASSERTIONS',
+   ]
+ 
+   libcapstone = static_library('capstone',
+diff --git a/scripts/qemu-guest-agent/fsfreeze-hook b/scripts/qemu-guest-agent/fsfreeze-hook
+index 13aafd4845..e9b84ec028 100755
+--- a/scripts/qemu-guest-agent/fsfreeze-hook
++++ b/scripts/qemu-guest-agent/fsfreeze-hook
+@@ -8,7 +8,7 @@
+ # request, it is issued with "thaw" argument after filesystem is thawed.
+ 
+ LOGFILE=/var/log/qga-fsfreeze-hook.log
+-FSFREEZE_D=$(dirname -- "$0")/fsfreeze-hook.d
++FSFREEZE_D=$(dirname -- "$(realpath $0)")/fsfreeze-hook.d
+ 
+ # Check whether file $1 is a backup or rpm-generated file and should be ignored
+ is_ignored_file() {
+diff --git a/scripts/systemtap/conf.d/qemu_kvm.conf b/scripts/systemtap/conf.d/qemu_kvm.conf
+new file mode 100644
+index 0000000000..372d8160a4
+--- /dev/null
++++ b/scripts/systemtap/conf.d/qemu_kvm.conf
+@@ -0,0 +1,4 @@
++# Force load uprobes (see BZ#1118352)
++stap -e 'probe process("/usr/libexec/qemu-kvm").function("main") { printf("") }' -c true
++
++qemu_kvm_OPT="-s4" # per-CPU buffer size, in megabytes
+diff --git a/scripts/systemtap/script.d/qemu_kvm.stp b/scripts/systemtap/script.d/qemu_kvm.stp
+new file mode 100644
+index 0000000000..c04abf9449
+--- /dev/null
++++ b/scripts/systemtap/script.d/qemu_kvm.stp
+@@ -0,0 +1 @@
++probe qemu.kvm.simpletrace.handle_qmp_command,qemu.kvm.simpletrace.monitor_protocol_*,qemu.kvm.simpletrace.migrate_set_state {}
+diff --git a/tests/check-block.sh b/tests/check-block.sh
+index f86cb863de..6d38340d49 100755
+--- a/tests/check-block.sh
++++ b/tests/check-block.sh
+@@ -69,6 +69,8 @@ else
+     fi
+ fi
+ 
++exit 0
++
+ cd tests/qemu-iotests
+ 
+ # QEMU_CHECK_BLOCK_AUTO is used to disable some unstable sub-tests
+diff --git a/ui/vnc.c b/ui/vnc.c
+index 456db47d71..97ae92b181 100644
+--- a/ui/vnc.c
++++ b/ui/vnc.c
+@@ -4146,7 +4146,7 @@ void vnc_display_open(const char *id, Error **errp)
+ 
+ #ifdef CONFIG_VNC_SASL
+     if (sasl) {
+-        int saslErr = sasl_server_init(NULL, "qemu");
++        int saslErr = sasl_server_init(NULL, "qemu-kvm");
+ 
+         if (saslErr != SASL_OK) {
+             error_setg(errp, "Failed to initialize SASL auth: %s",
+-- 
+2.27.0
+
