@@ -2,7 +2,6 @@
 %global SLOF_gittagcommit 899d9883
 
 %global have_usbredir 1
-%global have_spice    1
 %global have_opengl   1
 %global have_fdt      0
 %global have_gluster  1
@@ -27,7 +26,6 @@
 %ifarch x86_64
     %global kvm_target    x86_64
 %else
-    %global have_spice   0
     %global have_opengl  0
     %global have_gluster 0
 %endif
@@ -53,9 +51,6 @@
 #Versions of various parts:
 
 %global requires_all_modules                                     \
-%if %{have_spice}                                                \
-Requires: %{name}-ui-spice = %{epoch}:%{version}-%{release}      \
-%endif                                                           \
 %if %{have_opengl}                                               \
 Requires: %{name}-ui-opengl = %{epoch}:%{version}-%{release}     \
 %endif                                                           \
@@ -70,7 +65,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.0.0
-Release: 1%{?rcversion}%{?dist}
+Release: 2%{?rcversion}%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -102,8 +97,6 @@ Source30: kvm-s390x.conf
 Source31: kvm-x86.conf
 Source32: qemu-pr-helper.service
 Source33: qemu-pr-helper.socket
-Source34: 81-kvm-rhel.rules
-Source35: udev-kvm-check.c
 Source36: README.tests
 
 
@@ -122,6 +115,8 @@ Patch0015: 0015-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
 Patch0016: 0016-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0017: 0017-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0018: 0018-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
+# For bz#1906168 - [RHEL-9] qemu-kvm spec-file: Do not BuildRequire spice
+Patch19: kvm-Remove-SPICE-and-QXL-from-x86_64-rh-devices.mak.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -146,13 +141,6 @@ BuildRequires: usbredir-devel >= 0.7.1
 %endif
 BuildRequires: texinfo
 BuildRequires: python3-sphinx
-%if %{have_spice}
-BuildRequires: spice-protocol >= 0.12.12
-BuildRequires: spice-server-devel >= 0.12.8
-BuildRequires: libcacard-devel
-# For smartcard NSS support
-BuildRequires: nss-devel
-%endif
 BuildRequires: libseccomp-devel >= 2.4.0
 # For network block driver
 BuildRequires: libcurl-devel
@@ -271,6 +259,12 @@ Requires: usbredir >= 0.7.1
 %if %{have_fdt}
 Requires: libfdt >= 1.6.0
 %endif
+
+# Since SPICE is removed from RHEL-9, the following Obsoletes:
+# removes qemu-kvm-ui-spice for upgrades from RHEL-8
+# The "<= {version}" assumes RHEL-9 version >= RHEL-8 version (in
+# other words RHEL-9 rebases are done together/before RHEL-8 ones)
+Obsoletes: qemu-kvm-ui-spice <= %{version}
 
 %description -n qemu-kvm-core
 qemu-kvm is an open source virtualizer that provides hardware
@@ -396,19 +390,6 @@ This package provides the additional SSH block driver for QEMU.
 
 Install this package if you want to access remote disks using
 the Secure Shell (SSH) protocol.
-
-
-%if %{have_spice}
-%package  ui-spice
-Summary: QEMU spice support
-Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
-%if %{have_opengl}
-Requires: %{name}-ui-opengl%{?_isa} = %{epoch}:%{version}-%{release}
-%endif
-
-%description ui-spice
-This package provides spice support.
-%endif
 
 
 %if %{have_opengl}
@@ -642,10 +623,6 @@ pushd %{qemu_kvm_build}
   --enable-seccomp \
   --enable-slirp=system \
   --enable-snappy \
-%if 0%{have_spice}
-  --enable-smartcard \
-  --enable-spice \
-%endif
   --enable-system \
   --enable-tcg \
   --enable-tools \
@@ -707,7 +684,6 @@ make V=1 %{?_smp_mflags} $buildldflags
 cp -a %{kvm_target}-softmmu/qemu-system-%{kvm_target} qemu-kvm
 
 gcc %{SOURCE6} $RPM_OPT_FLAGS $RPM_LD_FLAGS -o ksmctl
-gcc %{SOURCE35} $RPM_OPT_FLAGS $RPM_LD_FLAGS -o udev-kvm-check
 %endif
 popd
 
@@ -761,8 +737,6 @@ mkdir -p $RPM_BUILD_ROOT%{testsdir}/tests/acceptance
 mkdir -p $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests
 mkdir -p $RPM_BUILD_ROOT%{testsdir}/scripts/qmp
 
-install -p -m 0755 udev-kvm-check $RPM_BUILD_ROOT%{_udevdir}
-install -p -m 0644 %{SOURCE34} $RPM_BUILD_ROOT%{_udevrulesdir}
 
 install -m 0644 scripts/dump-guest-memory.py \
                 $RPM_BUILD_ROOT%{_datadir}/%{name}
@@ -910,8 +884,6 @@ rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv64-virt-fw_jump.bin
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv64-generic-fw_dynamic.*
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/qemu-nsis.bmp
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/npcm7xx_bootrom.bin
-
-rm -rf ${RPM_BUILD_ROOT}%{_libdir}/qemu-kvm/ui-spice-app.so
 
 # Remove virtfs-proxy-helper files
 rm -rf ${RPM_BUILD_ROOT}%{_libexecdir}/virtfs-proxy-helper
@@ -1122,8 +1094,6 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %config(noreplace) %{_sysconfdir}/sysconfig/ksm
 %{_unitdir}/ksmtuned.service
 %{_sbindir}/ksmtuned
-%{_udevdir}/udev-kvm-check
-%{_udevrulesdir}/81-kvm-rhel.rules
 %ghost %{_sysconfdir}/kvm
 %config(noreplace) %{_sysconfdir}/ksmtuned.conf
 %dir %{_sysconfdir}/%{name}
@@ -1245,17 +1215,6 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %files block-ssh
 %{_libdir}/qemu-kvm/block-ssh.so
 
-%if 0%{have_spice}
-%files ui-spice
-    %{_libdir}/qemu-kvm/hw-usb-smartcard.so
-    %{_libdir}/qemu-kvm/audio-spice.so
-    %{_libdir}/qemu-kvm/ui-spice-core.so
-    %{_libdir}/qemu-kvm/chardev-spice.so
-%ifarch x86_64
-    %{_libdir}/qemu-kvm/hw-display-qxl.so
-%endif
-%endif
-
 %if 0%{have_opengl}
 %files ui-opengl
     %{_libdir}/qemu-kvm/ui-egl-headless.so
@@ -1264,6 +1223,16 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %endif
 
 %changelog
+* Thu May 13 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-2
+- kvm-Remove-message-with-running-VM-count.patch [bz#1914461]
+- kvm-Remove-SPICE-and-QXL-from-x86_64-rh-devices.mak.patch [bz#1906168]
+- kvm-spec-file-build-qemu-kvm-without-SPICE-and-QXL.patch [bz#1906168]
+- kvm-spec-file-Obsolete-qemu-kvm-ui-spice.patch [bz#1906168]
+- Resolves: bz#1914461
+  (Remove KVM guest count and limit info message)
+- Resolves: bz#1906168
+  ([RHEL-9] qemu-kvm spec-file: Do not BuildRequire spice)
+
 * Fri Apr 30 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-1
 - Rebase to QEMU 6.0
 - Resolves: bz#1872569
