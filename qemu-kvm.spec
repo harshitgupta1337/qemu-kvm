@@ -65,7 +65,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.0.0
-Release: 2%{?rcversion}%{?dist}
+Release: 3%{?rcversion}%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -117,6 +117,8 @@ Patch0017: 0017-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0018: 0018-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
 # For bz#1906168 - [RHEL-9] qemu-kvm spec-file: Do not BuildRequire spice
 Patch19: kvm-Remove-SPICE-and-QXL-from-x86_64-rh-devices.mak.patch
+# For bz#1944730 - Remove RHEL7 machine type (s390-ccw-virtio-rhel7.5.0)
+Patch20: kvm-hw-s390x-Remove-the-RHEL7-only-machine-type.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1223,6 +1225,11 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %endif
 
 %changelog
+* Tue May 25 2021 Miroslav Reznaina <mrezanin@redhat.com> - 6.0.0-3
+- kvm-hw-s390x-Remove-the-RHEL7-only-machine-type.patch [bz#1944730]
+- Resolves: bz#1944730
+  (Remove RHEL7 machine type (s390-ccw-virtio-rhel7.5.0))
+
 * Thu May 13 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-2
 - kvm-Remove-message-with-running-VM-count.patch [bz#1914461]
 - kvm-Remove-SPICE-and-QXL-from-x86_64-rh-devices.mak.patch [bz#1906168]
