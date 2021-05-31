@@ -65,7 +65,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.0.0
-Release: 3%{?rcversion}%{?dist}
+Release: 4%{?rcversion}%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 Epoch: 15
 License: GPLv2 and GPLv2+ and CC-BY
@@ -119,6 +119,8 @@ Patch0018: 0018-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
 Patch19: kvm-Remove-SPICE-and-QXL-from-x86_64-rh-devices.mak.patch
 # For bz#1944730 - Remove RHEL7 machine type (s390-ccw-virtio-rhel7.5.0)
 Patch20: kvm-hw-s390x-Remove-the-RHEL7-only-machine-type.patch
+# For bz#1962479 - Disable the 'x-terminal3270' device in qemu-kvm on s390x
+Patch21: kvm-s390x-redhat-disable-experimental-3270-device.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -1225,6 +1227,11 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %endif
 
 %changelog
+* Mon May 31 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-4
+- kvm-s390x-redhat-disable-experimental-3270-device.patch
+- Resolves: bz#1962479
+  (Disable the 'x-terminal3270' device in qemu-kvm on s390x)
+
 * Tue May 25 2021 Miroslav Reznaina <mrezanin@redhat.com> - 6.0.0-3
 - kvm-hw-s390x-Remove-the-RHEL7-only-machine-type.patch [bz#1944730]
 - Resolves: bz#1944730
