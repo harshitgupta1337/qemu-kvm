@@ -1,0 +1,125 @@
+From 0ca53acb7ee0a3b3b72685f47df1fb2466989d6c Mon Sep 17 00:00:00 2001
+From: Greg Kurz <groug@kaod.org>
+Date: Wed, 26 May 2021 09:03:53 -0400
+Subject: [PATCH 13/15] virtio-scsi: Set host notifiers and callbacks
+ separately
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 5: Synchronize RHEL-AV 8.5 release 18 to RHEL 9 Beta
+RH-Commit: [10/12] 61f873b494c52dc34eb60a705046bfead08532da (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 1957194
+RH-Acked-by: Danilo Cesar Lemes de Paula <ddepaula@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Greg Kurz <gkurz@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Host notifiers are guaranteed to be idle until the callbacks are
+hooked up with virtio_queue_aio_set_host_notifier_handler(). They
+thus don't need to be set or unset with the AioContext lock held.
+
+Do this outside the critical section, like virtio-blk already
+does : basically downgrading virtio_scsi_vring_init() to only
+setup the host notifier and set the callback in the caller.
+
+This will allow to batch addition/deletion of ioeventds in
+a single memory transaction, which is expected to greatly
+improve initialization time.
+
+Signed-off-by: Greg Kurz <groug@kaod.org>
+Message-Id: <20210407143501.244343-4-groug@kaod.org>
+Reviewed-by: Stefan Hajnoczi <stefanha@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit 61fc57bfc464c3584bd7ab810c86833661f0188c)
+Signed-off-by: Greg Kurz <gkurz@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/scsi/virtio-scsi-dataplane.c | 40 ++++++++++++++++++---------------
+ 1 file changed, 22 insertions(+), 18 deletions(-)
+
+diff --git a/hw/scsi/virtio-scsi-dataplane.c b/hw/scsi/virtio-scsi-dataplane.c
+index 4ad8793406..b2cb3d9dcc 100644
+--- a/hw/scsi/virtio-scsi-dataplane.c
++++ b/hw/scsi/virtio-scsi-dataplane.c
+@@ -94,8 +94,7 @@ static bool virtio_scsi_data_plane_handle_event(VirtIODevice *vdev,
+     return progress;
+ }
+ 
+-static int virtio_scsi_vring_init(VirtIOSCSI *s, VirtQueue *vq, int n,
+-                                  VirtIOHandleAIOOutput fn)
++static int virtio_scsi_set_host_notifier(VirtIOSCSI *s, VirtQueue *vq, int n)
+ {
+     BusState *qbus = BUS(qdev_get_parent_bus(DEVICE(s)));
+     int rc;
+@@ -109,7 +108,6 @@ static int virtio_scsi_vring_init(VirtIOSCSI *s, VirtQueue *vq, int n,
+         return rc;
+     }
+ 
+-    virtio_queue_aio_set_host_notifier_handler(vq, s->ctx, fn);
+     return 0;
+ }
+ 
+@@ -154,38 +152,44 @@ int virtio_scsi_dataplane_start(VirtIODevice *vdev)
+         goto fail_guest_notifiers;
+     }
+ 
+-    aio_context_acquire(s->ctx);
+-    rc = virtio_scsi_vring_init(s, vs->ctrl_vq, 0,
+-                                virtio_scsi_data_plane_handle_ctrl);
+-    if (rc) {
+-        goto fail_vrings;
++    rc = virtio_scsi_set_host_notifier(s, vs->ctrl_vq, 0);
++    if (rc != 0) {
++        goto fail_host_notifiers;
+     }
+ 
+     vq_init_count++;
+-    rc = virtio_scsi_vring_init(s, vs->event_vq, 1,
+-                                virtio_scsi_data_plane_handle_event);
+-    if (rc) {
+-        goto fail_vrings;
++    rc = virtio_scsi_set_host_notifier(s, vs->event_vq, 1);
++    if (rc != 0) {
++        goto fail_host_notifiers;
+     }
+ 
+     vq_init_count++;
++
+     for (i = 0; i < vs->conf.num_queues; i++) {
+-        rc = virtio_scsi_vring_init(s, vs->cmd_vqs[i], i + 2,
+-                                    virtio_scsi_data_plane_handle_cmd);
++        rc = virtio_scsi_set_host_notifier(s, vs->cmd_vqs[i], i + 2);
+         if (rc) {
+-            goto fail_vrings;
++            goto fail_host_notifiers;
+         }
+         vq_init_count++;
+     }
+ 
++    aio_context_acquire(s->ctx);
++    virtio_queue_aio_set_host_notifier_handler(vs->ctrl_vq, s->ctx,
++                                            virtio_scsi_data_plane_handle_ctrl);
++    virtio_queue_aio_set_host_notifier_handler(vs->event_vq, s->ctx,
++                                           virtio_scsi_data_plane_handle_event);
++
++    for (i = 0; i < vs->conf.num_queues; i++) {
++        virtio_queue_aio_set_host_notifier_handler(vs->cmd_vqs[i], s->ctx,
++                                             virtio_scsi_data_plane_handle_cmd);
++    }
++
+     s->dataplane_starting = false;
+     s->dataplane_started = true;
+     aio_context_release(s->ctx);
+     return 0;
+ 
+-fail_vrings:
+-    aio_wait_bh_oneshot(s->ctx, virtio_scsi_dataplane_stop_bh, s);
+-    aio_context_release(s->ctx);
++fail_host_notifiers:
+     for (i = 0; i < vq_init_count; i++) {
+         virtio_bus_set_host_notifier(VIRTIO_BUS(qbus), i, false);
+         virtio_bus_cleanup_host_notifier(VIRTIO_BUS(qbus), i);
+-- 
+2.27.0
+

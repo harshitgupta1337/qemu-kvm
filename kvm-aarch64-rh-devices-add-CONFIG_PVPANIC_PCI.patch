@@ -1,0 +1,38 @@
+From 5cc3aacc241c0d26f63d51efd1b6fa35490d37c9 Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Wed, 26 May 2021 10:33:20 -0400
+Subject: [PATCH 03/15] aarch64-rh-devices: add CONFIG_PVPANIC_PCI
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 2: aarch64-rh-devices: add CONFIG_PVPANIC_PCI
+RH-Commit: [1/1] f3d0a94a91ea1b3fff925f32affce1b77469e206 (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 1747467
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+We want to enable the PVPANIC facility on ARM. On aarch64,
+the PVPANIC PCI device is used (on x86_64 the ISA device is used).
+so let's set the PVPANIC_PCI config.
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ default-configs/devices/aarch64-rh-devices.mak | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/default-configs/devices/aarch64-rh-devices.mak b/default-configs/devices/aarch64-rh-devices.mak
+index a4d67274c0..4220469178 100644
+--- a/default-configs/devices/aarch64-rh-devices.mak
++++ b/default-configs/devices/aarch64-rh-devices.mak
+@@ -26,3 +26,4 @@ CONFIG_TPM_EMULATOR=y
+ CONFIG_TPM_TIS_SYSBUS=y
+ CONFIG_PTIMER=y
+ CONFIG_ARM_COMPATIBLE_SEMIHOSTING=y
++CONFIG_PVPANIC_PCI=y
+-- 
+2.27.0
+

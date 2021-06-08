@@ -1,0 +1,63 @@
+From ee0be09f3598596e41b3fc2dbefef3382c5b0541 Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Tue, 25 May 2021 09:22:24 +0200
+Subject: [PATCH 02/15] hw/arm/virt: Add 8.5 and 9.0 machine types and remove
+ older ones
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 1: Add 9.0.0 and 8.5.0 arm-virt machine types
+RH-Commit: [2/2] ace4619a1d505a3b552a236260b259bd6ddabc00 (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 1952449
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+Add 8.5 and 9.0 machine types and remove older ones.
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/arm/virt.c | 24 +++++-------------------
+ 1 file changed, 5 insertions(+), 19 deletions(-)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index 51a415570c..e4aa794f83 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -3095,28 +3095,14 @@ static void rhel_machine_init(void)
+ }
+ type_init(rhel_machine_init);
+ 
+-static void rhel840_virt_options(MachineClass *mc)
++static void rhel900_virt_options(MachineClass *mc)
+ {
+     compat_props_add(mc->compat_props, arm_rhel_compat, arm_rhel_compat_len);
+-    compat_props_add(mc->compat_props, hw_compat_rhel_8_4, hw_compat_rhel_8_4_len);
+ }
+-DEFINE_RHEL_MACHINE_AS_LATEST(8, 4, 0)
++DEFINE_RHEL_MACHINE_AS_LATEST(9, 0, 0)
+ 
+-static void rhel830_virt_options(MachineClass *mc)
++static void rhel850_virt_options(MachineClass *mc)
+ {
+-    VirtMachineClass *vmc = VIRT_MACHINE_CLASS(OBJECT_CLASS(mc));
+-
+-    rhel840_virt_options(mc);
+-    compat_props_add(mc->compat_props, hw_compat_rhel_8_3, hw_compat_rhel_8_3_len);
+-    vmc->no_kvm_steal_time = true;
+-}
+-DEFINE_RHEL_MACHINE(8, 3, 0)
+-
+-static void rhel820_virt_options(MachineClass *mc)
+-{
+-    rhel830_virt_options(mc);
+-    compat_props_add(mc->compat_props, hw_compat_rhel_8_2, hw_compat_rhel_8_2_len);
+-    mc->numa_mem_supported = true;
+-    mc->auto_enable_numa_with_memdev = false;
++    rhel900_virt_options(mc);
+ }
+-DEFINE_RHEL_MACHINE(8, 2, 0)
++DEFINE_RHEL_MACHINE(8, 5, 0)
+-- 
+2.27.0
+

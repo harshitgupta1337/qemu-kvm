@@ -16,3 +16,6 @@
 /qemu-5.2.0-rc3.tar.xz
 /qemu-5.2.0.tar.xz
 /qemu-6.0.0.tar.xz
+/qemu-kvm*.src.rpm
+/patches.*
+/*.orig

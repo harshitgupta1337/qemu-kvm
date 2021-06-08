@@ -4,7 +4,6 @@
 %global have_usbredir 1
 %global have_opengl   1
 %global have_fdt      0
-%global have_gluster  1
 %global have_kvm_setup 0
 %global have_memlock_limits 0
 
@@ -27,7 +26,6 @@
     %global kvm_target    x86_64
 %else
     %global have_opengl  0
-    %global have_gluster 0
 %endif
 %ifarch %{power64}
     %global kvm_target    ppc64
@@ -55,9 +53,6 @@
 Requires: %{name}-ui-opengl = %{epoch}:%{version}-%{release}     \
 %endif                                                           \
 Requires: %{name}-block-curl = %{epoch}:%{version}-%{release}    \
-%if %{have_gluster}                                              \
-Requires: %{name}-block-gluster = %{epoch}:%{version}-%{release} \
-%endif                                                           \
 Requires: %{name}-block-iscsi = %{epoch}:%{version}-%{release}   \
 Requires: %{name}-block-rbd = %{epoch}:%{version}-%{release}     \
 Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
@@ -65,9 +60,11 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.0.0
-Release: 4%{?rcversion}%{?dist}
+Release: 5%{?rcversion}%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
-Epoch: 15
+# Epoch 15 used for RHEL 8
+# Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
+Epoch: 17
 License: GPLv2 and GPLv2+ and CC-BY
 Group: Development/Tools
 URL: http://www.qemu.org/
@@ -121,6 +118,32 @@ Patch19: kvm-Remove-SPICE-and-QXL-from-x86_64-rh-devices.mak.patch
 Patch20: kvm-hw-s390x-Remove-the-RHEL7-only-machine-type.patch
 # For bz#1962479 - Disable the 'x-terminal3270' device in qemu-kvm on s390x
 Patch21: kvm-s390x-redhat-disable-experimental-3270-device.patch
+# For bz#1952449 - [aarch64] define RHEL9 machine types
+Patch22: kvm-arm-virt-Register-highmem-and-gic-version-as-class-p.patch
+# For bz#1952449 - [aarch64] define RHEL9 machine types
+Patch23: kvm-hw-arm-virt-Add-8.5-and-9.0-machine-types-and-remove.patch
+# For bz#1747467 - [aarch64] [qemu] PVPANIC support
+Patch24: kvm-aarch64-rh-devices-add-CONFIG_PVPANIC_PCI.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch25: kvm-redhat-s390x-add-rhel-8.5.0-compat-machine.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch26: kvm-redhat-add-missing-entries-in-hw_compat_rhel_8_4.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch27: kvm-redhat-Define-pseries-rhel8.5.0-machine-type.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch28: kvm-virtio-net-failover-add-missing-remove_migration_sta.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch29: kvm-hw-arm-virt-Disable-PL011-clock-migration-through-hw.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch30: kvm-virtio-blk-Fix-rollback-path-in-virtio_blk_data_plan.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch31: kvm-virtio-blk-Configure-all-host-notifiers-in-a-single-.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch32: kvm-virtio-scsi-Set-host-notifiers-and-callbacks-separat.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch33: kvm-virtio-scsi-Configure-all-host-notifiers-in-a-single.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch34: kvm-hw-arm-smmuv3-Another-range-invalidation-fix.patch
 
 BuildRequires: wget
 BuildRequires: rpm-build
@@ -151,11 +174,6 @@ BuildRequires: libcurl-devel
 BuildRequires: libssh-devel
 BuildRequires: librados-devel
 BuildRequires: librbd-devel
-%if %{have_gluster}
-# For gluster block driver
-BuildRequires: glusterfs-api-devel
-BuildRequires: glusterfs-devel
-%endif
 # We need both because the 'stap' binary is probed for by configure
 BuildRequires: systemtap
 BuildRequires: systemtap-sdt-devel
@@ -269,6 +287,7 @@ Requires: libfdt >= 1.6.0
 # The "<= {version}" assumes RHEL-9 version >= RHEL-8 version (in
 # other words RHEL-9 rebases are done together/before RHEL-8 ones)
 Obsoletes: qemu-kvm-ui-spice <= %{version}
+Obsoletes: qemu-kvm-block-gluster <= %{version}
 
 %description -n qemu-kvm-core
 qemu-kvm is an open source virtualizer that provides hardware
@@ -353,17 +372,6 @@ Install this package if you want to access remote disks over
 http, https, ftp and other transports provided by the CURL library.
 
 
-%if %{have_gluster}
-%package  block-gluster
-Summary: QEMU Gluster block driver
-Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
-%description block-gluster
-This package provides the additional Gluster block driver for QEMU.
-
-Install this package if you want to access remote Gluster storage.
-%endif
-
-
 %package  block-iscsi
 Summary: QEMU iSCSI block driver
 Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
@@ -428,11 +436,6 @@ mkdir -p %{qemu_kvm_build}
 buildldflags="VL_LDFLAGS=-Wl,--build-id"
 
 %global block_drivers_list qcow2,raw,file,host_device,nbd,iscsi,rbd,blkdebug,luks,null-co,nvme,copy-on-read,throttle
-
-%if 0%{have_gluster}
-    %global block_drivers_list %{block_drivers_list},gluster
-%endif
-
 
 %define disable_everything         \\\
   --disable-attr                   \\\
@@ -594,9 +597,6 @@ pushd %{qemu_kvm_build}
   --enable-fdt \
 %endif
   --enable-gcrypt \
-%if 0%{have_gluster}
-  --enable-glusterfs \
-%endif
   --enable-gnutls \
   --enable-guest-agent \
   --enable-iconv \
@@ -937,8 +937,6 @@ pxe_link() {
 
 %ifnarch aarch64 s390x
 pxe_link e1000 8086100e
-pxe_link ne2k_pci 10ec8029
-pxe_link pcnet 10222000
 pxe_link rtl8139 10ec8139
 pxe_link virtio 1af41000
 pxe_link e1000e 808610d3
@@ -1134,9 +1132,7 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
     %{_datadir}/%{name}/efi-e1000.rom
     %{_datadir}/%{name}/efi-e1000e.rom
     %{_datadir}/%{name}/efi-virtio.rom
-    %{_datadir}/%{name}/efi-pcnet.rom
     %{_datadir}/%{name}/efi-rtl8139.rom
-    %{_datadir}/%{name}/efi-ne2k_pci.rom
     %{_libdir}/qemu-kvm/hw-display-virtio-vga.so
 %endif
 %{_datadir}/icons/*
@@ -1205,11 +1201,6 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %files block-curl
 %{_libdir}/qemu-kvm/block-curl.so
 
-%if %{have_gluster}
-%files block-gluster
-%{_libdir}/qemu-kvm/block-gluster.so
-%endif
-
 %files block-iscsi
 %{_libdir}/qemu-kvm/block-iscsi.so
 
@@ -1227,6 +1218,33 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %endif
 
 %changelog
+* Tue Jun 08 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-5
+- kvm-arm-virt-Register-highmem-and-gic-version-as-class-p.patch [bz#1952449]
+- kvm-hw-arm-virt-Add-8.5-and-9.0-machine-types-and-remove.patch [bz#1952449]
+- kvm-aarch64-rh-devices-add-CONFIG_PVPANIC_PCI.patch [bz#1747467]
+- kvm-spec-Do-not-build-qemu-kvm-block-gluster.patch [bz#1964795]
+- kvm-spec-Do-not-link-pcnet-and-ne2k_pci-roms.patch [bz#1965961]
+- kvm-redhat-s390x-add-rhel-8.5.0-compat-machine.patch [bz#1957194]
+- kvm-redhat-add-missing-entries-in-hw_compat_rhel_8_4.patch [bz#1957194]
+- kvm-redhat-Define-pseries-rhel8.5.0-machine-type.patch [bz#1957194]
+- kvm-virtio-net-failover-add-missing-remove_migration_sta.patch [bz#1957194]
+- kvm-hw-arm-virt-Disable-PL011-clock-migration-through-hw.patch [bz#1957194]
+- kvm-virtio-blk-Fix-rollback-path-in-virtio_blk_data_plan.patch [bz#1957194]
+- kvm-virtio-blk-Configure-all-host-notifiers-in-a-single-.patch [bz#1957194]
+- kvm-virtio-scsi-Set-host-notifiers-and-callbacks-separat.patch [bz#1957194]
+- kvm-virtio-scsi-Configure-all-host-notifiers-in-a-single.patch [bz#1957194]
+- kvm-hw-arm-smmuv3-Another-range-invalidation-fix.patch [bz#1957194]
+- Resolves: bz#1952449
+  ([aarch64] define RHEL9 machine types)
+- Resolves: bz#1747467
+  ([aarch64] [qemu] PVPANIC support)
+- Resolves: bz#1964795
+  (Remove qemu-kvm-block-gluster package)
+- Resolves: bz#1965961
+  (Remove links to not build roms)
+- Resolves: bz#1957194
+  (Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta)
+
 * Mon May 31 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-4
 - kvm-s390x-redhat-disable-experimental-3270-device.patch
 - Resolves: bz#1962479

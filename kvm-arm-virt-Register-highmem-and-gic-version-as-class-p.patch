@@ -1,0 +1,77 @@
+From e808acaa50effe471c56a48b80d5e0d2d196b495 Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Tue, 25 May 2021 09:22:23 +0200
+Subject: [PATCH 01/15] arm/virt: Register highmem and gic-version as class
+ properties
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 1: Add 9.0.0 and 8.5.0 arm-virt machine types
+RH-Commit: [1/2] 1ff3970773e09f2efb194430511928ae852c02ba (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 1952449
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+This mirrors changes made in commit
+b91def7b8382 ("rm/virt: Register most properties as class properties")
+for the highmem and gic-version properties. This makes the
+code easier to diff against upstream.
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/arm/virt.c | 23 ++++++++++++-----------
+ 1 file changed, 12 insertions(+), 11 deletions(-)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index 080cf54ef1..51a415570c 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -2996,6 +2996,18 @@ static void rhel_machine_class_init(ObjectClass *oc, void *data)
+     object_class_property_set_description(oc, "acpi",
+         "Enable ACPI");
+ 
++    object_class_property_add_bool(oc, "highmem", virt_get_highmem,
++                                   virt_set_highmem);
++    object_class_property_set_description(oc, "highmem",
++                                          "Set on/off to enable/disable using "
++                                          "physical address space above 32 bits");
++
++    object_class_property_add_str(oc, "gic-version", virt_get_gic_version,
++                                  virt_set_gic_version);
++    object_class_property_set_description(oc, "gic-version",
++                                          "Set GIC version. "
++                                          "Valid values are 2, 3, host and max");
++
+     object_class_property_add_str(oc, "x-oem-id",
+                                   virt_get_oem_id,
+                                   virt_set_oem_id);
+@@ -3004,7 +3016,6 @@ static void rhel_machine_class_init(ObjectClass *oc, void *data)
+                                           "in ACPI table header."
+                                           "The string may be up to 6 bytes in size");
+ 
+-
+     object_class_property_add_str(oc, "x-oem-table-id",
+                                   virt_get_oem_table_id,
+                                   virt_set_oem_table_id);
+@@ -3027,17 +3038,7 @@ static void rhel_virt_instance_init(Object *obj)
+ 
+     /* High memory is enabled by default */
+     vms->highmem = true;
+-    object_property_add_bool(obj, "highmem", virt_get_highmem,
+-                             virt_set_highmem);
+-    object_property_set_description(obj, "highmem",
+-                                    "Set on/off to enable/disable using "
+-                                    "physical address space above 32 bits");
+     vms->gic_version = VIRT_GIC_VERSION_NOSEL;
+-    object_property_add_str(obj, "gic-version", virt_get_gic_version,
+-                        virt_set_gic_version);
+-    object_property_set_description(obj, "gic-version",
+-                                    "Set GIC version. "
+-                                    "Valid values are 2, 3, host and max");
+ 
+     vms->highmem_ecam = !vmc->no_highmem_ecam;
+ 
+-- 
+2.27.0
+

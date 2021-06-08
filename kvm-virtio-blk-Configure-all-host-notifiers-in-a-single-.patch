@@ -1,0 +1,107 @@
+From f02134f067150d02d1a74ff5aea151096679492e Mon Sep 17 00:00:00 2001
+From: Greg Kurz <groug@kaod.org>
+Date: Wed, 26 May 2021 09:03:52 -0400
+Subject: [PATCH 12/15] virtio-blk: Configure all host notifiers in a single MR
+ transaction
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 5: Synchronize RHEL-AV 8.5 release 18 to RHEL 9 Beta
+RH-Commit: [9/12] 609631835874ea62dad1ffbd469e83744299ee07 (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 1957194
+RH-Acked-by: Danilo Cesar Lemes de Paula <ddepaula@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Greg Kurz <gkurz@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+This allows the virtio-blk-pci device to batch the setup of all its
+host notifiers. This significantly improves boot time of VMs with a
+high number of vCPUs, e.g. from 3m26.186s down to 0m58.023s for a
+pseries machine with 384 vCPUs.
+
+Note that memory_region_transaction_commit() must be called before
+virtio_bus_cleanup_host_notifier() because the latter might close
+ioeventfds that the transaction still assumes to be around when it
+commits.
+
+Signed-off-by: Greg Kurz <groug@kaod.org>
+Message-Id: <20210407143501.244343-3-groug@kaod.org>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit d0267da614890b8f817364ae25850cdbb580a569)
+Signed-off-by: Greg Kurz <gkurz@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/block/dataplane/virtio-blk.c | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+diff --git a/hw/block/dataplane/virtio-blk.c b/hw/block/dataplane/virtio-blk.c
+index d7b5c95d26..cd81893d1d 100644
+--- a/hw/block/dataplane/virtio-blk.c
++++ b/hw/block/dataplane/virtio-blk.c
+@@ -198,19 +198,30 @@ int virtio_blk_data_plane_start(VirtIODevice *vdev)
+         goto fail_guest_notifiers;
+     }
+ 
++    memory_region_transaction_begin();
++
+     /* Set up virtqueue notify */
+     for (i = 0; i < nvqs; i++) {
+         r = virtio_bus_set_host_notifier(VIRTIO_BUS(qbus), i, true);
+         if (r != 0) {
++            int j = i;
++
+             fprintf(stderr, "virtio-blk failed to set host notifier (%d)\n", r);
+             while (i--) {
+                 virtio_bus_set_host_notifier(VIRTIO_BUS(qbus), i, false);
++            }
++
++            memory_region_transaction_commit();
++
++            while (j--) {
+                 virtio_bus_cleanup_host_notifier(VIRTIO_BUS(qbus), i);
+             }
+             goto fail_host_notifiers;
+         }
+     }
+ 
++    memory_region_transaction_commit();
++
+     s->starting = false;
+     vblk->dataplane_started = true;
+     trace_virtio_blk_data_plane_start(s);
+@@ -246,8 +257,15 @@ int virtio_blk_data_plane_start(VirtIODevice *vdev)
+     return 0;
+ 
+   fail_aio_context:
++    memory_region_transaction_begin();
++
+     for (i = 0; i < nvqs; i++) {
+         virtio_bus_set_host_notifier(VIRTIO_BUS(qbus), i, false);
++    }
++
++    memory_region_transaction_commit();
++
++    for (i = 0; i < nvqs; i++) {
+         virtio_bus_cleanup_host_notifier(VIRTIO_BUS(qbus), i);
+     }
+   fail_host_notifiers:
+@@ -312,8 +330,15 @@ void virtio_blk_data_plane_stop(VirtIODevice *vdev)
+ 
+     aio_context_release(s->ctx);
+ 
++    memory_region_transaction_begin();
++
+     for (i = 0; i < nvqs; i++) {
+         virtio_bus_set_host_notifier(VIRTIO_BUS(qbus), i, false);
++    }
++
++    memory_region_transaction_commit();
++
++    for (i = 0; i < nvqs; i++) {
+         virtio_bus_cleanup_host_notifier(VIRTIO_BUS(qbus), i);
+     }
+ 
+-- 
+2.27.0
+

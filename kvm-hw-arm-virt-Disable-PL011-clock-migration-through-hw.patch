@@ -1,0 +1,51 @@
+From 7f76c347f17c5fc60f3bcb99ad65e26f9da4ed9f Mon Sep 17 00:00:00 2001
+From: Auger Eric <eric.auger@redhat.com>
+Date: Thu, 20 May 2021 19:23:26 -0400
+Subject: [PATCH 10/15] hw/arm/virt: Disable PL011 clock migration through
+ hw_compat_rhel_8_3
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 5: Synchronize RHEL-AV 8.5 release 18 to RHEL 9 Beta
+RH-Commit: [6/12] 5f52975350b2497ee82cc5c9b8ba930e3a9b8c3d (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 1957194
+RH-Acked-by: Danilo Cesar Lemes de Paula <ddepaula@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Greg Kurz <gkurz@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Disable PL011 clock migration for machine types before
+virt-rhel8.4.0.
+
+The regression was introduced by aac63e0e6ea3
+("hw/char/pl011: add a clock input"), in 8.4,
+causing failure of migration between qemu 8.4 towards
+older ones.
+
+The fix was taken in 8.5 as part of the rebase,
+e6fa978d8343 ("hw/arm/virt: Disable pl011 clock migration
+if needed"). But the compat needs to be applied in
+hw_compat_rhel_8_3[].
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/core/machine.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/hw/core/machine.c b/hw/core/machine.c
+index c665e869de..6c534e14fa 100644
+--- a/hw/core/machine.c
++++ b/hw/core/machine.c
+@@ -69,6 +69,8 @@ GlobalProperty hw_compat_rhel_8_3[] = {
+     { "nvme", "use-intel-id", "on"},
+     /* hw_compat_rhel_8_3 from hw_compat_5_1 */
+     { "pvpanic", "events", "1"}, /* PVPANIC_PANICKED */
++    /* hw_compat_rhel_8_3 from hw_compat_5_1 */
++    { "pl011", "migrate-clk", "off" },
+     /* hw_compat_rhel_8_3 bz 1912846 */
+     { "pci-xhci", "x-rh-late-msi-cap", "off" },
+     /* hw_compat_rhel_8_3 from hw_compat_5_1 */
+-- 
+2.27.0
+
