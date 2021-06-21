@@ -1,0 +1,51 @@
+From bd1d37e3536136130df41ac8162ce5bb4f361f87 Mon Sep 17 00:00:00 2001
+From: Thomas Huth <thuth@redhat.com>
+Date: Tue, 1 Jun 2021 08:52:10 -0400
+Subject: [PATCH 02/21] pc-bios/s390-ccw: don't try to read the next block if
+ end of chunk is reached
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 8: Synchronize with RHEL-AV 8.5 release 19 to RHEL 9
+RH-Commit: [1/8] 69a43520a9e7f0ab92bdfdc47281c7606f5159e7 (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 1957194
+RH-Acked-by: Daniel P. Berrangé <berrange@redhat.com>
+RH-Acked-by: Greg Kurz <gkurz@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+
+From: Marc Hartmayer <mhartmay@linux.ibm.com>
+
+Don't read the block if a null block number is reached, because this means that
+the end of chunk is reached.
+
+Reviewed-by: Collin Walling <walling@linux.ibm.com>
+Signed-off-by: Marc Hartmayer <mhartmay@linux.ibm.com>
+Message-Id: <20210416074736.17409-1-mhartmay@linux.ibm.com>
+Signed-off-by: Thomas Huth <thuth@redhat.com>
+(cherry picked from commit a6625d38cce3901a7c1cba069f0abcf743a293f1)
+Signed-off-by: Thomas Huth <thuth@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ pc-bios/s390-ccw/bootmap.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pc-bios/s390-ccw/bootmap.c b/pc-bios/s390-ccw/bootmap.c
+index 44df7d16af..b46997c0b7 100644
+--- a/pc-bios/s390-ccw/bootmap.c
++++ b/pc-bios/s390-ccw/bootmap.c
+@@ -213,7 +213,7 @@ static int eckd_get_boot_menu_index(block_number_t s1b_block_nr)
+                 next_block_nr = eckd_block_num(&s1b->seek[i + 1].chs);
+             }
+ 
+-            if (next_block_nr) {
++            if (next_block_nr && !is_null_block_number(next_block_nr)) {
+                 read_block(next_block_nr, s2_next_blk,
+                            "Cannot read stage2 boot loader");
+             }
+-- 
+2.27.0
+

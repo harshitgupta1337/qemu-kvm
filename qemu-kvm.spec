@@ -1,13 +1,27 @@
-%global SLOF_gittagdate 20191022
-%global SLOF_gittagcommit 899d9883
+%global libfdt_version 1.6.0
+%global libseccomp_version 2.4.0
+%global libusbx_version 1.0.23
+%global meson_version 0.55.3-3
+%global usbredir_version 0.7.1
 
 %global have_usbredir 1
 %global have_opengl   1
 %global have_fdt      0
 %global have_kvm_setup 0
 %global have_memlock_limits 0
+# have_block_rbd is not relevant for RHEL but makes it
+# easier to sync spec dependency list with Fedora
+%global have_block_rbd 1
 
+%global have_pmem 1
+%ifnarch x86_64
+    %global have_pmem 0
+%endif
 
+%global have_numactl 1
+%ifarch s390x
+    %global have_numactl 0
+%endif
 
 %ifnarch %{ix86} x86_64
     %global have_usbredir 0
@@ -60,13 +74,12 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.0.0
-Release: 5%{?rcversion}%{?dist}
+Release: 6%{?rcversion}%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
 Epoch: 17
 License: GPLv2 and GPLv2+ and CC-BY
-Group: Development/Tools
 URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
@@ -144,101 +157,83 @@ Patch32: kvm-virtio-scsi-Set-host-notifiers-and-callbacks-separat.patch
 Patch33: kvm-virtio-scsi-Configure-all-host-notifiers-in-a-single.patch
 # For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
 Patch34: kvm-hw-arm-smmuv3-Another-range-invalidation-fix.patch
+# For bz#1972462 - QEMU core dump when doing TLS migration via TCP
+Patch35: kvm-yank-Unregister-function-when-using-TLS-migration.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch36: kvm-pc-bios-s390-ccw-don-t-try-to-read-the-next-block-if.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch37: kvm-sockets-update-SOCKET_ADDRESS_TYPE_FD-listen-2-backl.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch38: kvm-target-i386-sev-add-support-to-query-the-attestation.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch39: kvm-spapr-Don-t-hijack-current_machine-boot_order.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch40: kvm-target-i386-Add-CPU-model-versions-supporting-xsaves.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch41: kvm-spapr-Remove-stale-comment-about-power-saving-LPCR-b.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch42: kvm-spapr-Set-LPCR-to-current-AIL-mode-when-starting-a-n.patch
 
-BuildRequires: wget
-BuildRequires: rpm-build
-BuildRequires: ninja-build
-BuildRequires: meson >= 0.55.3-3
+# Source-git patches
+
+BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
-BuildRequires: which
 BuildRequires: gnutls-devel
 BuildRequires: cyrus-sasl-devel
-BuildRequires: libtool
 BuildRequires: libaio-devel
-BuildRequires: rsync
 BuildRequires: python3-devel
-BuildRequires: pciutils-devel
 BuildRequires: libiscsi-devel
-BuildRequires: ncurses-devel
 BuildRequires: libattr-devel
-BuildRequires: libusbx-devel >= 1.0.23
+BuildRequires: libusbx-devel >= %{libusbx_version}
 %if %{have_usbredir}
-BuildRequires: usbredir-devel >= 0.7.1
+BuildRequires: usbredir-devel >= %{usbredir_version}
 %endif
 BuildRequires: texinfo
 BuildRequires: python3-sphinx
-BuildRequires: libseccomp-devel >= 2.4.0
+BuildRequires: libseccomp-devel >= %{libseccomp_version}
 # For network block driver
 BuildRequires: libcurl-devel
 BuildRequires: libssh-devel
-BuildRequires: librados-devel
+%if %{have_block_rbd}
 BuildRequires: librbd-devel
+%endif
 # We need both because the 'stap' binary is probed for by configure
 BuildRequires: systemtap
 BuildRequires: systemtap-sdt-devel
 # For VNC PNG support
 BuildRequires: libpng-devel
-# For uuid generation
-BuildRequires: libuuid-devel
-# For Braille device support
-BuildRequires: brlapi-devel
-# For test suite
-BuildRequires: check-devel
 # For virtiofs
 BuildRequires: libcap-ng-devel
 # Hard requirement for version >= 1.3
 BuildRequires: pixman-devel
-# Documentation requirement
-BuildRequires: perl-podlators
-BuildRequires: texinfo
-BuildRequires: python3-sphinx
 # For rdma
-%if 0%{?have_librdma}
+%if %{have_librdma}
 BuildRequires: rdma-core-devel
 %endif
 %if %{have_fdt}
-BuildRequires: libfdt-devel >= 1.6.0
-%endif
-# iasl and cpp for acpi generation (not a hard requirement as we can use
-# pre-compiled files, but it's better to use this)
-%ifarch %{ix86} x86_64
-BuildRequires: iasl
-BuildRequires: cpp
+BuildRequires: libfdt-devel >= %{libfdt_version}
 %endif
 # For compressed guest memory dumps
 BuildRequires: lzo-devel snappy-devel
 # For NUMA memory binding
-%ifnarch s390x
+%if %{have_numactl}
 BuildRequires: numactl-devel
 %endif
 BuildRequires: libgcrypt-devel
 # qemu-pr-helper multipath support (requires libudev too)
 BuildRequires: device-mapper-multipath-devel
 BuildRequires: systemd-devel
-# used by qemu-bridge-helper and qemu-pr-helper
-BuildRequires: libcap-ng-devel
-
-BuildRequires: diffutils
-%ifarch x86_64
+%if %{have_pmem}
 BuildRequires: libpmem-devel
-Requires: libpmem
 %endif
-
 # qemu-keymap
 BuildRequires: pkgconfig(xkbcommon)
-
-# For s390-pgste flag
-%ifarch s390x
-BuildRequires: binutils >= 2.27-16
-%endif
-
 %if %{have_opengl}
 BuildRequires: pkgconfig(epoxy)
 BuildRequires: pkgconfig(libdrm)
 BuildRequires: pkgconfig(gbm)
 %endif
-
 BuildRequires: perl-Test-Harness
 BuildRequires: libslirp-devel
 
@@ -267,19 +262,17 @@ Requires: edk2-ovmf
 Requires: edk2-aarch64
 %endif
 
-Requires: libseccomp >= 2.4.0
-# For compressed guest memory dumps
-Requires: lzo snappy
+Requires: libseccomp >= %{libseccomp_version}
 %if %{have_kvm_setup}
 Requires(post): systemd-units
 Requires(preun): systemd-units
 %endif
-Requires: libusbx >= 1.0.23
+Requires: libusbx >= %{libusbx_version}
 %if %{have_usbredir}
-Requires: usbredir >= 0.7.1
+Requires: usbredir >= %{usbredir_version}
 %endif
 %if %{have_fdt}
-Requires: libfdt >= 1.6.0
+Requires: libfdt >= %{libfdt_version}
 %endif
 
 # Since SPICE is removed from RHEL-9, the following Obsoletes:
@@ -303,14 +296,12 @@ qemu-kvm-docs provides documentation files regarding qemu-kvm.
 
 %package -n qemu-img
 Summary: QEMU command line tool for manipulating disk images
-Group: Development/Tools
 
 %description -n qemu-img
 This package provides a command line tool for manipulating disk images.
 
 %package -n qemu-kvm-common
 Summary: QEMU common files needed by all QEMU targets
-Group: Development/Tools
 Requires(post): /usr/bin/getent
 Requires(post): /usr/sbin/groupadd
 Requires(post): /usr/sbin/useradd
@@ -593,7 +584,7 @@ pushd %{qemu_kvm_build}
   --enable-curl \
   --enable-debug-info \
   --enable-docs \
-%if 0%{have_fdt}
+%if %{have_fdt}
   --enable-fdt \
 %endif
   --enable-gcrypt \
@@ -602,7 +593,7 @@ pushd %{qemu_kvm_build}
   --enable-iconv \
   --enable-kvm \
   --enable-libiscsi \
-%ifarch x86_64
+%if %{have_pmem}
   --enable-libpmem \
 %endif
   --enable-libssh \
@@ -613,15 +604,17 @@ pushd %{qemu_kvm_build}
   --enable-malloc-trim \
   --enable-modules \
   --enable-mpath \
-%ifnarch s390x
+%if %{have_numactl}
   --enable-numa \
 %endif
-%if 0%{have_opengl}
+%if %{have_opengl}
   --enable-opengl \
 %endif
   --enable-pie \
+%if %{have_block_rbd}
   --enable-rbd \
-%if 0%{have_librdma}
+%endif
+%if %{have_librdma}
   --enable-rdma \
 %endif
   --enable-seccomp \
@@ -632,7 +625,7 @@ pushd %{qemu_kvm_build}
   --enable-tools \
   --enable-tpm \
   --enable-trace-backend=dtrace \
-%if 0%{have_usbredir}
+%if %{have_usbredir}
   --enable-usb-redir \
 %endif
   --enable-virtiofsd \
@@ -686,6 +679,12 @@ make V=1 %{?_smp_mflags} $buildldflags
   trace/trace-events-all qemu-kvm-simpletrace.stp
 
 cp -a %{kvm_target}-softmmu/qemu-system-%{kvm_target} qemu-kvm
+
+%ifarch s390x
+    # Copy the built new images into place for "make check":
+    cp pc-bios/s390-ccw/s390-ccw.img pc-bios/s390-ccw/s390-netboot.img pc-bios/
+%endif
+
 
 gcc %{SOURCE6} $RPM_OPT_FLAGS $RPM_LD_FLAGS -o ksmctl
 %endif
@@ -872,6 +871,7 @@ rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/skiboot.lid
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/qboot.rom
 
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/s390-ccw.img
+rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/s390-netboot.img
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/hppa-firmware.img
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/canyonlands.dtb
 rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/u-boot-sam460-20100605.bin
@@ -894,10 +894,10 @@ rm -rf ${RPM_BUILD_ROOT}%{_libexecdir}/virtfs-proxy-helper
 rm -rf ${RPM_BUILD_ROOT}%{_mandir}/man1/virtfs-proxy-helper*
 
 %ifarch s390x
-    # Use the s390-ccw.img that we've just built, not the pre-built one
+    # Use the s390-*.img that we've just built, not the pre-built ones
     install -m 0644 pc-bios/s390-ccw/s390-ccw.img $RPM_BUILD_ROOT%{_datadir}/%{name}/
+    install -m 0644 pc-bios/s390-ccw/s390-netboot.img $RPM_BUILD_ROOT%{_datadir}/%{name}/
 %else
-    rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/s390-netboot.img
     rm -rf ${RPM_BUILD_ROOT}%{_libdir}/qemu-kvm/hw-s390x-virtio-gpu-ccw.so
 %endif
 
@@ -962,13 +962,13 @@ rom_link() {
   rom_link ../sgabios/sgabios.bin sgabios.bin
 %endif
 
-%if 0%{have_kvm_setup}
+%if %{have_kvm_setup}
     install -D -p -m 755 %{SOURCE21} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/kvm-setup
     install -D -p -m 644 %{SOURCE22} $RPM_BUILD_ROOT%{_unitdir}/kvm-setup.service
     install -D -p -m 644 %{SOURCE23} $RPM_BUILD_ROOT%{_presetdir}/85-kvm.preset
 %endif
 
-%if 0%{have_memlock_limits}
+%if %{have_memlock_limits}
     install -D -p -m 644 %{SOURCE28} $RPM_BUILD_ROOT%{_sysconfdir}/security/limits.d/95-kvm-memlock.conf
 %endif
 
@@ -1000,7 +1000,7 @@ popd
 %check
 pushd %{qemu_kvm_build}
 echo "Testing qemu-kvm-build"
-export DIFF=diff; make check V=1
+make check V=1
 popd
 
 %post -n qemu-kvm-common
@@ -1050,7 +1050,6 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 # Deliberately empty
 
 %files -n qemu-kvm-docs
-%defattr(-,root,root)
 %dir %{qemudocdir}
 %doc %{qemudocdir}/genindex.html
 %doc %{qemudocdir}/search.html
@@ -1071,7 +1070,6 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %doc %{qemudocdir}/_static/*
 
 %files -n qemu-kvm-common
-%defattr(-,root,root)
 %{_mandir}/man7/qemu-qmp-ref.7*
 %{_mandir}/man7/qemu-cpu-models.7*
 %{_bindir}/qemu-keymap
@@ -1139,19 +1137,18 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %{_datadir}/%{name}/linuxboot_dma.bin
 %{_datadir}/%{name}/dump-guest-memory.py*
 %{_datadir}/%{name}/trace-events-all
-%if 0%{have_kvm_setup}
+%if %{have_kvm_setup}
     %{_prefix}/lib/systemd/kvm-setup
     %{_unitdir}/kvm-setup.service
     %{_presetdir}/85-kvm.preset
 %endif
-%if 0%{have_memlock_limits}
+%if %{have_memlock_limits}
     %{_sysconfdir}/security/limits.d/95-kvm-memlock.conf
 %endif
 %{_libexecdir}/virtiofsd
 %{_datadir}/%{name}/vhost-user/50-qemu-virtiofsd.json
 
 %files -n qemu-kvm-core
-%defattr(-,root,root)
 %{_libexecdir}/qemu-kvm
 %{_datadir}/systemtap/tapset/qemu-kvm.stp
 %{_datadir}/systemtap/tapset/qemu-kvm-log.stp
@@ -1171,7 +1168,6 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %endif
 
 %files -n qemu-img
-%defattr(-,root,root)
 %{_bindir}/qemu-img
 %{_bindir}/qemu-io
 %{_bindir}/qemu-nbd
@@ -1182,7 +1178,6 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %{_mandir}/man7/qemu-storage-daemon-qmp-ref.7*
 
 %files -n qemu-guest-agent
-%defattr(-,root,root,-)
 %doc COPYING README.rst
 %{_bindir}/qemu-ga
 %{_mandir}/man8/qemu-ga.8*
@@ -1210,7 +1205,7 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %files block-ssh
 %{_libdir}/qemu-kvm/block-ssh.so
 
-%if 0%{have_opengl}
+%if %{have_opengl}
 %files ui-opengl
     %{_libdir}/qemu-kvm/ui-egl-headless.so
     %{_libdir}/qemu-kvm/ui-opengl.so
@@ -1218,6 +1213,24 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %endif
 
 %changelog
+* Mon Jun 21 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-6
+- kvm-yank-Unregister-function-when-using-TLS-migration.patch [bz#1972462]
+- kvm-pc-bios-s390-ccw-don-t-try-to-read-the-next-block-if.patch [bz#1957194]
+- kvm-redhat-Install-the-s390-netboot.img-that-we-ve-built.patch [bz#1957194]
+- kvm-sockets-update-SOCKET_ADDRESS_TYPE_FD-listen-2-backl.patch [bz#1957194]
+- kvm-target-i386-sev-add-support-to-query-the-attestation.patch [bz#1957194]
+- kvm-spapr-Don-t-hijack-current_machine-boot_order.patch [bz#1957194]
+- kvm-target-i386-Add-CPU-model-versions-supporting-xsaves.patch [bz#1957194]
+- kvm-spapr-Remove-stale-comment-about-power-saving-LPCR-b.patch [bz#1957194]
+- kvm-spapr-Set-LPCR-to-current-AIL-mode-when-starting-a-n.patch [bz#1957194]
+- Specfile cleanup [bz#1973029]
+- Resolves: bz#1972462
+  (QEMU core dump when doing TLS migration via TCP)
+- Resolves: bz#1957194
+  (Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta)
+- Resolves: bz#1973029
+  (Spec file cleanups)
+
 * Tue Jun 08 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-5
 - kvm-arm-virt-Register-highmem-and-gic-version-as-class-p.patch [bz#1952449]
 - kvm-hw-arm-virt-Add-8.5-and-9.0-machine-types-and-remove.patch [bz#1952449]
