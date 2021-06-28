@@ -1,0 +1,49 @@
+From 64ec0505fccf6f277430f3be1829a9e44cd00dbb Mon Sep 17 00:00:00 2001
+From: Gerd Hoffmann <kraxel@redhat.com>
+Date: Fri, 18 Jun 2021 12:04:24 -0400
+Subject: [PATCH 07/12] disable CONFIG_USB_STORAGE_BOT
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 16: Synchronize with RHEL-AV 8.5 release 21 to RHEL 9
+RH-Commit: [5/8] 73d3ee0a17590c8cddf6bd812e6a758951c36ea4 (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 1957194
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-Acked-by: Daniel P. Berrangé <berrange@redhat.com>
+
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ default-configs/devices/ppc64-rh-devices.mak  | 1 -
+ default-configs/devices/x86_64-rh-devices.mak | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git a/default-configs/devices/ppc64-rh-devices.mak b/default-configs/devices/ppc64-rh-devices.mak
+index 5b01b7fac0..3ec5603ace 100644
+--- a/default-configs/devices/ppc64-rh-devices.mak
++++ b/default-configs/devices/ppc64-rh-devices.mak
+@@ -15,7 +15,6 @@ CONFIG_USB=y
+ CONFIG_USB_OHCI=y
+ CONFIG_USB_OHCI_PCI=y
+ CONFIG_USB_SMARTCARD=y
+-CONFIG_USB_STORAGE_BOT=y
+ CONFIG_USB_STORAGE_CORE=y
+ CONFIG_USB_STORAGE_CLASSIC=y
+ CONFIG_USB_XHCI=y
+diff --git a/default-configs/devices/x86_64-rh-devices.mak b/default-configs/devices/x86_64-rh-devices.mak
+index d09c138fc6..81bda09f4c 100644
+--- a/default-configs/devices/x86_64-rh-devices.mak
++++ b/default-configs/devices/x86_64-rh-devices.mak
+@@ -74,7 +74,6 @@ CONFIG_USB=y
+ CONFIG_USB_EHCI=y
+ CONFIG_USB_EHCI_PCI=y
+ CONFIG_USB_SMARTCARD=y
+-CONFIG_USB_STORAGE_BOT=y
+ CONFIG_USB_STORAGE_CORE=y
+ CONFIG_USB_STORAGE_CLASSIC=y
+ CONFIG_USB_UHCI=y
+-- 
+2.27.0
+

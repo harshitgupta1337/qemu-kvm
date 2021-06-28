@@ -67,14 +67,13 @@
 Requires: %{name}-ui-opengl = %{epoch}:%{version}-%{release}     \
 %endif                                                           \
 Requires: %{name}-block-curl = %{epoch}:%{version}-%{release}    \
-Requires: %{name}-block-iscsi = %{epoch}:%{version}-%{release}   \
 Requires: %{name}-block-rbd = %{epoch}:%{version}-%{release}     \
 Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.0.0
-Release: 6%{?rcversion}%{?dist}
+Release: 7%{?rcversion}%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -173,6 +172,26 @@ Patch40: kvm-target-i386-Add-CPU-model-versions-supporting-xsaves.patch
 Patch41: kvm-spapr-Remove-stale-comment-about-power-saving-LPCR-b.patch
 # For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
 Patch42: kvm-spapr-Set-LPCR-to-current-AIL-mode-when-starting-a-n.patch
+# For bz#1967502 - [aarch64] [qemu] Compile the PCIe expander bridge
+Patch43: kvm-aarch64-rh-devices-add-CONFIG_PXB.patch
+# For bz#1974795 - [RHEL9-beta] [aarch64] Launch guest with virtio-gpu-pci and virtual smmu causes "virtio_gpu_dequeue_ctrl_func" ERROR
+Patch44: kvm-virtio-gpu-handle-partial-maps-properly.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch45: kvm-x86-Add-x86-rhel8.5-machine-types.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch46: kvm-redhat-x86-Enable-kvm-asyncpf-int-by-default.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch47: kvm-block-backend-add-drained_poll.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch48: kvm-nbd-server-Use-drained-block-ops-to-quiesce-the-serv.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch49: kvm-disable-CONFIG_USB_STORAGE_BOT.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch50: kvm-doc-Fix-some-mistakes-in-the-SEV-documentation.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch51: kvm-docs-Add-SEV-ES-documentation-to-amd-memory-encrypti.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch52: kvm-docs-interop-firmware.json-Add-SEV-ES-support.patch
 
 # Source-git patches
 
@@ -183,7 +202,6 @@ BuildRequires: gnutls-devel
 BuildRequires: cyrus-sasl-devel
 BuildRequires: libaio-devel
 BuildRequires: python3-devel
-BuildRequires: libiscsi-devel
 BuildRequires: libattr-devel
 BuildRequires: libusbx-devel >= %{libusbx_version}
 %if %{have_usbredir}
@@ -281,6 +299,7 @@ Requires: libfdt >= %{libfdt_version}
 # other words RHEL-9 rebases are done together/before RHEL-8 ones)
 Obsoletes: qemu-kvm-ui-spice <= %{version}
 Obsoletes: qemu-kvm-block-gluster <= %{version}
+Obsoletes: %{name}-block-iscsi <= %{version}
 
 %description -n qemu-kvm-core
 qemu-kvm is an open source virtualizer that provides hardware
@@ -361,16 +380,6 @@ This package provides the additional CURL block driver for QEMU.
 
 Install this package if you want to access remote disks over
 http, https, ftp and other transports provided by the CURL library.
-
-
-%package  block-iscsi
-Summary: QEMU iSCSI block driver
-Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
-
-%description block-iscsi
-This package provides the additional iSCSI block driver for QEMU.
-
-Install this package if you want to access iSCSI volumes.
 
 
 %package  block-rbd
@@ -592,7 +601,6 @@ pushd %{qemu_kvm_build}
   --enable-guest-agent \
   --enable-iconv \
   --enable-kvm \
-  --enable-libiscsi \
 %if %{have_pmem}
   --enable-libpmem \
 %endif
@@ -1196,9 +1204,6 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %files block-curl
 %{_libdir}/qemu-kvm/block-curl.so
 
-%files block-iscsi
-%{_libdir}/qemu-kvm/block-iscsi.so
-
 %files block-rbd
 %{_libdir}/qemu-kvm/block-rbd.so
 
@@ -1213,6 +1218,30 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %endif
 
 %changelog
+* Mon Jun 28 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-7
+- kvm-aarch64-rh-devices-add-CONFIG_PXB.patch [bz#1967502]
+- kvm-virtio-gpu-handle-partial-maps-properly.patch [bz#1974795]
+- kvm-x86-Add-x86-rhel8.5-machine-types.patch [bz#1957194]
+- kvm-redhat-x86-Enable-kvm-asyncpf-int-by-default.patch [bz#1957194]
+- kvm-block-backend-add-drained_poll.patch [bz#1957194]
+- kvm-nbd-server-Use-drained-block-ops-to-quiesce-the-serv.patch [bz#1957194]
+- kvm-disable-CONFIG_USB_STORAGE_BOT.patch [bz#1957194]
+- kvm-doc-Fix-some-mistakes-in-the-SEV-documentation.patch [bz#1957194]
+- kvm-docs-Add-SEV-ES-documentation-to-amd-memory-encrypti.patch [bz#1957194]
+- kvm-docs-interop-firmware.json-Add-SEV-ES-support.patch [bz#1957194]
+- kvm-qga-drop-StandardError-syslog.patch [bz#1947977]
+- kvm-Remove-iscsi-support.patch [bz#1967133]
+- Resolves: bz#1967502
+  ([aarch64] [qemu] Compile the PCIe expander bridge)
+- Resolves: bz#1974795
+  ([RHEL9-beta] [aarch64] Launch guest with virtio-gpu-pci and virtual smmu causes "virtio_gpu_dequeue_ctrl_func" ERROR)
+- Resolves: bz#1957194
+  (Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta)
+- Resolves: bz#1947977
+  (remove StandardError=syslog from qemu-guest-agent.service)
+- Resolves: bz#1967133
+  (QEMU: disable libiscsi in RHEL-9)
+
 * Mon Jun 21 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-6
 - kvm-yank-Unregister-function-when-using-TLS-migration.patch [bz#1972462]
 - kvm-pc-bios-s390-ccw-don-t-try-to-read-the-next-block-if.patch [bz#1957194]

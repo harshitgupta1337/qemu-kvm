@@ -1,0 +1,49 @@
+From a9546384e1fe8b4dad9ab00c52f45dac3a8fbc00 Mon Sep 17 00:00:00 2001
+From: Vitaly Kuznetsov <vkuznets@redhat.com>
+Date: Tue, 8 Jun 2021 10:29:07 -0400
+Subject: [PATCH 04/12] redhat: x86: Enable 'kvm-asyncpf-int' by default
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 16: Synchronize with RHEL-AV 8.5 release 21 to RHEL 9
+RH-Commit: [2/8] 2ea940445291df74dfed2d2f9f2b1f88a3eca31b (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 1957194
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-Acked-by: Daniel P. Berrangé <berrange@redhat.com>
+
+'kvm-asyncpf-int' feature is supported by KVM starting with RHEL-8.4
+kernel, enable the feature by default starting with RHEL-8.5 machine
+type.
+
+Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/i386/pc.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/hw/i386/pc.c b/hw/i386/pc.c
+index 0a374dec39..cdbfa84d2e 100644
+--- a/hw/i386/pc.c
++++ b/hw/i386/pc.c
+@@ -366,12 +366,15 @@ GlobalProperty pc_rhel_compat[] = {
+     { TYPE_X86_CPU, "vmx-exit-load-perf-global-ctrl", "off" },
+     /* bz 1508330 */ 
+     { "vfio-pci", "x-no-geforce-quirks", "on" },
++    /* bz 1941397 */
++    { TYPE_X86_CPU, "kvm-asyncpf-int", "on" },
+ };
+ const size_t pc_rhel_compat_len = G_N_ELEMENTS(pc_rhel_compat);
+ 
+ GlobalProperty pc_rhel_8_4_compat[] = {
+     /* pc_rhel_8_4_compat from pc_compat_5_2 */
+     { "ICH9-LPC", "x-smi-cpu-hotunplug", "off" },
++    { TYPE_X86_CPU, "kvm-asyncpf-int", "off" },
+ };
+ const size_t pc_rhel_8_4_compat_len = G_N_ELEMENTS(pc_rhel_8_4_compat);
+ 
+-- 
+2.27.0
+

@@ -1,0 +1,201 @@
+From cdc537ada9528e09f8c70219f5a9a1ce8a4efa7e Mon Sep 17 00:00:00 2001
+From: Gerd Hoffmann <kraxel@redhat.com>
+Date: Thu, 6 May 2021 11:10:01 +0200
+Subject: [PATCH 02/12] virtio-gpu: handle partial maps properly
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 15: virtio-gpu: handle partial maps properly
+RH-Commit: [1/1] f2b0fd9758251d1f3a5ff9563911c8bdb4b191f0 (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 1974795
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+RH-Acked-by: Peter Xu <Peter Xu <peterx@redhat.com>
+
+dma_memory_map() may map only a part of the request.  Happens if the
+request can't be mapped in one go, for example due to a iommu creating
+a linear dma mapping for scattered physical pages.  Should that be the
+case virtio-gpu must call dma_memory_map() again with the remaining
+range instead of simply throwing an error.
+
+Note that this change implies the number of iov entries may differ from
+the number of mapping entries sent by the guest.  Therefore the iov_len
+bookkeeping needs some updates too, we have to explicitly pass around
+the iov length now.
+
+Reported-by: Auger Eric <eric.auger@redhat.com>
+Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+Message-id: 20210506091001.1301250-1-kraxel@redhat.com
+Reviewed-by: Eric Auger <eric.auger@redhat.com>
+Tested-by: Eric Auger <eric.auger@redhat.com>
+Message-Id: <20210506091001.1301250-1-kraxel@redhat.com>
+(cherry picked from commit 9049f8bc445d50c0b5fe5500c0ec51fcc821c2ef)
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/display/virtio-gpu-3d.c     |  7 ++--
+ hw/display/virtio-gpu.c        | 76 ++++++++++++++++++++--------------
+ include/hw/virtio/virtio-gpu.h |  3 +-
+ 3 files changed, 52 insertions(+), 34 deletions(-)
+
+diff --git a/hw/display/virtio-gpu-3d.c b/hw/display/virtio-gpu-3d.c
+index d98964858e..72c14d9132 100644
+--- a/hw/display/virtio-gpu-3d.c
++++ b/hw/display/virtio-gpu-3d.c
+@@ -283,22 +283,23 @@ static void virgl_resource_attach_backing(VirtIOGPU *g,
+ {
+     struct virtio_gpu_resource_attach_backing att_rb;
+     struct iovec *res_iovs;
++    uint32_t res_niov;
+     int ret;
+ 
+     VIRTIO_GPU_FILL_CMD(att_rb);
+     trace_virtio_gpu_cmd_res_back_attach(att_rb.resource_id);
+ 
+-    ret = virtio_gpu_create_mapping_iov(g, &att_rb, cmd, NULL, &res_iovs);
++    ret = virtio_gpu_create_mapping_iov(g, &att_rb, cmd, NULL, &res_iovs, &res_niov);
+     if (ret != 0) {
+         cmd->error = VIRTIO_GPU_RESP_ERR_UNSPEC;
+         return;
+     }
+ 
+     ret = virgl_renderer_resource_attach_iov(att_rb.resource_id,
+-                                             res_iovs, att_rb.nr_entries);
++                                             res_iovs, res_niov);
+ 
+     if (ret != 0)
+-        virtio_gpu_cleanup_mapping_iov(g, res_iovs, att_rb.nr_entries);
++        virtio_gpu_cleanup_mapping_iov(g, res_iovs, res_niov);
+ }
+ 
+ static void virgl_resource_detach_backing(VirtIOGPU *g,
+diff --git a/hw/display/virtio-gpu.c b/hw/display/virtio-gpu.c
+index c9f5e36fd0..6f3791deb3 100644
+--- a/hw/display/virtio-gpu.c
++++ b/hw/display/virtio-gpu.c
+@@ -608,11 +608,12 @@ static void virtio_gpu_set_scanout(VirtIOGPU *g,
+ int virtio_gpu_create_mapping_iov(VirtIOGPU *g,
+                                   struct virtio_gpu_resource_attach_backing *ab,
+                                   struct virtio_gpu_ctrl_command *cmd,
+-                                  uint64_t **addr, struct iovec **iov)
++                                  uint64_t **addr, struct iovec **iov,
++                                  uint32_t *niov)
+ {
+     struct virtio_gpu_mem_entry *ents;
+     size_t esize, s;
+-    int i;
++    int e, v;
+ 
+     if (ab->nr_entries > 16384) {
+         qemu_log_mask(LOG_GUEST_ERROR,
+@@ -633,37 +634,53 @@ int virtio_gpu_create_mapping_iov(VirtIOGPU *g,
+         return -1;
+     }
+ 
+-    *iov = g_malloc0(sizeof(struct iovec) * ab->nr_entries);
++    *iov = NULL;
+     if (addr) {
+-        *addr = g_malloc0(sizeof(uint64_t) * ab->nr_entries);
++        *addr = NULL;
+     }
+-    for (i = 0; i < ab->nr_entries; i++) {
+-        uint64_t a = le64_to_cpu(ents[i].addr);
+-        uint32_t l = le32_to_cpu(ents[i].length);
+-        hwaddr len = l;
+-        (*iov)[i].iov_base = dma_memory_map(VIRTIO_DEVICE(g)->dma_as,
+-                                            a, &len, DMA_DIRECTION_TO_DEVICE);
+-        (*iov)[i].iov_len = len;
+-        if (addr) {
+-            (*addr)[i] = a;
+-        }
+-        if (!(*iov)[i].iov_base || len != l) {
+-            qemu_log_mask(LOG_GUEST_ERROR, "%s: failed to map MMIO memory for"
+-                          " resource %d element %d\n",
+-                          __func__, ab->resource_id, i);
+-            if ((*iov)[i].iov_base) {
+-                i++; /* cleanup the 'i'th map */
++    for (e = 0, v = 0; e < ab->nr_entries; e++) {
++        uint64_t a = le64_to_cpu(ents[e].addr);
++        uint32_t l = le32_to_cpu(ents[e].length);
++        hwaddr len;
++        void *map;
++
++        do {
++            len = l;
++            map = dma_memory_map(VIRTIO_DEVICE(g)->dma_as,
++                                 a, &len, DMA_DIRECTION_TO_DEVICE);
++            if (!map) {
++                qemu_log_mask(LOG_GUEST_ERROR, "%s: failed to map MMIO memory for"
++                              " resource %d element %d\n",
++                              __func__, ab->resource_id, e);
++                virtio_gpu_cleanup_mapping_iov(g, *iov, v);
++                g_free(ents);
++                *iov = NULL;
++                if (addr) {
++                    g_free(*addr);
++                    *addr = NULL;
++                }
++                return -1;
++            }
++
++            if (!(v % 16)) {
++                *iov = g_realloc(*iov, sizeof(struct iovec) * (v + 16));
++                if (addr) {
++                    *addr = g_realloc(*addr, sizeof(uint64_t) * (v + 16));
++                }
+             }
+-            virtio_gpu_cleanup_mapping_iov(g, *iov, i);
+-            g_free(ents);
+-            *iov = NULL;
++            (*iov)[v].iov_base = map;
++            (*iov)[v].iov_len = len;
+             if (addr) {
+-                g_free(*addr);
+-                *addr = NULL;
++                (*addr)[v] = a;
+             }
+-            return -1;
+-        }
++
++            a += len;
++            l -= len;
++            v += 1;
++        } while (l > 0);
+     }
++    *niov = v;
++
+     g_free(ents);
+     return 0;
+ }
+@@ -717,13 +734,12 @@ virtio_gpu_resource_attach_backing(VirtIOGPU *g,
+         return;
+     }
+ 
+-    ret = virtio_gpu_create_mapping_iov(g, &ab, cmd, &res->addrs, &res->iov);
++    ret = virtio_gpu_create_mapping_iov(g, &ab, cmd, &res->addrs,
++                                        &res->iov, &res->iov_cnt);
+     if (ret != 0) {
+         cmd->error = VIRTIO_GPU_RESP_ERR_UNSPEC;
+         return;
+     }
+-
+-    res->iov_cnt = ab.nr_entries;
+ }
+ 
+ static void
+diff --git a/include/hw/virtio/virtio-gpu.h b/include/hw/virtio/virtio-gpu.h
+index fae149235c..0d15af41d9 100644
+--- a/include/hw/virtio/virtio-gpu.h
++++ b/include/hw/virtio/virtio-gpu.h
+@@ -209,7 +209,8 @@ void virtio_gpu_get_edid(VirtIOGPU *g,
+ int virtio_gpu_create_mapping_iov(VirtIOGPU *g,
+                                   struct virtio_gpu_resource_attach_backing *ab,
+                                   struct virtio_gpu_ctrl_command *cmd,
+-                                  uint64_t **addr, struct iovec **iov);
++                                  uint64_t **addr, struct iovec **iov,
++                                  uint32_t *niov);
+ void virtio_gpu_cleanup_mapping_iov(VirtIOGPU *g,
+                                     struct iovec *iov, uint32_t count);
+ void virtio_gpu_process_cmdq(VirtIOGPU *g);
+-- 
+2.27.0
+
