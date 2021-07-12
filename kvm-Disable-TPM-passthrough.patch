@@ -1,0 +1,44 @@
+From 651798d03827dda7eb8dc33fb3482f872ec81d16 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marc-Andr=C3=A9=20Lureau?= <marcandre.lureau@redhat.com>
+Date: Mon, 5 Jul 2021 15:23:48 +0400
+Subject: [PATCH 1/2] Disable TPM passthrough
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Marc-André Lureau <None>
+RH-MergeRequest: 17: Disable TPM passthrough
+RH-Commit: [1/1] 735b79065149b968350b3f14d763030d5ef66457
+RH-Bugzilla: 1978911
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Eric Auger <eric.auger@redhat.com>
+RH-Acked-by: Daniel P. Berrangé <berrange@redhat.com>
+
+Signed-off-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ default-configs/devices/ppc64-rh-devices.mak  | 1 -
+ default-configs/devices/x86_64-rh-devices.mak | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git a/default-configs/devices/ppc64-rh-devices.mak b/default-configs/devices/ppc64-rh-devices.mak
+index 3ec5603ace..d6e424540e 100644
+--- a/default-configs/devices/ppc64-rh-devices.mak
++++ b/default-configs/devices/ppc64-rh-devices.mak
+@@ -32,4 +32,3 @@ CONFIG_XICS=y
+ CONFIG_XIVE=y
+ CONFIG_TPM_SPAPR=y
+ CONFIG_TPM_EMULATOR=y
+-CONFIG_TPM_PASSTHROUGH=y
+diff --git a/default-configs/devices/x86_64-rh-devices.mak b/default-configs/devices/x86_64-rh-devices.mak
+index 81bda09f4c..c2dd112f81 100644
+--- a/default-configs/devices/x86_64-rh-devices.mak
++++ b/default-configs/devices/x86_64-rh-devices.mak
+@@ -98,4 +98,3 @@ CONFIG_XIO3130=y
+ CONFIG_TPM_CRB=y
+ CONFIG_TPM_TIS_ISA=y
+ CONFIG_TPM_EMULATOR=y
+-CONFIG_TPM_PASSTHROUGH=y
+-- 
+2.27.0
+

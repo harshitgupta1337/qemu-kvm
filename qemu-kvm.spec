@@ -7,7 +7,7 @@
 %global have_usbredir 1
 %global have_opengl   1
 %global have_fdt      0
-%global have_kvm_setup 0
+%global have_modules_load 0
 %global have_memlock_limits 0
 # have_block_rbd is not relevant for RHEL but makes it
 # easier to sync spec dependency list with Fedora
@@ -44,12 +44,11 @@
 %ifarch %{power64}
     %global kvm_target    ppc64
     %global have_fdt     1
-    %global have_kvm_setup 1
     %global have_memlock_limits 1
 %endif
 %ifarch s390x
     %global kvm_target    s390x
-    %global have_kvm_setup 1
+    %global have_modules_load 1
 %endif
 %ifarch ppc
     %global kvm_target    ppc
@@ -73,7 +72,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.0.0
-Release: 7%{?rcversion}%{?dist}
+Release: 8%{?rcversion}%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -96,9 +95,7 @@ Source10: qemu-guest-agent.service
 Source11: 99-qemu-guest-agent.rules
 Source12: bridge.conf
 Source13: qemu-ga.sysconfig
-Source21: kvm-setup
-Source22: kvm-setup.service
-Source23: 85-kvm.preset
+Source21: modules-load.conf
 Source26: vhost.conf
 Source27: kvm.conf
 Source28: 95-kvm-memlock.conf
@@ -192,6 +189,8 @@ Patch50: kvm-doc-Fix-some-mistakes-in-the-SEV-documentation.patch
 Patch51: kvm-docs-Add-SEV-ES-documentation-to-amd-memory-encrypti.patch
 # For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
 Patch52: kvm-docs-interop-firmware.json-Add-SEV-ES-support.patch
+# For bz#1978911 - Remove TPM Passthrough option from RHEL 9
+Patch53: kvm-Disable-TPM-passthrough.patch
 
 # Source-git patches
 
@@ -281,10 +280,6 @@ Requires: edk2-aarch64
 %endif
 
 Requires: libseccomp >= %{libseccomp_version}
-%if %{have_kvm_setup}
-Requires(post): systemd-units
-Requires(preun): systemd-units
-%endif
 Requires: libusbx >= %{libusbx_version}
 %if %{have_usbredir}
 Requires: usbredir >= %{usbredir_version}
@@ -970,10 +965,8 @@ rom_link() {
   rom_link ../sgabios/sgabios.bin sgabios.bin
 %endif
 
-%if %{have_kvm_setup}
-    install -D -p -m 755 %{SOURCE21} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/kvm-setup
-    install -D -p -m 644 %{SOURCE22} $RPM_BUILD_ROOT%{_unitdir}/kvm-setup.service
-    install -D -p -m 644 %{SOURCE23} $RPM_BUILD_ROOT%{_presetdir}/85-kvm.preset
+%if %{have_modules_load}
+    install -D -p -m 644 %{SOURCE21} $RPM_BUILD_ROOT%{_sysconfdir}/modules-load.d/kvm.conf
 %endif
 
 %if %{have_memlock_limits}
@@ -1021,25 +1014,19 @@ getent passwd qemu >/dev/null || \
 useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
   -c "qemu user" qemu
 
-# load kvm modules now, so we can make sure no reboot is needed.
-# If there's already a kvm module installed, we don't mess with it
-%udev_rules_update
-sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
-    udevadm trigger --subsystem-match=misc --sysname-match=kvm --action=add || :
-%if %{have_kvm_setup}
-    systemctl daemon-reload # Make sure it sees the new presets and unitfile
-    %systemd_post kvm-setup.service
-    if systemctl is-enabled kvm-setup.service > /dev/null; then
-        systemctl start kvm-setup.service
+# If this is a new installation, then load kvm modules now, so we can make
+# sure that the user gets a system where KVM is ready to use. In case of
+# an upgrade, don't try to modprobe again in case the user unloaded the
+# kvm module on purpose.
+%if %{have_modules_load}
+    if [ "$1" = "1" ]; then
+        modprobe -b kvm  &> /dev/null || :
     fi
 %endif
 
 %preun -n qemu-kvm-common
 %systemd_preun ksm.service
 %systemd_preun ksmtuned.service
-%if %{have_kvm_setup}
-%systemd_preun kvm-setup.service
-%endif
 
 %postun -n qemu-kvm-common
 %systemd_postun_with_restart ksm.service
@@ -1145,10 +1132,8 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %{_datadir}/%{name}/linuxboot_dma.bin
 %{_datadir}/%{name}/dump-guest-memory.py*
 %{_datadir}/%{name}/trace-events-all
-%if %{have_kvm_setup}
-    %{_prefix}/lib/systemd/kvm-setup
-    %{_unitdir}/kvm-setup.service
-    %{_presetdir}/85-kvm.preset
+%if %{have_modules_load}
+    %{_sysconfdir}/modules-load.d/kvm.conf
 %endif
 %if %{have_memlock_limits}
     %{_sysconfdir}/security/limits.d/95-kvm-memlock.conf
@@ -1218,6 +1203,14 @@ sh %{_sysconfdir}/sysconfig/modules/kvm.modules &> /dev/null || :
 %endif
 
 %changelog
+* Mon Jul 12 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-8
+- kvm-Disable-TPM-passthrough.patch [bz#1978911]
+- kvm-redhat-Replace-the-kvm-setup.service-with-a-etc-modu.patch [bz#1978837]
+- Resolves: bz#1978911
+  (Remove TPM Passthrough option from RHEL 9)
+- Resolves: bz#1978837
+  (Remove/replace kvm-setup.service)
+
 * Mon Jun 28 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-7
 - kvm-aarch64-rh-devices-add-CONFIG_PXB.patch [bz#1967502]
 - kvm-virtio-gpu-handle-partial-maps-properly.patch [bz#1974795]
