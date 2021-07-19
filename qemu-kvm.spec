@@ -65,6 +65,9 @@
 %if %{have_opengl}                                               \
 Requires: %{name}-ui-opengl = %{epoch}:%{version}-%{release}     \
 %endif                                                           \
+%if %{have_usbredir}                                             \
+Requires: %{name}-hw-usbredir = %{epoch}:%{version}-%{release}   \
+%endif                                                           \
 Requires: %{name}-block-curl = %{epoch}:%{version}-%{release}    \
 Requires: %{name}-block-rbd = %{epoch}:%{version}-%{release}     \
 Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
@@ -72,7 +75,7 @@ Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.0.0
-Release: 8%{?rcversion}%{?dist}
+Release: 9%{?rcversion}%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -191,6 +194,12 @@ Patch51: kvm-docs-Add-SEV-ES-documentation-to-amd-memory-encrypti.patch
 Patch52: kvm-docs-interop-firmware.json-Add-SEV-ES-support.patch
 # For bz#1978911 - Remove TPM Passthrough option from RHEL 9
 Patch53: kvm-Disable-TPM-passthrough.patch
+# For bz#1932191 - [IBM 9.0 FEAT] CPU Model for new IBM Z Hardware - qemu part (kvm)
+Patch54: kvm-s390x-cpumodel-add-3931-and-3932.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch55: kvm-spapr-Fix-EEH-capability-issue-on-KVM-guest-for-PCI-.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch56: kvm-ppc-pef.c-initialize-cgs-ready-in-kvmppc_svm_init.patch
 
 # Source-git patches
 
@@ -255,7 +264,7 @@ BuildRequires: perl-Test-Harness
 BuildRequires: libslirp-devel
 
 Requires: qemu-kvm-core = %{epoch}:%{version}-%{release}
-
+Requires: %{name}-docs = %{epoch}:%{version}-%{release}
 %{requires_all_modules}
 
 %define qemudocdir %{_docdir}/%{name}
@@ -271,7 +280,6 @@ hardware for a full system such as a PC and its associated peripherals.
 Summary: qemu-kvm core components
 Requires: %{name}-common = %{epoch}:%{version}-%{release}
 Requires: qemu-img = %{epoch}:%{version}-%{release}
-Recommends: qemu-kvm-docs
 %ifarch %{ix86} x86_64
 Requires: edk2-ovmf
 %endif
@@ -281,9 +289,6 @@ Requires: edk2-aarch64
 
 Requires: libseccomp >= %{libseccomp_version}
 Requires: libusbx >= %{libusbx_version}
-%if %{have_usbredir}
-Requires: usbredir >= %{usbredir_version}
-%endif
 %if %{have_fdt}
 Requires: libfdt >= %{libfdt_version}
 %endif
@@ -411,6 +416,15 @@ Requires: mesa-dri-drivers
 This package provides opengl support.
 %endif
 
+%if %{have_usbredir}
+%package  hw-usbredir
+Summary: QEMU usbredir support
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+Requires: usbredir >= 0.7.1
+
+%description hw-usbredir
+This package provides usbredir support.
+%endif
 
 %prep
 %if 0%{?rcversion}
@@ -771,6 +785,10 @@ make DESTDIR=$RPM_BUILD_ROOT \
     install
 
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset
+
+# Move vhost-user JSON files to the standard "qemu" directory
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/qemu
+mv $RPM_BUILD_ROOT%{_datadir}/%{name}/vhost-user $RPM_BUILD_ROOT%{_datadir}/qemu/
 %endif
 
 # Install qemu-guest-agent service and udev rules
@@ -1139,7 +1157,10 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
     %{_sysconfdir}/security/limits.d/95-kvm-memlock.conf
 %endif
 %{_libexecdir}/virtiofsd
-%{_datadir}/%{name}/vhost-user/50-qemu-virtiofsd.json
+# This is the standard location for vhost-user JSON files defined in the
+# vhost-user specification for interoperability with other software. Unlike
+# most other paths we use it's "qemu" instead of "qemu-kvm".
+%{_datadir}/qemu/vhost-user/50-qemu-virtiofsd.json
 
 %files -n qemu-kvm-core
 %{_libexecdir}/qemu-kvm
@@ -1149,9 +1170,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_datadir}/%{name}/systemtap/script.d/qemu_kvm.stp
 %{_datadir}/%{name}/systemtap/conf.d/qemu_kvm.conf
 
-%if %{have_usbredir}
-    %{_libdir}/qemu-kvm/hw-usb-redirect.so
-%endif
 %{_libdir}/qemu-kvm/hw-display-virtio-gpu.so
 %ifarch s390x
     %{_libdir}/qemu-kvm/hw-s390x-virtio-gpu-ccw.so
@@ -1200,9 +1218,26 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
     %{_libdir}/qemu-kvm/ui-egl-headless.so
     %{_libdir}/qemu-kvm/ui-opengl.so
 %endif
+
+%if %{have_usbredir}
+%files hw-usbredir
+    %{_libdir}/qemu-kvm/hw-usb-redirect.so
+%endif
 %endif
 
 %changelog
+* Mon Jul 19 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-9
+- kvm-s390x-cpumodel-add-3931-and-3932.patch [bz#1932191]
+- kvm-spapr-Fix-EEH-capability-issue-on-KVM-guest-for-PCI-.patch [bz#1957194]
+- kvm-ppc-pef.c-initialize-cgs-ready-in-kvmppc_svm_init.patch [bz#1957194]
+- kvm-redhat-Move-qemu-kvm-docs-dependency-to-qemu-kvm.patch [bz#1957194]
+- kvm-redhat-introducting-qemu-kvm-hw-usbredir.patch [bz#1957194]
+- kvm-redhat-use-the-standard-vhost-user-JSON-path.patch [bz#1957194]
+- Resolves: bz#1932191
+  ([IBM 9.0 FEAT] CPU Model for new IBM Z Hardware - qemu part (kvm))
+- Resolves: bz#1957194
+  (Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta)
+
 * Mon Jul 12 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-8
 - kvm-Disable-TPM-passthrough.patch [bz#1978911]
 - kvm-redhat-Replace-the-kvm-setup.service-with-a-etc-modu.patch [bz#1978837]

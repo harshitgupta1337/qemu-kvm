@@ -1,0 +1,69 @@
+From e496360f627cdc4202f185b63175ced08c8b1f07 Mon Sep 17 00:00:00 2001
+From: Daniel Henrique Barboza <danielhb413@gmail.com>
+Date: Wed, 23 Jun 2021 19:39:32 -0400
+Subject: [PATCH 3/6] ppc/pef.c: initialize cgs->ready in kvmppc_svm_init()
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 22: Synchronize with RHEL-AV 8.5 release 23 to RHEL 9
+RH-Commit: [2/5] b204f898d2333686e30b14c050ac7a9289670f23 (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 1957194
+
+QEMU is failing to launch a CGS pSeries guest in a host that has PEF
+support:
+
+qemu-system-ppc64: ../softmmu/vl.c:2585: qemu_machine_creation_done: Assertion `machine->cgs->ready' failed.
+Aborted
+
+This is happening because we're not setting the cgs->ready flag that is
+asserted in qemu_machine_creation_done() during machine start.
+
+cgs->ready is set in s390_pv_kvm_init() and sev_kvm_init(). Let's set it
+in kvmppc_svm_init() as well.
+
+Reported-by: Ram Pai <linuxram@us.ibm.com>
+Signed-off-by: Daniel Henrique Barboza <danielhb413@gmail.com>
+Message-Id: <20210528201619.52363-1-danielhb413@gmail.com>
+Acked-by: Ram Pai <linuxram@us.ibm.com>
+Signed-off-by: David Gibson <david@gibson.dropbear.id.au>
+(cherry picked from commit b873ed83311d96644b544b10f6869a430660585a)
+Signed-off-by: Daniel Henrique Barboza <dbarboza@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/ppc/pef.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/hw/ppc/pef.c b/hw/ppc/pef.c
+index 573be3ed79..cc44d5e339 100644
+--- a/hw/ppc/pef.c
++++ b/hw/ppc/pef.c
+@@ -41,7 +41,7 @@ struct PefGuest {
+     ConfidentialGuestSupport parent_obj;
+ };
+ 
+-static int kvmppc_svm_init(Error **errp)
++static int kvmppc_svm_init(ConfidentialGuestSupport *cgs, Error **errp)
+ {
+ #ifdef CONFIG_KVM
+     static Error *pef_mig_blocker;
+@@ -65,6 +65,8 @@ static int kvmppc_svm_init(Error **errp)
+     /* NB: This can fail if --only-migratable is used */
+     migrate_add_blocker(pef_mig_blocker, &error_fatal);
+ 
++    cgs->ready = true;
++
+     return 0;
+ #else
+     g_assert_not_reached();
+@@ -102,7 +104,7 @@ int pef_kvm_init(ConfidentialGuestSupport *cgs, Error **errp)
+         return -1;
+     }
+ 
+-    return kvmppc_svm_init(errp);
++    return kvmppc_svm_init(cgs, errp);
+ }
+ 
+ int pef_kvm_reset(ConfidentialGuestSupport *cgs, Error **errp)
+-- 
+2.27.0
+
