@@ -1,0 +1,50 @@
+From 0111d01afe82c46656a40269bf21eb7702c02a09 Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Fri, 16 Jul 2021 16:51:29 -0400
+Subject: [PATCH 13/43] file-posix: fix max_iov for /dev/sg devices
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Bugzilla: 1957194
+
+Even though it was only called for devices that have bs->sg set (which
+must be character devices), sg_get_max_segments looked at /sys/dev/block
+which only works for block devices.
+
+On Linux the sg driver has its own way to provide the maximum number of
+iovecs in a scatter/gather list, so add support for it.  The block device
+path is kept because it will be reinstated in the next patches.
+
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Reviewed-by: Max Reitz <mreitz@redhat.com>
+(cherry picked from commit 8ad5ab6148dca8aad297c134c09c84b0b92d45ed)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ block/file-posix.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/block/file-posix.c b/block/file-posix.c
+index 20e14f8e96..74d4903dc1 100644
+--- a/block/file-posix.c
++++ b/block/file-posix.c
+@@ -1204,6 +1204,17 @@ static int sg_get_max_segments(int fd)
+         goto out;
+     }
+ 
++    if (S_ISCHR(st.st_mode)) {
++        if (ioctl(fd, SG_GET_SG_TABLESIZE, &ret) == 0) {
++            return ret;
++        }
++        return -ENOTSUP;
++    }
++
++    if (!S_ISBLK(st.st_mode)) {
++        return -ENOTSUP;
++    }
++
+     sysfspath = g_strdup_printf("/sys/dev/block/%u:%u/queue/max_segments",
+                                 major(st.st_rdev), minor(st.st_rdev));
+     sysfd = open(sysfspath, O_RDONLY);
+-- 
+2.27.0
+

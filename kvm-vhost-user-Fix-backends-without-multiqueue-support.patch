@@ -1,0 +1,46 @@
+From de25a5f05b76ca99299e09dabe04e7d59b9bed79 Mon Sep 17 00:00:00 2001
+From: Kevin Wolf <kwolf@redhat.com>
+Date: Mon, 12 Jul 2021 10:22:32 -0400
+Subject: [PATCH 12/43] vhost-user: Fix backends without multiqueue support
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Bugzilla: 1957194
+
+dev->max_queues was never initialised for backends that don't support
+VHOST_USER_PROTOCOL_F_MQ, so it would use 0 as the maximum number of
+queues to check against and consequently fail for any such backend.
+
+Set it to 1 if the backend doesn't have multiqueue support.
+
+Fixes: c90bd505a3e8210c23d69fecab9ee6f56ec4a161
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Message-Id: <20210705171429.29286-1-kwolf@redhat.com>
+Reviewed-by: Cornelia Huck <cohuck@redhat.com>
+Reviewed-by: Raphael Norwitz <raphael.norwitz@nutanix.com>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit 84affad1fd4c5251d7cccf4df43b29e9157983a9)
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/virtio/vhost-user.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/hw/virtio/vhost-user.c b/hw/virtio/vhost-user.c
+index ee57abe045..53f50adcba 100644
+--- a/hw/virtio/vhost-user.c
++++ b/hw/virtio/vhost-user.c
+@@ -1908,7 +1908,10 @@ static int vhost_user_backend_init(struct vhost_dev *dev, void *opaque)
+             if (err < 0) {
+                 return err;
+             }
++        } else {
++            dev->max_queues = 1;
+         }
++
+         if (dev->num_queues && dev->max_queues < dev->num_queues) {
+             error_report("The maximum number of queues supported by the "
+                          "backend is %" PRIu64, dev->max_queues);
+-- 
+2.27.0
+

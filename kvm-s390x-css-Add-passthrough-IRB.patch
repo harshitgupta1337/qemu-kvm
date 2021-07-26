@@ -1,0 +1,127 @@
+From 4eb1f0936bfc921cad9af37f1573075148843b1d Mon Sep 17 00:00:00 2001
+From: Eric Farman <farman@linux.ibm.com>
+Date: Thu, 24 Jun 2021 14:15:16 -0400
+Subject: [PATCH 04/43] s390x/css: Add passthrough IRB
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Bugzilla: 1957194
+
+Wire in the subchannel callback for building the IRB
+ESW and ECW space for passthrough devices, and copy
+the hardware's ESW into the IRB we are building.
+
+If the hardware presented concurrent sense, then copy
+that sense data into the IRB's ECW space.
+
+Signed-off-by: Eric Farman <farman@linux.ibm.com>
+Message-Id: <20210617232537.1337506-5-farman@linux.ibm.com>
+Signed-off-by: Cornelia Huck <cohuck@redhat.com>
+(cherry picked from commit c626710fc755628d0d6b88aab0514c9238a84522)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/s390x/css.c         | 16 +++++++++++++++-
+ hw/s390x/s390-ccw.c    |  1 +
+ hw/vfio/ccw.c          |  4 ++++
+ include/hw/s390x/css.h |  3 +++
+ 4 files changed, 23 insertions(+), 1 deletion(-)
+
+diff --git a/hw/s390x/css.c b/hw/s390x/css.c
+index e77a0e523d..c3150da4f7 100644
+--- a/hw/s390x/css.c
++++ b/hw/s390x/css.c
+@@ -1336,7 +1336,7 @@ static void copy_schib_to_guest(SCHIB *dest, const SCHIB *src)
+     }
+ }
+ 
+-static void copy_esw_to_guest(ESW *dest, const ESW *src)
++void copy_esw_to_guest(ESW *dest, const ESW *src)
+ {
+     dest->word0 = cpu_to_be32(src->word0);
+     dest->erw = cpu_to_be32(src->erw);
+@@ -1651,6 +1651,20 @@ static void build_irb_sense_data(SubchDev *sch, IRB *irb)
+     }
+ }
+ 
++void build_irb_passthrough(SubchDev *sch, IRB *irb)
++{
++    /* Copy ESW from hardware */
++    irb->esw = sch->esw;
++
++    /*
++     * If (irb->esw.erw & ESW_ERW_SENSE) is true, then the contents
++     * of the ECW is sense data. If false, then it is model-dependent
++     * information. Either way, copy it into the IRB for the guest to
++     * read/decide what to do with.
++     */
++    build_irb_sense_data(sch, irb);
++}
++
+ void build_irb_virtual(SubchDev *sch, IRB *irb)
+ {
+     SCHIB *schib = &sch->curr_status;
+diff --git a/hw/s390x/s390-ccw.c b/hw/s390x/s390-ccw.c
+index b497571863..39cbea615b 100644
+--- a/hw/s390x/s390-ccw.c
++++ b/hw/s390x/s390-ccw.c
+@@ -125,6 +125,7 @@ static void s390_ccw_realize(S390CCWDevice *cdev, char *sysfsdev, Error **errp)
+     }
+     sch->driver_data = cdev;
+     sch->do_subchannel_work = do_subchannel_work_passthrough;
++    sch->irb_cb = build_irb_passthrough;
+ 
+     ccw_dev->sch = sch;
+     ret = css_sch_build_schib(sch, &cdev->hostid);
+diff --git a/hw/vfio/ccw.c b/hw/vfio/ccw.c
+index b2df708e4b..5f141d44a4 100644
+--- a/hw/vfio/ccw.c
++++ b/hw/vfio/ccw.c
+@@ -322,6 +322,7 @@ static void vfio_ccw_io_notifier_handler(void *opaque)
+     SCHIB *schib = &sch->curr_status;
+     SCSW s;
+     IRB irb;
++    ESW esw;
+     int size;
+ 
+     if (!event_notifier_test_and_clear(&vcdev->io_notifier)) {
+@@ -372,6 +373,9 @@ static void vfio_ccw_io_notifier_handler(void *opaque)
+     copy_scsw_to_guest(&s, &irb.scsw);
+     schib->scsw = s;
+ 
++    copy_esw_to_guest(&esw, &irb.esw);
++    sch->esw = esw;
++
+     /* If a uint check is pending, copy sense data. */
+     if ((schib->scsw.dstat & SCSW_DSTAT_UNIT_CHECK) &&
+         (schib->pmcw.chars & PMCW_CHARS_MASK_CSENSE)) {
+diff --git a/include/hw/s390x/css.h b/include/hw/s390x/css.h
+index 7c23a13f3d..10ed1df1bb 100644
+--- a/include/hw/s390x/css.h
++++ b/include/hw/s390x/css.h
+@@ -141,6 +141,7 @@ struct SubchDev {
+     void (*irb_cb)(SubchDev *, IRB *);
+     SenseId id;
+     void *driver_data;
++    ESW esw;
+ };
+ 
+ static inline void sch_gen_unit_exception(SubchDev *sch)
+@@ -202,6 +203,7 @@ int css_sch_build_schib(SubchDev *sch, CssDevId *dev_id);
+ unsigned int css_find_free_chpid(uint8_t cssid);
+ uint16_t css_build_subchannel_id(SubchDev *sch);
+ void copy_scsw_to_guest(SCSW *dest, const SCSW *src);
++void copy_esw_to_guest(ESW *dest, const ESW *src);
+ void css_inject_io_interrupt(SubchDev *sch);
+ void css_reset(void);
+ void css_reset_sch(SubchDev *sch);
+@@ -216,6 +218,7 @@ void css_clear_sei_pending(void);
+ IOInstEnding s390_ccw_cmd_request(SubchDev *sch);
+ IOInstEnding do_subchannel_work_virtual(SubchDev *sub);
+ IOInstEnding do_subchannel_work_passthrough(SubchDev *sub);
++void build_irb_passthrough(SubchDev *sch, IRB *irb);
+ void build_irb_virtual(SubchDev *sch, IRB *irb);
+ 
+ int s390_ccw_halt(SubchDev *sch);
+-- 
+2.27.0
+

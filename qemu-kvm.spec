@@ -9,9 +9,10 @@
 %global have_fdt      0
 %global have_modules_load 0
 %global have_memlock_limits 0
-# have_block_rbd is not relevant for RHEL but makes it
-# easier to sync spec dependency list with Fedora
+# Some of these are not relevant for RHEL, but defining them
+# makes it easier to sync the dependency list with Fedora
 %global have_block_rbd 1
+%global enable_werror 1
 
 %global have_pmem 1
 %ifnarch x86_64
@@ -23,6 +24,11 @@
     %global have_numactl 0
 %endif
 
+%global tools_only 0
+%ifarch %{power64}
+    %global tools_only 1
+%endif
+
 %ifnarch %{ix86} x86_64
     %global have_usbredir 0
 %endif
@@ -31,6 +37,14 @@
     %global have_librdma 1
 %else
     %global have_librdma 0
+%endif
+
+%global modprobe_kvm_conf %{_sourcedir}/kvm.conf
+%ifarch s390x
+    %global modprobe_kvm_conf %{_sourcedir}/kvm-s390x.conf
+%endif
+%ifarch %{ix86} x86_64
+    %global modprobe_kvm_conf %{_sourcedir}/kvm-x86.conf
 %endif
 
 %ifarch %{ix86}
@@ -59,6 +73,12 @@
     %global have_fdt     1
 %endif
 
+%global target_list %{kvm_target}-softmmu
+%global block_drivers_rw_list qcow2,raw,file,host_device,nbd,iscsi,rbd,blkdebug,luks,null-co,nvme,copy-on-read,throttle
+%global block_drivers_ro_list vmdk,vhdx,vpc,https,ssh
+%define qemudocdir %{_docdir}/%{name}
+
+
 #Versions of various parts:
 
 %global requires_all_modules                                     \
@@ -72,10 +92,27 @@ Requires: %{name}-block-curl = %{epoch}:%{version}-%{release}    \
 Requires: %{name}-block-rbd = %{epoch}:%{version}-%{release}     \
 Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
 
+# Since SPICE is removed from RHEL-9, the following Obsoletes:
+# removes {name}-ui-spice for upgrades from RHEL-8
+# The "<= {version}" assumes RHEL-9 version >= RHEL-8 version (in
+# other words RHEL-9 rebases are done together/before RHEL-8 ones)
+%global obsoletes_some_modules                                  \
+Obsoletes: %{name}-ui-spice <= %{version}                       \
+Obsoletes: %{name}-block-gluster <= %{version}                  \
+Obsoletes: %{name}-block-iscsi <= %{version}                    \
+
+# Release candidate version tracking
+# global rcver rc4
+%if 0%{?rcver:1}
+%global rcrel .%{rcver}
+%global rcstr -%{rcver}
+%endif
+
+
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.0.0
-Release: 9%{?rcversion}%{?dist}
+Release: 10%{?rcrel}%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -85,7 +122,7 @@ URL: http://www.qemu.org/
 ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
 
-Source0: http://wiki.qemu.org/download/qemu-6.0.0.tar.xz
+Source0: http://wiki.qemu.org/download/qemu-%{version}%{?rcstr}.tar.xz
 
 # KSM control scripts
 Source4: ksm.service
@@ -104,8 +141,6 @@ Source27: kvm.conf
 Source28: 95-kvm-memlock.conf
 Source30: kvm-s390x.conf
 Source31: kvm-x86.conf
-Source32: qemu-pr-helper.service
-Source33: qemu-pr-helper.socket
 Source36: README.tests
 
 
@@ -200,6 +235,44 @@ Patch54: kvm-s390x-cpumodel-add-3931-and-3932.patch
 Patch55: kvm-spapr-Fix-EEH-capability-issue-on-KVM-guest-for-PCI-.patch
 # For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
 Patch56: kvm-ppc-pef.c-initialize-cgs-ready-in-kvmppc_svm_init.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch57: kvm-s390x-css-Introduce-an-ESW-struct.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch58: kvm-s390x-css-Split-out-the-IRB-sense-data.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch59: kvm-s390x-css-Refactor-IRB-construction.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch60: kvm-s390x-css-Add-passthrough-IRB.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch61: kvm-vhost-user-blk-Fail-gracefully-on-too-large-queue-si.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch62: kvm-vhost-user-blk-Make-sure-to-set-Error-on-realize-fai.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch63: kvm-vhost-user-blk-Don-t-reconnect-during-initialisation.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch64: kvm-vhost-user-blk-Improve-error-reporting-in-realize.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch65: kvm-vhost-user-blk-Get-more-feature-flags-from-vhost-dev.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch66: kvm-virtio-Fail-if-iommu_platform-is-requested-but-unsup.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch67: kvm-vhost-user-blk-Check-that-num-queues-is-supported-by.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch68: kvm-vhost-user-Fix-backends-without-multiqueue-support.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch69: kvm-file-posix-fix-max_iov-for-dev-sg-devices.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch70: kvm-scsi-generic-pass-max_segments-via-max_iov-field-in-.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch71: kvm-osdep-provide-ROUND_DOWN-macro.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch72: kvm-block-backend-align-max_transfer-to-request-alignmen.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch73: kvm-block-add-max_hw_transfer-to-BlockLimits.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch74: kvm-file-posix-try-BLKSECTGET-on-block-devices-too-do-no.patch
+# For bz#1957782 - VMDK support should be read-only
+Patch75: kvm-block-Add-option-to-use-driver-whitelist-even-in-too.patch
 
 # Source-git patches
 
@@ -263,21 +336,24 @@ BuildRequires: pkgconfig(gbm)
 BuildRequires: perl-Test-Harness
 BuildRequires: libslirp-devel
 
-Requires: qemu-kvm-core = %{epoch}:%{version}-%{release}
+
+# Requires for qemu-kvm package
+Requires: %{name}-core = %{epoch}:%{version}-%{release}
 Requires: %{name}-docs = %{epoch}:%{version}-%{release}
+Requires: %{name}-tools = %{epoch}:%{version}-%{release}
+Requires: qemu-pr-helper = %{epoch}:%{version}-%{release}
 %{requires_all_modules}
 
-%define qemudocdir %{_docdir}/%{name}
-
 %description
-qemu-kvm is an open source virtualizer that provides hardware
-emulation for the KVM hypervisor. qemu-kvm acts as a virtual
+%{name} is an open source virtualizer that provides hardware
+emulation for the KVM hypervisor. %{name} acts as a virtual
 machine monitor together with the KVM kernel modules, and emulates the
 hardware for a full system such as a PC and its associated peripherals.
 
 
-%package -n qemu-kvm-core
-Summary: qemu-kvm core components
+%package core
+Summary: %{name} core components
+%{obsoletes_some_modules}
 Requires: %{name}-common = %{epoch}:%{version}-%{release}
 Requires: qemu-img = %{epoch}:%{version}-%{release}
 %ifarch %{ix86} x86_64
@@ -293,33 +369,14 @@ Requires: libusbx >= %{libusbx_version}
 Requires: libfdt >= %{libfdt_version}
 %endif
 
-# Since SPICE is removed from RHEL-9, the following Obsoletes:
-# removes qemu-kvm-ui-spice for upgrades from RHEL-8
-# The "<= {version}" assumes RHEL-9 version >= RHEL-8 version (in
-# other words RHEL-9 rebases are done together/before RHEL-8 ones)
-Obsoletes: qemu-kvm-ui-spice <= %{version}
-Obsoletes: qemu-kvm-block-gluster <= %{version}
-Obsoletes: %{name}-block-iscsi <= %{version}
-
-%description -n qemu-kvm-core
-qemu-kvm is an open source virtualizer that provides hardware
-emulation for the KVM hypervisor. qemu-kvm acts as a virtual
+%description core
+%{name} is an open source virtualizer that provides hardware
+emulation for the KVM hypervisor. %{name} acts as a virtual
 machine monitor together with the KVM kernel modules, and emulates the
 hardware for a full system such as a PC and its associated peripherals.
 
-%package -n qemu-kvm-docs
-Summary: qemu-kvm documentation
 
-%description -n qemu-kvm-docs
-qemu-kvm-docs provides documentation files regarding qemu-kvm.
-
-%package -n qemu-img
-Summary: QEMU command line tool for manipulating disk images
-
-%description -n qemu-img
-This package provides a command line tool for manipulating disk images.
-
-%package -n qemu-kvm-common
+%package common
 Summary: QEMU common files needed by all QEMU targets
 Requires(post): /usr/bin/getent
 Requires(post): /usr/sbin/groupadd
@@ -336,11 +393,36 @@ Requires: seavgabios-bin >= 1.12.0-3
 Requires: ipxe-roms-qemu >= 20170123-1
 %endif
 
-%description -n qemu-kvm-common
-qemu-kvm is an open source virtualizer that provides hardware emulation for
+%description common
+%{name} is an open source virtualizer that provides hardware emulation for
 the KVM hypervisor.
 
-This package provides documentation and auxiliary programs used with qemu-kvm.
+This package provides documentation and auxiliary programs used with %{name}.
+
+
+%package tools
+Summary: %{name} support tools
+%description tools
+%{name}-tools provides various tools related to %{name} usage.
+
+
+%package docs
+Summary: %{name} documentation
+%description docs
+%{name}-docs provides documentation files regarding %{name}.
+
+
+%package -n qemu-pr-helper
+Summary: qemu-pr-helper utility for %{name}
+%description -n qemu-pr-helper
+This package provides the qemu-pr-helper utility that is required for certain 
+SCSI features. 
+
+
+%package -n qemu-img
+Summary: QEMU command line tool for manipulating disk images
+%description -n qemu-img
+This package provides a command line tool for manipulating disk images.
 
 
 %package -n qemu-guest-agent
@@ -348,9 +430,8 @@ Summary: QEMU guest agent
 Requires(post): systemd-units
 Requires(preun): systemd-units
 Requires(postun): systemd-units
-
 %description -n qemu-guest-agent
-qemu-kvm is an open source virtualizer that provides hardware emulation for
+%{name} is an open source virtualizer that provides hardware emulation for
 the KVM hypervisor.
 
 This package provides an agent to run inside guests, which communicates
@@ -358,23 +439,24 @@ with the host over a virtio-serial channel named "org.qemu.guest_agent.0"
 
 This package does not need to be installed on the host OS.
 
+
 %package tests
-Summary: tests for the qemu-kvm package
+Summary: tests for the %{name} package
 Requires: %{name} = %{epoch}:%{version}-%{release}
 
 %define testsdir %{_libdir}/%{name}/tests-src
 
 %description tests
-The qemu-kvm-tests rpm contains tests that can be used to verify
-the functionality of the installed qemu-kvm package
+The %{name}-tests rpm contains tests that can be used to verify
+the functionality of the installed %{name} package
 
 Install this package if you want access to the avocado_qemu
 tests, or qemu-iotests.
 
+
 %package  block-curl
 Summary: QEMU CURL block driver
 Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
-
 %description block-curl
 This package provides the additional CURL block driver for QEMU.
 
@@ -382,21 +464,21 @@ Install this package if you want to access remote disks over
 http, https, ftp and other transports provided by the CURL library.
 
 
+%if %{have_block_rbd}
 %package  block-rbd
 Summary: QEMU Ceph/RBD block driver
 Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
-
 %description block-rbd
 This package provides the additional Ceph/RBD block driver for QEMU.
 
 Install this package if you want to access remote Ceph volumes
 using the rbd protocol.
+%endif
 
 
 %package  block-ssh
 Summary: QEMU SSH block driver
 Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
-
 %description block-ssh
 This package provides the additional SSH block driver for QEMU.
 
@@ -411,7 +493,6 @@ Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
 Requires: mesa-libGL
 Requires: mesa-libEGL
 Requires: mesa-dri-drivers
-
 %description ui-opengl
 This package provides opengl support.
 %endif
@@ -427,11 +508,7 @@ This package provides usbredir support.
 %endif
 
 %prep
-%if 0%{?rcversion}
-%setup -n qemu-%{version}-%{?rcversion}
-%else
-%setup -n qemu-%{version}
-%endif
+%setup -q -n qemu-%{version}%{?rcstr}
 %autopatch -p1
 
 %global qemu_kvm_build qemu_kvm_build
@@ -439,14 +516,11 @@ mkdir -p %{qemu_kvm_build}
 
 
 %build
-%global buildarch %{kvm_target}-softmmu
-
 # --build-id option is used for giving info to the debug packages.
 buildldflags="VL_LDFLAGS=-Wl,--build-id"
 
-%global block_drivers_list qcow2,raw,file,host_device,nbd,iscsi,rbd,blkdebug,luks,null-co,nvme,copy-on-read,throttle
-
 %define disable_everything         \\\
+  --audio-drv-list=                \\\
   --disable-attr                   \\\
   --disable-auth-pam               \\\
   --disable-avx2                   \\\
@@ -566,32 +640,54 @@ buildldflags="VL_LDFLAGS=-Wl,--build-id"
   --disable-xfsctl                 \\\
   --disable-xkbcommon              \\\
   --disable-zstd                   \\\
-  --with-git-submodules=ignore
+  --with-git-submodules=ignore     \\\
+  --without-default-devices
+
+
+run_configure() {
+    ../configure \
+        --cc=%{__cc} \
+        --cxx=%{__cxx} \
+        --prefix="%{_prefix}" \
+        --libdir="%{_libdir}" \
+        --datadir="%{_datadir}" \
+        --sysconfdir="%{_sysconfdir}" \
+        --interp-prefix=%{_prefix}/qemu-%M \
+        --localstatedir="%{_localstatedir}" \
+        --docdir="%{_docdir}" \
+        --libexecdir="%{_libexecdir}" \
+        --extra-ldflags="-Wl,--build-id -Wl,-z,relro -Wl,-z,now" \
+        --extra-cflags="%{optflags}" \
+        --with-pkgversion="%{name}-%{version}-%{release}" \
+        --with-suffix="%{name}" \
+        --firmwarepath=%{_prefix}/share/qemu-firmware \
+        --meson="%{__meson}" \
+        --enable-trace-backend=dtrace \
+        --with-coroutine=ucontext \
+        --with-git=git \
+        --tls-priority=@QEMU,SYSTEM \
+        %{disable_everything} \
+        "$@"
+
+    echo "config-host.mak contents:"
+    echo "==="
+    cat config-host.mak
+    echo "==="
+}
+
 
 pushd %{qemu_kvm_build}
-../configure  \
-  --prefix="%{_prefix}" \
-  --libdir="%{_libdir}" \
-  --datadir="%{_datadir}" \
-  --sysconfdir="%{_sysconfdir}" \
-  --interp-prefix=%{_prefix}/qemu-%M \
-  --localstatedir="%{_localstatedir}" \
-  --docdir="%{_docdir}" \
-  --libexecdir="%{_libexecdir}" \
-  --extra-ldflags="-Wl,--build-id -Wl,-z,relro -Wl,-z,now" \
-  --extra-cflags="%{optflags}" \
-  --with-pkgversion="%{name}-%{version}-%{release}" \
-  --with-suffix="%{name}" \
-  --firmwarepath=%{_prefix}/share/qemu-firmware \
-  --meson="%{__meson}" \
-  --target-list="%{buildarch}" \
-  --block-drv-rw-whitelist=%{block_drivers_list} \
-  --audio-drv-list= \
-  --block-drv-ro-whitelist=vmdk,vhdx,vpc,https,ssh \
-  --with-coroutine=ucontext \
-  --with-git=git \
-  --tls-priority=@QEMU,SYSTEM \
-  %{disable_everything} \
+run_configure \
+%if %{defined target_list}
+  --target-list="%{target_list}" \
+%endif
+%if %{defined block_drivers_rw_list}
+  --block-drv-rw-whitelist=%{block_drivers_rw_list} \
+%endif
+%if %{defined block_drivers_ro_list}
+  --block-drv-ro-whitelist=%{block_drivers_ro_list} \
+%endif
+  --enable-block-drv-whitelist-in-tools \
   --enable-attr \
 %ifarch %{ix86} x86_64
   --enable-avx2 \
@@ -641,7 +737,6 @@ pushd %{qemu_kvm_build}
   --enable-tcg \
   --enable-tools \
   --enable-tpm \
-  --enable-trace-backend=dtrace \
 %if %{have_usbredir}
   --enable-usb-redir \
 %endif
@@ -655,17 +750,13 @@ pushd %{qemu_kvm_build}
   --enable-vnc \
   --enable-vnc-png \
   --enable-vnc-sasl \
+%if %{enable_werror}
   --enable-werror \
+%endif
   --enable-xkbcommon \
-  --without-default-devices
 
 
-echo "qemu-kvm config-host.mak contents:"
-echo "==="
-cat config-host.mak
-echo "==="
-
-%ifarch %{power64}
+%if %{tools_only}
 make V=1 %{?_smp_mflags} $buildldflags qemu-img
 make V=1 %{?_smp_mflags} $buildldflags qemu-io
 make V=1 %{?_smp_mflags} $buildldflags qemu-nbd
@@ -678,8 +769,11 @@ make V=1 %{?_smp_mflags} $buildldflags docs/qemu-storage-daemon-qmp-ref.7
 
 make V=1 %{?_smp_mflags} $buildldflags qga/qemu-ga
 make V=1 %{?_smp_mflags} $buildldflags docs/qemu-ga.8
-%else
+# endif tools_only
+%endif
 
+
+%if !%{tools_only}
 make V=1 %{?_smp_mflags} $buildldflags
 
 # Setup back compat qemu-kvm binary
@@ -702,252 +796,213 @@ cp -a %{kvm_target}-softmmu/qemu-system-%{kvm_target} qemu-kvm
     cp pc-bios/s390-ccw/s390-ccw.img pc-bios/s390-ccw/s390-netboot.img pc-bios/
 %endif
 
-
-gcc %{SOURCE6} $RPM_OPT_FLAGS $RPM_LD_FLAGS -o ksmctl
-%endif
+gcc %{_sourcedir}/ksmctl.c $RPM_OPT_FLAGS $RPM_LD_FLAGS -o ksmctl
 popd
+# endif !tools_only
+%endif
+
+
 
 %install
-pushd %{qemu_kvm_build}
-%define _udevdir %(pkg-config --variable=udevdir udev)
-%define _udevrulesdir %{_udevdir}/rules.d
-
-%ifarch %{power64}
-install -D -p -m 0755 qemu-img $RPM_BUILD_ROOT%{_bindir}/qemu-img
-install -D -p -m 0755 qemu-io $RPM_BUILD_ROOT%{_bindir}/qemu-io
-install -D -p -m 0755 qemu-nbd $RPM_BUILD_ROOT%{_bindir}/qemu-nbd
-install -D -p -m 0755 storage-daemon/qemu-storage-daemon $RPM_BUILD_ROOT%{_bindir}/qemu-storage-daemon
-
-mkdir -p $RPM_BUILD_ROOT%{_mandir}/man1/
-mkdir -p $RPM_BUILD_ROOT%{_mandir}/man7/
-mkdir -p $RPM_BUILD_ROOT%{_mandir}/man8/
-
-install -D -p -m 644 docs/qemu-img.1* $RPM_BUILD_ROOT%{_mandir}/man1
-install -D -p -m 644 docs/qemu-nbd.8* $RPM_BUILD_ROOT%{_mandir}/man8
-install -D -p -p -m 644 docs/qemu-storage-daemon.1* $RPM_BUILD_ROOT%{_mandir}/man1
-install -D -p -p -m 644 docs/qemu-storage-daemon-qmp-ref.7* $RPM_BUILD_ROOT%{_mandir}/man7
-install -D -p -m 644 docs/qemu-ga.8* $RPM_BUILD_ROOT%{_mandir}/man8
-%else
-install -D -p -m 0644 %{SOURCE4} $RPM_BUILD_ROOT%{_unitdir}/ksm.service
-install -D -p -m 0644 %{SOURCE5} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/ksm
-install -D -p -m 0755 ksmctl $RPM_BUILD_ROOT%{_libexecdir}/ksmctl
-
-install -D -p -m 0644 %{SOURCE7} $RPM_BUILD_ROOT%{_unitdir}/ksmtuned.service
-install -D -p -m 0755 %{SOURCE8} $RPM_BUILD_ROOT%{_sbindir}/ksmtuned
-install -D -p -m 0644 %{SOURCE9} $RPM_BUILD_ROOT%{_sysconfdir}/ksmtuned.conf
-install -D -p -m 0644 %{SOURCE26} $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/vhost.conf
-%ifarch s390x
-    install -D -p -m 0644 %{SOURCE30} $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/kvm.conf
-%else
-%ifarch %{ix86} x86_64
-    install -D -p -m 0644 %{SOURCE31} $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/kvm.conf
-%else
-    install -D -p -m 0644 %{SOURCE27} $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/kvm.conf
-%endif
-%endif
-
-mkdir -p $RPM_BUILD_ROOT%{_bindir}/
-mkdir -p $RPM_BUILD_ROOT%{_udevrulesdir}/
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}
-
-# Create new directories and put them all under tests-src
-mkdir -p $RPM_BUILD_ROOT%{testsdir}/python
-mkdir -p $RPM_BUILD_ROOT%{testsdir}/tests
-mkdir -p $RPM_BUILD_ROOT%{testsdir}/tests/acceptance
-mkdir -p $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests
-mkdir -p $RPM_BUILD_ROOT%{testsdir}/scripts/qmp
-
-
-install -m 0644 scripts/dump-guest-memory.py \
-                $RPM_BUILD_ROOT%{_datadir}/%{name}
-
-# Install avocado_qemu tests
-cp -R tests/acceptance/* $RPM_BUILD_ROOT%{testsdir}/tests/acceptance/
-
-# Install qemu.py and qmp/ scripts required to run avocado_qemu tests
-cp -R python/qemu $RPM_BUILD_ROOT%{testsdir}/python
-cp -R scripts/qmp/* $RPM_BUILD_ROOT%{testsdir}/scripts/qmp
-install -p -m 0755 ../tests/Makefile.include $RPM_BUILD_ROOT%{testsdir}/tests/
-
-# Install qemu-iotests
-cp -R ../tests/qemu-iotests/* $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/
-cp -ur tests/qemu-iotests/* $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/
-# Avoid ambiguous 'python' interpreter name
-find $RPM_BUILD_ROOT%{testsdir}/tests/qemu-iotests/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/env \(python\|python3\)+%{__python3}+' {} \;
-find $RPM_BUILD_ROOT%{testsdir}/scripts/qmp/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/env \(python\|python3\)+%{__python3}+' {} \;
-find $RPM_BUILD_ROOT%{testsdir}/scripts/qmp/* -maxdepth 1 -type f -exec sed -i -e '1 s+/usr/bin/\(python\|python3\)+%{__python3}+' {} \;
-
-install -p -m 0644 %{SOURCE36} $RPM_BUILD_ROOT%{testsdir}/README
-
-make DESTDIR=$RPM_BUILD_ROOT \
-    sharedir="%{_datadir}/%{name}" \
-    datadir="%{_datadir}/%{name}" \
-    install
-
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset
-
-# Move vhost-user JSON files to the standard "qemu" directory
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/qemu
-mv $RPM_BUILD_ROOT%{_datadir}/%{name}/vhost-user $RPM_BUILD_ROOT%{_datadir}/qemu/
-%endif
-
 # Install qemu-guest-agent service and udev rules
 install -D -m 0644 %{_sourcedir}/qemu-guest-agent.service %{buildroot}%{_unitdir}/qemu-guest-agent.service
 install -D -m 0644 %{_sourcedir}/qemu-ga.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/qemu-ga
 install -D -m 0644 %{_sourcedir}/99-qemu-guest-agent.rules %{buildroot}%{_udevrulesdir}/99-qemu-guest-agent.rules
 
-# - the fsfreeze hook script:
-install -D --preserve-timestamps \
-            scripts/qemu-guest-agent/fsfreeze-hook \
-            $RPM_BUILD_ROOT%{_sysconfdir}/qemu-ga/fsfreeze-hook
-# Workaround for the missing /etc/qemu-kvm/fsfreeze-hook
-# Please, do not carry this over to RHEL-9
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/qemu-kvm/
-ln -s %{_sysconfdir}/qemu-ga/fsfreeze-hook \
-      $RPM_BUILD_ROOT%{_sysconfdir}/qemu-kvm/fsfreeze-hook
 
-# - the directory for user scripts:
-mkdir $RPM_BUILD_ROOT%{_sysconfdir}/qemu-ga/fsfreeze-hook.d
-
-# - and the fsfreeze script samples:
-mkdir --parents $RPM_BUILD_ROOT%{_datadir}/%{name}/qemu-ga/fsfreeze-hook.d/
-install --preserve-timestamps --mode=0644 \
-             scripts/qemu-guest-agent/fsfreeze-hook.d/*.sample \
-             $RPM_BUILD_ROOT%{_datadir}/%{name}/qemu-ga/fsfreeze-hook.d/
-
-# - Install dedicated log directory:
-mkdir -p -v $RPM_BUILD_ROOT%{_localstatedir}/log/qemu-ga/
-
-mkdir -p $RPM_BUILD_ROOT%{_bindir}
-install -c -m 0755  qga/qemu-ga ${RPM_BUILD_ROOT}%{_bindir}/qemu-ga
-
-%ifnarch %{power64}
-mkdir -p $RPM_BUILD_ROOT%{_mandir}/man8
-
-install -m 0755 %{kvm_target}-softmmu/qemu-system-%{kvm_target} $RPM_BUILD_ROOT%{_libexecdir}/qemu-kvm
-install -m 0644 qemu-kvm.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
-install -m 0644 qemu-kvm-log.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
-install -m 0644 qemu-kvm-simpletrace.stp $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/
-install -d -m 0755 "$RPM_BUILD_ROOT%{_datadir}/%{name}/systemtap/script.d"
-install -c -m 0644 scripts/systemtap/script.d/qemu_kvm.stp "$RPM_BUILD_ROOT%{_datadir}/%{name}/systemtap/script.d/"
-install -d -m 0755 "$RPM_BUILD_ROOT%{_datadir}/%{name}/systemtap/conf.d"
-install -c -m 0644 scripts/systemtap/conf.d/qemu_kvm.conf "$RPM_BUILD_ROOT%{_datadir}/%{name}/systemtap/conf.d/"
+# Install qemu-ga fsfreeze bits
+mkdir -p %{buildroot}%{_sysconfdir}/qemu-ga/fsfreeze-hook.d
+install -p scripts/qemu-guest-agent/fsfreeze-hook %{buildroot}%{_sysconfdir}/qemu-ga/fsfreeze-hook
+mkdir -p %{buildroot}%{_datadir}/%{name}/qemu-ga/fsfreeze-hook.d/
+install -p -m 0644 scripts/qemu-guest-agent/fsfreeze-hook.d/*.sample %{buildroot}%{_datadir}/%{name}/qemu-ga/fsfreeze-hook.d/
+mkdir -p -v %{buildroot}%{_localstatedir}/log/qemu-ga/
 
 
-rm $RPM_BUILD_ROOT/%{_datadir}/applications/qemu.desktop
-rm $RPM_BUILD_ROOT%{_bindir}/qemu-system-%{kvm_target}
-rm $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}.stp
-rm $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}-simpletrace.stp
-rm $RPM_BUILD_ROOT%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}-log.stp
-rm $RPM_BUILD_ROOT%{_bindir}/elf2dmp
+%if %{tools_only}
+pushd %{qemu_kvm_build}
+install -D -p -m 0755 qga/qemu-ga %{buildroot}%{_bindir}/qemu-ga
+install -D -p -m 0755 qemu-img %{buildroot}%{_bindir}/qemu-img
+install -D -p -m 0755 qemu-io %{buildroot}%{_bindir}/qemu-io
+install -D -p -m 0755 qemu-nbd %{buildroot}%{_bindir}/qemu-nbd
+install -D -p -m 0755 storage-daemon/qemu-storage-daemon %{buildroot}%{_bindir}/qemu-storage-daemon
+
+mkdir -p %{buildroot}%{_mandir}/man1/
+mkdir -p %{buildroot}%{_mandir}/man7/
+mkdir -p %{buildroot}%{_mandir}/man8/
+
+install -D -p -m 644 docs/qemu-img.1* %{buildroot}%{_mandir}/man1
+install -D -p -m 644 docs/qemu-nbd.8* %{buildroot}%{_mandir}/man8
+install -D -p -m 644 docs/qemu-storage-daemon.1* %{buildroot}%{_mandir}/man1
+install -D -p -m 644 docs/qemu-storage-daemon-qmp-ref.7* %{buildroot}%{_mandir}/man7
+install -D -p -m 644 docs/qemu-ga.8* %{buildroot}%{_mandir}/man8
+popd
+# endif tools_only
+%endif
+
+%if !%{tools_only}
+install -D -p -m 0644 %{_sourcedir}/ksm.service %{buildroot}%{_unitdir}/ksm.service
+install -D -p -m 0644 %{_sourcedir}/ksm.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/ksm
+install -D -p -m 0755 %{qemu_kvm_build}/ksmctl %{buildroot}%{_libexecdir}/ksmctl
+
+install -D -p -m 0644 %{_sourcedir}/ksmtuned.service %{buildroot}%{_unitdir}/ksmtuned.service
+install -D -p -m 0755 %{_sourcedir}/ksmtuned %{buildroot}%{_sbindir}/ksmtuned
+install -D -p -m 0644 %{_sourcedir}/ksmtuned.conf %{buildroot}%{_sysconfdir}/ksmtuned.conf
+install -D -p -m 0644 %{_sourcedir}/vhost.conf %{buildroot}%{_sysconfdir}/modprobe.d/vhost.conf
+install -D -p -m 0644 %{modprobe_kvm_conf} $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/kvm.conf
+
+# Create new directories and put them all under tests-src
+mkdir -p %{buildroot}%{testsdir}/python
+mkdir -p %{buildroot}%{testsdir}/tests
+mkdir -p %{buildroot}%{testsdir}/tests/acceptance
+mkdir -p %{buildroot}%{testsdir}/tests/qemu-iotests
+mkdir -p %{buildroot}%{testsdir}/scripts/qmp
+
+
+install -m 0644 scripts/dump-guest-memory.py \
+                %{buildroot}%{_datadir}/%{name}
+
+# Install avocado_qemu tests
+cp -R %{qemu_kvm_build}/tests/acceptance/* %{buildroot}%{testsdir}/tests/acceptance/
+
+# Install qemu.py and qmp/ scripts required to run avocado_qemu tests
+cp -R %{qemu_kvm_build}/python/qemu %{buildroot}%{testsdir}/python
+cp -R %{qemu_kvm_build}/scripts/qmp/* %{buildroot}%{testsdir}/scripts/qmp
+install -p -m 0755 tests/Makefile.include %{buildroot}%{testsdir}/tests/
+
+# Install qemu-iotests
+cp -R tests/qemu-iotests/* %{buildroot}%{testsdir}/tests/qemu-iotests/
+cp -ur %{qemu_kvm_build}/tests/qemu-iotests/* %{buildroot}%{testsdir}/tests/qemu-iotests/
+
+install -p -m 0644 %{_sourcedir}/README.tests %{buildroot}%{testsdir}/README
+
+# Do the actual qemu tree install
+pushd %{qemu_kvm_build}
+make DESTDIR=%{buildroot} \
+    sharedir="%{_datadir}/%{name}" \
+    datadir="%{_datadir}/%{name}" \
+    install
+popd
+
+mkdir -p %{buildroot}%{_datadir}/systemtap/tapset
+
+# Move vhost-user JSON files to the standard "qemu" directory
+mkdir -p %{buildroot}%{_datadir}/qemu
+mv %{buildroot}%{_datadir}/%{name}/vhost-user %{buildroot}%{_datadir}/qemu/
+
+install -m 0755 %{qemu_kvm_build}/%{kvm_target}-softmmu/qemu-system-%{kvm_target} %{buildroot}%{_libexecdir}/qemu-kvm
+install -m 0644 %{qemu_kvm_build}/qemu-kvm.stp %{buildroot}%{_datadir}/systemtap/tapset/
+install -m 0644 %{qemu_kvm_build}/qemu-kvm-log.stp %{buildroot}%{_datadir}/systemtap/tapset/
+install -m 0644 %{qemu_kvm_build}/qemu-kvm-simpletrace.stp %{buildroot}%{_datadir}/systemtap/tapset/
+install -d -m 0755 "%{buildroot}%{_datadir}/%{name}/systemtap/script.d"
+install -c -m 0644 %{qemu_kvm_build}/scripts/systemtap/script.d/qemu_kvm.stp "%{buildroot}%{_datadir}/%{name}/systemtap/script.d/"
+install -d -m 0755 "%{buildroot}%{_datadir}/%{name}/systemtap/conf.d"
+install -c -m 0644 %{qemu_kvm_build}/scripts/systemtap/conf.d/qemu_kvm.conf "%{buildroot}%{_datadir}/%{name}/systemtap/conf.d/"
+
+
+rm %{buildroot}/%{_datadir}/applications/qemu.desktop
+rm %{buildroot}%{_bindir}/qemu-system-%{kvm_target}
+rm %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}.stp
+rm %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}-simpletrace.stp
+rm %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}-log.stp
+rm %{buildroot}%{_bindir}/elf2dmp
 
 # Install simpletrace
-install -m 0755 scripts/simpletrace.py $RPM_BUILD_ROOT%{_datadir}/%{name}/simpletrace.py
+install -m 0755 scripts/simpletrace.py %{buildroot}%{_datadir}/%{name}/simpletrace.py
 # Avoid ambiguous 'python' interpreter name
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool
-install -m 0644 -t $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool scripts/tracetool/*.py
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/backend
-install -m 0644 -t $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/backend scripts/tracetool/backend/*.py
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/format
-install -m 0644 -t $RPM_BUILD_ROOT%{_datadir}/%{name}/tracetool/format scripts/tracetool/format/*.py
+mkdir -p %{buildroot}%{_datadir}/%{name}/tracetool
+install -m 0644 -t %{buildroot}%{_datadir}/%{name}/tracetool scripts/tracetool/*.py
+mkdir -p %{buildroot}%{_datadir}/%{name}/tracetool/backend
+install -m 0644 -t %{buildroot}%{_datadir}/%{name}/tracetool/backend scripts/tracetool/backend/*.py
+mkdir -p %{buildroot}%{_datadir}/%{name}/tracetool/format
+install -m 0644 -t %{buildroot}%{_datadir}/%{name}/tracetool/format scripts/tracetool/format/*.py
 
-mkdir -p $RPM_BUILD_ROOT%{qemudocdir}
-install -p -m 0644 -t ${RPM_BUILD_ROOT}%{qemudocdir} ../README.rst ../README.systemtap ../COPYING ../COPYING.LIB ../LICENSE ../docs/interop/qmp-spec.txt
+mkdir -p %{buildroot}%{qemudocdir}
+install -p -m 0644 -t %{buildroot}%{qemudocdir} README.rst README.systemtap COPYING COPYING.LIB LICENSE docs/interop/qmp-spec.txt
 
 # Rename man page
-pushd ${RPM_BUILD_ROOT}%{_mandir}/man1/
+pushd %{buildroot}%{_mandir}/man1/
 for fn in qemu.1*; do
      mv $fn "qemu-kvm${fn#qemu}"
 done
 popd
-chmod -x ${RPM_BUILD_ROOT}%{_mandir}/man1/*
-chmod -x ${RPM_BUILD_ROOT}%{_mandir}/man8/*
 
-install -D -p -m 0644 ../qemu.sasl $RPM_BUILD_ROOT%{_sysconfdir}/sasl2/%{name}.conf
-
-# Install keymaps
-pushd pc-bios/keymaps
-for kmp in *; do
-   install $kmp ${RPM_BUILD_ROOT}%{_datadir}/%{name}/keymaps/
-done
-rm -f ${RPM_BUILD_ROOT}%{_datadir}/%{name}/keymaps/*.stamp
-popd
+install -D -p -m 0644 qemu.sasl %{buildroot}%{_sysconfdir}/sasl2/%{name}.conf
 
 # Provided by package openbios
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/openbios-ppc
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/openbios-sparc32
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/openbios-sparc64
+rm -rf %{buildroot}%{_datadir}/%{name}/openbios-ppc
+rm -rf %{buildroot}%{_datadir}/%{name}/openbios-sparc32
+rm -rf %{buildroot}%{_datadir}/%{name}/openbios-sparc64
 # Provided by package SLOF
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/slof.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/slof.bin
 
 # Remove unpackaged files.
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/palcode-clipper
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/petalogix*.dtb
-rm -f ${RPM_BUILD_ROOT}%{_datadir}/%{name}/bamboo.dtb
-rm -f ${RPM_BUILD_ROOT}%{_datadir}/%{name}/ppc_rom.bin
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/s390-zipl.rom
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/u-boot.e500
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/qemu_vga.ndrv
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/skiboot.lid
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/qboot.rom
+rm -rf %{buildroot}%{_datadir}/%{name}/palcode-clipper
+rm -rf %{buildroot}%{_datadir}/%{name}/petalogix*.dtb
+rm -f %{buildroot}%{_datadir}/%{name}/bamboo.dtb
+rm -f %{buildroot}%{_datadir}/%{name}/ppc_rom.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/s390-zipl.rom
+rm -rf %{buildroot}%{_datadir}/%{name}/u-boot.e500
+rm -rf %{buildroot}%{_datadir}/%{name}/qemu_vga.ndrv
+rm -rf %{buildroot}%{_datadir}/%{name}/skiboot.lid
+rm -rf %{buildroot}%{_datadir}/%{name}/qboot.rom
 
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/s390-ccw.img
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/s390-netboot.img
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/hppa-firmware.img
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/canyonlands.dtb
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/u-boot-sam460-20100605.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/s390-ccw.img
+rm -rf %{buildroot}%{_datadir}/%{name}/s390-netboot.img
+rm -rf %{buildroot}%{_datadir}/%{name}/hppa-firmware.img
+rm -rf %{buildroot}%{_datadir}/%{name}/canyonlands.dtb
+rm -rf %{buildroot}%{_datadir}/%{name}/u-boot-sam460-20100605.bin
 
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/firmware
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/edk2-*.fd
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/edk2-licenses.txt
+rm -rf %{buildroot}%{_datadir}/%{name}/firmware
+rm -rf %{buildroot}%{_datadir}/%{name}/edk2-*.fd
+rm -rf %{buildroot}%{_datadir}/%{name}/edk2-licenses.txt
 
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv32-sifive_u-fw_jump.bin
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv32-virt-fw_jump.bin
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv32-generic-fw_dynamic.*
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv64-sifive_u-fw_jump.bin
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv64-virt-fw_jump.bin
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/opensbi-riscv64-generic-fw_dynamic.*
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/qemu-nsis.bmp
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/npcm7xx_bootrom.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/opensbi-riscv32-sifive_u-fw_jump.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/opensbi-riscv32-virt-fw_jump.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/opensbi-riscv32-generic-fw_dynamic.*
+rm -rf %{buildroot}%{_datadir}/%{name}/opensbi-riscv64-sifive_u-fw_jump.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/opensbi-riscv64-virt-fw_jump.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/opensbi-riscv64-generic-fw_dynamic.*
+rm -rf %{buildroot}%{_datadir}/%{name}/qemu-nsis.bmp
+rm -rf %{buildroot}%{_datadir}/%{name}/npcm7xx_bootrom.bin
 
 # Remove virtfs-proxy-helper files
-rm -rf ${RPM_BUILD_ROOT}%{_libexecdir}/virtfs-proxy-helper
-rm -rf ${RPM_BUILD_ROOT}%{_mandir}/man1/virtfs-proxy-helper*
+rm -rf %{buildroot}%{_libexecdir}/virtfs-proxy-helper
+rm -rf %{buildroot}%{_mandir}/man1/virtfs-proxy-helper*
 
 %ifarch s390x
     # Use the s390-*.img that we've just built, not the pre-built ones
-    install -m 0644 pc-bios/s390-ccw/s390-ccw.img $RPM_BUILD_ROOT%{_datadir}/%{name}/
-    install -m 0644 pc-bios/s390-ccw/s390-netboot.img $RPM_BUILD_ROOT%{_datadir}/%{name}/
+    install -m 0644 %{qemu_kvm_build}/pc-bios/s390-ccw/s390-ccw.img %{buildroot}%{_datadir}/%{name}/
+    install -m 0644 %{qemu_kvm_build}/pc-bios/s390-ccw/s390-netboot.img %{buildroot}%{_datadir}/%{name}/
 %else
-    rm -rf ${RPM_BUILD_ROOT}%{_libdir}/qemu-kvm/hw-s390x-virtio-gpu-ccw.so
+    rm -rf %{buildroot}%{_libdir}/%{name}/hw-s390x-virtio-gpu-ccw.so
 %endif
 
 %ifnarch x86_64
-    rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/kvmvapic.bin
-    rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/linuxboot.bin
-    rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/multiboot.bin
-    rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/pvh.bin
+    rm -rf %{buildroot}%{_datadir}/%{name}/kvmvapic.bin
+    rm -rf %{buildroot}%{_datadir}/%{name}/linuxboot.bin
+    rm -rf %{buildroot}%{_datadir}/%{name}/multiboot.bin
+    rm -rf %{buildroot}%{_datadir}/%{name}/pvh.bin
 %endif
 
 # Remove sparc files
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/QEMU,tcx.bin
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/QEMU,cgthree.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/QEMU,tcx.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/QEMU,cgthree.bin
 
 # Remove ivshmem example programs
-rm -rf ${RPM_BUILD_ROOT}%{_bindir}/ivshmem-client
-rm -rf ${RPM_BUILD_ROOT}%{_bindir}/ivshmem-server
+rm -rf %{buildroot}%{_bindir}/ivshmem-client
+rm -rf %{buildroot}%{_bindir}/ivshmem-server
 
 # Remove efi roms
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/efi*.rom
+rm -rf %{buildroot}%{_datadir}/%{name}/efi*.rom
 
 # Provided by package ipxe
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/pxe*rom
+rm -rf %{buildroot}%{_datadir}/%{name}/pxe*rom
 # Provided by package vgabios
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/vgabios*bin
+rm -rf %{buildroot}%{_datadir}/%{name}/vgabios*bin
 # Provided by package seabios
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/bios*.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/bios*.bin
 # Provided by package sgabios
-rm -rf ${RPM_BUILD_ROOT}%{_datadir}/%{name}/sgabios.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/sgabios.bin
 
 # the pxe gpxe images will be symlinks to the images on
 # /usr/share/ipxe, as QEMU doesn't know how to look
@@ -984,48 +1039,56 @@ rom_link() {
 %endif
 
 %if %{have_modules_load}
-    install -D -p -m 644 %{SOURCE21} $RPM_BUILD_ROOT%{_sysconfdir}/modules-load.d/kvm.conf
+    install -D -p -m 644 %{_sourcedir}/modules-load.conf %{buildroot}%{_sysconfdir}/modules-load.d/kvm.conf
 %endif
 
 %if %{have_memlock_limits}
-    install -D -p -m 644 %{SOURCE28} $RPM_BUILD_ROOT%{_sysconfdir}/security/limits.d/95-kvm-memlock.conf
+    install -D -p -m 644 %{_sourcedir}/95-kvm-memlock.conf %{buildroot}%{_sysconfdir}/security/limits.d/95-kvm-memlock.conf
 %endif
 
 # Install rules to use the bridge helper with libvirt's virbr0
-install -D -m 0644 %{SOURCE12} $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/bridge.conf
+install -D -m 0644 %{_sourcedir}/bridge.conf %{buildroot}%{_sysconfdir}/%{name}/bridge.conf
 
 # Install qemu-pr-helper service
-install -m 0644 %{_sourcedir}/qemu-pr-helper.service %{buildroot}%{_unitdir}
-install -m 0644 %{_sourcedir}/qemu-pr-helper.socket %{buildroot}%{_unitdir}
-
-find $RPM_BUILD_ROOT -name '*.la' -or -name '*.a' | xargs rm -f
+install -m 0644 contrib/systemd/qemu-pr-helper.service %{buildroot}%{_unitdir}
+install -m 0644 contrib/systemd/qemu-pr-helper.socket %{buildroot}%{_unitdir}
 
 # We need to make the block device modules and other qemu SO files executable
 # otherwise RPM won't pick up their dependencies.
-chmod +x $RPM_BUILD_ROOT%{_libdir}/qemu-kvm/*.so
+chmod +x %{buildroot}%{_libdir}/%{name}/*.so
 
-# Remove buildinfo
-rm -rf $RPM_BUILD_ROOT%{qemudocdir}/interop/.buildinfo
-rm -rf $RPM_BUILD_ROOT%{qemudocdir}/system/.buildinfo
-rm -rf $RPM_BUILD_ROOT%{qemudocdir}/tools/.buildinfo
-rm -rf $RPM_BUILD_ROOT%{qemudocdir}/user/.buildinfo
-rm -rf $RPM_BUILD_ROOT%{qemudocdir}/devel/.buildinfo
-rm -rf $RPM_BUILD_ROOT%{qemudocdir}/.buildinfo
+# Remove docs we don't care about
+find %{buildroot}%{qemudocdir} -name .buildinfo -delete
+rm -rf %{buildroot}%{qemudocdir}/specs
 
-# Remove spec
-rm -rf $RPM_BUILD_ROOT%{qemudocdir}/specs
-popd
+# endif !tools_only
+%endif
+
+
 
 %check
+%if !%{tools_only}
+
 pushd %{qemu_kvm_build}
-echo "Testing qemu-kvm-build"
+echo "Testing %{name}-build"
 make check V=1
 popd
 
-%post -n qemu-kvm-common
-%systemd_post ksm.service
-%systemd_post ksmtuned.service
+# endif !tools_only
+%endif
 
+
+
+%post -n qemu-guest-agent
+%systemd_post qemu-guest-agent.service
+%preun -n qemu-guest-agent
+%systemd_preun qemu-guest-agent.service
+%postun -n qemu-guest-agent
+%systemd_postun_with_restart qemu-guest-agent.service
+
+
+%if !%{tools_only}
+%post common
 getent group kvm >/dev/null || groupadd -g 36 -r kvm
 getent group qemu >/dev/null || groupadd -g 107 -r qemu
 getent passwd qemu >/dev/null || \
@@ -1042,63 +1105,79 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
     fi
 %endif
 
-%preun -n qemu-kvm-common
+%systemd_post ksm.service
+%systemd_post ksmtuned.service
+
+%preun common
 %systemd_preun ksm.service
 %systemd_preun ksmtuned.service
 
-%postun -n qemu-kvm-common
+%postun common
 %systemd_postun_with_restart ksm.service
 %systemd_postun_with_restart ksmtuned.service
+# endif !tools_only
 %endif
 
-%post -n qemu-guest-agent
-%systemd_post qemu-guest-agent.service
-%preun -n qemu-guest-agent
-%systemd_preun qemu-guest-agent.service
-%postun -n qemu-guest-agent
-%systemd_postun_with_restart qemu-guest-agent.service
 
-%ifnarch %{power64}
+
+%files -n qemu-img
+%{_bindir}/qemu-img
+%{_bindir}/qemu-io
+%{_bindir}/qemu-nbd
+%{_bindir}/qemu-storage-daemon
+%{_mandir}/man1/qemu-img.1*
+%{_mandir}/man8/qemu-nbd.8*
+%{_mandir}/man1/qemu-storage-daemon.1*
+%{_mandir}/man7/qemu-storage-daemon-qmp-ref.7*
+
+
+%files -n qemu-guest-agent
+%doc COPYING README.rst
+%{_bindir}/qemu-ga
+%{_mandir}/man8/qemu-ga.8*
+%{_unitdir}/qemu-guest-agent.service
+%{_udevrulesdir}/99-qemu-guest-agent.rules
+%config(noreplace) %{_sysconfdir}/sysconfig/qemu-ga
+%{_sysconfdir}/qemu-ga
+%{_datadir}/%{name}/qemu-ga
+%dir %{_localstatedir}/log/qemu-ga
+
+
+%if !%{tools_only}
 %files
 # Deliberately empty
 
-%files -n qemu-kvm-docs
-%dir %{qemudocdir}
-%doc %{qemudocdir}/genindex.html
-%doc %{qemudocdir}/search.html
-%doc %{qemudocdir}/objects.inv
-%doc %{qemudocdir}/searchindex.js
-%doc %{qemudocdir}/README.rst
-%doc %{qemudocdir}/COPYING
-%doc %{qemudocdir}/COPYING.LIB
-%doc %{qemudocdir}/LICENSE
-%doc %{qemudocdir}/README.systemtap
-%doc %{qemudocdir}/qmp-spec.txt
-%doc %{qemudocdir}/interop/*
-%doc %{qemudocdir}/index.html
-%doc %{qemudocdir}/system/*
-%doc %{qemudocdir}/tools/*
-%doc %{qemudocdir}/user/*
-%doc %{qemudocdir}/devel/*
-%doc %{qemudocdir}/_static/*
-
-%files -n qemu-kvm-common
-%{_mandir}/man7/qemu-qmp-ref.7*
-%{_mandir}/man7/qemu-cpu-models.7*
+%files tools
 %{_bindir}/qemu-keymap
-%{_bindir}/qemu-pr-helper
 %{_bindir}/qemu-edid
 %{_bindir}/qemu-trace-stap
+%{_datadir}/%{name}/simpletrace.py*
+%{_datadir}/%{name}/tracetool/*.py*
+%{_datadir}/%{name}/tracetool/backend/*.py*
+%{_datadir}/%{name}/tracetool/format/*.py*
+%{_datadir}/%{name}/dump-guest-memory.py*
+%{_datadir}/%{name}/trace-events-all
+%{_mandir}/man1/qemu-trace-stap.1*
+
+%files -n qemu-pr-helper
+%{_bindir}/qemu-pr-helper
 %{_unitdir}/qemu-pr-helper.service
 %{_unitdir}/qemu-pr-helper.socket
-%{_mandir}/man7/qemu-ga-ref.7*
 %{_mandir}/man8/qemu-pr-helper.8*
+
+%files docs
+%doc %{qemudocdir}
+
+%files common
+%license COPYING COPYING.LIB LICENSE
+%{_mandir}/man7/qemu-qmp-ref.7*
+%{_mandir}/man7/qemu-cpu-models.7*
+%{_mandir}/man7/qemu-ga-ref.7*
 %{_mandir}/man1/virtiofsd.1*
 
 %dir %{_datadir}/%{name}/
 %{_datadir}/%{name}/keymaps/
 %{_mandir}/man1/%{name}.1*
-%{_mandir}/man1/qemu-trace-stap.1*
 %{_mandir}/man7/qemu-block-drivers.7*
 %attr(4755, -, -) %{_libexecdir}/qemu-bridge-helper
 %config(noreplace) %{_sysconfdir}/sasl2/%{name}.conf
@@ -1113,10 +1192,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %config(noreplace) %{_sysconfdir}/%{name}/bridge.conf
 %config(noreplace) %{_sysconfdir}/modprobe.d/vhost.conf
 %config(noreplace) %{_sysconfdir}/modprobe.d/kvm.conf
-%{_datadir}/%{name}/simpletrace.py*
-%{_datadir}/%{name}/tracetool/*.py*
-%{_datadir}/%{name}/tracetool/backend/*.py*
-%{_datadir}/%{name}/tracetool/format/*.py*
 
 %ifarch x86_64
     %{_datadir}/%{name}/bios.bin
@@ -1144,12 +1219,10 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
     %{_datadir}/%{name}/efi-e1000e.rom
     %{_datadir}/%{name}/efi-virtio.rom
     %{_datadir}/%{name}/efi-rtl8139.rom
-    %{_libdir}/qemu-kvm/hw-display-virtio-vga.so
+    %{_libdir}/%{name}/hw-display-virtio-vga.so
 %endif
 %{_datadir}/icons/*
 %{_datadir}/%{name}/linuxboot_dma.bin
-%{_datadir}/%{name}/dump-guest-memory.py*
-%{_datadir}/%{name}/trace-events-all
 %if %{have_modules_load}
     %{_sysconfdir}/modules-load.d/kvm.conf
 %endif
@@ -1162,7 +1235,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 # most other paths we use it's "qemu" instead of "qemu-kvm".
 %{_datadir}/qemu/vhost-user/50-qemu-virtiofsd.json
 
-%files -n qemu-kvm-core
+%files core
 %{_libexecdir}/qemu-kvm
 %{_datadir}/systemtap/tapset/qemu-kvm.stp
 %{_datadir}/systemtap/tapset/qemu-kvm-log.stp
@@ -1170,62 +1243,95 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_datadir}/%{name}/systemtap/script.d/qemu_kvm.stp
 %{_datadir}/%{name}/systemtap/conf.d/qemu_kvm.conf
 
-%{_libdir}/qemu-kvm/hw-display-virtio-gpu.so
+%{_libdir}/%{name}/hw-display-virtio-gpu.so
 %ifarch s390x
-    %{_libdir}/qemu-kvm/hw-s390x-virtio-gpu-ccw.so
+    %{_libdir}/%{name}/hw-s390x-virtio-gpu-ccw.so
 %else
-    %{_libdir}/qemu-kvm/hw-display-virtio-gpu-pci.so
+    %{_libdir}/%{name}/hw-display-virtio-gpu-pci.so
 %endif
-%endif
 
-%files -n qemu-img
-%{_bindir}/qemu-img
-%{_bindir}/qemu-io
-%{_bindir}/qemu-nbd
-%{_bindir}/qemu-storage-daemon
-%{_mandir}/man1/qemu-img.1*
-%{_mandir}/man8/qemu-nbd.8*
-%{_mandir}/man1/qemu-storage-daemon.1*
-%{_mandir}/man7/qemu-storage-daemon-qmp-ref.7*
-
-%files -n qemu-guest-agent
-%doc COPYING README.rst
-%{_bindir}/qemu-ga
-%{_mandir}/man8/qemu-ga.8*
-%{_unitdir}/qemu-guest-agent.service
-%{_udevrulesdir}/99-qemu-guest-agent.rules
-%config(noreplace) %{_sysconfdir}/sysconfig/qemu-ga
-%{_sysconfdir}/qemu-ga
-%{_sysconfdir}/qemu-kvm/fsfreeze-hook
-%{_datadir}/%{name}/qemu-ga
-%dir %{_localstatedir}/log/qemu-ga
-
-%ifnarch %{power64}
 %files tests
 %{testsdir}
 
 %files block-curl
-%{_libdir}/qemu-kvm/block-curl.so
-
+%{_libdir}/%{name}/block-curl.so
+%if %{have_block_rbd}
 %files block-rbd
-%{_libdir}/qemu-kvm/block-rbd.so
-
+%{_libdir}/%{name}/block-rbd.so
+%endif
 %files block-ssh
-%{_libdir}/qemu-kvm/block-ssh.so
+%{_libdir}/%{name}/block-ssh.so
 
 %if %{have_opengl}
 %files ui-opengl
-    %{_libdir}/qemu-kvm/ui-egl-headless.so
-    %{_libdir}/qemu-kvm/ui-opengl.so
+%{_libdir}/%{name}/ui-egl-headless.so
+%{_libdir}/%{name}/ui-opengl.so
 %endif
 
 %if %{have_usbredir}
 %files hw-usbredir
-    %{_libdir}/qemu-kvm/hw-usb-redirect.so
+    %{_libdir}/%{name}/hw-usb-redirect.so
 %endif
+
+# endif !tools_only
 %endif
 
 %changelog
+* Sun Jul 25 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-10
+- kvm-s390x-css-Introduce-an-ESW-struct.patch [bz#1957194]
+- kvm-s390x-css-Split-out-the-IRB-sense-data.patch [bz#1957194]
+- kvm-s390x-css-Refactor-IRB-construction.patch [bz#1957194]
+- kvm-s390x-css-Add-passthrough-IRB.patch [bz#1957194]
+- kvm-vhost-user-blk-Fail-gracefully-on-too-large-queue-si.patch [bz#1957194]
+- kvm-vhost-user-blk-Make-sure-to-set-Error-on-realize-fai.patch [bz#1957194]
+- kvm-vhost-user-blk-Don-t-reconnect-during-initialisation.patch [bz#1957194]
+- kvm-vhost-user-blk-Improve-error-reporting-in-realize.patch [bz#1957194]
+- kvm-vhost-user-blk-Get-more-feature-flags-from-vhost-dev.patch [bz#1957194]
+- kvm-virtio-Fail-if-iommu_platform-is-requested-but-unsup.patch [bz#1957194]
+- kvm-vhost-user-blk-Check-that-num-queues-is-supported-by.patch [bz#1957194]
+- kvm-vhost-user-Fix-backends-without-multiqueue-support.patch [bz#1957194]
+- kvm-file-posix-fix-max_iov-for-dev-sg-devices.patch [bz#1957194]
+- kvm-scsi-generic-pass-max_segments-via-max_iov-field-in-.patch [bz#1957194]
+- kvm-osdep-provide-ROUND_DOWN-macro.patch [bz#1957194]
+- kvm-block-backend-align-max_transfer-to-request-alignmen.patch [bz#1957194]
+- kvm-block-add-max_hw_transfer-to-BlockLimits.patch [bz#1957194]
+- kvm-file-posix-try-BLKSECTGET-on-block-devices-too-do-no.patch [bz#1957194]
+- kvm-block-Add-option-to-use-driver-whitelist-even-in-too.patch [bz#1957782]
+- kvm-spec-Restrict-block-drivers-in-tools.patch [bz#1957782]
+- kvm-Move-tools-to-separate-package.patch [bz#1972285]
+- kvm-Split-qemu-pr-helper-to-separate-package.patch [bz#1972300]
+- kvm-spec-RPM_BUILD_ROOT-buildroot.patch [bz#1973029]
+- kvm-spec-More-use-of-name-instead-of-qemu-kvm.patch [bz#1973029]
+- kvm-spec-Use-qemu-pr-helper.service-from-qemu.git.patch [bz#1973029]
+- kvm-spec-Use-_sourcedir-for-referencing-sources.patch [bz#1973029]
+- kvm-spec-Add-tools_only.patch [bz#1973029]
+- kvm-spec-build-Add-run_configure-helper.patch [bz#1973029]
+- kvm-spec-build-Disable-more-bits-with-disable_everything.patch [bz#1973029]
+- kvm-spec-build-Add-macros-for-some-configure-parameters.patch [bz#1973029]
+- kvm-spec-files-Move-qemu-guest-agent-and-qemu-img-earlie.patch [bz#1973029]
+- kvm-spec-install-Remove-redundant-bits.patch [bz#1973029]
+- kvm-spec-install-Add-modprobe_kvm_conf-macro.patch [bz#1973029]
+- kvm-spec-install-Remove-qemu-guest-agent-etc-qemu-kvm-us.patch [bz#1973029]
+- kvm-spec-install-clean-up-qemu-ga-section.patch [bz#1973029]
+- kvm-spec-install-Use-a-single-tools_only-section.patch [bz#1973029]
+- kvm-spec-Make-tools_only-not-cross-spec-sections.patch [bz#1973029]
+- kvm-spec-install-Limit-time-spent-in-qemu_kvm_build.patch [bz#1973029]
+- kvm-spec-misc-syntactic-merges-with-Fedora.patch [bz#1973029]
+- kvm-spec-Use-Fedora-s-pattern-for-specifying-rc-version.patch [bz#1973029]
+- kvm-spec-files-don-t-use-fine-grained-docs-file-list.patch [bz#1973029]
+- kvm-spec-files-Add-licenses-to-qemu-common-too.patch [bz#1973029]
+- kvm-spec-install-Drop-python3-shebang-fixup.patch [bz#1973029]
+- Resolves: bz#1957194
+  (Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta)
+- Resolves: bz#1957782
+  (VMDK support should be read-only)
+- Resolves: bz#1972285
+  (Split out a qemu-kvm-tools subpackage)
+- Resolves: bz#1972300
+  (Split out a qemu-pr-helper subpackage)
+- Resolves: bz#1973029
+  (Spec file cleanups)
+
 * Mon Jul 19 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-9
 - kvm-s390x-cpumodel-add-3931-and-3932.patch [bz#1932191]
 - kvm-spapr-Fix-EEH-capability-issue-on-KVM-guest-for-PCI-.patch [bz#1957194]
