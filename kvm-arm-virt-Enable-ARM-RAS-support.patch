@@ -1,0 +1,68 @@
+From 170a9c7dc044a0094b48c658e0d57c97c4b854e0 Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Wed, 30 Jun 2021 13:38:03 +0200
+Subject: [PATCH 03/13] arm/virt: Enable ARM RAS support
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 19: arm/virt: Support RAS
+RH-Commit: [3/3] 1572368bb0f47463a1f6ffa3f5baa97242440c98 (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 1838608
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+
+We want to support ARM RAS (Reliability, Availability & Serviceability).
+So let's register the RAS property as a class property. It is
+unset by default.
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/arm/virt.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index fe1111d527..0084935ec8 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -2281,7 +2281,6 @@ static void virt_set_acpi(Object *obj, Visitor *v, const char *name,
+     visit_type_OnOffAuto(v, name, &vms->acpi, errp);
+ }
+ 
+-#if 0 /* Disabled for Red Hat Enterprise Linux */
+ static bool virt_get_ras(Object *obj, Error **errp)
+ {
+     VirtMachineState *vms = VIRT_MACHINE(obj);
+@@ -2296,6 +2295,7 @@ static void virt_set_ras(Object *obj, bool value, Error **errp)
+     vms->ras = value;
+ }
+ 
++#if 0 /* Disabled for Red Hat Enterprise Linux */
+ static bool virt_get_mte(Object *obj, Error **errp)
+ {
+     VirtMachineState *vms = VIRT_MACHINE(obj);
+@@ -3013,6 +3013,12 @@ static void rhel_machine_class_init(ObjectClass *oc, void *data)
+                                           "Set the IOMMU type. "
+                                           "Valid values are none and smmuv3");
+ 
++    object_class_property_add_bool(oc, "ras", virt_get_ras,
++                                   virt_set_ras);
++    object_class_property_set_description(oc, "ras",
++                                          "Set on/off to enable/disable reporting host memory errors "
++                                          "to a KVM guest using ACPI and guest external abort exceptions");
++
+     object_class_property_add_bool(oc, "its", virt_get_its,
+                                    virt_set_its);
+     object_class_property_set_description(oc, "its",
+@@ -3063,7 +3069,7 @@ static void rhel_virt_instance_init(Object *obj)
+     /* Default disallows iommu instantiation */
+     vms->iommu = VIRT_IOMMU_NONE;
+ 
+-    /* Default disallows RAS instantiation and is non-configurable for RHEL */
++    /* Default disallows RAS instantiation */
+     vms->ras = false;
+ 
+     /* MTE is disabled by default and non-configurable for RHEL */
+-- 
+2.27.0
+

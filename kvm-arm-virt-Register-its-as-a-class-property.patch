@@ -1,0 +1,56 @@
+From 29d18bdaf3dad52a052b2b058cd8f74652a72f76 Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Thu, 8 Jul 2021 05:14:47 -0400
+Subject: [PATCH 02/13] arm/virt: Register its as a class property
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 19: arm/virt: Support RAS
+RH-Commit: [2/3] 95debacfd59d06ed2dcaeb120b20a280ff515434 (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 1838608
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+
+As done for highmem, gic-version, iommu, let's register the its property
+as a class property. This is closer to the upstream code. This
+change was originally made by upstream commit:
+b91def7b8382 ("arm/virt: Register most properties as class properties")
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/arm/virt.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index bdae24a753..fe1111d527 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -3013,6 +3013,12 @@ static void rhel_machine_class_init(ObjectClass *oc, void *data)
+                                           "Set the IOMMU type. "
+                                           "Valid values are none and smmuv3");
+ 
++    object_class_property_add_bool(oc, "its", virt_get_its,
++                                   virt_set_its);
++    object_class_property_set_description(oc, "its",
++                                          "Set on/off to enable/disable "
++                                          "ITS instantiation");
++
+     object_class_property_add_str(oc, "x-oem-id",
+                                   virt_get_oem_id,
+                                   virt_set_oem_id);
+@@ -3052,11 +3058,6 @@ static void rhel_virt_instance_init(Object *obj)
+     } else {
+         /* Default allows ITS instantiation */
+         vms->its = true;
+-        object_property_add_bool(obj, "its", virt_get_its,
+-                                 virt_set_its);
+-        object_property_set_description(obj, "its",
+-                                        "Set on/off to enable/disable "
+-                                        "ITS instantiation");
+     }
+ 
+     /* Default disallows iommu instantiation */
+-- 
+2.27.0
+

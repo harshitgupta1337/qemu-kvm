@@ -3,6 +3,7 @@
 %global libusbx_version 1.0.23
 %global meson_version 0.55.3-3
 %global usbredir_version 0.7.1
+%global ipxe_version 20200823-5.git4bd064de
 
 %global have_usbredir 1
 %global have_opengl   1
@@ -77,7 +78,7 @@
 %global block_drivers_rw_list qcow2,raw,file,host_device,nbd,iscsi,rbd,blkdebug,luks,null-co,nvme,copy-on-read,throttle
 %global block_drivers_ro_list vmdk,vhdx,vpc,https,ssh
 %define qemudocdir %{_docdir}/%{name}
-
+%global firmwaredirs "%{_datadir}/qemu-firmware:%{_datadir}/ipxe/qemu:%{_datadir}/seavgabios:%{_datadir}/seabios:%{_datadir}/sgabios"
 
 #Versions of various parts:
 
@@ -112,7 +113,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.0.0
-Release: 10%{?rcrel}%{?dist}
+Release: 11%{?rcrel}%{?dist}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -273,6 +274,14 @@ Patch73: kvm-block-add-max_hw_transfer-to-BlockLimits.patch
 Patch74: kvm-file-posix-try-BLKSECTGET-on-block-devices-too-do-no.patch
 # For bz#1957782 - VMDK support should be read-only
 Patch75: kvm-block-Add-option-to-use-driver-whitelist-even-in-too.patch
+# For bz#1838608 - aarch64: Enable ARMv8 RAS virtualization support
+Patch76: kvm-arm-virt-Register-iommu-as-a-class-property.patch
+# For bz#1838608 - aarch64: Enable ARMv8 RAS virtualization support
+Patch77: kvm-arm-virt-Register-its-as-a-class-property.patch
+# For bz#1838608 - aarch64: Enable ARMv8 RAS virtualization support
+Patch78: kvm-arm-virt-Enable-ARM-RAS-support.patch
+# For bz#1972079 - Windows Installation blocked on 4k disk when using blk+raw+iothread
+Patch79: kvm-block-Fix-in_flight-leak-in-request-padding-error-pa.patch
 
 # Source-git patches
 
@@ -342,6 +351,7 @@ Requires: %{name}-core = %{epoch}:%{version}-%{release}
 Requires: %{name}-docs = %{epoch}:%{version}-%{release}
 Requires: %{name}-tools = %{epoch}:%{version}-%{release}
 Requires: qemu-pr-helper = %{epoch}:%{version}-%{release}
+Requires: virtiofsd = %{epoch}:%{version}-%{release}
 %{requires_all_modules}
 
 %description
@@ -390,7 +400,7 @@ Requires: sgabios-bin
 %endif
 %ifnarch aarch64 s390x
 Requires: seavgabios-bin >= 1.12.0-3
-Requires: ipxe-roms-qemu >= 20170123-1
+Requires: ipxe-roms-qemu >= %{ipxe_version}
 %endif
 
 %description common
@@ -417,6 +427,15 @@ Summary: qemu-pr-helper utility for %{name}
 %description -n qemu-pr-helper
 This package provides the qemu-pr-helper utility that is required for certain 
 SCSI features. 
+
+
+%package -n qemu-virtiofsd
+Summary: QEMU virtio-fs shared file system daemon
+Provides: virtiofsd
+%description -n qemu-virtiofsd
+This package provides virtiofsd daemon. This program is a vhost-user backend
+that implements the virtio-fs device that is used for sharing a host directory
+tree with a guest.
 
 
 %package -n qemu-img
@@ -516,9 +535,6 @@ mkdir -p %{qemu_kvm_build}
 
 
 %build
-# --build-id option is used for giving info to the debug packages.
-buildldflags="VL_LDFLAGS=-Wl,--build-id"
-
 %define disable_everything         \\\
   --audio-drv-list=                \\\
   --disable-attr                   \\\
@@ -656,11 +672,11 @@ run_configure() {
         --localstatedir="%{_localstatedir}" \
         --docdir="%{_docdir}" \
         --libexecdir="%{_libexecdir}" \
-        --extra-ldflags="-Wl,--build-id -Wl,-z,relro -Wl,-z,now" \
+        --extra-ldflags="%{build_ldflags}" \
         --extra-cflags="%{optflags}" \
         --with-pkgversion="%{name}-%{version}-%{release}" \
         --with-suffix="%{name}" \
-        --firmwarepath=%{_prefix}/share/qemu-firmware \
+        --firmwarepath=%{firmwaredirs} \
         --meson="%{__meson}" \
         --enable-trace-backend=dtrace \
         --with-coroutine=ucontext \
@@ -757,24 +773,24 @@ run_configure \
 
 
 %if %{tools_only}
-make V=1 %{?_smp_mflags} $buildldflags qemu-img
-make V=1 %{?_smp_mflags} $buildldflags qemu-io
-make V=1 %{?_smp_mflags} $buildldflags qemu-nbd
-make V=1 %{?_smp_mflags} $buildldflags storage-daemon/qemu-storage-daemon
+%make_build qemu-img
+%make_build qemu-io
+%make_build qemu-nbd
+%make_build storage-daemon/qemu-storage-daemon
 
-make V=1 %{?_smp_mflags} $buildldflags docs/qemu-img.1
-make V=1 %{?_smp_mflags} $buildldflags docs/qemu-nbd.8
-make V=1 %{?_smp_mflags} $buildldflags docs/qemu-storage-daemon.1
-make V=1 %{?_smp_mflags} $buildldflags docs/qemu-storage-daemon-qmp-ref.7
+%make_build docs/qemu-img.1
+%make_build docs/qemu-nbd.8
+%make_build docs/qemu-storage-daemon.1
+%make_build docs/qemu-storage-daemon-qmp-ref.7
 
-make V=1 %{?_smp_mflags} $buildldflags qga/qemu-ga
-make V=1 %{?_smp_mflags} $buildldflags docs/qemu-ga.8
+%make_build qga/qemu-ga
+%make_build docs/qemu-ga.8
 # endif tools_only
 %endif
 
 
 %if !%{tools_only}
-make V=1 %{?_smp_mflags} $buildldflags
+%make_build
 
 # Setup back compat qemu-kvm binary
 %{__python3} scripts/tracetool.py --backend dtrace --format stap \
@@ -877,10 +893,7 @@ install -p -m 0644 %{_sourcedir}/README.tests %{buildroot}%{testsdir}/README
 
 # Do the actual qemu tree install
 pushd %{qemu_kvm_build}
-make DESTDIR=%{buildroot} \
-    sharedir="%{_datadir}/%{name}" \
-    datadir="%{_datadir}/%{name}" \
-    install
+%make_install
 popd
 
 mkdir -p %{buildroot}%{_datadir}/systemtap/tapset
@@ -1004,39 +1017,6 @@ rm -rf %{buildroot}%{_datadir}/%{name}/bios*.bin
 # Provided by package sgabios
 rm -rf %{buildroot}%{_datadir}/%{name}/sgabios.bin
 
-# the pxe gpxe images will be symlinks to the images on
-# /usr/share/ipxe, as QEMU doesn't know how to look
-# for other paths, yet.
-pxe_link() {
-    ln -s ../ipxe.efi/$2.rom %{buildroot}%{_datadir}/%{name}/efi-$1.rom
-}
-
-%ifnarch aarch64 s390x
-pxe_link e1000 8086100e
-pxe_link rtl8139 10ec8139
-pxe_link virtio 1af41000
-pxe_link e1000e 808610d3
-%endif
-
-rom_link() {
-    ln -s $1 %{buildroot}%{_datadir}/%{name}/$2
-}
-
-%ifnarch aarch64 s390x
-  rom_link ../seavgabios/vgabios-isavga.bin vgabios.bin
-  rom_link ../seavgabios/vgabios-cirrus.bin vgabios-cirrus.bin
-  rom_link ../seavgabios/vgabios-qxl.bin vgabios-qxl.bin
-  rom_link ../seavgabios/vgabios-stdvga.bin vgabios-stdvga.bin
-  rom_link ../seavgabios/vgabios-vmware.bin vgabios-vmware.bin
-  rom_link ../seavgabios/vgabios-virtio.bin vgabios-virtio.bin
-  rom_link ../seavgabios/vgabios-ramfb.bin vgabios-ramfb.bin
-  rom_link ../seavgabios/vgabios-bochs-display.bin vgabios-bochs-display.bin
-%endif
-%ifarch x86_64
-  rom_link ../seabios/bios.bin bios.bin
-  rom_link ../seabios/bios-256k.bin bios-256k.bin
-  rom_link ../sgabios/sgabios.bin sgabios.bin
-%endif
 
 %if %{have_modules_load}
     install -D -p -m 644 %{_sourcedir}/modules-load.conf %{buildroot}%{_sysconfdir}/modules-load.d/kvm.conf
@@ -1071,7 +1051,7 @@ rm -rf %{buildroot}%{qemudocdir}/specs
 
 pushd %{qemu_kvm_build}
 echo "Testing %{name}-build"
-make check V=1
+%make_build check
 popd
 
 # endif !tools_only
@@ -1165,6 +1145,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_unitdir}/qemu-pr-helper.socket
 %{_mandir}/man8/qemu-pr-helper.8*
 
+%files -n qemu-virtiofsd
+%{_mandir}/man1/virtiofsd.1*
+%{_libexecdir}/virtiofsd
+# This is the standard location for vhost-user JSON files defined in the
+# vhost-user specification for interoperability with other software. Unlike
+# most other paths we use it's "qemu" instead of "qemu-kvm".
+%{_datadir}/qemu/vhost-user/50-qemu-virtiofsd.json
+
 %files docs
 %doc %{qemudocdir}
 
@@ -1173,7 +1161,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_mandir}/man7/qemu-qmp-ref.7*
 %{_mandir}/man7/qemu-cpu-models.7*
 %{_mandir}/man7/qemu-ga-ref.7*
-%{_mandir}/man1/virtiofsd.1*
 
 %dir %{_datadir}/%{name}/
 %{_datadir}/%{name}/keymaps/
@@ -1194,12 +1181,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %config(noreplace) %{_sysconfdir}/modprobe.d/kvm.conf
 
 %ifarch x86_64
-    %{_datadir}/%{name}/bios.bin
-    %{_datadir}/%{name}/bios-256k.bin
     %{_datadir}/%{name}/linuxboot.bin
     %{_datadir}/%{name}/multiboot.bin
     %{_datadir}/%{name}/kvmvapic.bin
-    %{_datadir}/%{name}/sgabios.bin
     %{_datadir}/%{name}/pvh.bin
 %endif
 %ifarch s390x
@@ -1207,18 +1191,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
     %{_datadir}/%{name}/s390-netboot.img
 %endif
 %ifnarch aarch64 s390x
-    %{_datadir}/%{name}/vgabios.bin
-    %{_datadir}/%{name}/vgabios-cirrus.bin
-    %{_datadir}/%{name}/vgabios-qxl.bin
-    %{_datadir}/%{name}/vgabios-stdvga.bin
-    %{_datadir}/%{name}/vgabios-vmware.bin
-    %{_datadir}/%{name}/vgabios-virtio.bin
-    %{_datadir}/%{name}/vgabios-ramfb.bin
-    %{_datadir}/%{name}/vgabios-bochs-display.bin
-    %{_datadir}/%{name}/efi-e1000.rom
-    %{_datadir}/%{name}/efi-e1000e.rom
-    %{_datadir}/%{name}/efi-virtio.rom
-    %{_datadir}/%{name}/efi-rtl8139.rom
     %{_libdir}/%{name}/hw-display-virtio-vga.so
 %endif
 %{_datadir}/icons/*
@@ -1229,11 +1201,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %if %{have_memlock_limits}
     %{_sysconfdir}/security/limits.d/95-kvm-memlock.conf
 %endif
-%{_libexecdir}/virtiofsd
-# This is the standard location for vhost-user JSON files defined in the
-# vhost-user specification for interoperability with other software. Unlike
-# most other paths we use it's "qemu" instead of "qemu-kvm".
-%{_datadir}/qemu/vhost-user/50-qemu-virtiofsd.json
 
 %files core
 %{_libexecdir}/qemu-kvm
@@ -1277,6 +1244,31 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Sat Aug 07 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-11
+- kvm-arm-virt-Register-iommu-as-a-class-property.patch [bz#1838608]
+- kvm-arm-virt-Register-its-as-a-class-property.patch [bz#1838608]
+- kvm-arm-virt-Enable-ARM-RAS-support.patch [bz#1838608]
+- kvm-block-Fix-in_flight-leak-in-request-padding-error-pa.patch [bz#1972079]
+- kvm-spec-Remove-buildldflags.patch [bz#1973029]
+- kvm-spec-Use-make_build-macro.patch [bz#1973029]
+- kvm-spec-Drop-make-install-sharedir-and-datadir-usage.patch [bz#1973029]
+- kvm-spec-use-make_install-macro.patch [bz#1973029]
+- kvm-spec-parallelize-make-check.patch [bz#1973029]
+- kvm-spec-Drop-explicit-build-id.patch [bz#1973029]
+- kvm-spec-use-build_ldflags.patch [bz#1973029]
+- kvm-Move-virtiofsd-to-separate-package.patch [bz#1979728]
+- kvm-Utilize-firmware-configure-option.patch [bz#1980139]
+- Resolves: bz#1838608
+  (aarch64: Enable ARMv8 RAS virtualization support)
+- Resolves: bz#1972079
+  (Windows Installation blocked on 4k disk when using blk+raw+iothread)
+- Resolves: bz#1973029
+  (Spec file cleanups)
+- Resolves: bz#1979728
+  (Split out virtiofsd subpackage)
+- Resolves: bz#1980139
+  (Use configure --firmwarepath more)
+
 * Sun Jul 25 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-10
 - kvm-s390x-css-Introduce-an-ESW-struct.patch [bz#1957194]
 - kvm-s390x-css-Split-out-the-IRB-sense-data.patch [bz#1957194]
