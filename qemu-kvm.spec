@@ -113,7 +113,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.0.0
-Release: 11%{?rcrel}%{?dist}
+Release: 11%{?rcrel}%{?dist}.1
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -1244,6 +1244,10 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Aug 10 2021 Mohan Boddu <mboddu@redhat.com> - 17:6.0.0-11.1
+- Rebuilt for IMA sigs, glibc 2.34, aarch64 flags
+  Related: rhbz#1991688
+
 * Sat Aug 07 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-11
 - kvm-arm-virt-Register-iommu-as-a-class-property.patch [bz#1838608]
 - kvm-arm-virt-Register-its-as-a-class-property.patch [bz#1838608]
