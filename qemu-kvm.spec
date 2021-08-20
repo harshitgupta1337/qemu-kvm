@@ -14,6 +14,18 @@
 # makes it easier to sync the dependency list with Fedora
 %global have_block_rbd 1
 %global enable_werror 1
+%global have_clang 1
+%global have_safe_stack 0
+
+%if %{have_clang}
+%global toolchain clang
+%ifarch x86_64
+%global have_safe_stack 1
+%endif
+%else
+%global toolchain gcc
+%global cc_suffix .gcc
+%endif
 
 %global have_pmem 1
 %ifnarch x86_64
@@ -113,7 +125,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.0.0
-Release: 11%{?rcrel}%{?dist}.1
+Release: 12%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -282,9 +294,98 @@ Patch77: kvm-arm-virt-Register-its-as-a-class-property.patch
 Patch78: kvm-arm-virt-Enable-ARM-RAS-support.patch
 # For bz#1972079 - Windows Installation blocked on 4k disk when using blk+raw+iothread
 Patch79: kvm-block-Fix-in_flight-leak-in-request-padding-error-pa.patch
+# For bz#1974683 - Fail to set migrate incoming for 2nd time after the first time failed
+Patch80: kvm-migration-Move-yank-outside-qemu_start_incoming_migr.patch
+# For bz#1974683 - Fail to set migrate incoming for 2nd time after the first time failed
+Patch81: kvm-migration-Allow-reset-of-postcopy_recover_triggered-.patch
+# For bz#1968519 - Remove all the old 7.0-7.5 machine types
+Patch82: kvm-Remove-RHEL-7.0.0-machine-type.patch
+# For bz#1968519 - Remove all the old 7.0-7.5 machine types
+Patch83: kvm-Remove-RHEL-7.1.0-machine-type.patch
+# For bz#1968519 - Remove all the old 7.0-7.5 machine types
+Patch84: kvm-Remove-RHEL-7.2.0-machine-type.patch
+# For bz#1968519 - Remove all the old 7.0-7.5 machine types
+Patch85: kvm-Remove-RHEL-7.3.0-machine-types.patch
+# For bz#1968519 - Remove all the old 7.0-7.5 machine types
+Patch86: kvm-Remove-RHEL-7.4.0-machine-types.patch
+# For bz#1968519 - Remove all the old 7.0-7.5 machine types
+Patch87: kvm-Remove-RHEL-7.5.0-machine-types.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch88: kvm-acpi-pc-revert-back-to-v5.2-PCI-slot-enumeration.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch89: kvm-migration-failover-reset-partially_hotplugged.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch90: kvm-hmp-Fix-loadvm-to-resume-the-VM-on-success-instead-o.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch91: kvm-migration-Move-bitmap_mutex-out-of-migration_bitmap_.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch92: kvm-i386-cpu-Expose-AVX_VNNI-instruction-to-guest.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch93: kvm-ratelimit-protect-with-a-mutex.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch94: kvm-Update-Linux-headers-to-5.13-rc4.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch95: kvm-i386-Add-ratelimit-for-bus-locks-acquired-in-guest.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch96: kvm-iothread-generalize-iothread_set_param-iothread_get_.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch97: kvm-iothread-add-aio-max-batch-parameter.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch98: kvm-linux-aio-limit-the-batch-size-using-aio-max-batch-p.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch99: kvm-block-nvme-Fix-VFIO_MAP_DMA-failed-No-space-left-on-.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch100: kvm-migration-move-wait-unplug-loop-to-its-own-function.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch101: kvm-migration-failover-continue-to-wait-card-unplug-on-e.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch102: kvm-aarch64-Add-USB-storage-devices.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch103: kvm-iotests-Improve-and-rename-test-291-to-qemu-img-bitm.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch104: kvm-qemu-img-Fail-fast-on-convert-bitmaps-with-inconsist.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch105: kvm-qemu-img-Add-skip-broken-bitmaps-for-convert-bitmaps.patch
+# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
+Patch106: kvm-audio-Never-send-migration-section.patch
+# For bz#1939509 - QEMU: enable SafeStack
+# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
+Patch107: kvm-pc-bios-s390-ccw-bootmap-Silence-compiler-warning-fr.patch
+# For bz#1939509 - QEMU: enable SafeStack
+# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
+Patch108: kvm-pc-bios-s390-ccw-Use-reset_psw-pointer-instead-of-ha.patch
+# For bz#1939509 - QEMU: enable SafeStack
+# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
+Patch109: kvm-pc-bios-s390-ccw-netboot-Use-Wl-prefix-to-pass-param.patch
+# For bz#1939509 - QEMU: enable SafeStack
+# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
+Patch110: kvm-pc-bios-s390-ccw-Silence-warning-from-Clang-by-marki.patch
+# For bz#1939509 - QEMU: enable SafeStack
+# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
+Patch111: kvm-pc-bios-s390-ccw-Fix-the-cc-option-macro-in-the-Make.patch
+# For bz#1939509 - QEMU: enable SafeStack
+# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
+Patch112: kvm-pc-bios-s390-ccw-Silence-GCC-11-stringop-overflow-wa.patch
+# For bz#1939509 - QEMU: enable SafeStack
+# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
+Patch113: kvm-pc-bios-s390-ccw-Allow-building-with-Clang-too.patch
+# For bz#1939509 - QEMU: enable SafeStack
+# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
+Patch114: kvm-pc-bios-s390-ccw-Fix-inline-assembly-for-older-versi.patch
+# For bz#1939509 - QEMU: enable SafeStack
+# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
+Patch115: kvm-configure-Fix-endianess-test-with-LTO.patch
 
 # Source-git patches
 
+%if %{have_clang}
+BuildRequires: clang
+%if %{have_safe_stack}
+BuildRequires: compiler-rt
+%endif
+%else
+BuildRequires: gcc
+%endif
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
@@ -541,6 +642,7 @@ mkdir -p %{qemu_kvm_build}
   --disable-auth-pam               \\\
   --disable-avx2                   \\\
   --disable-avx512f                \\\
+  --disable-block-drv-whitelist-in-tools \\\
   --disable-bochs                  \\\
   --disable-brlapi                 \\\
   --disable-bsd-user               \\\
@@ -663,7 +765,7 @@ mkdir -p %{qemu_kvm_build}
 run_configure() {
     ../configure \
         --cc=%{__cc} \
-        --cxx=%{__cxx} \
+        --cxx=/bin/false \
         --prefix="%{_prefix}" \
         --libdir="%{_libdir}" \
         --datadir="%{_datadir}" \
@@ -703,7 +805,6 @@ run_configure \
 %if %{defined block_drivers_ro_list}
   --block-drv-ro-whitelist=%{block_drivers_ro_list} \
 %endif
-  --enable-block-drv-whitelist-in-tools \
   --enable-attr \
 %ifarch %{ix86} x86_64
   --enable-avx2 \
@@ -770,6 +871,9 @@ run_configure \
   --enable-werror \
 %endif
   --enable-xkbcommon \
+%if %{have_safe_stack}
+  --enable-safe-stack \
+%endif
 
 
 %if %{tools_only}
@@ -812,7 +916,7 @@ cp -a %{kvm_target}-softmmu/qemu-system-%{kvm_target} qemu-kvm
     cp pc-bios/s390-ccw/s390-ccw.img pc-bios/s390-ccw/s390-netboot.img pc-bios/
 %endif
 
-gcc %{_sourcedir}/ksmctl.c $RPM_OPT_FLAGS $RPM_LD_FLAGS -o ksmctl
+%{__cc} %{_sourcedir}/ksmctl.c %{optflags} %{?build_ldflags} -o ksmctl
 popd
 # endif !tools_only
 %endif
@@ -1244,6 +1348,59 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Fri Aug 20 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-12.el9
+- kvm-migration-Move-yank-outside-qemu_start_incoming_migr.patch [bz#1974683]
+- kvm-migration-Allow-reset-of-postcopy_recover_triggered-.patch [bz#1974683]
+- kvm-Remove-RHEL-7.0.0-machine-type.patch [bz#1968519]
+- kvm-Remove-RHEL-7.1.0-machine-type.patch [bz#1968519]
+- kvm-Remove-RHEL-7.2.0-machine-type.patch [bz#1968519]
+- kvm-Remove-RHEL-7.3.0-machine-types.patch [bz#1968519]
+- kvm-Remove-RHEL-7.4.0-machine-types.patch [bz#1968519]
+- kvm-Remove-RHEL-7.5.0-machine-types.patch [bz#1968519]
+- kvm-acpi-pc-revert-back-to-v5.2-PCI-slot-enumeration.patch [bz#1957194]
+- kvm-migration-failover-reset-partially_hotplugged.patch [bz#1957194]
+- kvm-hmp-Fix-loadvm-to-resume-the-VM-on-success-instead-o.patch [bz#1957194]
+- kvm-migration-Move-bitmap_mutex-out-of-migration_bitmap_.patch [bz#1957194]
+- kvm-i386-cpu-Expose-AVX_VNNI-instruction-to-guest.patch [bz#1957194]
+- kvm-ratelimit-protect-with-a-mutex.patch [bz#1957194]
+- kvm-Update-Linux-headers-to-5.13-rc4.patch [bz#1957194]
+- kvm-i386-Add-ratelimit-for-bus-locks-acquired-in-guest.patch [bz#1957194]
+- kvm-iothread-generalize-iothread_set_param-iothread_get_.patch [bz#1957194]
+- kvm-iothread-add-aio-max-batch-parameter.patch [bz#1957194]
+- kvm-linux-aio-limit-the-batch-size-using-aio-max-batch-p.patch [bz#1957194]
+- kvm-block-nvme-Fix-VFIO_MAP_DMA-failed-No-space-left-on-.patch [bz#1957194]
+- kvm-migration-move-wait-unplug-loop-to-its-own-function.patch [bz#1957194]
+- kvm-migration-failover-continue-to-wait-card-unplug-on-e.patch [bz#1957194]
+- kvm-aarch64-Add-USB-storage-devices.patch [bz#1957194]
+- kvm-iotests-Improve-and-rename-test-291-to-qemu-img-bitm.patch [bz#1957194]
+- kvm-qemu-img-Fail-fast-on-convert-bitmaps-with-inconsist.patch [bz#1957194]
+- kvm-qemu-img-Add-skip-broken-bitmaps-for-convert-bitmaps.patch [bz#1957194]
+- kvm-audio-Never-send-migration-section.patch [bz#1957194]
+- kvm-pc-bios-s390-ccw-bootmap-Silence-compiler-warning-fr.patch [bz#1939509 bz#1940132]
+- kvm-pc-bios-s390-ccw-Use-reset_psw-pointer-instead-of-ha.patch [bz#1939509 bz#1940132]
+- kvm-pc-bios-s390-ccw-netboot-Use-Wl-prefix-to-pass-param.patch [bz#1939509 bz#1940132]
+- kvm-pc-bios-s390-ccw-Silence-warning-from-Clang-by-marki.patch [bz#1939509 bz#1940132]
+- kvm-pc-bios-s390-ccw-Fix-the-cc-option-macro-in-the-Make.patch [bz#1939509 bz#1940132]
+- kvm-pc-bios-s390-ccw-Silence-GCC-11-stringop-overflow-wa.patch [bz#1939509 bz#1940132]
+- kvm-pc-bios-s390-ccw-Allow-building-with-Clang-too.patch [bz#1939509 bz#1940132]
+- kvm-pc-bios-s390-ccw-Fix-inline-assembly-for-older-versi.patch [bz#1939509 bz#1940132]
+- kvm-configure-Fix-endianess-test-with-LTO.patch [bz#1939509 bz#1940132]
+- kvm-spec-Switch-toolchain-to-Clang-LLVM.patch [bz#1939509 bz#1940132]
+- kvm-spec-Use-safe-stack-for-x86_64.patch [bz#1939509 bz#1940132]
+- kvm-spec-Reenable-write-support-for-VMDK-etc.-in-tools.patch [bz#1989841]
+- Resolves: bz#1974683
+  (Fail to set migrate incoming for 2nd time after the first time failed)
+- Resolves: bz#1968519
+  (Remove all the old 7.0-7.5 machine types)
+- Resolves: bz#1957194
+  (Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta)
+- Resolves: bz#1939509
+  (QEMU: enable SafeStack)
+- Resolves: bz#1940132
+  (QEMU: switch build toolchain to Clang/LLVM)
+- Resolves: bz#1989841
+  (RFE: qemu-img cannot convert images into vmdk and vpc formats)
+
 * Tue Aug 10 2021 Mohan Boddu <mboddu@redhat.com> - 17:6.0.0-11.1
 - Rebuilt for IMA sigs, glibc 2.34, aarch64 flags
   Related: rhbz#1991688

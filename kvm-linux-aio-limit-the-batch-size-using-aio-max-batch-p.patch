@@ -1,0 +1,84 @@
+From 6f4cb3e1e5d718356f16645e806d47cb2159ae98 Mon Sep 17 00:00:00 2001
+From: Stefano Garzarella <sgarzare@redhat.com>
+Date: Thu, 29 Jul 2021 07:42:33 -0400
+Subject: [PATCH 19/39] linux-aio: limit the batch size using `aio-max-batch`
+ parameter
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 32: Synchronize with RHEL-AV 8.5 release 27 to RHEL 9
+RH-Commit: [11/15] 44e2f2d294d8ed1d13fb29c5c1599543b86c67e5 (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 1957194
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+When there are multiple queues attached to the same AIO context,
+some requests may experience high latency, since in the worst case
+the AIO engine queue is only flushed when it is full (MAX_EVENTS) or
+there are no more queues plugged.
+
+Commit 2558cb8dd4 ("linux-aio: increasing MAX_EVENTS to a larger
+hardcoded value") changed MAX_EVENTS from 128 to 1024, to increase
+the number of in-flight requests. But this change also increased
+the potential maximum batch to 1024 elements.
+
+When there is a single queue attached to the AIO context, the issue
+is mitigated from laio_io_unplug() that will flush the queue every
+time is invoked since there can't be others queue plugged.
+
+Let's use the new `aio-max-batch` IOThread parameter to mitigate
+this issue, limiting the number of requests in a batch.
+
+We also define a default value (32): this value is obtained running
+some benchmarks and it represents a good tradeoff between the latency
+increase while a request is queued and the cost of the io_submit(2)
+system call.
+
+Signed-off-by: Stefano Garzarella <sgarzare@redhat.com>
+Message-id: 20210721094211.69853-4-sgarzare@redhat.com
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+(cherry picked from commit d7ddd0a1618a75b31dc308bb37365ce1da972154)
+Signed-off-by: Stefano Garzarella <sgarzare@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ block/linux-aio.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/block/linux-aio.c b/block/linux-aio.c
+index 3c0527c2bf..0dab507b71 100644
+--- a/block/linux-aio.c
++++ b/block/linux-aio.c
+@@ -28,6 +28,9 @@
+  */
+ #define MAX_EVENTS 1024
+ 
++/* Maximum number of requests in a batch. (default value) */
++#define DEFAULT_MAX_BATCH 32
++
+ struct qemu_laiocb {
+     Coroutine *co;
+     LinuxAioState *ctx;
+@@ -351,6 +354,10 @@ static int laio_do_submit(int fd, struct qemu_laiocb *laiocb, off_t offset,
+     LinuxAioState *s = laiocb->ctx;
+     struct iocb *iocbs = &laiocb->iocb;
+     QEMUIOVector *qiov = laiocb->qiov;
++    int64_t max_batch = s->aio_context->aio_max_batch ?: DEFAULT_MAX_BATCH;
++
++    /* limit the batch with the number of available events */
++    max_batch = MIN_NON_ZERO(MAX_EVENTS - s->io_q.in_flight, max_batch);
+ 
+     switch (type) {
+     case QEMU_AIO_WRITE:
+@@ -371,7 +378,7 @@ static int laio_do_submit(int fd, struct qemu_laiocb *laiocb, off_t offset,
+     s->io_q.in_queue++;
+     if (!s->io_q.blocked &&
+         (!s->io_q.plugged ||
+-         s->io_q.in_flight + s->io_q.in_queue >= MAX_EVENTS)) {
++         s->io_q.in_queue >= max_batch)) {
+         ioq_submit(s);
+     }
+ 
+-- 
+2.27.0
+

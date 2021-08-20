@@ -1,0 +1,48 @@
+From f2d40216872a40bc5f5089de760c7ba0e3a710bc Mon Sep 17 00:00:00 2001
+From: Thomas Huth <thuth@redhat.com>
+Date: Sun, 2 May 2021 13:07:46 +0200
+Subject: [PATCH 32/39] pc-bios/s390-ccw: Fix the cc-option macro in the
+ Makefile
+
+RH-Author: Jon Maloy <jmaloy@redhat.com>
+RH-MergeRequest: 24: v7:  Add support for building qemu-kvm with clang and safe-stack
+RH-Commit: [5/11] 75379671567451e12ca32a3ea35d1ad2aa04bf5f (jmaloy/qemu-kvm-centos-jon)
+RH-Bugzilla: 1939509 1940132
+RH-Acked-by: Danilo Cesar Lemes de Paula <ddepaula@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+
+The cc-option macro is not doing what it should - compared with the
+original from the rules.mak file that got removed with commit
+660f793093 ("Makefile: inline the relevant parts of rules.mak"),
+the arguments got changed and thus the macro is rather doubling
+the QEMU_CFLAGS than adding the flag that should be tested.
+
+Message-Id: <20210502174836.838816-3-thuth@redhat.com>
+Fixes: 22fb2ab096 ("pc-bios/s390-ccw: do not use rules.mak")
+Signed-off-by: Thomas Huth <thuth@redhat.com>
+(cherry picked from commit 3462ff35512e925df5ee8c079ed46d4c93b633a7)
+Signed-off-by: Jon Maloy <jmaloy@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ pc-bios/s390-ccw/Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/pc-bios/s390-ccw/Makefile b/pc-bios/s390-ccw/Makefile
+index 29fd9019b8..f0fe84c9eb 100644
+--- a/pc-bios/s390-ccw/Makefile
++++ b/pc-bios/s390-ccw/Makefile
+@@ -6,8 +6,8 @@ include ../../config-host.mak
+ CFLAGS = -O2 -g
+ 
+ quiet-command = $(if $(V),$1,$(if $(2),@printf "  %-7s %s\n" $2 $3 && $1, @$1))
+-cc-option = $(if $(shell $(CC) $1 -S -o /dev/null -xc /dev/null > /dev/null \
+-	      2>&1 && echo OK), $1, $2)
++cc-option = $(if $(shell $(CC) $1 $2 -S -o /dev/null -xc /dev/null \
++			 >/dev/null 2>&1 && echo OK),$2,$3)
+ 
+ VPATH_SUFFIXES = %.c %.h %.S %.m %.mak %.sh %.rc Kconfig% %.json.in
+ set-vpath = $(if $1,$(foreach PATTERN,$(VPATH_SUFFIXES),$(eval vpath $(PATTERN) $1)))
+-- 
+2.27.0
+

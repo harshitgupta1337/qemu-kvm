@@ -1,0 +1,63 @@
+From 1e69dbe01e1cad1680723e1bc086cc52a1772c17 Mon Sep 17 00:00:00 2001
+From: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
+Date: Wed, 11 Aug 2021 08:40:38 -0400
+Subject: [PATCH 27/39] audio: Never send migration section
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 35: Synchronize with RHEL-AV 8.5 release 28 to RHEL 9
+RH-Commit: [4/4] 0b6ec114a3573ac7efcbe5ab3094d8020899c82d (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 1957194
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+
+The audio migration vmstate is empty, and always has been; we can't
+just remove it though because an old qemu might send it us.
+Changes with -audiodev now mean it's sometimes created when it didn't
+used to be, and can confuse migration to old qemu.
+
+Change it so that vmstate_audio is never sent; if it's received it
+should still be accepted, and old qemu's shouldn't be too upset if it's
+missing.
+
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Tested-by: Daniel P. Berrangé <berrange@redhat.com>
+Message-Id: <20210809170956.78536-1-dgilbert@redhat.com>
+Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+(cherry picked from commit da77adbaf619c4d170cb42d769145ad1803fbad9)
+Signed-off-by: Danilo C. L. de Paula <ddepaula@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ audio/audio.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/audio/audio.c b/audio/audio.c
+index 534278edfe..fa724ea8e0 100644
+--- a/audio/audio.c
++++ b/audio/audio.c
+@@ -1621,10 +1621,20 @@ void audio_cleanup(void)
+     }
+ }
+ 
++static bool vmstate_audio_needed(void *opaque)
++{
++    /*
++     * Never needed, this vmstate only exists in case
++     * an old qemu sends it to us.
++     */
++    return false;
++}
++
+ static const VMStateDescription vmstate_audio = {
+     .name = "audio",
+     .version_id = 1,
+     .minimum_version_id = 1,
++    .needed = vmstate_audio_needed,
+     .fields = (VMStateField[]) {
+         VMSTATE_END_OF_LIST()
+     }
+-- 
+2.27.0
+

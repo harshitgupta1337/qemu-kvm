@@ -1,0 +1,44 @@
+From 354026a79551358a5be4ed561e080ff550738e92 Mon Sep 17 00:00:00 2001
+From: Thomas Huth <thuth@redhat.com>
+Date: Fri, 23 Apr 2021 17:20:46 +0200
+Subject: [PATCH 30/39] pc-bios/s390-ccw/netboot: Use "-Wl," prefix to pass
+ parameter to the linker
+
+RH-Author: Jon Maloy <jmaloy@redhat.com>
+RH-MergeRequest: 24: v7:  Add support for building qemu-kvm with clang and safe-stack
+RH-Commit: [3/11] 6a22a1705fbeb5fb2eab6c0e149a433286f98e5f (jmaloy/qemu-kvm-centos-jon)
+RH-Bugzilla: 1939509 1940132
+RH-Acked-by: Danilo Cesar Lemes de Paula <ddepaula@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+
+We are using the compiler to do the linking of the bios files. GCC still
+accepts the "-Ttext=..." linker flag directly and is smart enough to
+pass it to the linker, but in case we are compiling with Clang, we have
+to use the official way with the "-Wl," prefix instead.
+
+Message-Id: <20210423153646.593153-1-thuth@redhat.com>
+Signed-off-by: Thomas Huth <thuth@redhat.com>
+(cherry picked from commit b460a220872c28a8da95cbc7e9369d26aa268848)
+Signed-off-by: Jon Maloy <jmaloy@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ pc-bios/s390-ccw/netboot.mak | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pc-bios/s390-ccw/netboot.mak b/pc-bios/s390-ccw/netboot.mak
+index 577c023afe..68b4d7edcb 100644
+--- a/pc-bios/s390-ccw/netboot.mak
++++ b/pc-bios/s390-ccw/netboot.mak
+@@ -6,7 +6,7 @@ NETOBJS := start.o sclp.o cio.o virtio.o virtio-net.o jump2ipl.o netmain.o
+ LIBC_INC := -nostdinc -I$(SLOF_DIR)/lib/libc/include
+ LIBNET_INC := -I$(SLOF_DIR)/lib/libnet
+ 
+-NETLDFLAGS := $(LDFLAGS) -Ttext=0x7800000
++NETLDFLAGS := $(LDFLAGS) -Wl,-Ttext=0x7800000
+ 
+ $(NETOBJS): QEMU_CFLAGS += $(LIBC_INC) $(LIBNET_INC)
+ 
+-- 
+2.27.0
+

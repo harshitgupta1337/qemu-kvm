@@ -1,0 +1,118 @@
+From e9848f4a4f45960bff1a2a7bc4a4670670de37a5 Mon Sep 17 00:00:00 2001
+From: Laurent Vivier <lvivier@redhat.com>
+Date: Wed, 4 Aug 2021 07:10:12 -0400
+Subject: [PATCH 21/39] migration: move wait-unplug loop to its own function
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 32: Synchronize with RHEL-AV 8.5 release 27 to RHEL 9
+RH-Commit: [13/15] ab3f26a86e4ea955678323608512e54af2a7c83b (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 1957194
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+The loop is used in migration_thread() and bg_migration_thread(),
+so we can move it to its own function and call it from these both places.
+
+Moreover, in migration_thread() we have a wrong state transition from
+SETUP to ACTIVE while state could be WAIT_UNPLUG. This is correctly
+managed in bg_migration_thread() so use this code instead.
+
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Message-Id: <20210629155007.629086-2-lvivier@redhat.com>
+Reviewed-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Reviewed-by: Juan Quintela <quintela@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit fde93d99d9c208c07e2dcc24cd04e824d2b65b35)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ migration/migration.c | 54 +++++++++++++++++++++----------------------
+ 1 file changed, 26 insertions(+), 28 deletions(-)
+
+diff --git a/migration/migration.c b/migration/migration.c
+index 9cf1cde39d..58df1dac05 100644
+--- a/migration/migration.c
++++ b/migration/migration.c
+@@ -3681,6 +3681,28 @@ bool migration_rate_limit(void)
+     return urgent;
+ }
+ 
++/*
++ * if failover devices are present, wait they are completely
++ * unplugged
++ */
++
++static void qemu_savevm_wait_unplug(MigrationState *s, int old_state,
++                                    int new_state)
++{
++    if (qemu_savevm_state_guest_unplug_pending()) {
++        migrate_set_state(&s->state, old_state, MIGRATION_STATUS_WAIT_UNPLUG);
++
++        while (s->state == MIGRATION_STATUS_WAIT_UNPLUG &&
++               qemu_savevm_state_guest_unplug_pending()) {
++            qemu_sem_timedwait(&s->wait_unplug_sem, 250);
++        }
++
++        migrate_set_state(&s->state, MIGRATION_STATUS_WAIT_UNPLUG, new_state);
++    } else {
++        migrate_set_state(&s->state, old_state, new_state);
++    }
++}
++
+ /*
+  * Master migration thread on the source VM.
+  * It drives the migration and pumps the data down the outgoing channel.
+@@ -3727,22 +3749,10 @@ static void *migration_thread(void *opaque)
+ 
+     qemu_savevm_state_setup(s->to_dst_file);
+ 
+-    if (qemu_savevm_state_guest_unplug_pending()) {
+-        migrate_set_state(&s->state, MIGRATION_STATUS_SETUP,
+-                          MIGRATION_STATUS_WAIT_UNPLUG);
+-
+-        while (s->state == MIGRATION_STATUS_WAIT_UNPLUG &&
+-               qemu_savevm_state_guest_unplug_pending()) {
+-            qemu_sem_timedwait(&s->wait_unplug_sem, 250);
+-        }
+-
+-        migrate_set_state(&s->state, MIGRATION_STATUS_WAIT_UNPLUG,
+-                MIGRATION_STATUS_ACTIVE);
+-    }
++    qemu_savevm_wait_unplug(s, MIGRATION_STATUS_SETUP,
++                               MIGRATION_STATUS_ACTIVE);
+ 
+     s->setup_time = qemu_clock_get_ms(QEMU_CLOCK_HOST) - setup_start;
+-    migrate_set_state(&s->state, MIGRATION_STATUS_SETUP,
+-                      MIGRATION_STATUS_ACTIVE);
+ 
+     trace_migration_thread_setup_complete();
+ 
+@@ -3850,21 +3860,9 @@ static void *bg_migration_thread(void *opaque)
+     qemu_savevm_state_header(s->to_dst_file);
+     qemu_savevm_state_setup(s->to_dst_file);
+ 
+-    if (qemu_savevm_state_guest_unplug_pending()) {
+-        migrate_set_state(&s->state, MIGRATION_STATUS_SETUP,
+-                          MIGRATION_STATUS_WAIT_UNPLUG);
+-
+-        while (s->state == MIGRATION_STATUS_WAIT_UNPLUG &&
+-               qemu_savevm_state_guest_unplug_pending()) {
+-            qemu_sem_timedwait(&s->wait_unplug_sem, 250);
+-        }
++    qemu_savevm_wait_unplug(s, MIGRATION_STATUS_SETUP,
++                               MIGRATION_STATUS_ACTIVE);
+ 
+-        migrate_set_state(&s->state, MIGRATION_STATUS_WAIT_UNPLUG,
+-                          MIGRATION_STATUS_ACTIVE);
+-    } else {
+-        migrate_set_state(&s->state, MIGRATION_STATUS_SETUP,
+-                MIGRATION_STATUS_ACTIVE);
+-    }
+     s->setup_time = qemu_clock_get_ms(QEMU_CLOCK_HOST) - setup_start;
+ 
+     trace_migration_thread_setup_complete();
+-- 
+2.27.0
+

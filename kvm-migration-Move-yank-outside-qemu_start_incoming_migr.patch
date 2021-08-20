@@ -1,0 +1,94 @@
+From 4c11e06222ca5a88f48f2d47adc3a7da306bb345 Mon Sep 17 00:00:00 2001
+From: Peter Xu <peterx@redhat.com>
+Date: Tue, 29 Jun 2021 14:13:55 -0400
+Subject: [PATCH 01/39] migration: Move yank outside
+ qemu_start_incoming_migration()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Leonardo Brás <leobras@redhat.com>
+RH-MergeRequest: 25: migration: Move yank outside qemu_start_incoming_migration()
+RH-Commit: [1/2] e5694b0ae9a55f6b147c336e86fce6f4f2163db6 (LeoBras/centos-qemu-kvm)
+RH-Bugzilla: 1974683
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Peter Xu <Peter Xu <peterx@redhat.com>>
+
+Starting from commit b5eea99ec2f5c, qmp_migrate_recover() calls unregister
+before calling qemu_start_incoming_migration(). I believe it wanted to mitigate
+the next call to yank_register_instance(), but I think that's wrong.
+
+Firstly, if during recover, we should keep the yank instance there, not
+"quickly removing and adding it back".
+
+Meanwhile, calling qmp_migrate_recover() twice with b5eea99ec2f5c will directly
+crash the dest qemu (right now it can't; but it'll start to work right after
+the next patch) because the 1st call of qmp_migrate_recover() will unregister
+permanently when the channel failed to establish, then the 2nd call of
+qmp_migrate_recover() crashes at yank_unregister_instance().
+
+This patch fixes it by moving yank ops out of qemu_start_incoming_migration()
+into qmp_migrate_incoming.  For qmp_migrate_recover(), drop the unregister of
+yank instance too since we keep it there during the recovery phase.
+
+Signed-off-by: Peter Xu <peterx@redhat.com>
+Reviewed-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-Id: <20210629181356.217312-2-peterx@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit cc48c587d25ff5dd7dddb4e5072de9ca8464c832)
+Fixes: b5eea99e ("migration: Add yank feature", 2021-01-13)
+Signed-off-by: Leonardo Bras <leobras@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ migration/migration.c | 11 +++++------
+ 1 file changed, 5 insertions(+), 6 deletions(-)
+
+diff --git a/migration/migration.c b/migration/migration.c
+index 4afc6069b6..f077640df2 100644
+--- a/migration/migration.c
++++ b/migration/migration.c
+@@ -454,10 +454,6 @@ static void qemu_start_incoming_migration(const char *uri, Error **errp)
+ {
+     const char *p = NULL;
+ 
+-    if (!yank_register_instance(MIGRATION_YANK_INSTANCE, errp)) {
+-        return;
+-    }
+-
+     qapi_event_send_migration(MIGRATION_STATUS_SETUP);
+     if (strstart(uri, "tcp:", &p) ||
+         strstart(uri, "unix:", NULL) ||
+@@ -472,7 +468,6 @@ static void qemu_start_incoming_migration(const char *uri, Error **errp)
+     } else if (strstart(uri, "fd:", &p)) {
+         fd_start_incoming_migration(p, errp);
+     } else {
+-        yank_unregister_instance(MIGRATION_YANK_INSTANCE);
+         error_setg(errp, "unknown migration protocol: %s", uri);
+     }
+ }
+@@ -2095,9 +2090,14 @@ void qmp_migrate_incoming(const char *uri, Error **errp)
+         return;
+     }
+ 
++    if (!yank_register_instance(MIGRATION_YANK_INSTANCE, errp)) {
++        return;
++    }
++
+     qemu_start_incoming_migration(uri, &local_err);
+ 
+     if (local_err) {
++        yank_unregister_instance(MIGRATION_YANK_INSTANCE);
+         error_propagate(errp, local_err);
+         return;
+     }
+@@ -2126,7 +2126,6 @@ void qmp_migrate_recover(const char *uri, Error **errp)
+      * only re-setup the migration stream and poke existing migration
+      * to continue using that newly established channel.
+      */
+-    yank_unregister_instance(MIGRATION_YANK_INSTANCE);
+     qemu_start_incoming_migration(uri, errp);
+ }
+ 
+-- 
+2.27.0
+

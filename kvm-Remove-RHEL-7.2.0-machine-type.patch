@@ -1,0 +1,192 @@
+From 999b28683394c2939ca8bd6b692ed2169860ced9 Mon Sep 17 00:00:00 2001
+From: Juan Quintela <quintela@redhat.com>
+Date: Tue, 3 Aug 2021 11:02:24 +0200
+Subject: [PATCH 05/39] Remove RHEL 7.2.0 machine type
+
+RH-Author: quintela1 <quintela@redhat.com>
+RH-MergeRequest: 30: Remove RHEL 7.x.0 machine types
+RH-Commit: [3/6] 575f0fe16c1928a41628f1f704a4d5d370679a82 (juan.quintela/qemu-kvm)
+RH-Bugzilla: 1968519
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/core/machine.c    | 24 ------------------------
+ hw/i386/pc.c         | 22 ----------------------
+ hw/i386/pc_piix.c    | 26 --------------------------
+ hw/ppc/spapr.c       | 26 --------------------------
+ include/hw/boards.h  |  3 ---
+ include/hw/i386/pc.h |  3 ---
+ 6 files changed, 104 deletions(-)
+
+diff --git a/hw/core/machine.c b/hw/core/machine.c
+index cc7c826593..54eb8376a7 100644
+--- a/hw/core/machine.c
++++ b/hw/core/machine.c
+@@ -246,30 +246,6 @@ GlobalProperty hw_compat_rhel_7_3[] = {
+ };
+ const size_t hw_compat_rhel_7_3_len = G_N_ELEMENTS(hw_compat_rhel_7_3);
+ 
+-/* Mostly like hw_compat_2_4 + 2_3 but:
+- *  we don't need "any_layout" as it has been backported to 7.2
+- */
+-GlobalProperty hw_compat_rhel_7_2[] = {
+-        { "virtio-blk-device", "scsi", "true" },
+-        { "e1000-82540em", "extra_mac_registers", "off" },
+-        { "virtio-pci", "x-disable-pcie", "on" },
+-        { "virtio-pci", "migrate-extra", "off" },
+-        { "fw_cfg_mem", "dma_enabled", "off" },
+-        { "fw_cfg_io", "dma_enabled", "off" },
+-        { "isa-fdc", "fallback", "144" },
+-        /* Optional because not all virtio-pci devices support legacy mode */
+-        { "virtio-pci", "disable-modern", "on", .optional = true },
+-        { "virtio-pci", "disable-legacy", "off", .optional = true },
+-        { TYPE_PCI_DEVICE, "x-pcie-lnksta-dllla", "off" },
+-        { "virtio-pci", "page-per-vq", "on" },
+-        /* hw_compat_rhel_7_2 - introduced with 2.10.0 */
+-        { "migration", "send-section-footer", "off" },
+-        /* hw_compat_rhel_7_2 - introduced with 2.10.0 */
+-        { "migration", "store-global-state", "off",
+-        },
+-};
+-const size_t hw_compat_rhel_7_2_len = G_N_ELEMENTS(hw_compat_rhel_7_2);
+-
+ GlobalProperty hw_compat_5_2[] = {
+     { "ICH9-LPC", "smm-compat", "on"},
+     { "PIIX4_PM", "smm-compat", "on"},
+diff --git a/hw/i386/pc.c b/hw/i386/pc.c
+index 3c1f5be4fa..938cb82818 100644
+--- a/hw/i386/pc.c
++++ b/hw/i386/pc.c
+@@ -519,28 +519,6 @@ GlobalProperty pc_rhel_7_3_compat[] = {
+ };
+ const size_t pc_rhel_7_3_compat_len = G_N_ELEMENTS(pc_rhel_7_3_compat);
+ 
+-GlobalProperty pc_rhel_7_2_compat[] = {
+-    { "phenom" "-" TYPE_X86_CPU, "rdtscp", "off"},
+-    { "qemu64" "-" TYPE_X86_CPU, "sse4a", "on" },
+-    { "qemu64" "-" TYPE_X86_CPU, "abm", "on" },
+-    { "Haswell-" TYPE_X86_CPU, "abm", "off" },
+-    { "Haswell-IBRS" "-" TYPE_X86_CPU, "abm", "off" },
+-    { "Haswell-noTSX-" TYPE_X86_CPU, "abm", "off" },
+-    { "Haswell-noTSX-IBRS" "-" TYPE_X86_CPU, "abm", "off" },
+-    { "Broadwell-" TYPE_X86_CPU, "abm", "off" },
+-    { "Broadwell-IBRS" "-" TYPE_X86_CPU, "abm", "off" },
+-    { "Broadwell-noTSX-" TYPE_X86_CPU, "abm", "off" },
+-    { "Broadwell-noTSX-IBRS" "-" TYPE_X86_CPU, "abm", "off" },
+-    { "host" "-" TYPE_X86_CPU, "host-cache-info", "on" },
+-    { TYPE_X86_CPU, "check", "off" },
+-    { "qemu32" "-" TYPE_X86_CPU, "popcnt", "on" },
+-    { TYPE_X86_CPU, "arat", "off" },
+-    { "usb-redir", "streams", "off" },
+-    { TYPE_X86_CPU, "fill-mtrr-mask", "off" },
+-    { "apic-common", "legacy-instance-id", "on" },
+-};
+-const size_t pc_rhel_7_2_compat_len = G_N_ELEMENTS(pc_rhel_7_2_compat);
+-
+ /*
+  * The PC_RHEL_*_COMPAT serve the same purpose for RHEL-7 machine
+  * types as the PC_COMPAT_* do for upstream types.
+diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
+index 2a6a28f1e5..201cbbdb01 100644
+--- a/hw/i386/pc_piix.c
++++ b/hw/i386/pc_piix.c
+@@ -1049,29 +1049,3 @@ static void pc_machine_rhel730_options(MachineClass *m)
+ 
+ DEFINE_PC_MACHINE(rhel730, "pc-i440fx-rhel7.3.0", pc_init_rhel730,
+                   pc_machine_rhel730_options);
+-
+-
+-static void pc_init_rhel720(MachineState *machine)
+-{
+-    pc_init1(machine, TYPE_I440FX_PCI_HOST_BRIDGE, \
+-             TYPE_I440FX_PCI_DEVICE);
+-}
+-
+-static void pc_machine_rhel720_options(MachineClass *m)
+-{
+-    PCMachineClass *pcmc = PC_MACHINE_CLASS(m);
+-    X86MachineClass *x86mc = X86_MACHINE_CLASS(m);
+-    pc_machine_rhel730_options(m);
+-    m->desc = "RHEL 7.2.0 PC (i440FX + PIIX, 1996)";
+-    /* From pc_i440fx_2_5_machine_options */
+-    x86mc->save_tsc_khz = false;
+-    m->legacy_fw_cfg_order = 1;
+-    /* Note: broken_reserved_end was already in 7.2 */
+-    /* From pc_i440fx_2_6_machine_options */
+-    pcmc->legacy_cpu_hotplug = true;
+-    compat_props_add(m->compat_props, hw_compat_rhel_7_2, hw_compat_rhel_7_2_len);
+-    compat_props_add(m->compat_props, pc_rhel_7_2_compat, pc_rhel_7_2_compat_len);
+-}
+-
+-DEFINE_PC_MACHINE(rhel720, "pc-i440fx-rhel7.2.0", pc_init_rhel720,
+-                  pc_machine_rhel720_options);
+diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
+index 11db32c537..0bc558e0b7 100644
+--- a/hw/ppc/spapr.c
++++ b/hw/ppc/spapr.c
+@@ -5397,32 +5397,6 @@ static void spapr_machine_rhel730sxxm_class_options(MachineClass *mc)
+ 
+ DEFINE_SPAPR_MACHINE(rhel730sxxm, "rhel7.3.0-sxxm", false);
+ 
+-/*
+- * pseries-rhel7.2.0
+- */
+-/* Should be like spapr_compat_2_5 + 2_4 + 2_3, but "dynamic-reconfiguration"
+- * has been backported to RHEL7_2 so we don't need it here.
+- */
+-
+-GlobalProperty spapr_compat_rhel7_2[] = {
+-    { "spapr-vlan", "use-rx-buffer-pools", "off" },
+-    { TYPE_SPAPR_PCI_HOST_BRIDGE, "ddw", "off" },
+-};
+-const size_t spapr_compat_rhel7_2_len = G_N_ELEMENTS(spapr_compat_rhel7_2);
+-
+-static void spapr_machine_rhel720_class_options(MachineClass *mc)
+-{
+-    SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
+-
+-    spapr_machine_rhel730_class_options(mc);
+-    smc->use_ohci_by_default = true;
+-    mc->has_hotpluggable_cpus = NULL;
+-    compat_props_add(mc->compat_props, hw_compat_rhel_7_2, hw_compat_rhel_7_2_len);
+-    compat_props_add(mc->compat_props, spapr_compat_rhel7_2, spapr_compat_rhel7_2_len);
+-}
+-
+-DEFINE_SPAPR_MACHINE(rhel720, "rhel7.2.0", false);
+-
+ static void spapr_machine_register_types(void)
+ {
+     type_register_static(&spapr_machine_info);
+diff --git a/include/hw/boards.h b/include/hw/boards.h
+index 070db0b9b1..43eb868ceb 100644
+--- a/include/hw/boards.h
++++ b/include/hw/boards.h
+@@ -442,7 +442,4 @@ extern const size_t hw_compat_rhel_7_4_len;
+ extern GlobalProperty hw_compat_rhel_7_3[];
+ extern const size_t hw_compat_rhel_7_3_len;
+ 
+-extern GlobalProperty hw_compat_rhel_7_2[];
+-extern const size_t hw_compat_rhel_7_2_len;
+-
+ #endif
+diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
+index 84d985f57c..c26c6dcc72 100644
+--- a/include/hw/i386/pc.h
++++ b/include/hw/i386/pc.h
+@@ -308,9 +308,6 @@ extern const size_t pc_rhel_7_4_compat_len;
+ extern GlobalProperty pc_rhel_7_3_compat[];
+ extern const size_t pc_rhel_7_3_compat_len;
+ 
+-extern GlobalProperty pc_rhel_7_2_compat[];
+-extern const size_t pc_rhel_7_2_compat_len;
+-
+ /* Helper for setting model-id for CPU models that changed model-id
+  * depending on QEMU versions up to QEMU 2.4.
+  */
+-- 
+2.27.0
+

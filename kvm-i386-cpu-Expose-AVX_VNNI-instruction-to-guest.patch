@@ -1,0 +1,82 @@
+From c24fcdf0712ef81ec25ca3a4a1144cca18303fbe Mon Sep 17 00:00:00 2001
+From: "plai@redhat.com" <plai@redhat.com>
+Date: Thu, 29 Jul 2021 07:42:19 -0400
+Subject: [PATCH 13/39] i386/cpu: Expose AVX_VNNI instruction to guest
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 32: Synchronize with RHEL-AV 8.5 release 27 to RHEL 9
+RH-Commit: [5/15] 56381e35a1dc06af7d457d1fe61b1c108dd25d06 (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 1957194
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+Expose AVX (VEX-encoded) versions of the Vector Neural Network
+Instructions to guest.
+
+The bit definition:
+CPUID.(EAX=7,ECX=1):EAX[bit 4] AVX_VNNI
+
+The following instructions are available when this feature is
+present in the guest.
+  1. VPDPBUS: Multiply and Add Unsigned and Signed Bytes
+  2. VPDPBUSDS: Multiply and Add Unsigned and Signed Bytes with Saturation
+  3. VPDPWSSD: Multiply and Add Signed Word Integers
+  4. VPDPWSSDS: Multiply and Add Signed Integers with Saturation
+
+As for the kvm related code, please reference Linux commit id 1085a6b585d7.
+
+The release document ref below link:
+https://software.intel.com/content/www/us/en/develop/download/\
+intel-architecture-instruction-set-extensions-programming-reference.html
+
+Signed-off-by: Yang Zhong <yang.zhong@intel.com>
+Message-Id: <20210407015609.22936-1-yang.zhong@intel.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+(cherry picked from commit c1826ea6a052084f2e6a0bae9dd5932a727df039)
+Signed-off-by: Paul Lai <plai@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ target/i386/cpu.c | 4 ++--
+ target/i386/cpu.h | 2 ++
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index da47c3e50e..0de2932c79 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -996,7 +996,7 @@ static FeatureWordInfo feature_word_info[FEATURE_WORDS] = {
+         .type = CPUID_FEATURE_WORD,
+         .feat_names = {
+             NULL, NULL, NULL, NULL,
+-            NULL, "avx512-bf16", NULL, NULL,
++            "avx-vnni", "avx512-bf16", NULL, NULL,
+             NULL, NULL, NULL, NULL,
+             NULL, NULL, NULL, NULL,
+             NULL, NULL, NULL, NULL,
+@@ -3284,7 +3284,7 @@ static X86CPUDefinition builtin_x86_defs[] = {
+             MSR_ARCH_CAP_SKIP_L1DFL_VMENTRY | MSR_ARCH_CAP_MDS_NO |
+             MSR_ARCH_CAP_PSCHANGE_MC_NO | MSR_ARCH_CAP_TAA_NO,
+         .features[FEAT_7_1_EAX] =
+-            CPUID_7_1_EAX_AVX512_BF16,
++            CPUID_7_1_EAX_AVX_VNNI | CPUID_7_1_EAX_AVX512_BF16,
+         /* XSAVES is added in version 2 */
+         .features[FEAT_XSAVE] =
+             CPUID_XSAVE_XSAVEOPT | CPUID_XSAVE_XSAVEC |
+diff --git a/target/i386/cpu.h b/target/i386/cpu.h
+index 570f916878..edc8984448 100644
+--- a/target/i386/cpu.h
++++ b/target/i386/cpu.h
+@@ -804,6 +804,8 @@ typedef uint64_t FeatureWordArray[FEATURE_WORDS];
+ /* Speculative Store Bypass Disable */
+ #define CPUID_7_0_EDX_SPEC_CTRL_SSBD    (1U << 31)
+ 
++/* AVX VNNI Instruction */
++#define CPUID_7_1_EAX_AVX_VNNI          (1U << 4)
+ /* AVX512 BFloat16 Instruction */
+ #define CPUID_7_1_EAX_AVX512_BF16       (1U << 5)
+ 
+-- 
+2.27.0
+

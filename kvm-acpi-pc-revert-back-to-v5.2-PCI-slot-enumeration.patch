@@ -1,0 +1,111 @@
+From 456bb6cb658b9d332fa0b5b91946916b48ed449e Mon Sep 17 00:00:00 2001
+From: Igor Mammedov <imammedo@redhat.com>
+Date: Thu, 29 Jul 2021 07:42:10 -0400
+Subject: [PATCH 09/39] acpi: pc: revert back to v5.2 PCI slot enumeration
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 32: Synchronize with RHEL-AV 8.5 release 27 to RHEL 9
+RH-Commit: [1/15] 57222343ccae17b99b4e166798d4d0eecca2e22b (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 1957194
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+Commit [1] moved _SUN variable from only hot-pluggable to
+all devices. This made linux kernel enumerate extra slots
+that weren't present before. If extra slot happens to be
+be enumerated first and there is a device in th same slot
+but on other bridge, linux kernel will add -N suffix to
+slot name of the later, thus changing NIC name compared to
+QEMU 5.2. This in some case confuses systemd, if it is
+using SLOT NIC naming scheme and interface name becomes
+not the same as it was under QEMU-5.2.
+
+Reproducer QEMU CLI:
+  -M pc-i440fx-5.2 -nodefaults \
+  -device pci-bridge,chassis_nr=1,id=pci.1,bus=pci.0,addr=0x3 \
+  -device virtio-net-pci,id=nic1,bus=pci.1,addr=0x1 \
+  -device virtio-net-pci,id=nic2,bus=pci.1,addr=0x2 \
+  -device virtio-net-pci,id=nic3,bus=pci.1,addr=0x3
+
+with RHEL8 guest produces following results:
+  v5.2:
+     kernel: virtio_net virtio0 ens1: renamed from eth0
+     kernel: virtio_net virtio2 ens3: renamed from eth2
+     kernel: virtio_net virtio1 enp1s2: renamed from eth1
+      (slot 2 is assigned to empty bus 0 slot and virtio1
+       is assigned to 2-2 slot, and renaming falls back,
+       for some reason, to path based naming scheme)
+
+  v6.0:
+     kernel: virtio_net virtio0 ens1: renamed from eth0
+     kernel: virtio_net virtio2 ens3: renamed from eth2
+     systemd-udevd[299]: Error changing net interface name 'eth1' to 'ens3': File exists
+     systemd-udevd[299]: could not rename interface '3' from 'eth1' to 'ens3': File exists
+      (with commit [1] kernel assigns virtio2 to 3-2 slot
+       since bridge advertises _SUN=0x3 and kernel assigns
+       slot 3 to bridge. Still it manages to rename virtio2
+       correctly to ens3, however systemd gets confused with virtio1
+       where slot allocation exactly the same (2-2) as in 5.2 case
+       and tries to rename it to ens3 which is rightfully taken by
+       virtio2)
+
+I'm not sure what breaks in systemd interface renaming (it probably
+should be investigated), but on QEMU side we can safely revert
+_SUN to 5.2 behavior (i.e. avoid cold-plugged bridges and non
+hot-pluggable device classes), without breaking acpi-index, which uses
+slot numbers but it doesn't have to use _SUN, it could use an arbitrary
+variable name that has the same slot value).
+It will help existing VMs to keep networking with non trivial
+configs in working order since systemd will do its interface
+renaming magic as it used to do.
+
+1)
+Fixes: b7f23f62e40 (pci: acpi: add _DSM method to PCI devices)
+Signed-off-by: Igor Mammedov <imammedo@redhat.com>
+Message-Id: <20210624204229.998824-3-imammedo@redhat.com>
+Reviewed-by: Stefan Hajnoczi <stefanha@redhat.com>
+Tested-by: John Sucaet <john.sucaet@ekinops.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit 7193d7cdd93e50f0e5f09803b98d27d3f9b147ac)
+Signed-off-by: Igor Mammedov <imammedo@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/i386/acpi-build.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/hw/i386/acpi-build.c b/hw/i386/acpi-build.c
+index de98750aef..dbee0cd3bc 100644
+--- a/hw/i386/acpi-build.c
++++ b/hw/i386/acpi-build.c
+@@ -432,11 +432,15 @@ static void build_append_pci_bus_devices(Aml *parent_scope, PCIBus *bus,
+         aml_append(dev, aml_name_decl("_ADR", aml_int(slot << 16)));
+ 
+         if (bsel) {
+-            aml_append(dev, aml_name_decl("_SUN", aml_int(slot)));
++            /*
++             * Can't declare _SUN here for every device as it changes 'slot'
++             * enumeration order in linux kernel, so use another variable for it
++             */
++            aml_append(dev, aml_name_decl("ASUN", aml_int(slot)));
+             method = aml_method("_DSM", 4, AML_SERIALIZED);
+             aml_append(method, aml_return(
+                 aml_call6("PDSM", aml_arg(0), aml_arg(1), aml_arg(2),
+-                          aml_arg(3), aml_name("BSEL"), aml_name("_SUN"))
++                          aml_arg(3), aml_name("BSEL"), aml_name("ASUN"))
+             ));
+             aml_append(dev, method);
+         }
+@@ -463,6 +467,7 @@ static void build_append_pci_bus_devices(Aml *parent_scope, PCIBus *bus,
+             aml_append(method, aml_return(aml_int(s3d)));
+             aml_append(dev, method);
+         } else if (hotplug_enabled_dev) {
++            aml_append(dev, aml_name_decl("_SUN", aml_int(slot)));
+             /* add _EJ0 to make slot hotpluggable  */
+             method = aml_method("_EJ0", 1, AML_NOTSERIALIZED);
+             aml_append(method,
+-- 
+2.27.0
+

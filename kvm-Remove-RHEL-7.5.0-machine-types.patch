@@ -1,0 +1,210 @@
+From 6de2502ef6f2ee68842bed7d09b0a2c7ac57b11b Mon Sep 17 00:00:00 2001
+From: Juan Quintela <quintela@redhat.com>
+Date: Tue, 3 Aug 2021 12:24:36 +0200
+Subject: [PATCH 08/39] Remove RHEL 7.5.0 machine types
+
+RH-Author: quintela1 <quintela@redhat.com>
+RH-MergeRequest: 30: Remove RHEL 7.x.0 machine types
+RH-Commit: [6/6] a4a72853fda905fe5036520f6095032e308cb51f (juan.quintela/qemu-kvm)
+RH-Bugzilla: 1968519
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/core/machine.c    | 20 --------------------
+ hw/i386/pc.c         | 18 ------------------
+ hw/i386/pc_piix.c    | 20 --------------------
+ hw/i386/pc_q35.c     | 20 --------------------
+ hw/ppc/spapr.c       | 31 -------------------------------
+ include/hw/boards.h  |  3 ---
+ include/hw/i386/pc.h |  3 ---
+ 7 files changed, 115 deletions(-)
+
+diff --git a/hw/core/machine.c b/hw/core/machine.c
+index 6dc2651d73..b271389681 100644
+--- a/hw/core/machine.c
++++ b/hw/core/machine.c
+@@ -195,26 +195,6 @@ GlobalProperty hw_compat_rhel_7_6[] = {
+ };
+ const size_t hw_compat_rhel_7_6_len = G_N_ELEMENTS(hw_compat_rhel_7_6);
+ 
+-/* The same as hw_compat_2_11 + hw_compat_2_10 */
+-GlobalProperty hw_compat_rhel_7_5[] = {
+-    /* hw_compat_rhel_7_5 from hw_compat_2_11 */
+-    { "hpet", "hpet-offset-saved", "false" },
+-    /* hw_compat_rhel_7_5 from hw_compat_2_11 */
+-    { "virtio-blk-pci", "vectors", "2" },
+-    /* hw_compat_rhel_7_5 from hw_compat_2_11 */
+-    { "vhost-user-blk-pci", "vectors", "2" },
+-    /* hw_compat_rhel_7_5 from hw_compat_2_11
+-       bz 1608778 modified for our naming */
+-    { "e1000-82540em", "migrate_tso_props", "off" },
+-    /* hw_compat_rhel_7_5 from hw_compat_2_10 */
+-    { "virtio-mouse-device", "wheel-axis", "false" },
+-    /* hw_compat_rhel_7_5 from hw_compat_2_10 */
+-    { "virtio-tablet-device", "wheel-axis", "false" },
+-    { "cirrus-vga", "vgamem_mb", "16" },
+-    { "migration", "decompress-error-check", "off" },
+-};
+-const size_t hw_compat_rhel_7_5_len = G_N_ELEMENTS(hw_compat_rhel_7_5);
+-
+ GlobalProperty hw_compat_5_2[] = {
+     { "ICH9-LPC", "smm-compat", "on"},
+     { "PIIX4_PM", "smm-compat", "on"},
+diff --git a/hw/i386/pc.c b/hw/i386/pc.c
+index 6b39abce02..88972dc3e6 100644
+--- a/hw/i386/pc.c
++++ b/hw/i386/pc.c
+@@ -459,24 +459,6 @@ GlobalProperty pc_rhel_7_6_compat[] = {
+ };
+ const size_t pc_rhel_7_6_compat_len = G_N_ELEMENTS(pc_rhel_7_6_compat);
+ 
+-/* Similar to PC_COMPAT_2_11 + PC_COMPAT_2_10, but:
+- * - x-hv-max-vps was backported to 7.5
+- * - x-pci-hole64-fix was backported to 7.5
+- */
+-GlobalProperty pc_rhel_7_5_compat[] = {
+-    /* pc_rhel_7_5_compat from pc_compat_2_11 */  
+-    { "Skylake-Server" "-" TYPE_X86_CPU, "clflushopt", "off" },
+-    /* pc_rhel_7_5_compat from pc_compat_2_12 */  
+-    { TYPE_X86_CPU, "legacy-cache", "on" },
+-    /* pc_rhel_7_5_compat from pc_compat_2_12 */  
+-    { TYPE_X86_CPU, "topoext", "off" },
+-    /* pc_rhel_7_5_compat from pc_compat_2_12 */  
+-    { "EPYC-" TYPE_X86_CPU, "xlevel", stringify(0x8000000a) },
+-    /* pc_rhel_7_5_compat from pc_compat_2_12 */  
+-    { "EPYC-IBPB-" TYPE_X86_CPU, "xlevel", stringify(0x8000000a) },
+-};
+-const size_t pc_rhel_7_5_compat_len = G_N_ELEMENTS(pc_rhel_7_5_compat);
+-
+ /*
+  * The PC_RHEL_*_COMPAT serve the same purpose for RHEL-7 machine
+  * types as the PC_COMPAT_* do for upstream types.
+diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
+index fe2ac7593a..ba7926cfae 100644
+--- a/hw/i386/pc_piix.c
++++ b/hw/i386/pc_piix.c
+@@ -991,23 +991,3 @@ static void pc_machine_rhel760_options(MachineClass *m)
+ 
+ DEFINE_PC_MACHINE(rhel760, "pc-i440fx-rhel7.6.0", pc_init_rhel760,
+                   pc_machine_rhel760_options);
+-
+-static void pc_init_rhel750(MachineState *machine)
+-{
+-    pc_init1(machine, TYPE_I440FX_PCI_HOST_BRIDGE, \
+-             TYPE_I440FX_PCI_DEVICE);
+-}
+-
+-static void pc_machine_rhel750_options(MachineClass *m)
+-{
+-    pc_machine_rhel760_options(m);
+-    m->alias = NULL;
+-    m->is_default = 0;
+-    m->desc = "RHEL 7.5.0 PC (i440FX + PIIX, 1996)";
+-    m->auto_enable_numa_with_memhp = false;
+-    compat_props_add(m->compat_props, hw_compat_rhel_7_5, hw_compat_rhel_7_5_len);
+-    compat_props_add(m->compat_props, pc_rhel_7_5_compat, pc_rhel_7_5_compat_len);
+-}
+-
+-DEFINE_PC_MACHINE(rhel750, "pc-i440fx-rhel7.5.0", pc_init_rhel750,
+-                  pc_machine_rhel750_options);
+diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
+index 9958ed9184..f93825d603 100644
+--- a/hw/i386/pc_q35.c
++++ b/hw/i386/pc_q35.c
+@@ -754,23 +754,3 @@ static void pc_q35_machine_rhel760_options(MachineClass *m)
+ 
+ DEFINE_PC_MACHINE(q35_rhel760, "pc-q35-rhel7.6.0", pc_q35_init_rhel760,
+                   pc_q35_machine_rhel760_options);
+-
+-static void pc_q35_init_rhel750(MachineState *machine)
+-{
+-    pc_q35_init(machine);
+-}
+-
+-static void pc_q35_machine_rhel750_options(MachineClass *m)
+-{
+-    PCMachineClass *pcmc = PC_MACHINE_CLASS(m);
+-    pc_q35_machine_rhel760_options(m);
+-    m->alias = NULL;
+-    m->desc = "RHEL-7.5.0 PC (Q35 + ICH9, 2009)";
+-    m->auto_enable_numa_with_memhp = false;
+-    pcmc->default_nic_model = "e1000";
+-    compat_props_add(m->compat_props, hw_compat_rhel_7_5, hw_compat_rhel_7_5_len);
+-    compat_props_add(m->compat_props, pc_rhel_7_5_compat, pc_rhel_7_5_compat_len);
+-}
+-
+-DEFINE_PC_MACHINE(q35_rhel750, "pc-q35-rhel7.5.0", pc_q35_init_rhel750,
+-                  pc_q35_machine_rhel750_options);
+diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
+index bdabbf8b81..cda75a8cfe 100644
+--- a/hw/ppc/spapr.c
++++ b/hw/ppc/spapr.c
+@@ -5282,35 +5282,4 @@ static void spapr_machine_rhel760sxxm_class_options(MachineClass *mc)
+ 
+ DEFINE_SPAPR_MACHINE(rhel760sxxm, "rhel7.6.0-sxxm", false);
+ 
+-static void spapr_machine_rhel750_class_options(MachineClass *mc)
+-{
+-    spapr_machine_rhel760_class_options(mc);
+-    compat_props_add(mc->compat_props, hw_compat_rhel_7_5, hw_compat_rhel_7_5_len);
+-
+-}
+-
+-DEFINE_SPAPR_MACHINE(rhel750, "rhel7.5.0", false);
+-
+-/*
+- * pseries-rhel7.5.0-sxxm
+- *
+- * pseries-rhel7.5.0 with speculative execution exploit mitigations enabled by default
+- */
+-
+-static void spapr_machine_rhel750sxxm_class_options(MachineClass *mc)
+-{
+-    SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
+-
+-    spapr_machine_rhel750_class_options(mc);
+-    smc->default_caps.caps[SPAPR_CAP_CFPC] = SPAPR_CAP_WORKAROUND;
+-    smc->default_caps.caps[SPAPR_CAP_SBBC] = SPAPR_CAP_WORKAROUND;
+-    smc->default_caps.caps[SPAPR_CAP_IBS] = SPAPR_CAP_FIXED_CCD;
+-}
+-
+-DEFINE_SPAPR_MACHINE(rhel750sxxm, "rhel7.5.0-sxxm", false);
+-static void spapr_machine_register_types(void)
+-{
+-    type_register_static(&spapr_machine_info);
+-}
+-
+ type_init(spapr_machine_register_types)
+diff --git a/include/hw/boards.h b/include/hw/boards.h
+index f27170b6fb..73f7dcdb35 100644
+--- a/include/hw/boards.h
++++ b/include/hw/boards.h
+@@ -433,7 +433,4 @@ extern const size_t hw_compat_rhel_8_0_len;
+ extern GlobalProperty hw_compat_rhel_7_6[];
+ extern const size_t hw_compat_rhel_7_6_len;
+ 
+-extern GlobalProperty hw_compat_rhel_7_5[];
+-extern const size_t hw_compat_rhel_7_5_len;
+-
+ #endif
+diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
+index ff93dfb372..549e581a98 100644
+--- a/include/hw/i386/pc.h
++++ b/include/hw/i386/pc.h
+@@ -296,9 +296,6 @@ extern const size_t pc_rhel_8_0_compat_len;
+ extern GlobalProperty pc_rhel_7_6_compat[];
+ extern const size_t pc_rhel_7_6_compat_len;
+ 
+-extern GlobalProperty pc_rhel_7_5_compat[];
+-extern const size_t pc_rhel_7_5_compat_len;
+-
+ /* Helper for setting model-id for CPU models that changed model-id
+  * depending on QEMU versions up to QEMU 2.4.
+  */
+-- 
+2.27.0
+

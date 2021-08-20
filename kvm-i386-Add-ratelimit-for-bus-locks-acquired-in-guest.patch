@@ -1,0 +1,219 @@
+From e92a6c64cb4b1437c5b75f25a638dbb6eb041383 Mon Sep 17 00:00:00 2001
+From: "plai@redhat.com" <plai@redhat.com>
+Date: Thu, 29 Jul 2021 07:42:27 -0400
+Subject: [PATCH 16/39] i386: Add ratelimit for bus locks acquired in guest
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 32: Synchronize with RHEL-AV 8.5 release 27 to RHEL 9
+RH-Commit: [8/15] 2b8f01e05e44388c2f90d5281a9fe5537ab2433d (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 1957194
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Igor Mammedov <imammedo@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+A bus lock is acquired through either split locked access to writeback
+(WB) memory or any locked access to non-WB memory. It is typically >1000
+cycles slower than an atomic operation within a cache and can also
+disrupts performance on other cores.
+
+Virtual Machines can exploit bus locks to degrade the performance of
+system. To address this kind of performance DOS attack coming from the
+VMs, bus lock VM exit is introduced in KVM and it can report the bus
+locks detected in guest. If enabled in KVM, it would exit to the
+userspace to let the user enforce throttling policies once bus locks
+acquired in VMs.
+
+The availability of bus lock VM exit can be detected through the
+KVM_CAP_X86_BUS_LOCK_EXIT. The returned bitmap contains the potential
+policies supported by KVM. The field KVM_BUS_LOCK_DETECTION_EXIT in
+bitmap is the only supported strategy at present. It indicates that KVM
+will exit to userspace to handle the bus locks.
+
+This patch adds a ratelimit on the bus locks acquired in guest as a
+mitigation policy.
+
+Introduce a new field "bus_lock_ratelimit" to record the limited speed
+of bus locks in the target VM. The user can specify it through the
+"bus-lock-ratelimit" as a machine property. In current implementation,
+the default value of the speed is 0 per second, which means no
+restrictions on the bus locks.
+
+As for ratelimit on detected bus locks, simply set the ratelimit
+interval to 1s and restrict the quota of bus lock occurence to the value
+of "bus_lock_ratelimit". A potential alternative is to introduce the
+time slice as a property which can help the user achieve more precise
+control.
+
+The detail of bus lock VM exit can be found in spec:
+https://software.intel.com/content/www/us/en/develop/download/intel-architecture-instruction-set-extensions-programming-reference.html
+
+Signed-off-by: Chenyi Qiang <chenyi.qiang@intel.com>
+Message-Id: <20210521043820.29678-1-chenyi.qiang@intel.com>
+Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
+(cherry picked from commit 035d1ef26565f8f8eae058c37f5731a9ae304b96)
+Signed-off-by: Paul Lai <plai@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/i386/x86.c         | 24 ++++++++++++++++++++++++
+ include/hw/i386/x86.h |  8 ++++++++
+ target/i386/kvm/kvm.c | 41 +++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 73 insertions(+)
+
+diff --git a/hw/i386/x86.c b/hw/i386/x86.c
+index ed796fe6ba..d30cf27e29 100644
+--- a/hw/i386/x86.c
++++ b/hw/i386/x86.c
+@@ -1246,6 +1246,23 @@ static void x86_machine_set_oem_table_id(Object *obj, const char *value,
+     strncpy(x86ms->oem_table_id, value, 8);
+ }
+ 
++static void x86_machine_get_bus_lock_ratelimit(Object *obj, Visitor *v,
++                                const char *name, void *opaque, Error **errp)
++{
++    X86MachineState *x86ms = X86_MACHINE(obj);
++    uint64_t bus_lock_ratelimit = x86ms->bus_lock_ratelimit;
++
++    visit_type_uint64(v, name, &bus_lock_ratelimit, errp);
++}
++
++static void x86_machine_set_bus_lock_ratelimit(Object *obj, Visitor *v,
++                               const char *name, void *opaque, Error **errp)
++{
++    X86MachineState *x86ms = X86_MACHINE(obj);
++
++    visit_type_uint64(v, name, &x86ms->bus_lock_ratelimit, errp);
++}
++
+ static void x86_machine_initfn(Object *obj)
+ {
+     X86MachineState *x86ms = X86_MACHINE(obj);
+@@ -1256,6 +1273,7 @@ static void x86_machine_initfn(Object *obj)
+     x86ms->pci_irq_mask = ACPI_BUILD_PCI_IRQS;
+     x86ms->oem_id = g_strndup(ACPI_BUILD_APPNAME6, 6);
+     x86ms->oem_table_id = g_strndup(ACPI_BUILD_APPNAME8, 8);
++    x86ms->bus_lock_ratelimit = 0;
+ }
+ 
+ static void x86_machine_class_init(ObjectClass *oc, void *data)
+@@ -1299,6 +1317,12 @@ static void x86_machine_class_init(ObjectClass *oc, void *data)
+                                           "Override the default value of field OEM Table ID "
+                                           "in ACPI table header."
+                                           "The string may be up to 8 bytes in size");
++
++    object_class_property_add(oc, X86_MACHINE_BUS_LOCK_RATELIMIT, "uint64_t",
++                                x86_machine_get_bus_lock_ratelimit,
++                                x86_machine_set_bus_lock_ratelimit, NULL, NULL);
++    object_class_property_set_description(oc, X86_MACHINE_BUS_LOCK_RATELIMIT,
++            "Set the ratelimit for the bus locks acquired in VMs");
+ }
+ 
+ static const TypeInfo x86_machine_info = {
+diff --git a/include/hw/i386/x86.h b/include/hw/i386/x86.h
+index c09b648dff..25a1f16f01 100644
+--- a/include/hw/i386/x86.h
++++ b/include/hw/i386/x86.h
+@@ -74,12 +74,20 @@ struct X86MachineState {
+      * will be translated to MSI messages in the address space.
+      */
+     AddressSpace *ioapic_as;
++
++    /*
++     * Ratelimit enforced on detected bus locks in guest.
++     * The default value of the bus_lock_ratelimit is 0 per second,
++     * which means no limitation on the guest's bus locks.
++     */
++    uint64_t bus_lock_ratelimit;
+ };
+ 
+ #define X86_MACHINE_SMM              "smm"
+ #define X86_MACHINE_ACPI             "acpi"
+ #define X86_MACHINE_OEM_ID           "x-oem-id"
+ #define X86_MACHINE_OEM_TABLE_ID     "x-oem-table-id"
++#define X86_MACHINE_BUS_LOCK_RATELIMIT  "bus-lock-ratelimit"
+ 
+ #define TYPE_X86_MACHINE   MACHINE_TYPE_NAME("x86")
+ OBJECT_DECLARE_TYPE(X86MachineState, X86MachineClass, X86_MACHINE)
+diff --git a/target/i386/kvm/kvm.c b/target/i386/kvm/kvm.c
+index 4c69c2cb4b..af030af116 100644
+--- a/target/i386/kvm/kvm.c
++++ b/target/i386/kvm/kvm.c
+@@ -130,6 +130,9 @@ static bool has_msr_mcg_ext_ctl;
+ static struct kvm_cpuid2 *cpuid_cache;
+ static struct kvm_msr_list *kvm_feature_msrs;
+ 
++#define BUS_LOCK_SLICE_TIME 1000000000ULL /* ns */
++static RateLimit bus_lock_ratelimit_ctrl;
++
+ int kvm_has_pit_state2(void)
+ {
+     return has_pit_state2;
+@@ -2267,6 +2270,28 @@ int kvm_arch_init(MachineState *ms, KVMState *s)
+         }
+     }
+ 
++    if (object_dynamic_cast(OBJECT(ms), TYPE_X86_MACHINE)) {
++        X86MachineState *x86ms = X86_MACHINE(ms);
++
++        if (x86ms->bus_lock_ratelimit > 0) {
++            ret = kvm_check_extension(s, KVM_CAP_X86_BUS_LOCK_EXIT);
++            if (!(ret & KVM_BUS_LOCK_DETECTION_EXIT)) {
++                error_report("kvm: bus lock detection unsupported");
++                return -ENOTSUP;
++            }
++            ret = kvm_vm_enable_cap(s, KVM_CAP_X86_BUS_LOCK_EXIT, 0,
++                                    KVM_BUS_LOCK_DETECTION_EXIT);
++            if (ret < 0) {
++                error_report("kvm: Failed to enable bus lock detection cap: %s",
++                             strerror(-ret));
++                return ret;
++            }
++            ratelimit_init(&bus_lock_ratelimit_ctrl);
++            ratelimit_set_speed(&bus_lock_ratelimit_ctrl,
++                                x86ms->bus_lock_ratelimit, BUS_LOCK_SLICE_TIME);
++        }
++    }
++
+     return 0;
+ }
+ 
+@@ -4225,6 +4250,15 @@ void kvm_arch_pre_run(CPUState *cpu, struct kvm_run *run)
+     }
+ }
+ 
++static void kvm_rate_limit_on_bus_lock(void)
++{
++    uint64_t delay_ns = ratelimit_calculate_delay(&bus_lock_ratelimit_ctrl, 1);
++
++    if (delay_ns) {
++        g_usleep(delay_ns / SCALE_US);
++    }
++}
++
+ MemTxAttrs kvm_arch_post_run(CPUState *cpu, struct kvm_run *run)
+ {
+     X86CPU *x86_cpu = X86_CPU(cpu);
+@@ -4240,6 +4274,9 @@ MemTxAttrs kvm_arch_post_run(CPUState *cpu, struct kvm_run *run)
+     } else {
+         env->eflags &= ~IF_MASK;
+     }
++    if (run->flags & KVM_RUN_X86_BUS_LOCK) {
++        kvm_rate_limit_on_bus_lock();
++    }
+ 
+     /* We need to protect the apic state against concurrent accesses from
+      * different threads in case the userspace irqchip is used. */
+@@ -4598,6 +4635,10 @@ int kvm_arch_handle_exit(CPUState *cs, struct kvm_run *run)
+         ioapic_eoi_broadcast(run->eoi.vector);
+         ret = 0;
+         break;
++    case KVM_EXIT_X86_BUS_LOCK:
++        /* already handled in kvm_arch_post_run */
++        ret = 0;
++        break;
+     default:
+         fprintf(stderr, "KVM: unknown exit reason %d\n", run->exit_reason);
+         ret = -1;
+-- 
+2.27.0
+
