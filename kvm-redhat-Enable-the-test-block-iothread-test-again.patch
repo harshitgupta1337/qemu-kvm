@@ -1,0 +1,43 @@
+From 4231cac75289acd643c2daaa2dece485b958bef1 Mon Sep 17 00:00:00 2001
+From: Thomas Huth <thuth@redhat.com>
+Date: Fri, 20 Aug 2021 10:27:12 +0200
+Subject: [PATCH 4/4] redhat: Enable the 'test-block-iothread' test again
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Thomas Huth <thuth@redhat.com>
+RH-MergeRequest: 36: Disable LTO on non-x86 architectures
+RH-Commit: [2/2] e010396f3ee0f3f39ff8bcd4749f8ae2e8624980 (thuth/qemu-kvm-cs9)
+RH-Bugzilla: 1950192
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1950192
+
+Now that we disabled LTO to fix the coroutines/iothreads on s390x and
+aarch64, we can also enable the 'test-block-iothread' test again.
+
+Signed-off-by: Thomas Huth <thuth@redhat.com>
+---
+ tests/unit/meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tests/unit/meson.build b/tests/unit/meson.build
+index 244d35f5d4..b3bc2109da 100644
+--- a/tests/unit/meson.build
++++ b/tests/unit/meson.build
+@@ -65,7 +65,7 @@ if have_block
+     'test-blockjob': [testblock],
+     'test-blockjob-txn': [testblock],
+     'test-block-backend': [testblock],
+-#    'test-block-iothread': [testblock],
++    'test-block-iothread': [testblock],
+     'test-write-threshold': [testblock],
+     'test-crypto-hash': [crypto],
+     'test-crypto-hmac': [crypto],
+-- 
+2.27.0
+

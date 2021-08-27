@@ -5,6 +5,12 @@
 %global usbredir_version 0.7.1
 %global ipxe_version 20200823-5.git4bd064de
 
+# LTO does not work with the coroutines of QEMU on non-x86 architectures
+# (see BZ 1952483 and 1950192 for more information)
+%ifnarch x86_64
+    %global _lto_cflags %%{nil}
+%endif
+
 %global have_usbredir 1
 %global have_opengl   1
 %global have_fdt      0
@@ -125,7 +131,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.0.0
-Release: 12%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 13%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -375,6 +381,12 @@ Patch114: kvm-pc-bios-s390-ccw-Fix-inline-assembly-for-older-versi.patch
 # For bz#1939509 - QEMU: enable SafeStack
 # For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
 Patch115: kvm-configure-Fix-endianess-test-with-LTO.patch
+# For bz#1951814 - RFE: Warning when using qcow2-v2 (compat=0.10)
+Patch116: kvm-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
+# For bz#1995819 - RFE: Remove ac97 audio support from QEMU
+Patch117: kvm-disable-ac97-audio.patch
+# For bz#1950192 - RHEL9: when ioeventfd=off and 8.4guest, (qemu) qemu-kvm: ../util/qemu-coroutine-lock.c:57: qemu_co_queue_wait_impl: Assertion `qemu_in_coroutine()' failed.
+Patch118: kvm-redhat-Enable-the-test-block-iothread-test-again.patch
 
 # Source-git patches
 
@@ -1348,6 +1360,18 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Fri Aug 27 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-13
+- kvm-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch [bz#1951814]
+- kvm-disable-ac97-audio.patch [bz#1995819]
+- kvm-redhat-Disable-LTO-on-non-x86-architectures.patch [bz#1950192]
+- kvm-redhat-Enable-the-test-block-iothread-test-again.patch [bz#1950192]
+- Resolves: bz#1951814
+  (RFE: Warning when using qcow2-v2 (compat=0.10))
+- Resolves: bz#1995819
+  (RFE: Remove ac97 audio support from QEMU)
+- Resolves: bz#1950192
+  (RHEL9: when ioeventfd=off and 8.4guest, (qemu) qemu-kvm: ../util/qemu-coroutine-lock.c:57: qemu_co_queue_wait_impl: Assertion `qemu_in_coroutine()' failed.)
+
 * Fri Aug 20 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-12.el9
 - kvm-migration-Move-yank-outside-qemu_start_incoming_migr.patch [bz#1974683]
 - kvm-migration-Allow-reset-of-postcopy_recover_triggered-.patch [bz#1974683]
