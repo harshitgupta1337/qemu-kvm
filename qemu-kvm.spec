@@ -182,6 +182,8 @@ Patch0016: 0016-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0017: 0017-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0018: 0018-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
 
+# Source-git patches
+
 %if %{have_clang}
 BuildRequires: clang
 %if %{have_safe_stack}
