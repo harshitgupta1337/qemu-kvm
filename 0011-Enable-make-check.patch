@@ -1,4 +1,4 @@
-From 5f6a55a218029af944a8d02ab9264647315890d3 Mon Sep 17 00:00:00 2001
+From e05f30c4899bfec4084cda3223e7141ddc97be6f Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 2 Sep 2020 09:39:41 +0200
 Subject: Enable make check
@@ -8,24 +8,27 @@ make check run during build.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 ---
- redhat/qemu-kvm.spec.template       |  6 ++----
+Rebase changes (6.1.0):
+- removed unnecessary test changes
+
+Merged patches (6.1.0):
+- 2f129df7d3 redhat: Enable the 'test-block-iothread' test again
+---
+ .distro/qemu-kvm.spec.template      |  5 ++---
  tests/qemu-iotests/051              |  8 ++++----
  tests/qtest/bios-tables-test.c      |  6 +++---
  tests/qtest/boot-serial-test.c      |  6 +++++-
  tests/qtest/cdrom-test.c            |  4 ++++
  tests/qtest/cpu-plug-test.c         |  4 ++--
- tests/qtest/e1000-test.c            |  2 ++
  tests/qtest/fuzz-e1000e-test.c      |  2 +-
  tests/qtest/fuzz-virtio-scsi-test.c |  2 +-
  tests/qtest/hd-geo-test.c           |  4 ++++
- tests/qtest/libqos/meson.build      |  2 +-
  tests/qtest/lpc-ich9-test.c         |  2 +-
  tests/qtest/meson.build             | 11 +++--------
  tests/qtest/prom-env-test.c         |  4 ++++
  tests/qtest/test-x86-cpuid-compat.c |  2 ++
  tests/qtest/usb-hcd-xhci-test.c     |  4 ++++
- tests/unit/meson.build              |  2 +-
- 17 files changed, 44 insertions(+), 27 deletions(-)
+ 14 files changed, 40 insertions(+), 24 deletions(-)
 
 diff --git a/tests/qemu-iotests/051 b/tests/qemu-iotests/051
 index 7bf29343d7..fd63402d78 100755
@@ -56,10 +59,10 @@ index 7bf29343d7..fd63402d78 100755
       *)
          ;;
 diff --git a/tests/qtest/bios-tables-test.c b/tests/qtest/bios-tables-test.c
-index 156d4174aa..b4a1074b77 100644
+index 51d3a4e239..fe01fd8b7d 100644
 --- a/tests/qtest/bios-tables-test.c
 +++ b/tests/qtest/bios-tables-test.c
-@@ -1299,7 +1299,7 @@ static void test_acpi_virt_tcg_numamem(void)
+@@ -1303,7 +1303,7 @@ static void test_acpi_virt_tcg_numamem(void)
      free_test_data(&data);
  
  }
@@ -68,7 +71,7 @@ index 156d4174aa..b4a1074b77 100644
  static void test_acpi_virt_tcg_pxb(void)
  {
      test_data data = {
-@@ -1331,7 +1331,7 @@ static void test_acpi_virt_tcg_pxb(void)
+@@ -1335,7 +1335,7 @@ static void test_acpi_virt_tcg_pxb(void)
  
      free_test_data(&data);
  }
@@ -77,7 +80,7 @@ index 156d4174aa..b4a1074b77 100644
  static void test_acpi_tcg_acpi_hmat(const char *machine)
  {
      test_data data;
-@@ -1561,7 +1561,7 @@ int main(int argc, char *argv[])
+@@ -1565,7 +1565,7 @@ int main(int argc, char *argv[])
          qtest_add_func("acpi/virt", test_acpi_virt_tcg);
          qtest_add_func("acpi/virt/numamem", test_acpi_virt_tcg_numamem);
          qtest_add_func("acpi/virt/memhp", test_acpi_virt_tcg_memhp);
@@ -87,10 +90,10 @@ index 156d4174aa..b4a1074b77 100644
      }
      ret = g_test_run();
 diff --git a/tests/qtest/boot-serial-test.c b/tests/qtest/boot-serial-test.c
-index d74509b1c5..a64c55e384 100644
+index 96849cec91..81df62e01a 100644
 --- a/tests/qtest/boot-serial-test.c
 +++ b/tests/qtest/boot-serial-test.c
-@@ -120,19 +120,23 @@ static testdef_t tests[] = {
+@@ -148,19 +148,23 @@ static testdef_t tests[] = {
      { "ppc", "g3beige", "", "PowerPC,750" },
      { "ppc", "mac99", "", "PowerPC,G4" },
      { "ppc", "sam460ex", "-m 256", "DRAM:  256 MiB" },
@@ -166,22 +169,6 @@ index a1c689414b..a8f076711c 100644
          return;
      }
      data = g_new(PlugTestData, 1);
-diff --git a/tests/qtest/e1000-test.c b/tests/qtest/e1000-test.c
-index ea286d1793..a1847ac8ed 100644
---- a/tests/qtest/e1000-test.c
-+++ b/tests/qtest/e1000-test.c
-@@ -22,9 +22,11 @@ struct QE1000 {
- 
- static const char *models[] = {
-     "e1000",
-+#if 0 /* Disabled for Red Hat Enterprise Linux */
-     "e1000-82540em",
-     "e1000-82544gc",
-     "e1000-82545em",
-+#endif
- };
- 
- static void *e1000_get_driver(void *obj, const char *interface)
 diff --git a/tests/qtest/fuzz-e1000e-test.c b/tests/qtest/fuzz-e1000e-test.c
 index 66229e6096..947fba73b7 100644
 --- a/tests/qtest/fuzz-e1000e-test.c
@@ -209,7 +196,7 @@ index aaf6d10e18..43727d62ac 100644
  
      qtest_outl(s, 0xcf8, 0x80001811);
 diff --git a/tests/qtest/hd-geo-test.c b/tests/qtest/hd-geo-test.c
-index f7b7cfbc2d..99cccf8638 100644
+index 113126ae06..999ef2aace 100644
 --- a/tests/qtest/hd-geo-test.c
 +++ b/tests/qtest/hd-geo-test.c
 @@ -737,6 +737,7 @@ static void test_override_ide(void)
@@ -240,19 +227,6 @@ index f7b7cfbc2d..99cccf8638 100644
          qtest_add_func("hd-geo/override/virtio_blk", test_override_virtio_blk);
          qtest_add_func("hd-geo/override/zero_chs", test_override_zero_chs);
          qtest_add_func("hd-geo/override/scsi_hot_unplug",
-diff --git a/tests/qtest/libqos/meson.build b/tests/qtest/libqos/meson.build
-index 1cddf5bdaa..2f4a564105 100644
---- a/tests/qtest/libqos/meson.build
-+++ b/tests/qtest/libqos/meson.build
-@@ -41,7 +41,7 @@ libqos_srcs = files('../libqtest.c',
-         'virtio-serial.c',
- 
-         # qgraph machines:
--        'aarch64-xlnx-zcu102-machine.c',
-+#        'aarch64-xlnx-zcu102-machine.c',
-         'arm-imx25-pdk-machine.c',
-         'arm-n800-machine.c',
-         'arm-raspi2-machine.c',
 diff --git a/tests/qtest/lpc-ich9-test.c b/tests/qtest/lpc-ich9-test.c
 index fe0bef9980..7a9d51579b 100644
 --- a/tests/qtest/lpc-ich9-test.c
@@ -267,10 +241,10 @@ index fe0bef9980..7a9d51579b 100644
  
      qtest_outl(s, 0xcf8, 0x8000f840); /* PMBASE */
 diff --git a/tests/qtest/meson.build b/tests/qtest/meson.build
-index 0c76738921..b9a7426a7b 100644
+index 2bc3efd49f..53ce4b6416 100644
 --- a/tests/qtest/meson.build
 +++ b/tests/qtest/meson.build
-@@ -71,7 +71,6 @@ qtests_i386 = \
+@@ -73,7 +73,6 @@ qtests_i386 = \
     'ide-test',
     'hd-geo-test',
     'boot-order-test',
@@ -278,7 +252,7 @@ index 0c76738921..b9a7426a7b 100644
     'rtc-test',
     'i440fx-test',
     'fw_cfg-test',
-@@ -79,7 +78,6 @@ qtests_i386 = \
+@@ -81,7 +80,6 @@ qtests_i386 = \
     'drive_del-test',
     'tco-test',
     'cpu-plug-test',
@@ -286,7 +260,7 @@ index 0c76738921..b9a7426a7b 100644
     'vmgenid-test',
     'migration-test',
     'test-x86-cpuid-compat',
-@@ -130,17 +128,15 @@ qtests_moxie = [ 'boot-serial-test' ]
+@@ -130,17 +128,15 @@ qtests_mips64el = \
  
  qtests_ppc = \
    (config_all_devices.has_key('CONFIG_ISA_TESTDEV') ? ['endianness-test'] : []) +            \
@@ -306,7 +280,7 @@ index 0c76738921..b9a7426a7b 100644
    qtests_pci + ['migration-test', 'numa-test', 'cpu-plug-test', 'drive_del-test']
  
  qtests_sh4 = (config_all_devices.has_key('CONFIG_ISA_TESTDEV') ? ['endianness-test'] : [])
-@@ -183,7 +179,7 @@ qtests_aarch64 = \
+@@ -186,7 +182,7 @@ qtests_aarch64 = \
    ['arm-cpu-features',
     'numa-test',
     'boot-serial-test',
@@ -315,7 +289,7 @@ index 0c76738921..b9a7426a7b 100644
     'migration-test']
  
  qtests_s390x = \
-@@ -192,7 +188,6 @@ qtests_s390x = \
+@@ -195,7 +191,6 @@ qtests_s390x = \
    (config_host.has_key('CONFIG_POSIX') ? ['test-filter-redirector'] : []) +                     \
    ['boot-serial-test',
     'drive_del-test',
@@ -392,19 +366,6 @@ index 10ef9d2a91..3855873050 100644
      qtest_add_func("/xhci/pci/hotplug/usb-ccid", test_usb_ccid_hotplug);
  
      qtest_start("-device nec-usb-xhci,id=xhci"
-diff --git a/tests/unit/meson.build b/tests/unit/meson.build
-index b3bc2109da..244d35f5d4 100644
---- a/tests/unit/meson.build
-+++ b/tests/unit/meson.build
-@@ -65,7 +65,7 @@ if have_block
-     'test-blockjob': [testblock],
-     'test-blockjob-txn': [testblock],
-     'test-block-backend': [testblock],
--    'test-block-iothread': [testblock],
-+#    'test-block-iothread': [testblock],
-     'test-write-threshold': [testblock],
-     'test-crypto-hash': [crypto],
-     'test-crypto-hmac': [crypto],
 -- 
 2.27.0
 

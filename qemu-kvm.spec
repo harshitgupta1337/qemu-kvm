@@ -23,6 +23,7 @@
 %global have_clang 1
 %global have_safe_stack 0
 
+
 %if %{have_clang}
 %global toolchain clang
 %ifarch x86_64
@@ -31,6 +32,15 @@
 %else
 %global toolchain gcc
 %global cc_suffix .gcc
+%endif
+
+
+
+# Release candidate version tracking
+# global rcver rc4
+%if 0%{?rcver:1}
+%global rcrel .%{rcver}
+%global rcstr -%{rcver}
 %endif
 
 %global have_pmem 1
@@ -120,18 +130,11 @@ Obsoletes: %{name}-ui-spice <= %{version}                       \
 Obsoletes: %{name}-block-gluster <= %{version}                  \
 Obsoletes: %{name}-block-iscsi <= %{version}                    \
 
-# Release candidate version tracking
-# global rcver rc4
-%if 0%{?rcver:1}
-%global rcrel .%{rcver}
-%global rcstr -%{rcver}
-%endif
-
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
-Version: 6.0.0
-Release: 13%{?rcrel}%{?dist}%{?cc_suffix}
+Version: 6.1.0
+Release: 1%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -177,218 +180,7 @@ Patch0014: 0014-globally-limit-the-maximum-number-of-CPUs.patch
 Patch0015: 0015-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
 Patch0016: 0016-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0017: 0017-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
-Patch0018: 0018-block-Versioned-x-blockdev-reopen-API-with-feature-f.patch
-# For bz#1906168 - [RHEL-9] qemu-kvm spec-file: Do not BuildRequire spice
-Patch19: kvm-Remove-SPICE-and-QXL-from-x86_64-rh-devices.mak.patch
-# For bz#1944730 - Remove RHEL7 machine type (s390-ccw-virtio-rhel7.5.0)
-Patch20: kvm-hw-s390x-Remove-the-RHEL7-only-machine-type.patch
-# For bz#1962479 - Disable the 'x-terminal3270' device in qemu-kvm on s390x
-Patch21: kvm-s390x-redhat-disable-experimental-3270-device.patch
-# For bz#1952449 - [aarch64] define RHEL9 machine types
-Patch22: kvm-arm-virt-Register-highmem-and-gic-version-as-class-p.patch
-# For bz#1952449 - [aarch64] define RHEL9 machine types
-Patch23: kvm-hw-arm-virt-Add-8.5-and-9.0-machine-types-and-remove.patch
-# For bz#1747467 - [aarch64] [qemu] PVPANIC support
-Patch24: kvm-aarch64-rh-devices-add-CONFIG_PVPANIC_PCI.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch25: kvm-redhat-s390x-add-rhel-8.5.0-compat-machine.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch26: kvm-redhat-add-missing-entries-in-hw_compat_rhel_8_4.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch27: kvm-redhat-Define-pseries-rhel8.5.0-machine-type.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch28: kvm-virtio-net-failover-add-missing-remove_migration_sta.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch29: kvm-hw-arm-virt-Disable-PL011-clock-migration-through-hw.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch30: kvm-virtio-blk-Fix-rollback-path-in-virtio_blk_data_plan.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch31: kvm-virtio-blk-Configure-all-host-notifiers-in-a-single-.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch32: kvm-virtio-scsi-Set-host-notifiers-and-callbacks-separat.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch33: kvm-virtio-scsi-Configure-all-host-notifiers-in-a-single.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch34: kvm-hw-arm-smmuv3-Another-range-invalidation-fix.patch
-# For bz#1972462 - QEMU core dump when doing TLS migration via TCP
-Patch35: kvm-yank-Unregister-function-when-using-TLS-migration.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch36: kvm-pc-bios-s390-ccw-don-t-try-to-read-the-next-block-if.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch37: kvm-sockets-update-SOCKET_ADDRESS_TYPE_FD-listen-2-backl.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch38: kvm-target-i386-sev-add-support-to-query-the-attestation.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch39: kvm-spapr-Don-t-hijack-current_machine-boot_order.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch40: kvm-target-i386-Add-CPU-model-versions-supporting-xsaves.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch41: kvm-spapr-Remove-stale-comment-about-power-saving-LPCR-b.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch42: kvm-spapr-Set-LPCR-to-current-AIL-mode-when-starting-a-n.patch
-# For bz#1967502 - [aarch64] [qemu] Compile the PCIe expander bridge
-Patch43: kvm-aarch64-rh-devices-add-CONFIG_PXB.patch
-# For bz#1974795 - [RHEL9-beta] [aarch64] Launch guest with virtio-gpu-pci and virtual smmu causes "virtio_gpu_dequeue_ctrl_func" ERROR
-Patch44: kvm-virtio-gpu-handle-partial-maps-properly.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch45: kvm-x86-Add-x86-rhel8.5-machine-types.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch46: kvm-redhat-x86-Enable-kvm-asyncpf-int-by-default.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch47: kvm-block-backend-add-drained_poll.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch48: kvm-nbd-server-Use-drained-block-ops-to-quiesce-the-serv.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch49: kvm-disable-CONFIG_USB_STORAGE_BOT.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch50: kvm-doc-Fix-some-mistakes-in-the-SEV-documentation.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch51: kvm-docs-Add-SEV-ES-documentation-to-amd-memory-encrypti.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch52: kvm-docs-interop-firmware.json-Add-SEV-ES-support.patch
-# For bz#1978911 - Remove TPM Passthrough option from RHEL 9
-Patch53: kvm-Disable-TPM-passthrough.patch
-# For bz#1932191 - [IBM 9.0 FEAT] CPU Model for new IBM Z Hardware - qemu part (kvm)
-Patch54: kvm-s390x-cpumodel-add-3931-and-3932.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch55: kvm-spapr-Fix-EEH-capability-issue-on-KVM-guest-for-PCI-.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch56: kvm-ppc-pef.c-initialize-cgs-ready-in-kvmppc_svm_init.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch57: kvm-s390x-css-Introduce-an-ESW-struct.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch58: kvm-s390x-css-Split-out-the-IRB-sense-data.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch59: kvm-s390x-css-Refactor-IRB-construction.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch60: kvm-s390x-css-Add-passthrough-IRB.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch61: kvm-vhost-user-blk-Fail-gracefully-on-too-large-queue-si.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch62: kvm-vhost-user-blk-Make-sure-to-set-Error-on-realize-fai.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch63: kvm-vhost-user-blk-Don-t-reconnect-during-initialisation.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch64: kvm-vhost-user-blk-Improve-error-reporting-in-realize.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch65: kvm-vhost-user-blk-Get-more-feature-flags-from-vhost-dev.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch66: kvm-virtio-Fail-if-iommu_platform-is-requested-but-unsup.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch67: kvm-vhost-user-blk-Check-that-num-queues-is-supported-by.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch68: kvm-vhost-user-Fix-backends-without-multiqueue-support.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch69: kvm-file-posix-fix-max_iov-for-dev-sg-devices.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch70: kvm-scsi-generic-pass-max_segments-via-max_iov-field-in-.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch71: kvm-osdep-provide-ROUND_DOWN-macro.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch72: kvm-block-backend-align-max_transfer-to-request-alignmen.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch73: kvm-block-add-max_hw_transfer-to-BlockLimits.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch74: kvm-file-posix-try-BLKSECTGET-on-block-devices-too-do-no.patch
-# For bz#1957782 - VMDK support should be read-only
-Patch75: kvm-block-Add-option-to-use-driver-whitelist-even-in-too.patch
-# For bz#1838608 - aarch64: Enable ARMv8 RAS virtualization support
-Patch76: kvm-arm-virt-Register-iommu-as-a-class-property.patch
-# For bz#1838608 - aarch64: Enable ARMv8 RAS virtualization support
-Patch77: kvm-arm-virt-Register-its-as-a-class-property.patch
-# For bz#1838608 - aarch64: Enable ARMv8 RAS virtualization support
-Patch78: kvm-arm-virt-Enable-ARM-RAS-support.patch
-# For bz#1972079 - Windows Installation blocked on 4k disk when using blk+raw+iothread
-Patch79: kvm-block-Fix-in_flight-leak-in-request-padding-error-pa.patch
-# For bz#1974683 - Fail to set migrate incoming for 2nd time after the first time failed
-Patch80: kvm-migration-Move-yank-outside-qemu_start_incoming_migr.patch
-# For bz#1974683 - Fail to set migrate incoming for 2nd time after the first time failed
-Patch81: kvm-migration-Allow-reset-of-postcopy_recover_triggered-.patch
-# For bz#1968519 - Remove all the old 7.0-7.5 machine types
-Patch82: kvm-Remove-RHEL-7.0.0-machine-type.patch
-# For bz#1968519 - Remove all the old 7.0-7.5 machine types
-Patch83: kvm-Remove-RHEL-7.1.0-machine-type.patch
-# For bz#1968519 - Remove all the old 7.0-7.5 machine types
-Patch84: kvm-Remove-RHEL-7.2.0-machine-type.patch
-# For bz#1968519 - Remove all the old 7.0-7.5 machine types
-Patch85: kvm-Remove-RHEL-7.3.0-machine-types.patch
-# For bz#1968519 - Remove all the old 7.0-7.5 machine types
-Patch86: kvm-Remove-RHEL-7.4.0-machine-types.patch
-# For bz#1968519 - Remove all the old 7.0-7.5 machine types
-Patch87: kvm-Remove-RHEL-7.5.0-machine-types.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch88: kvm-acpi-pc-revert-back-to-v5.2-PCI-slot-enumeration.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch89: kvm-migration-failover-reset-partially_hotplugged.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch90: kvm-hmp-Fix-loadvm-to-resume-the-VM-on-success-instead-o.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch91: kvm-migration-Move-bitmap_mutex-out-of-migration_bitmap_.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch92: kvm-i386-cpu-Expose-AVX_VNNI-instruction-to-guest.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch93: kvm-ratelimit-protect-with-a-mutex.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch94: kvm-Update-Linux-headers-to-5.13-rc4.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch95: kvm-i386-Add-ratelimit-for-bus-locks-acquired-in-guest.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch96: kvm-iothread-generalize-iothread_set_param-iothread_get_.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch97: kvm-iothread-add-aio-max-batch-parameter.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch98: kvm-linux-aio-limit-the-batch-size-using-aio-max-batch-p.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch99: kvm-block-nvme-Fix-VFIO_MAP_DMA-failed-No-space-left-on-.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch100: kvm-migration-move-wait-unplug-loop-to-its-own-function.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch101: kvm-migration-failover-continue-to-wait-card-unplug-on-e.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch102: kvm-aarch64-Add-USB-storage-devices.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch103: kvm-iotests-Improve-and-rename-test-291-to-qemu-img-bitm.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch104: kvm-qemu-img-Fail-fast-on-convert-bitmaps-with-inconsist.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch105: kvm-qemu-img-Add-skip-broken-bitmaps-for-convert-bitmaps.patch
-# For bz#1957194 - Synchronize RHEL-AV 8.5.0 changes to RHEL 9.0.0 Beta
-Patch106: kvm-audio-Never-send-migration-section.patch
-# For bz#1939509 - QEMU: enable SafeStack
-# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
-Patch107: kvm-pc-bios-s390-ccw-bootmap-Silence-compiler-warning-fr.patch
-# For bz#1939509 - QEMU: enable SafeStack
-# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
-Patch108: kvm-pc-bios-s390-ccw-Use-reset_psw-pointer-instead-of-ha.patch
-# For bz#1939509 - QEMU: enable SafeStack
-# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
-Patch109: kvm-pc-bios-s390-ccw-netboot-Use-Wl-prefix-to-pass-param.patch
-# For bz#1939509 - QEMU: enable SafeStack
-# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
-Patch110: kvm-pc-bios-s390-ccw-Silence-warning-from-Clang-by-marki.patch
-# For bz#1939509 - QEMU: enable SafeStack
-# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
-Patch111: kvm-pc-bios-s390-ccw-Fix-the-cc-option-macro-in-the-Make.patch
-# For bz#1939509 - QEMU: enable SafeStack
-# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
-Patch112: kvm-pc-bios-s390-ccw-Silence-GCC-11-stringop-overflow-wa.patch
-# For bz#1939509 - QEMU: enable SafeStack
-# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
-Patch113: kvm-pc-bios-s390-ccw-Allow-building-with-Clang-too.patch
-# For bz#1939509 - QEMU: enable SafeStack
-# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
-Patch114: kvm-pc-bios-s390-ccw-Fix-inline-assembly-for-older-versi.patch
-# For bz#1939509 - QEMU: enable SafeStack
-# For bz#1940132 - QEMU: switch build toolchain to Clang/LLVM
-Patch115: kvm-configure-Fix-endianess-test-with-LTO.patch
-# For bz#1951814 - RFE: Warning when using qcow2-v2 (compat=0.10)
-Patch116: kvm-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
-# For bz#1995819 - RFE: Remove ac97 audio support from QEMU
-Patch117: kvm-disable-ac97-audio.patch
-# For bz#1950192 - RHEL9: when ioeventfd=off and 8.4guest, (qemu) qemu-kvm: ../util/qemu-coroutine-lock.c:57: qemu_co_queue_wait_impl: Assertion `qemu_in_coroutine()' failed.
-Patch118: kvm-redhat-Enable-the-test-block-iothread-test-again.patch
-
-# Source-git patches
+Patch0018: 0018-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -412,6 +204,7 @@ BuildRequires: usbredir-devel >= %{usbredir_version}
 %endif
 BuildRequires: texinfo
 BuildRequires: python3-sphinx
+BuildRequires: python3-sphinx_rtd_theme
 BuildRequires: libseccomp-devel >= %{libseccomp_version}
 # For network block driver
 BuildRequires: libcurl-devel
@@ -656,6 +449,7 @@ mkdir -p %{qemu_kvm_build}
   --disable-avx512f                \\\
   --disable-block-drv-whitelist-in-tools \\\
   --disable-bochs                  \\\
+  --disable-bpf                    \\\
   --disable-brlapi                 \\\
   --disable-bsd-user               \\\
   --disable-bzip2                  \\\
@@ -713,6 +507,7 @@ mkdir -p %{qemu_kvm_build}
   --disable-netmap                 \\\
   --disable-nettle                 \\\
   --disable-numa                   \\\
+  --disable-nvmm                   \\\
   --disable-opengl                 \\\
   --disable-parallels              \\\
   --disable-pie                    \\\
@@ -729,8 +524,8 @@ mkdir -p %{qemu_kvm_build}
   --disable-sdl                    \\\
   --disable-sdl-image              \\\
   --disable-seccomp                \\\
-  --disable-sheepdog               \\\
   --disable-slirp                  \\\
+  --disable-slirp-smbd             \\\
   --disable-smartcard              \\\
   --disable-snappy                 \\\
   --disable-sparse                 \\\
@@ -797,6 +592,7 @@ run_configure() {
         --with-git=git \
         --tls-priority=@QEMU,SYSTEM \
         %{disable_everything} \
+        --with-devices-%{kvm_target}=%{kvm_target}-rh-devices \
         "$@"
 
     echo "config-host.mak contents:"
@@ -928,7 +724,7 @@ cp -a %{kvm_target}-softmmu/qemu-system-%{kvm_target} qemu-kvm
     cp pc-bios/s390-ccw/s390-ccw.img pc-bios/s390-ccw/s390-netboot.img pc-bios/
 %endif
 
-%{__cc} %{_sourcedir}/ksmctl.c %{optflags} %{?build_ldflags} -o ksmctl
+%{__cc} %{_sourcedir}/ksmctl.c %{optflags} -pie %{?build_ldflags} -o ksmctl
 popd
 # endif !tools_only
 %endif
@@ -1161,7 +957,6 @@ rm -rf %{buildroot}%{qemudocdir}/specs
 %endif
 
 
-
 %check
 %if !%{tools_only}
 
@@ -1172,8 +967,6 @@ popd
 
 # endif !tools_only
 %endif
-
-
 
 %post -n qemu-guest-agent
 %systemd_post qemu-guest-agent.service
@@ -1327,11 +1120,21 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_datadir}/%{name}/systemtap/conf.d/qemu_kvm.conf
 
 %{_libdir}/%{name}/hw-display-virtio-gpu.so
+%{_libdir}/%{name}/hw-display-virtio-gpu-gl.so
+%ifarch x86_64 %{power64}
+    %{_libdir}/%{name}/hw-display-virtio-vga-gl.so
+%endif
 %ifarch s390x
     %{_libdir}/%{name}/hw-s390x-virtio-gpu-ccw.so
 %else
     %{_libdir}/%{name}/hw-display-virtio-gpu-pci.so
+    %{_libdir}/%{name}/hw-display-virtio-gpu-pci-gl.so
 %endif
+    %{_libdir}/%{name}/accel-qtest-%{kvm_target}.so
+%ifarch x86_64
+    %{_libdir}/%{name}/accel-tcg-%{kvm_target}.so
+%endif
+%{_libdir}/%{name}/hw-usb-host.so
 
 %files tests
 %{testsdir}
@@ -1360,6 +1163,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Thu Sep 02 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.1.0-1
+- Rebase to QEMU 6.1.0 [bz#1997408]
+- Resolves: #bz#1997408
+  (Rebase to QEMU 6.1.0)
+
 * Fri Aug 27 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.0.0-13
 - kvm-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch [bz#1951814]
 - kvm-disable-ac97-audio.patch [bz#1995819]
@@ -3099,7 +2907,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 - Resolves: bz#1640044
   (Disable CONFIG_I2C and CONFIG_IPMI in default-configs/ppc64-softmmu.mak)
 
-* Tue Dec 11 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - qemu-kvm-2.12.0-46 
+* Tue Dec 11 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - qemu-kvm-2.12.0-46
 - kvm-qcow2-Give-the-refcount-cache-the-minimum-possible-s.patch [bz#1656507]
 - kvm-docs-Document-the-new-default-sizes-of-the-qcow2-cac.patch [bz#1656507]
 - kvm-qcow2-Fix-Coverity-warning-when-calculating-the-refc.patch [bz#1656507]
@@ -3226,7 +3034,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
   (rbd json format of 7.6 is incompatible with 7.5)
 
 * Tue Oct 16 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 2.12.0-40.el8
-
 - kvm-vnc-call-sasl_server_init-only-when-required.patch [bz#1609327]
 - kvm-nbd-server-fix-NBD_CMD_CACHE.patch [bz#1636142]
 - kvm-nbd-fix-NBD_FLAG_SEND_CACHE-value.patch [bz#1636142]
@@ -3285,7 +3092,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 - Resolves: bz#1639374
   (qemu-img map 'Aborted (core dumped)' when specifying a plain file)
 
-* Tue Oct 16 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> - 
+* Tue Oct 16 2018 Danilo Cesar Lemes de Paula <ddepaula@redhat.com> -
 - kvm-linux-headers-update.patch [bz#1508142]
 - kvm-s390x-cpumodel-Set-up-CPU-model-for-AP-device-suppor.patch [bz#1508142]
 - kvm-s390x-kvm-enable-AP-instruction-interpretation-for-g.patch [bz#1508142]

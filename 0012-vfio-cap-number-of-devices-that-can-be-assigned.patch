@@ -1,4 +1,4 @@
-From 22c0f47f02c5db63f3857dabc6cc7cb6bfc78158 Mon Sep 17 00:00:00 2001
+From 79697eeae5ecc81c6e334b4a5164c9a664541a22 Mon Sep 17 00:00:00 2001
 From: Bandan Das <bsd@redhat.com>
 Date: Tue, 3 Dec 2013 20:05:13 +0100
 Subject: vfio: cap number of devices that can be assigned
@@ -22,6 +22,9 @@ for other uses. Stepping down a bit, the number 32 arbitrarily
 matches the number of slots on a PCI bus and is also a nice power
 of two.
 
+Count of slots increased to 509 later so we could increase limit
+to 64 as some usecases require more than 32 devices.
+
 Signed-off-by: Bandan Das <bsd@redhat.com>
 ---
  hw/vfio/pci.c | 29 ++++++++++++++++++++++++++++-
@@ -29,10 +32,10 @@ Signed-off-by: Bandan Das <bsd@redhat.com>
  2 files changed, 29 insertions(+), 1 deletion(-)
 
 diff --git a/hw/vfio/pci.c b/hw/vfio/pci.c
-index 5c65aa0a98..327b86703a 100644
+index e1ea1d8a23..717af74b9a 100644
 --- a/hw/vfio/pci.c
 +++ b/hw/vfio/pci.c
-@@ -46,6 +46,9 @@
+@@ -45,6 +45,9 @@
  
  #define TYPE_VFIO_PCI_NOHOTPLUG "vfio-pci-nohotplug"
  
@@ -42,7 +45,7 @@ index 5c65aa0a98..327b86703a 100644
  static void vfio_disable_interrupts(VFIOPCIDevice *vdev);
  static void vfio_mmap_set_enabled(VFIOPCIDevice *vdev, bool enabled);
  
-@@ -2783,9 +2786,30 @@ static void vfio_realize(PCIDevice *pdev, Error **errp)
+@@ -2790,9 +2793,30 @@ static void vfio_realize(PCIDevice *pdev, Error **errp)
      ssize_t len;
      struct stat st;
      int groupid;
@@ -74,7 +77,7 @@ index 5c65aa0a98..327b86703a 100644
      if (!vdev->vbasedev.sysfsdev) {
          if (!(~vdev->host.domain || ~vdev->host.bus ||
                ~vdev->host.slot || ~vdev->host.function)) {
-@@ -3222,6 +3246,9 @@ static Property vfio_pci_dev_properties[] = {
+@@ -3229,6 +3253,9 @@ static Property vfio_pci_dev_properties[] = {
      DEFINE_PROP_BOOL("x-no-kvm-msix", VFIOPCIDevice, no_kvm_msix, false),
      DEFINE_PROP_BOOL("x-no-geforce-quirks", VFIOPCIDevice,
                       no_geforce_quirks, false),

@@ -1,4 +1,4 @@
-From 09eba380295aef0a27d3fbcdda43019ab2898e08 Mon Sep 17 00:00:00 2001
+From 8ae9e40c13f4beb1eedaef46e6b00f562de692e2 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:47:32 +0200
 Subject: Add s390x machine types
@@ -6,15 +6,19 @@ Subject: Add s390x machine types
 Adding changes to add RHEL machine types for s390x architecture.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+--
+Merged patches (6.1.0 RC1):
+- 64a9a5c971 hw/s390x: Remove the RHEL7-only machine type
+- 395516d62b redhat: s390x: add rhel-8.5.0 compat machine
 ---
- hw/s390x/s390-virtio-ccw.c | 87 +++++++++++++++++++++++++++++++++++++-
- 1 file changed, 86 insertions(+), 1 deletion(-)
+ hw/s390x/s390-virtio-ccw.c | 66 +++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 65 insertions(+), 1 deletion(-)
 
 diff --git a/hw/s390x/s390-virtio-ccw.c b/hw/s390x/s390-virtio-ccw.c
-index 2972b607f3..8df6dd1c71 100644
+index e4b18aef49..9a51dd8de2 100644
 --- a/hw/s390x/s390-virtio-ccw.c
 +++ b/hw/s390x/s390-virtio-ccw.c
-@@ -771,7 +771,7 @@ bool css_migration_enabled(void)
+@@ -767,7 +767,7 @@ bool css_migration_enabled(void)
      {                                                                         \
          MachineClass *mc = MACHINE_CLASS(oc);                                 \
          ccw_machine_##suffix##_class_options(mc);                             \
@@ -23,29 +27,40 @@ index 2972b607f3..8df6dd1c71 100644
          if (latest) {                                                         \
              mc->alias = "s390-ccw-virtio";                                    \
              mc->is_default = true;                                            \
-@@ -795,6 +795,7 @@ bool css_migration_enabled(void)
+@@ -791,6 +791,7 @@ bool css_migration_enabled(void)
      }                                                                         \
      type_init(ccw_machine_register_##suffix)
  
 +#if 0 /* Disabled for Red Hat Enterprise Linux */
- static void ccw_machine_6_0_instance_options(MachineState *machine)
+ static void ccw_machine_6_1_instance_options(MachineState *machine)
  {
  }
-@@ -1071,6 +1072,90 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
+@@ -1082,6 +1083,69 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
      compat_props_add(mc->compat_props, compat, G_N_ELEMENTS(compat));
  }
  DEFINE_CCW_MACHINE(2_4, "2.4", false);
 +#endif
 +
++static void ccw_machine_rhel850_instance_options(MachineState *machine)
++{
++}
++
++static void ccw_machine_rhel850_class_options(MachineClass *mc)
++{
++}
++DEFINE_CCW_MACHINE(rhel850, "rhel8.5.0", true);
++
 +static void ccw_machine_rhel840_instance_options(MachineState *machine)
 +{
++    ccw_machine_rhel850_instance_options(machine);
 +}
 +
 +static void ccw_machine_rhel840_class_options(MachineClass *mc)
 +{
++    ccw_machine_rhel850_class_options(mc);
 +    compat_props_add(mc->compat_props, hw_compat_rhel_8_4, hw_compat_rhel_8_4_len);
 +}
-+DEFINE_CCW_MACHINE(rhel840, "rhel8.4.0", true);
++DEFINE_CCW_MACHINE(rhel840, "rhel8.4.0", false);
 +
 +static void ccw_machine_rhel820_instance_options(MachineState *machine)
 +{
@@ -87,38 +102,6 @@ index 2972b607f3..8df6dd1c71 100644
 +    compat_props_add(mc->compat_props, hw_compat_rhel_7_6, hw_compat_rhel_7_6_len);
 +}
 +DEFINE_CCW_MACHINE(rhel760, "rhel7.6.0", false);
-+
-+static void ccw_machine_rhel750_instance_options(MachineState *machine)
-+{
-+    static const S390FeatInit qemu_cpu_feat = { S390_FEAT_LIST_QEMU_V2_11 };
-+    ccw_machine_rhel760_instance_options(machine);
-+
-+    /* before 2.12 we emulated the very first z900, and RHEL 7.5 is
-+       based on 2.10 */
-+    s390_set_qemu_cpu_model(0x2064, 7, 1, qemu_cpu_feat);
-+
-+    /* bpb and ppa15 were only in the full model in RHEL 7.5 */
-+    s390_cpudef_featoff_greater(11, 1, S390_FEAT_PPA15);
-+    s390_cpudef_featoff_greater(11, 1, S390_FEAT_BPB);
-+}
-+
-+GlobalProperty ccw_compat_rhel_7_5[] = {
-+        {
-+            .driver   = TYPE_SCLP_EVENT_FACILITY,
-+            .property = "allow_all_mask_sizes",
-+            .value    = "off",
-+        },
-+};
-+const size_t ccw_compat_rhel_7_5_len = G_N_ELEMENTS(ccw_compat_rhel_7_5);
-+
-+static void ccw_machine_rhel750_class_options(MachineClass *mc)
-+{
-+    ccw_machine_rhel760_class_options(mc);
-+    compat_props_add(mc->compat_props, hw_compat_rhel_7_5, hw_compat_rhel_7_5_len);
-+    compat_props_add(mc->compat_props, ccw_compat_rhel_7_5, ccw_compat_rhel_7_5_len);
-+    S390_CCW_MACHINE_CLASS(mc)->hpage_1m_allowed = false;
-+}
-+DEFINE_CCW_MACHINE(rhel750, "rhel7.5.0", false);
  
  static void ccw_machine_register_types(void)
  {

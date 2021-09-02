@@ -1,7 +1,7 @@
-From 9d2700ed836cdfabbd031da74cd5a3d01c9127dd Mon Sep 17 00:00:00 2001
+From 0486a5468aee70d74e8ad65f3b2e5fa16cacba56 Mon Sep 17 00:00:00 2001
 From: Kevin Wolf <kwolf@redhat.com>
 Date: Fri, 20 Aug 2021 18:25:12 +0200
-Subject: [PATCH 1/4] qcow2: Deprecation warning when opening v2 images rw
+Subject: qcow2: Deprecation warning when opening v2 images rw
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -31,20 +31,27 @@ but it's what is available and the same function qcow2_do_open() already
 uses it this way for another warning.
 
 Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+
+patch_name: kvm-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
+present_in_specfile: true
+location_in_specfile: 116
+---
+Rebase notes (6.1.0):
+- Replace bs->read_only with bdrv_is_read_only
 ---
  block/qcow2.c                    | 6 ++++++
  tests/qemu-iotests/common.filter | 1 +
  2 files changed, 7 insertions(+)
 
 diff --git a/block/qcow2.c b/block/qcow2.c
-index 9727ae8fe3..7c061bf315 100644
+index 9f1b6461c8..4c303e6666 100644
 --- a/block/qcow2.c
 +++ b/block/qcow2.c
 @@ -1336,6 +1336,12 @@ static int coroutine_fn qcow2_do_open(BlockDriverState *bs, QDict *options,
          ret = -ENOTSUP;
          goto fail;
      }
-+    if (header.version < 3 && !bs->read_only && bdrv_uses_whitelist()) {
++    if (header.version < 3 && !bdrv_is_read_only(bs) && bdrv_uses_whitelist()) {
 +        warn_report_once("qcow2 v2 images are deprecated and may not be "
 +                         "supported in future versions. Please consider "
 +                         "upgrading the image with 'qemu-img amend "
@@ -54,7 +61,7 @@ index 9727ae8fe3..7c061bf315 100644
      s->qcow_version = header.version;
  
 diff --git a/tests/qemu-iotests/common.filter b/tests/qemu-iotests/common.filter
-index 268b749e2f..1f243a8bc1 100644
+index 2b2b53946c..c5c2dc39bd 100644
 --- a/tests/qemu-iotests/common.filter
 +++ b/tests/qemu-iotests/common.filter
 @@ -82,6 +82,7 @@ _filter_qemu()

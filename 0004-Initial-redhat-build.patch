@@ -1,49 +1,149 @@
-From 431955e872aa010376b1f94665908c2ba8194b44 Mon Sep 17 00:00:00 2001
+From 4a0a5d5019938a8b4b5526d33e1bf3d7dcfc56a5 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
-Date: Fri, 12 Oct 2018 07:31:11 +0200
+Date: Wed, 26 May 2021 10:56:02 +0200
 Subject: Initial redhat build
 
 This patch introduces redhat build structure in redhat subdirectory. In addition,
 several issues are fixed in QEMU tree:
 
- - Change of app name for sasl_server_init in VNC code from qemu to qemu-kvm
-  - As we use qemu-kvm as name in all places, this is updated to be consistent
- - Man page renamed from qemu to qemu-kvm
-  - man page is installed using make install so we have to fix it in qemu tree
+- Change of app name for sasl_server_init in VNC code from qemu to qemu-kvm
+ - As we use qemu-kvm as name in all places, this is updated to be consistent
+- Man page renamed from qemu to qemu-kvm
+ - man page is installed using make install so we have to fix it in qemu tree
 
 We disable make check due to issues with some of the tests.
 
-This rebase is based on qemu-kvm-5.2.0-16.el9
+This rebase is based on qemu-kvm-5.2.0-13.el9
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+--
+Rebase changes (210526):
+- Move build to .distro
+- Move changes for support file to related commit
+- Added dependency for python3-sphinx-rtd_theme
+- Removed --disable-sheepdog configure option
+- Added new hw-display modules
+
+Rebase changes (210623):
+- SASL initialization moved to ui/vnc-auth-sasl.c
+
+Rebase changes (210714):
+- Add accel-qtest-<arch> and accel-tcg-x86_64 libraries
+
+Rebase changes (6.1.0 rc1):
+- Added hw-usb-host module
+
+Rebase changes (6.1.0 rc4):
+- Disable new configure options (bpf, nvmm, slirp-smbd)
+
+Rebase chagnes (6.1.0):
+- Use -pie for ksmctl build (annocheck complain fix)
 
 Merged patches (6.0.0):
-- 605758c902 Limit build on Power to qemu-img and qemu-ga only
+ - 605758c902 Limit build on Power to qemu-img and qemu-ga only
+
+Merged patches (6.1.0 RC1):
+- f04f91751f Use cached tarballs
+- 6581165c65 Remove message with running VM count
+- 03c3cac9fc spec-file: build qemu-kvm without SPICE and QXL
+- e0ae6c1f6c spec-file: Obsolete qemu-kvm-ui-spice
+- 9d2e9f9ecf spec: Do not build qemu-kvm-block-gluster
+- cf470b4234 spec: Do not link pcnet and ne2k_pci roms
+- e981284a6b redhat: Install the s390-netboot.img that we've built
+- 24ef557f33 spec: Remove usage of Group: tag
+- c40d69b4f4 spec: Drop %defattr usage
+- f8e98798ce spec: Clean up BuildRequires
+- 47246b43ee spec: Remove iasl BuildRequires
+- 170dc1cbe0 spec: Remove redundant 0 in conditionals
+- 8718f6fa11 spec: Add more have_XXX conditionals
+- a001269ce9 spec: Remove binutils versioned Requires
+- 34545ee641 spec: Remove diffutils BuildRequires
+- c2c82beac9 spec: Remove redundant Requires:
+- 9314c231f4 spec: Add XXX_version macros
+- c43db0bf0f spec: Add have_block_rbd
+- 3ecb0c0319 qga: drop StandardError=syslog
+- 018049dc80 Remove iscsi support
+- a2edf18777 redhat: Replace the kvm-setup.service with a /etc/modules-load.d config file
+- 387b5fbcfe redhat: Move qemu-kvm-docs dependency to qemu-kvm
+- 4ead693178 redhat: introducting qemu-kvm-hw-usbredir
+- 4dc6fc3035 redhat: use the standard vhost-user JSON path
+- 84757178b4 Fix local build
+- 8c394227dd spec: Restrict block drivers in tools
+- b6aa7c1fae Move tools to separate package
+- eafd82e509 Split qemu-pr-helper to separate package
+- 2c0182e2aa spec: RPM_BUILD_ROOT -> %{buildroot}
+- 91bd55ca13 spec: More use of %{name} instead of 'qemu-kvm'
+- 50ba299c61 spec: Use qemu-pr-helper.service from qemu.git (partial)
+- ee08d4e0a3 spec: Use %{_sourcedir} for referencing sources
+- 039e7f7d02 spec: Add tools_only
+- 884ba71617 spec: %build: Add run_configure helper
+- 8ebd864d65 spec: %build: Disable more bits with %{disable_everything} (partial)
+- f23fdb53f5 spec: %build: Add macros for some 'configure' parameters
+- fe951a8bd8 spec: %files: Move qemu-guest-agent and qemu-img earlier
+- 353b632e37 spec: %install: Remove redundant bits
+- 9d2015b752 spec: %install: Add %{modprobe_kvm_conf} macro
+- 6d05134e8c spec: %install: Remove qemu-guest-agent /etc/qemu-kvm usage
+- 985b226467 spec: %install: clean up qemu-ga section
+- dfaf9c600d spec: %install: Use a single %{tools_only} section
+- f6978ddb46 spec: Make tools_only not cross spec sections
+- 071c211098 spec: %install: Limit time spent in %{qemu_kvm_build}
+- 1b65c674be spec: misc syntactic merges with Fedora
+- 4da16294cf spec: Use Fedora's pattern for specifying rc version
+- d7ee259a79 spec: %files: don't use fine grained -docs file list
+- 64cad0c60f spec: %files: Add licenses to qemu-common too
+- c3de4f080a spec: %install: Drop python3 shebang fixup
+
+Merged patches (6.1.0 RC2):
+- 46fc216115 Update local build to work with spec file improvements
+
+Merged patches (6.1.0 RC3):
+- bab9531548 spec: Remove buildldflags
+- c8360ab6a9 spec: Use %make_build macro
+- f6966c66e9 spec: Drop make install sharedir and datadir usage
+- 86982421bc spec: use %make_install macro
+- 191c405d22 spec: parallelize `make check`
+- 251a1fb958 spec: Drop explicit --build-id
+- 44c7dda6c3 spec: use %{build_ldflags}
+- 0009a34354 Move virtiofsd to separate package
+-  34d1b200b3 Utilize --firmware configure option
+
+Merged patches (6.1.0):
+- 2800e1dd03 spec: Switch toolchain to Clang/LLVM (except process-patches.sh)
+- e8a70f500f spec: Use safe-stack for x86_64
+- e29445d50d spec: Reenable write support for VMDK etc. in tools
+- a4fe2a3e16 redhat: Disable LTO on non-x86 architectures
+
+fixes
 ---
+ .distro/85-kvm.preset                   |    5 -
+ .distro/Makefile                        |  100 +
+ .distro/Makefile.common                 |   45 +
+ .distro/README.tests                    |   39 +
+ .distro/kvm-setup                       |   49 -
+ .distro/kvm-setup.service               |   14 -
+ .distro/modules-load.conf               |    4 +
+ .distro/qemu-guest-agent.service        |    1 -
+ .distro/qemu-kvm.spec.template          | 3767 +++++++++++++++++++++++
+ .distro/scripts/extract_build_cmd.py    |   12 +
  .gitignore                              |    1 +
  README.systemtap                        |   43 +
- configure                               |    5 -
- hw/remote/memory.c                      |    2 +-
- hw/remote/proxy.c                       |    2 +-
- meson.build                             |    8 +-
- redhat/Makefile                         |   90 +
- redhat/Makefile.common                  |   50 +
- redhat/README.tests                     |   39 +
- redhat/qemu-kvm.spec.template           | 3609 +++++++++++++++++++++++
- redhat/scripts/extract_build_cmd.py     |    5 +-
- redhat/scripts/process-patches.sh       |   20 +-
- redhat/udev-kvm-check.c                 |   19 +-
+ configure                               |    1 -
+ meson.build                             |    6 +-
  scripts/qemu-guest-agent/fsfreeze-hook  |    2 +-
  scripts/systemtap/conf.d/qemu_kvm.conf  |    4 +
  scripts/systemtap/script.d/qemu_kvm.stp |    1 +
  tests/check-block.sh                    |    2 +
- ui/vnc.c                                |    2 +-
- 18 files changed, 3860 insertions(+), 44 deletions(-)
+ ui/vnc-auth-sasl.c                      |    2 +-
+ 19 files changed, 4024 insertions(+), 74 deletions(-)
+ delete mode 100644 .distro/85-kvm.preset
+ create mode 100644 .distro/Makefile
+ create mode 100644 .distro/Makefile.common
+ create mode 100644 .distro/README.tests
+ delete mode 100644 .distro/kvm-setup
+ delete mode 100644 .distro/kvm-setup.service
+ create mode 100644 .distro/modules-load.conf
+ create mode 100644 .distro/qemu-kvm.spec.template
  create mode 100644 README.systemtap
- create mode 100644 redhat/Makefile
- create mode 100644 redhat/Makefile.common
- create mode 100644 redhat/README.tests
- create mode 100644 redhat/qemu-kvm.spec.template
  create mode 100644 scripts/systemtap/conf.d/qemu_kvm.conf
  create mode 100644 scripts/systemtap/script.d/qemu_kvm.stp
 
@@ -97,21 +197,10 @@ index 0000000000..ad913fc990
 +3. Translate the trace record to readable format.
 +  # /usr/share/qemu-kvm/simpletrace.py --no-header /usr/share/qemu-kvm/trace-events /tmp/trace.log
 diff --git a/configure b/configure
-index 4f374b4889..53b2fa583a 100755
+index 9a79a004d7..b0dbdded06 100755
 --- a/configure
 +++ b/configure
-@@ -6383,10 +6383,6 @@ fi
- mv $cross config-meson.cross
- 
- rm -rf meson-private meson-info meson-logs
--unset staticpic
--if ! version_ge "$($meson --version)" 0.56.0; then
--  staticpic=$(if test "$pie" = yes; then echo true; else echo false; fi)
--fi
- NINJA=$ninja $meson setup \
-         --prefix "$prefix" \
-         --libdir "$libdir" \
-@@ -6406,7 +6402,6 @@ NINJA=$ninja $meson setup \
+@@ -5189,7 +5189,6 @@ if test "$skip_meson" = no; then
          -Dwerror=$(if test "$werror" = yes; then echo true; else echo false; fi) \
          -Dstrip=$(if test "$strip_opt" = yes; then echo true; else echo false; fi) \
          -Db_pie=$(if test "$pie" = yes; then echo true; else echo false; fi) \
@@ -119,46 +208,19 @@ index 4f374b4889..53b2fa583a 100755
          -Db_coverage=$(if test "$gcov" = yes; then echo true; else echo false; fi) \
          -Db_lto=$lto -Dcfi=$cfi -Dcfi_debug=$cfi_debug \
          -Dmalloc=$malloc -Dmalloc_trim=$malloc_trim -Dsparse=$sparse \
-diff --git a/hw/remote/memory.c b/hw/remote/memory.c
-index 32085b1e05..bf0047a81b 100644
---- a/hw/remote/memory.c
-+++ b/hw/remote/memory.c
-@@ -43,7 +43,7 @@ void remote_sysmem_reconfig(MPQemuMsg *msg, Error **errp)
-     remote_sysmem_reset();
- 
-     for (region = 0; region < msg->num_fds; region++) {
--        g_autofree char *name;
-+        g_autofree char *name = NULL;
-         subregion = g_new(MemoryRegion, 1);
-         name = g_strdup_printf("remote-mem-%u", suffix++);
-         memory_region_init_ram_from_fd(subregion, NULL,
-diff --git a/hw/remote/proxy.c b/hw/remote/proxy.c
-index 4fa4be079d..253c1aa7ec 100644
---- a/hw/remote/proxy.c
-+++ b/hw/remote/proxy.c
-@@ -347,7 +347,7 @@ static void probe_pci_info(PCIDevice *dev, Error **errp)
-                    PCI_BASE_ADDRESS_SPACE_IO : PCI_BASE_ADDRESS_SPACE_MEMORY;
- 
-         if (size) {
--            g_autofree char *name;
-+            g_autofree char *name = NULL;
-             pdev->region[i].dev = pdev;
-             pdev->region[i].present = true;
-             if (type == PCI_BASE_ADDRESS_SPACE_MEMORY) {
 diff --git a/meson.build b/meson.build
-index c6f4b0cf5e..06c15bd6d2 100644
+index b3e7ec0e92..17707c8748 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -1,6 +1,6 @@
  project('qemu', ['c'], meson_version: '>=0.55.0',
--        default_options: ['warning_level=1', 'c_std=gnu99', 'cpp_std=gnu++11', 'b_colorout=auto'] +
+         default_options: ['warning_level=1', 'c_std=gnu11', 'cpp_std=gnu++11', 'b_colorout=auto'] +
 -                         (meson.version().version_compare('>=0.56.0') ? [ 'b_staticpic=false' ] : []),
-+        default_options: ['warning_level=1', 'c_std=gnu99', 'cpp_std=gnu++11', 'b_colorout=auto',
-+                          'b_staticpic=false' ],
++                          [ 'b_staticpic=false' ],
          version: run_command('head', meson.source_root() / 'VERSION').stdout().strip())
  
  not_found = dependency('', required: false)
-@@ -1482,7 +1482,9 @@ if capstone_opt == 'internal'
+@@ -1790,7 +1790,9 @@ if capstone_opt == 'internal'
      # Include all configuration defines via a header file, which will wind up
      # as a dependency on the object file, and thus changes here will result
      # in a rebuild.
@@ -212,19 +274,19 @@ index f86cb863de..6d38340d49 100755
  cd tests/qemu-iotests
  
  # QEMU_CHECK_BLOCK_AUTO is used to disable some unstable sub-tests
-diff --git a/ui/vnc.c b/ui/vnc.c
-index 456db47d71..97ae92b181 100644
---- a/ui/vnc.c
-+++ b/ui/vnc.c
-@@ -4146,7 +4146,7 @@ void vnc_display_open(const char *id, Error **errp)
+diff --git a/ui/vnc-auth-sasl.c b/ui/vnc-auth-sasl.c
+index 47fdae5b21..2a950caa2a 100644
+--- a/ui/vnc-auth-sasl.c
++++ b/ui/vnc-auth-sasl.c
+@@ -42,7 +42,7 @@
  
- #ifdef CONFIG_VNC_SASL
-     if (sasl) {
--        int saslErr = sasl_server_init(NULL, "qemu");
-+        int saslErr = sasl_server_init(NULL, "qemu-kvm");
+ bool vnc_sasl_server_init(Error **errp)
+ {
+-    int saslErr = sasl_server_init(NULL, "qemu");
++    int saslErr = sasl_server_init(NULL, "qemu-kvm");
  
-         if (saslErr != SASL_OK) {
-             error_setg(errp, "Failed to initialize SASL auth: %s",
+     if (saslErr != SASL_OK) {
+         error_setg(errp, "Failed to initialize SASL auth: %s",
 -- 
 2.27.0
 

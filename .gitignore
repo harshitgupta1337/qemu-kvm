@@ -19,3 +19,4 @@
 /qemu-kvm*.src.rpm
 /patches.*
 /*.orig
+/qemu-6.1.0.tar.xz
