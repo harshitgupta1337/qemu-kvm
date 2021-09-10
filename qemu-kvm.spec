@@ -106,7 +106,7 @@
 %global block_drivers_rw_list qcow2,raw,file,host_device,nbd,iscsi,rbd,blkdebug,luks,null-co,nvme,copy-on-read,throttle
 %global block_drivers_ro_list vmdk,vhdx,vpc,https,ssh
 %define qemudocdir %{_docdir}/%{name}
-%global firmwaredirs "%{_datadir}/qemu-firmware:%{_datadir}/ipxe/qemu:%{_datadir}/seavgabios:%{_datadir}/seabios:%{_datadir}/sgabios"
+%global firmwaredirs "%{_datadir}/qemu-firmware:%{_datadir}/ipxe/qemu:%{_datadir}/seavgabios:%{_datadir}/seabios"
 
 #Versions of various parts:
 
@@ -119,7 +119,8 @@ Requires: %{name}-hw-usbredir = %{epoch}:%{version}-%{release}   \
 %endif                                                           \
 Requires: %{name}-block-curl = %{epoch}:%{version}-%{release}    \
 Requires: %{name}-block-rbd = %{epoch}:%{version}-%{release}     \
-Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}
+Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}     \
+Requires: %{name}-audio-pa = %{epoch}:%{version}-%{release}
 
 # Since SPICE is removed from RHEL-9, the following Obsoletes:
 # removes {name}-ui-spice for upgrades from RHEL-8
@@ -134,7 +135,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.1.0
-Release: 1%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 2%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -181,6 +182,8 @@ Patch0015: 0015-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
 Patch0016: 0016-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
 Patch0017: 0017-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
 Patch0018: 0018-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
+# For bz#2002937 - [qemu][aarch64] Remove 9.0 machine types in arm virt for 9-Beta
+Patch19: kvm-hw-arm-virt-Remove-9.0-machine-type.patch
 
 # Source-git patches
 
@@ -236,7 +239,6 @@ BuildRequires: lzo-devel snappy-devel
 %if %{have_numactl}
 BuildRequires: numactl-devel
 %endif
-BuildRequires: libgcrypt-devel
 # qemu-pr-helper multipath support (requires libudev too)
 BuildRequires: device-mapper-multipath-devel
 BuildRequires: systemd-devel
@@ -252,6 +254,7 @@ BuildRequires: pkgconfig(gbm)
 %endif
 BuildRequires: perl-Test-Harness
 BuildRequires: libslirp-devel
+BuildRequires: pulseaudio-libs-devel
 
 
 # Requires for qemu-kvm package
@@ -304,7 +307,6 @@ Requires(preun): systemd-units
 Requires(postun): systemd-units
 %ifarch %{ix86} x86_64
 Requires: seabios-bin >= 1.10.2-1
-Requires: sgabios-bin
 %endif
 %ifnarch aarch64 s390x
 Requires: seavgabios-bin >= 1.12.0-3
@@ -411,6 +413,13 @@ This package provides the additional SSH block driver for QEMU.
 
 Install this package if you want to access remote disks using
 the Secure Shell (SSH) protocol.
+
+
+%package  audio-pa
+Summary: QEMU PulseAudio audio driver
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+%description audio-pa
+This package provides the additional PulseAudio audio driver for QEMU.
 
 
 %if %{have_opengl}
@@ -615,6 +624,7 @@ run_configure \
 %if %{defined block_drivers_ro_list}
   --block-drv-ro-whitelist=%{block_drivers_ro_list} \
 %endif
+  --audio-drv-list=pa \
   --enable-attr \
 %ifarch %{ix86} x86_64
   --enable-avx2 \
@@ -628,7 +638,6 @@ run_configure \
 %if %{have_fdt}
   --enable-fdt \
 %endif
-  --enable-gcrypt \
   --enable-gnutls \
   --enable-guest-agent \
   --enable-iconv \
@@ -928,7 +937,6 @@ rm -rf %{buildroot}%{_datadir}/%{name}/pxe*rom
 rm -rf %{buildroot}%{_datadir}/%{name}/vgabios*bin
 # Provided by package seabios
 rm -rf %{buildroot}%{_datadir}/%{name}/bios*.bin
-# Provided by package sgabios
 rm -rf %{buildroot}%{_datadir}/%{name}/sgabios.bin
 
 
@@ -1149,6 +1157,8 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 %files block-ssh
 %{_libdir}/%{name}/block-ssh.so
+%files audio-pa
+%{_libdir}/%{name}/audio-pa.so
 
 %if %{have_opengl}
 %files ui-opengl
@@ -1165,6 +1175,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Fri Sep 10 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.1.0-2
+- kvm-hw-arm-virt-Remove-9.0-machine-type.patch [bz#2002937]
+- kvm-remove-sgabios-dependency.patch [bz#2000845]
+- kvm-enable-pulseaudio.patch [bz#1997725]
+- kvm-spec-disable-use-of-gcrypt-for-crypto-backends-in-fa.patch [bz#1990068]
+- Resolves: bz#2002937
+  ([qemu][aarch64] Remove 9.0 machine types in arm virt for 9-Beta)
+- Resolves: bz#2000845
+  (RFE: Remove SGA, deprecate cirrus, and set defaults for QEMU machine-types in RHEL9)
+- Resolves: bz#1997725
+  (RFE: enable pulseaudio backend on QEMU)
+- Resolves: bz#1990068
+  (Disable use of gcrypt for crypto backends in favour of gnutls)
+
 * Thu Sep 02 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.1.0-1
 - Rebase to QEMU 6.1.0 [bz#1997408]
 - Resolves: #bz#1997408
