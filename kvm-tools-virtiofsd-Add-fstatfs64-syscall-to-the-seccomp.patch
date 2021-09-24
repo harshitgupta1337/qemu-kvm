@@ -1,0 +1,51 @@
+From b615b79feaa73bbaa32bb8c30401a4f6f0c0205e Mon Sep 17 00:00:00 2001
+From: Thomas Huth <thuth@redhat.com>
+Date: Tue, 14 Sep 2021 13:29:59 +0200
+Subject: [PATCH 2/2] tools/virtiofsd: Add fstatfs64 syscall to the seccomp
+ allowlist
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 44: Apply RHEL 9.0.0 Beta fixes to RHEL 9.0.0
+RH-Commit: [2/2] 0085289cefb57d49d2423b4f3376e8cf4a970012 (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 2005026
+RH-Acked-by: Daniel P. Berrangé <berrange@redhat.com>
+RH-Acked-by: Gerd Hoffmann <kraxel@redhat.com>
+
+The virtiofsd currently crashes on s390x when doing something like
+this in the guest:
+
+ mkdir -p /mnt/myfs
+ mount -t virtiofs myfs /mnt/myfs
+ touch /mnt/myfs/foo.txt
+ stat -f /mnt/myfs/foo.txt
+
+The problem is that the fstatfs64 syscall is called in this case
+from the virtiofsd. We have to put it on the seccomp allowlist to
+avoid that the daemon gets killed in this case.
+
+(cherry picked from commit 8cfd339b3d402f913fe520a4f35f30152fb4fb80)
+Suggested-by: Vivek Goyal <vgoyal@redhat.com>
+Signed-off-by: Thomas Huth <thuth@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ tools/virtiofsd/passthrough_seccomp.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/tools/virtiofsd/passthrough_seccomp.c b/tools/virtiofsd/passthrough_seccomp.c
+index f49ed94b5e..a3ce9f898d 100644
+--- a/tools/virtiofsd/passthrough_seccomp.c
++++ b/tools/virtiofsd/passthrough_seccomp.c
+@@ -51,6 +51,7 @@ static const int syscall_allowlist[] = {
+     SCMP_SYS(fsetxattr),
+     SCMP_SYS(fstat),
+     SCMP_SYS(fstatfs),
++    SCMP_SYS(fstatfs64),
+     SCMP_SYS(fsync),
+     SCMP_SYS(ftruncate),
+     SCMP_SYS(futex),
+-- 
+2.27.0
+
