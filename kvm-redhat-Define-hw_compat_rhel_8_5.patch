@@ -1,0 +1,74 @@
+From 1f0a5d3ae9c835e35b83cf8bbedd0f814df3451d Mon Sep 17 00:00:00 2001
+From: Greg Kurz <gkurz@redhat.com>
+Date: Mon, 27 Sep 2021 10:02:46 +0200
+Subject: [PATCH 1/2] redhat: Define hw_compat_rhel_8_5
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Thomas Huth <thuth@redhat.com>
+RH-MergeRequest: 45: Add s390x machine type compatibility update for 6.1 rebase
+RH-Commit: [1/2] 5d304edf2bee7abc57843deb9e5d85ab5f19a34c (thuth/qemu-kvm-cs9)
+RH-Bugzilla: 1998943
+RH-Acked-by: Greg Kurz <gkurz@redhat.com>
+RH-Acked-by: Daniel P. Berrangé <berrange@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: David Hildenbrand <david@redhat.com>
+
+The QEMU 6.1 rebase changed the default value of some properties
+for existing machine types. Prepare ground by introducing
+hw_compat_rhel_8_5.
+
+Signed-off-by: Greg Kurz <gkurz@redhat.com>
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1998943
+Signed-off-by: Thomas Huth <thuth@redhat.com>
+---
+ hw/core/machine.c   | 17 +++++++++++++++++
+ include/hw/boards.h |  3 +++
+ 2 files changed, 20 insertions(+)
+
+diff --git a/hw/core/machine.c b/hw/core/machine.c
+index d681a06a47..a14503cc30 100644
+--- a/hw/core/machine.c
++++ b/hw/core/machine.c
+@@ -37,6 +37,23 @@
+ #include "hw/virtio/virtio.h"
+ #include "hw/virtio/virtio-pci.h"
+ 
++/*
++ * Mostly the same as hw_compat_6_0
++ */
++GlobalProperty hw_compat_rhel_8_5[] = {
++    /* hw_compat_rhel_8_5 from hw_compat_6_0 */
++    { "gpex-pcihost", "allow-unmapped-accesses", "false" },
++    /* hw_compat_rhel_8_5 from hw_compat_6_0 */
++    { "i8042", "extended-state", "false"},
++    /* hw_compat_rhel_8_5 from hw_compat_6_0 */
++    { "nvme-ns", "eui64-default", "off"},
++    /* hw_compat_rhel_8_5 from hw_compat_6_0 */
++    { "e1000", "init-vet", "off" },
++    /* hw_compat_rhel_8_5 from hw_compat_6_0 */
++    { "e1000e", "init-vet", "off" },
++};
++const size_t hw_compat_rhel_8_5_len = G_N_ELEMENTS(hw_compat_rhel_8_5);
++
+ /*
+  * Mostly the same as hw_compat_5_2
+  */
+diff --git a/include/hw/boards.h b/include/hw/boards.h
+index a2b1681027..7b9208ef7a 100644
+--- a/include/hw/boards.h
++++ b/include/hw/boards.h
+@@ -418,6 +418,9 @@ extern const size_t hw_compat_2_2_len;
+ extern GlobalProperty hw_compat_2_1[];
+ extern const size_t hw_compat_2_1_len;
+ 
++extern GlobalProperty hw_compat_rhel_8_5[];
++extern const size_t hw_compat_rhel_8_5_len;
++
+ extern GlobalProperty hw_compat_rhel_8_4[];
+ extern const size_t hw_compat_rhel_8_4_len;
+ 
+-- 
+2.27.0
+

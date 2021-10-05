@@ -135,7 +135,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.1.0
-Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -188,6 +188,10 @@ Patch19: kvm-hw-arm-virt-Remove-9.0-machine-type.patch
 Patch20: kvm-disable-sga-device.patch
 # For bz#2005026 - [s390][virtio-fs] Umount virtiofs shared folder failure from guest side [rhel-9.0.0]
 Patch21: kvm-tools-virtiofsd-Add-fstatfs64-syscall-to-the-seccomp.patch
+# For bz#1998943 - Add machine type compatibility update for 6.1 rebase [s390x]
+Patch22: kvm-redhat-Define-hw_compat_rhel_8_5.patch
+# For bz#1998943 - Add machine type compatibility update for 6.1 rebase [s390x]
+Patch23: kvm-redhat-Add-s390x-machine-type-compatibility-update-f.patch
 
 # Source-git patches
 
@@ -1179,6 +1183,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Oct 05 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.1.0-4
+- kvm-redhat-Define-hw_compat_rhel_8_5.patch [bz#1998943]
+- kvm-redhat-Add-s390x-machine-type-compatibility-update-f.patch [bz#1998943]
+- Resolves: bz#1998943
+  (Add machine type compatibility update for 6.1 rebase [s390x])
+
 * Fri Sep 24 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.1.0-3
 - kvm-disable-sga-device.patch [bz#2000845]
 - kvm-tools-virtiofsd-Add-fstatfs64-syscall-to-the-seccomp.patch [bz#2005026]
