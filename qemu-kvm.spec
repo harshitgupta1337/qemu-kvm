@@ -117,9 +117,7 @@ Requires: %{name}-ui-opengl = %{epoch}:%{version}-%{release}     \
 %if %{have_usbredir}                                             \
 Requires: %{name}-hw-usbredir = %{epoch}:%{version}-%{release}   \
 %endif                                                           \
-Requires: %{name}-block-curl = %{epoch}:%{version}-%{release}    \
 Requires: %{name}-block-rbd = %{epoch}:%{version}-%{release}     \
-Requires: %{name}-block-ssh = %{epoch}:%{version}-%{release}     \
 Requires: %{name}-audio-pa = %{epoch}:%{version}-%{release}
 
 # Since SPICE is removed from RHEL-9, the following Obsoletes:
@@ -135,7 +133,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.1.0
-Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -192,6 +190,8 @@ Patch21: kvm-tools-virtiofsd-Add-fstatfs64-syscall-to-the-seccomp.patch
 Patch22: kvm-redhat-Define-hw_compat_rhel_8_5.patch
 # For bz#1998943 - Add machine type compatibility update for 6.1 rebase [s390x]
 Patch23: kvm-redhat-Add-s390x-machine-type-compatibility-update-f.patch
+# For bz#1984401 - fails to revert snapshot of a VM [balloon/page-poison]
+Patch24: kvm-virtio-balloon-Fix-page-poison-subsection-name.patch
 
 # Source-git patches
 
@@ -1183,6 +1183,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Oct 11 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.1.0-5
+- kvm-virtio-balloon-Fix-page-poison-subsection-name.patch [bz#1984401]
+- kvm-spec-Remove-block-curl-and-block-ssh-dependency.patch [bz#2010985]
+- Resolves: bz#1984401
+  (fails to revert snapshot of a VM [balloon/page-poison])
+- Resolves: bz#2010985
+  (Remove dependency on qemu-kvm-block-curl and qemu-kvm-block-ssh [rhel-9.0.0])
+
 * Tue Oct 05 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.1.0-4
 - kvm-redhat-Define-hw_compat_rhel_8_5.patch [bz#1998943]
 - kvm-redhat-Add-s390x-machine-type-compatibility-update-f.patch [bz#1998943]
