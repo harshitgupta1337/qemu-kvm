@@ -133,7 +133,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.1.0
-Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 6%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -192,6 +192,8 @@ Patch22: kvm-redhat-Define-hw_compat_rhel_8_5.patch
 Patch23: kvm-redhat-Add-s390x-machine-type-compatibility-update-f.patch
 # For bz#1984401 - fails to revert snapshot of a VM [balloon/page-poison]
 Patch24: kvm-virtio-balloon-Fix-page-poison-subsection-name.patch
+# For bz#1998942 - Add machine type compatibility update for 6.1 rebase [aarch64]
+Patch25: kvm-hw-arm-virt-Add-hw_compat_rhel_8_5-to-8.5-machine-ty.patch
 
 # Source-git patches
 
@@ -1183,6 +1185,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Oct 18 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.1.0-6
+- kvm-hw-arm-virt-Add-hw_compat_rhel_8_5-to-8.5-machine-ty.patch [bz#1998942]
+- Resolves: bz#1998942
+  (Add machine type compatibility update for 6.1 rebase [aarch64])
+
 * Mon Oct 11 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.1.0-5
 - kvm-virtio-balloon-Fix-page-poison-subsection-name.patch [bz#1984401]
 - kvm-spec-Remove-block-curl-and-block-ssh-dependency.patch [bz#2010985]

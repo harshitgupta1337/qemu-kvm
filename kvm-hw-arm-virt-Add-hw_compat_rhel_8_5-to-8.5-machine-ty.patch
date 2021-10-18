@@ -1,0 +1,38 @@
+From c0fa5e8ad618a980752f7053de4d4fedd46b5b53 Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Tue, 12 Oct 2021 17:53:07 +0200
+Subject: [PATCH] hw: arm: virt: Add hw_compat_rhel_8_5 to 8.5 machine type
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 48: hw: arm: virt: Add hw_compat_rhel_8_5 to 8.5 machine type
+RH-Commit: [1/1] f4230d3bbd94beb44afb23cb0d1561ff2bc71340 (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 1998942
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+branch: c9s
+Upstream: no
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=40295089
+
+Add hw_compat_rhel_8_5 to rhel8.5 virt options.
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+---
+ hw/arm/virt.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index 9e7cb687dc..79286c40ec 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -3148,5 +3148,6 @@ type_init(rhel_machine_init);
+ static void rhel850_virt_options(MachineClass *mc)
+ {
+     compat_props_add(mc->compat_props, arm_rhel_compat, arm_rhel_compat_len);
++    compat_props_add(mc->compat_props, hw_compat_rhel_8_5, hw_compat_rhel_8_5_len);
+ }
+ DEFINE_RHEL_MACHINE_AS_LATEST(8, 5, 0)
+-- 
+2.27.0
+
