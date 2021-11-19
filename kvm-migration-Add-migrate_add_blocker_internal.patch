@@ -1,0 +1,100 @@
+From 58d47d795b91beb1f87929fb07d9f1b4af79cb14 Mon Sep 17 00:00:00 2001
+From: Peter Xu <peterx@redhat.com>
+Date: Wed, 22 Sep 2021 12:20:08 -0400
+Subject: [PATCH 2/6] migration: Add migrate_add_blocker_internal()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Peter Xu <peterx@redhat.com>
+RH-MergeRequest: 51: dump-guest-memory: Add blocker for migration
+RH-Commit: [2/3] 44cf3879ee66cc9974dd3d8a5f9a0d4f762b7c01 (peterx/qemu-kvm)
+RH-Bugzilla: 1996609
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: quintela1 <quintela@redhat.com>
+RH-Acked-by: Laszlo Ersek <lersek@redhat.com>
+
+An internal version that removes -only-migratable implications.  It can be used
+for temporary migration blockers like dump-guest-memory.
+
+Reviewed-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+Reviewed-by: Juan Quintela <quintela@redhat.com>
+Signed-off-by: Peter Xu <peterx@redhat.com>
+Signed-off-by: Juan Quintela <quintela@redhat.com>
+(cherry picked from commit 60fd680193119e7e4d50eccff7b55a0aadc934ab)
+Signed-off-by: Peter Xu <peterx@redhat.com>
+---
+ include/migration/blocker.h | 16 ++++++++++++++++
+ migration/migration.c       | 21 +++++++++++++--------
+ 2 files changed, 29 insertions(+), 8 deletions(-)
+
+diff --git a/include/migration/blocker.h b/include/migration/blocker.h
+index acd27018e9..9cebe2ba06 100644
+--- a/include/migration/blocker.h
++++ b/include/migration/blocker.h
+@@ -25,6 +25,22 @@
+  */
+ int migrate_add_blocker(Error *reason, Error **errp);
+ 
++/**
++ * @migrate_add_blocker_internal - prevent migration from proceeding without
++ *                                 only-migrate implications
++ *
++ * @reason - an error to be returned whenever migration is attempted
++ *
++ * @errp - [out] The reason (if any) we cannot block migration right now.
++ *
++ * @returns - 0 on success, -EBUSY on failure, with errp set.
++ *
++ * Some of the migration blockers can be temporary (e.g., for a few seconds),
++ * so it shouldn't need to conflict with "-only-migratable".  For those cases,
++ * we can call this function rather than @migrate_add_blocker().
++ */
++int migrate_add_blocker_internal(Error *reason, Error **errp);
++
+ /**
+  * @migrate_del_blocker - remove a blocking error from migration
+  *
+diff --git a/migration/migration.c b/migration/migration.c
+index f476e2101e..2aaf2fd449 100644
+--- a/migration/migration.c
++++ b/migration/migration.c
+@@ -2053,15 +2053,8 @@ void migrate_init(MigrationState *s)
+     s->threshold_size = 0;
+ }
+ 
+-int migrate_add_blocker(Error *reason, Error **errp)
++int migrate_add_blocker_internal(Error *reason, Error **errp)
+ {
+-    if (only_migratable) {
+-        error_propagate_prepend(errp, error_copy(reason),
+-                                "disallowing migration blocker "
+-                                "(--only-migratable) for: ");
+-        return -EACCES;
+-    }
+-
+     /* Snapshots are similar to migrations, so check RUN_STATE_SAVE_VM too. */
+     if (runstate_check(RUN_STATE_SAVE_VM) || !migration_is_idle()) {
+         error_propagate_prepend(errp, error_copy(reason),
+@@ -2074,6 +2067,18 @@ int migrate_add_blocker(Error *reason, Error **errp)
+     return 0;
+ }
+ 
++int migrate_add_blocker(Error *reason, Error **errp)
++{
++    if (only_migratable) {
++        error_propagate_prepend(errp, error_copy(reason),
++                                "disallowing migration blocker "
++                                "(--only-migratable) for: ");
++        return -EACCES;
++    }
++
++    return migrate_add_blocker_internal(reason, errp);
++}
++
+ void migrate_del_blocker(Error *reason)
+ {
+     migration_blockers = g_slist_remove(migration_blockers, reason);
+-- 
+2.27.0
+

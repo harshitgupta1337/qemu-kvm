@@ -103,8 +103,8 @@
 %endif
 
 %global target_list %{kvm_target}-softmmu
-%global block_drivers_rw_list qcow2,raw,file,host_device,nbd,iscsi,rbd,blkdebug,luks,null-co,nvme,copy-on-read,throttle
-%global block_drivers_ro_list vmdk,vhdx,vpc,https,ssh
+%global block_drivers_rw_list qcow2,raw,file,host_device,nbd,iscsi,rbd,blkdebug,luks,null-co,nvme,copy-on-read,throttle,compress
+%global block_drivers_ro_list vdi,vmdk,vhdx,vpc,https,ssh
 %define qemudocdir %{_docdir}/%{name}
 %global firmwaredirs "%{_datadir}/qemu-firmware:%{_datadir}/ipxe/qemu:%{_datadir}/seavgabios:%{_datadir}/seabios"
 
@@ -133,7 +133,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.1.0
-Release: 6%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -194,6 +194,13 @@ Patch23: kvm-redhat-Add-s390x-machine-type-compatibility-update-f.patch
 Patch24: kvm-virtio-balloon-Fix-page-poison-subsection-name.patch
 # For bz#1998942 - Add machine type compatibility update for 6.1 rebase [aarch64]
 Patch25: kvm-hw-arm-virt-Add-hw_compat_rhel_8_5-to-8.5-machine-ty.patch
+# For bz#1996609 - Qemu hit core dump when dump guest memory during live migration
+Patch26: kvm-migration-Make-migration-blocker-work-for-snapshots-.patch
+# For bz#1996609 - Qemu hit core dump when dump guest memory during live migration
+Patch27: kvm-migration-Add-migrate_add_blocker_internal.patch
+# For bz#1996609 - Qemu hit core dump when dump guest memory during live migration
+Patch28: kvm-dump-guest-memory-Block-live-migration.patch
+Patch29: kvm-Fix-for-ppc64le-build.patch
 
 # Source-git patches
 
@@ -686,6 +693,7 @@ run_configure \
 %if %{have_usbredir}
   --enable-usb-redir \
 %endif
+  --enable-vdi \
   --enable-virtiofsd \
   --enable-vhost-kernel \
   --enable-vhost-net \
@@ -1185,6 +1193,19 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Fri Nov 19 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.1.0-7
+- kvm-migration-Make-migration-blocker-work-for-snapshots-.patch [bz#1996609]
+- kvm-migration-Add-migrate_add_blocker_internal.patch [bz#1996609]
+- kvm-dump-guest-memory-Block-live-migration.patch [bz#1996609]
+- kvm-spec-Build-the-VDI-block-driver.patch [bz#2013331]
+- kvm-spec-Explicitly-include-compress-filter.patch [bz#1980035]
+- Resolves: bz#1996609
+  (Qemu hit core dump when dump guest memory during live migration)
+- Resolves: bz#2013331
+  (RFE: qemu-img cannot convert from vdi format)
+- Resolves: bz#1980035
+  (RFE: Enable compress filter so we can create new, compressed qcow2 files via qemu-nbd)
+
 * Mon Oct 18 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.1.0-6
 - kvm-hw-arm-virt-Add-hw_compat_rhel_8_5-to-8.5-machine-ty.patch [bz#1998942]
 - Resolves: bz#1998942
