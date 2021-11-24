@@ -133,7 +133,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.1.0
-Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -145,13 +145,6 @@ ExclusiveArch: x86_64 %{power64} aarch64 s390x
 
 Source0: http://wiki.qemu.org/download/qemu-%{version}%{?rcstr}.tar.xz
 
-# KSM control scripts
-Source4: ksm.service
-Source5: ksm.sysconfig
-Source6: ksmctl.c
-Source7: ksmtuned.service
-Source8: ksmtuned
-Source9: ksmtuned.conf
 Source10: qemu-guest-agent.service
 Source11: 99-qemu-guest-agent.rules
 Source12: bridge.conf
@@ -753,7 +746,6 @@ cp -a %{kvm_target}-softmmu/qemu-system-%{kvm_target} qemu-kvm
     cp pc-bios/s390-ccw/s390-ccw.img pc-bios/s390-ccw/s390-netboot.img pc-bios/
 %endif
 
-%{__cc} %{_sourcedir}/ksmctl.c %{optflags} -pie %{?build_ldflags} -o ksmctl
 popd
 # endif !tools_only
 %endif
@@ -797,13 +789,7 @@ popd
 %endif
 
 %if !%{tools_only}
-install -D -p -m 0644 %{_sourcedir}/ksm.service %{buildroot}%{_unitdir}/ksm.service
-install -D -p -m 0644 %{_sourcedir}/ksm.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/ksm
-install -D -p -m 0755 %{qemu_kvm_build}/ksmctl %{buildroot}%{_libexecdir}/ksmctl
 
-install -D -p -m 0644 %{_sourcedir}/ksmtuned.service %{buildroot}%{_unitdir}/ksmtuned.service
-install -D -p -m 0755 %{_sourcedir}/ksmtuned %{buildroot}%{_sbindir}/ksmtuned
-install -D -p -m 0644 %{_sourcedir}/ksmtuned.conf %{buildroot}%{_sysconfdir}/ksmtuned.conf
 install -D -p -m 0644 %{_sourcedir}/vhost.conf %{buildroot}%{_sysconfdir}/modprobe.d/vhost.conf
 install -D -p -m 0644 %{modprobe_kvm_conf} $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/kvm.conf
 
@@ -1021,17 +1007,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
         modprobe -b kvm  &> /dev/null || :
     fi
 %endif
-
-%systemd_post ksm.service
-%systemd_post ksmtuned.service
-
-%preun common
-%systemd_preun ksm.service
-%systemd_preun ksmtuned.service
-
-%postun common
-%systemd_postun_with_restart ksm.service
-%systemd_postun_with_restart ksmtuned.service
 # endif !tools_only
 %endif
 
@@ -1105,13 +1080,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_mandir}/man7/qemu-block-drivers.7*
 %attr(4755, -, -) %{_libexecdir}/qemu-bridge-helper
 %config(noreplace) %{_sysconfdir}/sasl2/%{name}.conf
-%{_unitdir}/ksm.service
-%{_libexecdir}/ksmctl
-%config(noreplace) %{_sysconfdir}/sysconfig/ksm
-%{_unitdir}/ksmtuned.service
-%{_sbindir}/ksmtuned
 %ghost %{_sysconfdir}/kvm
-%config(noreplace) %{_sysconfdir}/ksmtuned.conf
 %dir %{_sysconfdir}/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/bridge.conf
 %config(noreplace) %{_sysconfdir}/modprobe.d/vhost.conf
@@ -1193,6 +1162,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Wed Nov 24 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.1.0-8
+- kvm-Move-ksmtuned-files-to-separate-package.patch [bz#1971678]
+- Resolves: bz#1971678
+  (Split out ksmtuned package from qemu-kvm)
+
 * Fri Nov 19 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.1.0-7
 - kvm-migration-Make-migration-blocker-work-for-snapshots-.patch [bz#1996609]
 - kvm-migration-Add-migrate_add_blocker_internal.patch [bz#1996609]
