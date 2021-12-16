@@ -1,4 +1,4 @@
-From 01fe9632c4dcc7a6ce9c0100db6256e815e6bf87 Mon Sep 17 00:00:00 2001
+From 2d595bc1744fc764ef506fd6ed6555f267d01ea4 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:27:13 +0200
 Subject: Add ppc64 machine types
@@ -7,10 +7,12 @@ Adding changes to add RHEL machine types for ppc64 architecture.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 
-Merged patches (6.1.0 RC1):
-- c438c25ac3 redhat: Define pseries-rhel8.5.0 machine type
+Rebase notes (6.2.0 rc1):
+- Fixed rebase conflict relicts
+- Update machine type compat for 6.2 (from MR 66)
 
 Merged patches (6.1.0):
+- c438c25ac3 redhat: Define pseries-rhel8.5.0 machine type
 - a3995e2eff Remove RHEL 7.0.0 machine type (only ppc64 changes)
 - ad3190a79b Remove RHEL 7.1.0 machine type (only ppc64 changes)
 - 84bbe15d4e Remove RHEL 7.2.0 machine type (only ppc64 changes)
@@ -18,20 +20,20 @@ Merged patches (6.1.0):
 - af69d1ca6e Remove RHEL 7.4.0 machine types (only ppc64 changes)
 - 8f7a74ab78 Remove RHEL 7.5.0 machine types (only ppc64 changes)
 ---
- hw/ppc/spapr.c          | 238 +++++++++++++++++++++++++++++++++++++++-
+ hw/ppc/spapr.c          | 243 ++++++++++++++++++++++++++++++++++++++++
  hw/ppc/spapr_cpu_core.c |  13 +++
  include/hw/ppc/spapr.h  |   4 +
  target/ppc/compat.c     |  13 ++-
  target/ppc/cpu.h        |   1 +
- target/ppc/kvm.c        |  28 +++++
+ target/ppc/kvm.c        |  27 +++++
  target/ppc/kvm_ppc.h    |  13 +++
- 7 files changed, 307 insertions(+), 3 deletions(-)
+ 7 files changed, 313 insertions(+), 1 deletion(-)
 
 diff --git a/hw/ppc/spapr.c b/hw/ppc/spapr.c
-index 81699d4f8b..1386e45e70 100644
+index 3b5fd749be..f4bb5f15f0 100644
 --- a/hw/ppc/spapr.c
 +++ b/hw/ppc/spapr.c
-@@ -1592,6 +1592,9 @@ static void spapr_machine_reset(MachineState *machine)
+@@ -1593,6 +1593,9 @@ static void spapr_machine_reset(MachineState *machine)
  
      pef_kvm_reset(machine->cgs, &error_fatal);
      spapr_caps_apply(spapr);
@@ -41,7 +43,7 @@ index 81699d4f8b..1386e45e70 100644
  
      first_ppc_cpu = POWERPC_CPU(first_cpu);
      if (kvm_enabled() && kvmppc_has_cap_mmu_radix() &&
-@@ -3315,6 +3318,20 @@ static void spapr_set_host_serial(Object *obj, const char *value, Error **errp)
+@@ -3288,6 +3291,20 @@ static void spapr_set_host_serial(Object *obj, const char *value, Error **errp)
      spapr->host_serial = g_strdup(value);
  }
  
@@ -62,7 +64,7 @@ index 81699d4f8b..1386e45e70 100644
  static void spapr_instance_init(Object *obj)
  {
      SpaprMachineState *spapr = SPAPR_MACHINE(obj);
-@@ -3393,6 +3410,12 @@ static void spapr_instance_init(Object *obj)
+@@ -3366,6 +3383,12 @@ static void spapr_instance_init(Object *obj)
          spapr_get_host_serial, spapr_set_host_serial);
      object_property_set_description(obj, "host-serial",
          "Host serial number to advertise in guest device tree");
@@ -75,7 +77,7 @@ index 81699d4f8b..1386e45e70 100644
  }
  
  static void spapr_machine_finalizefn(Object *obj)
-@@ -4634,6 +4657,7 @@ static void spapr_machine_class_init(ObjectClass *oc, void *data)
+@@ -4614,6 +4637,7 @@ static void spapr_machine_class_init(ObjectClass *oc, void *data)
      vmc->client_architecture_support = spapr_vof_client_architecture_support;
      vmc->quiesce = spapr_vof_quiesce;
      vmc->setprop = spapr_vof_setprop;
@@ -83,15 +85,15 @@ index 81699d4f8b..1386e45e70 100644
  }
  
  static const TypeInfo spapr_machine_info = {
-@@ -4685,6 +4709,7 @@ static void spapr_machine_latest_class_options(MachineClass *mc)
+@@ -4665,6 +4689,7 @@ static void spapr_machine_latest_class_options(MachineClass *mc)
      }                                                                \
      type_init(spapr_machine_register_##suffix)
  
 +#if 0 /* Disabled for Red Hat Enterprise Linux */
  /*
-  * pseries-6.1
+  * pseries-6.2
   */
-@@ -4786,6 +4811,7 @@ static void spapr_machine_4_1_class_options(MachineClass *mc)
+@@ -4781,6 +4806,7 @@ static void spapr_machine_4_1_class_options(MachineClass *mc)
  }
  
  DEFINE_SPAPR_MACHINE(4_1, "4.1", false);
@@ -99,7 +101,7 @@ index 81699d4f8b..1386e45e70 100644
  
  /*
   * pseries-4.0
-@@ -4805,6 +4831,8 @@ static bool phb_placement_4_0(SpaprMachineState *spapr, uint32_t index,
+@@ -4800,6 +4826,8 @@ static bool phb_placement_4_0(SpaprMachineState *spapr, uint32_t index,
      *nv2atsd = 0;
      return true;
  }
@@ -108,23 +110,7 @@ index 81699d4f8b..1386e45e70 100644
  static void spapr_machine_4_0_class_options(MachineClass *mc)
  {
      SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
-@@ -4963,6 +4991,7 @@ DEFINE_SPAPR_MACHINE(2_8, "2.8", false);
- /*
-  * pseries-2.7
-  */
-+#endif
- 
- static bool phb_placement_2_7(SpaprMachineState *spapr, uint32_t index,
-                               uint64_t *buid, hwaddr *pio,
-@@ -5018,6 +5047,7 @@ static bool phb_placement_2_7(SpaprMachineState *spapr, uint32_t index,
-     return true;
- }
- 
-+#if 0 /* Disabled for Red Hat Enterprise Linux */
- static void spapr_machine_2_7_class_options(MachineClass *mc)
- {
-     SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
-@@ -5132,10 +5162,214 @@ static void spapr_machine_2_1_class_options(MachineClass *mc)
+@@ -5127,6 +5155,221 @@ static void spapr_machine_2_1_class_options(MachineClass *mc)
      compat_props_add(mc->compat_props, hw_compat_2_1, hw_compat_2_1_len);
  }
  DEFINE_SPAPR_MACHINE(2_1, "2.1", false);
@@ -148,8 +134,14 @@ index 81699d4f8b..1386e45e70 100644
 +
 +static void spapr_machine_rhel850_class_options(MachineClass *mc)
 +{
++    SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
++
 +    /* The default machine type must apply the RHEL specific defaults */
 +    spapr_machine_rhel_default_class_options(mc);
++    compat_props_add(mc->compat_props, hw_compat_rhel_8_5,
++                     hw_compat_rhel_8_5_len);
++    smc->pre_6_2_numa_affinity = true;
++    mc->smp_props.prefer_sockets = true;
 +}
 +
 +DEFINE_SPAPR_MACHINE(rhel850, "rhel8.5.0", true);
@@ -239,8 +231,7 @@ index 81699d4f8b..1386e45e70 100644
 +    compat_props_add(mc->compat_props, hw_compat_rhel_8_1,
 +                     hw_compat_rhel_8_1_len);
 +    compat_props_add(mc->compat_props, compat, G_N_ELEMENTS(compat));
- 
--static void spapr_machine_register_types(void)
++
 +    /* from pseries-4.2 */
 +    smc->default_caps.caps[SPAPR_CAP_CCF_ASSIST] = SPAPR_CAP_OFF;
 +}
@@ -255,8 +246,7 @@ index 81699d4f8b..1386e45e70 100644
 + */
 +
 +static void spapr_machine_rhel800_class_options(MachineClass *mc)
- {
--    type_register_static(&spapr_machine_info);
++{
 +    SpaprMachineClass *smc = SPAPR_MACHINE_CLASS(mc);
 +
 +    spapr_machine_rhel810_class_options(mc);
@@ -274,8 +264,8 @@ index 81699d4f8b..1386e45e70 100644
 +    smc->dr_phb_enabled = false;
 +    smc->broken_host_serial_model = true;
 +    smc->default_caps.caps[SPAPR_CAP_LARGE_DECREMENTER] = SPAPR_CAP_OFF;
- }
- 
++}
++
 +DEFINE_SPAPR_MACHINE(rhel800, "rhel8.0.0", false);
 +
 +/*
@@ -339,10 +329,11 @@ index 81699d4f8b..1386e45e70 100644
 +}
 +
 +DEFINE_SPAPR_MACHINE(rhel760sxxm, "rhel7.6.0-sxxm", false);
-+
- type_init(spapr_machine_register_types)
+ 
+ static void spapr_machine_register_types(void)
+ {
 diff --git a/hw/ppc/spapr_cpu_core.c b/hw/ppc/spapr_cpu_core.c
-index 64178f0f9a..2bff13a6ab 100644
+index 8ba34f6a1d..78eca1c04a 100644
 --- a/hw/ppc/spapr_cpu_core.c
 +++ b/hw/ppc/spapr_cpu_core.c
 @@ -24,6 +24,7 @@
@@ -380,18 +371,18 @@ index 64178f0f9a..2bff13a6ab 100644
          qdev_unrealize(DEVICE(cpu));
          return false;
 diff --git a/include/hw/ppc/spapr.h b/include/hw/ppc/spapr.h
-index 637652ad16..589d1a262c 100644
+index ee7504b976..fcd5bf9302 100644
 --- a/include/hw/ppc/spapr.h
 +++ b/include/hw/ppc/spapr.h
-@@ -146,6 +146,7 @@ struct SpaprMachineClass {
-     bool pre_5_1_assoc_refpoints;
+@@ -154,6 +154,7 @@ struct SpaprMachineClass {
      bool pre_5_2_numa_associativity;
+     bool pre_6_2_numa_affinity;
  
 +    bool has_power9_support;
      bool (*phb_placement)(SpaprMachineState *spapr, uint32_t index,
                            uint64_t *buid, hwaddr *pio,
                            hwaddr *mmio32, hwaddr *mmio64,
-@@ -230,6 +231,9 @@ struct SpaprMachineState {
+@@ -238,6 +239,9 @@ struct SpaprMachineState {
      /* Set by -boot */
      char *boot_device;
  
@@ -427,10 +418,10 @@ index 7949a24f5a..f207a9ba01 100644
      const CompatInfo *compat = compat_by_pvr(compat_pvr);
      const CompatInfo *min = compat_by_pvr(min_compat_pvr);
 diff --git a/target/ppc/cpu.h b/target/ppc/cpu.h
-index 93d308ac8f..dca9bdf846 100644
+index e946da5f3a..23e8b76c85 100644
 --- a/target/ppc/cpu.h
 +++ b/target/ppc/cpu.h
-@@ -1378,6 +1378,7 @@ static inline int cpu_mmu_index(CPUPPCState *env, bool ifetch)
+@@ -1401,6 +1401,7 @@ static inline int cpu_mmu_index(CPUPPCState *env, bool ifetch)
  
  /* Compatibility modes */
  #if defined(TARGET_PPC64)
@@ -439,7 +430,7 @@ index 93d308ac8f..dca9bdf846 100644
                        uint32_t min_compat_pvr, uint32_t max_compat_pvr);
  bool ppc_type_check_compat(const char *cputype, uint32_t compat_pvr,
 diff --git a/target/ppc/kvm.c b/target/ppc/kvm.c
-index dc93b99189..0f4f072fbd 100644
+index dc93b99189..154888cce5 100644
 --- a/target/ppc/kvm.c
 +++ b/target/ppc/kvm.c
 @@ -90,6 +90,7 @@ static int cap_ppc_nested_kvm_hv;
@@ -458,15 +449,10 @@ index dc93b99189..0f4f072fbd 100644
      cap_large_decr = kvmppc_get_dec_bits();
      cap_fwnmi = kvm_vm_check_extension(s, KVM_CAP_PPC_FWNMI);
      /*
-@@ -2558,9 +2560,20 @@ int kvmppc_enable_cap_large_decr(PowerPCCPU *cpu, int enable)
-     return 0;
+@@ -2563,6 +2565,16 @@ int kvmppc_has_cap_rpt_invalidate(void)
+     return cap_rpt_invalidate;
  }
  
-+<<<<<<< HEAD
- int kvmppc_has_cap_rpt_invalidate(void)
- {
-     return cap_rpt_invalidate;
-+=======
 +bool kvmppc_has_cap_secure_guest(void)
 +{
 +    return !!cap_ppc_secure_guest;
@@ -475,11 +461,12 @@ index dc93b99189..0f4f072fbd 100644
 +int kvmppc_enable_cap_secure_guest(void)
 +{
 +    return kvm_vm_enable_cap(kvm_state, KVM_CAP_PPC_SECURE_GUEST, 0, 1);
-+>>>>>>> 89c02f0e37... Add ppc64 machine types
- }
- 
++}
++
  PowerPCCPUClass *kvm_ppc_get_host_cpu_class(void)
-@@ -2959,3 +2972,18 @@ bool kvm_arch_cpu_check_are_resettable(void)
+ {
+     uint32_t host_pvr = mfpvr();
+@@ -2959,3 +2971,18 @@ bool kvm_arch_cpu_check_are_resettable(void)
  {
      return true;
  }

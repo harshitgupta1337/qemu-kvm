@@ -20,3 +20,4 @@
 /patches.*
 /*.orig
 /qemu-6.1.0.tar.xz
+/qemu-6.2.0.tar.xz

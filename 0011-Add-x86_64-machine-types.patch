@@ -1,4 +1,4 @@
-From afc727ec3b2ad5a5c4033f25a63c877500b0194d Mon Sep 17 00:00:00 2001
+From afe0cbc5cdb98998b37cf48e9a1c87a110d9fbb3 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:10:31 +0200
 Subject: Add x86_64 machine types
@@ -7,14 +7,12 @@ Adding changes to add RHEL machine types for x86_64 architecture.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 
-Rebase notes (210609):
+Rebase notes (6.1.0):
 - Update qemu64 cpu spec
 
-Merged patches (6.1.0 RC1):
+Merged patches (6.1.0):
 - 59c284ad3b x86: Add x86 rhel8.5 machine types
 - a8868b42fe redhat: x86: Enable 'kvm-asyncpf-int' by default
-
-Merged patches (6.1.0):
 - a3995e2eff Remove RHEL 7.0.0 machine type (only x86_64 changes)
 - ad3190a79b Remove RHEL 7.1.0 machine type (only x86_64 changes)
 - 84bbe15d4e Remove RHEL 7.2.0 machine type (only x86_64 changes)
@@ -33,10 +31,10 @@ Merged patches (6.1.0):
  8 files changed, 385 insertions(+), 7 deletions(-)
 
 diff --git a/hw/i386/pc.c b/hw/i386/pc.c
-index c2b9d62a35..719cedaa4b 100644
+index a2ef40ecbc..b6d2db8d04 100644
 --- a/hw/i386/pc.c
 +++ b/hw/i386/pc.c
-@@ -362,6 +362,116 @@ GlobalProperty pc_compat_1_4[] = {
+@@ -371,6 +371,116 @@ GlobalProperty pc_compat_1_4[] = {
  };
  const size_t pc_compat_1_4_len = G_N_ELEMENTS(pc_compat_1_4);
  
@@ -153,7 +151,7 @@ index c2b9d62a35..719cedaa4b 100644
  GSIState *pc_gsi_create(qemu_irq **irqs, bool pci_enabled)
  {
      GSIState *s;
-@@ -1713,6 +1823,7 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
+@@ -1694,6 +1804,7 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
      pcmc->pvh_enabled = true;
      pcmc->kvmclock_create_always = true;
      assert(!mc->get_hotplug_handler);
@@ -161,9 +159,9 @@ index c2b9d62a35..719cedaa4b 100644
      mc->get_hotplug_handler = pc_get_hotplug_handler;
      mc->hotplug_allowed = pc_hotplug_allowed;
      mc->cpu_index_to_instance_props = x86_cpu_index_to_props;
-@@ -1724,7 +1835,8 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
+@@ -1704,7 +1815,8 @@ static void pc_machine_class_init(ObjectClass *oc, void *data)
+     mc->has_hotpluggable_cpus = true;
      mc->default_boot_order = "cad";
-     mc->smp_parse = pc_smp_parse;
      mc->block_default_type = IF_IDE;
 -    mc->max_cpus = 255;
 +    /* 240: max CPU count for RHEL */
@@ -172,10 +170,10 @@ index c2b9d62a35..719cedaa4b 100644
      mc->wakeup = pc_machine_wakeup;
      hc->pre_plug = pc_machine_device_pre_plug_cb;
 diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
-index eebb4f3141..19d6721f3d 100644
+index dda3f64f19..dabc6c1933 100644
 --- a/hw/i386/pc_piix.c
 +++ b/hw/i386/pc_piix.c
-@@ -51,6 +51,7 @@
+@@ -50,6 +50,7 @@
  #include "qapi/error.h"
  #include "qemu/error-report.h"
  #include "sysemu/xen.h"
@@ -202,7 +200,7 @@ index eebb4f3141..19d6721f3d 100644
  static void pc_compat_2_3_fn(MachineState *machine)
  {
      X86MachineState *x86ms = X86_MACHINE(machine);
-@@ -937,3 +939,65 @@ static void xenfv_3_1_machine_options(MachineClass *m)
+@@ -951,3 +953,65 @@ static void xenfv_3_1_machine_options(MachineClass *m)
  DEFINE_PC_MACHINE(xenfv, "xenfv-3.1", pc_xen_hvm_init,
                    xenfv_3_1_machine_options);
  #endif
@@ -269,10 +267,10 @@ index eebb4f3141..19d6721f3d 100644
 +DEFINE_PC_MACHINE(rhel760, "pc-i440fx-rhel7.6.0", pc_init_rhel760,
 +                  pc_machine_rhel760_options);
 diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
-index e7724fd02c..8032babda5 100644
+index 235054a643..04c911da18 100644
 --- a/hw/i386/pc_q35.c
 +++ b/hw/i386/pc_q35.c
-@@ -196,8 +196,8 @@ static void pc_q35_init(MachineState *machine)
+@@ -197,8 +197,8 @@ static void pc_q35_init(MachineState *machine)
  
      if (pcmc->smbios_defaults) {
          /* These values are guest ABI, do not change */
@@ -283,7 +281,7 @@ index e7724fd02c..8032babda5 100644
                              pcmc->smbios_uuid_encoded,
                              pcmc->smbios_stream_product,
                              pcmc->smbios_stream_version,
-@@ -337,6 +337,7 @@ static void pc_q35_init(MachineState *machine)
+@@ -342,6 +342,7 @@ static void pc_q35_init(MachineState *machine)
      DEFINE_PC_MACHINE(suffix, name, pc_init_##suffix, optionfn)
  
  
@@ -291,7 +289,7 @@ index e7724fd02c..8032babda5 100644
  static void pc_q35_machine_options(MachineClass *m)
  {
      PCMachineClass *pcmc = PC_MACHINE_CLASS(m);
-@@ -602,3 +603,175 @@ static void pc_q35_2_4_machine_options(MachineClass *m)
+@@ -620,3 +621,175 @@ static void pc_q35_2_4_machine_options(MachineClass *m)
  
  DEFINE_Q35_MACHINE(v2_4, "pc-q35-2.4", NULL,
                     pc_q35_2_4_machine_options);
@@ -468,10 +466,10 @@ index e7724fd02c..8032babda5 100644
 +DEFINE_PC_MACHINE(q35_rhel760, "pc-q35-rhel7.6.0", pc_q35_init_rhel760,
 +                  pc_q35_machine_rhel760_options);
 diff --git a/include/hw/boards.h b/include/hw/boards.h
-index f5423f351a..a2b1681027 100644
+index b0a6e05b48..3c3d2ad450 100644
 --- a/include/hw/boards.h
 +++ b/include/hw/boards.h
-@@ -242,6 +242,8 @@ struct MachineClass {
+@@ -263,6 +263,8 @@ struct MachineClass {
      strList *allowed_dynamic_sysbus_devices;
      bool auto_enable_numa_with_memhp;
      bool auto_enable_numa_with_memdev;
@@ -481,10 +479,10 @@ index f5423f351a..a2b1681027 100644
      bool smbus_no_migration_support;
      bool nvdimm_supported;
 diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
-index 17ad7bfc3a..75b338d66d 100644
+index 7ccc9a1a07..9689a58b14 100644
 --- a/include/hw/i386/pc.h
 +++ b/include/hw/i386/pc.h
-@@ -277,6 +277,27 @@ extern const size_t pc_compat_1_5_len;
+@@ -280,6 +280,27 @@ extern const size_t pc_compat_1_5_len;
  extern GlobalProperty pc_compat_1_4[];
  extern const size_t pc_compat_1_4_len;
  
@@ -525,10 +523,10 @@ index d95028018e..7b004065ae 100644
  };
  
 diff --git a/target/i386/kvm/kvm.c b/target/i386/kvm/kvm.c
-index e69abe48e3..4a3077b3f0 100644
+index 5a698bde19..a668f521ac 100644
 --- a/target/i386/kvm/kvm.c
 +++ b/target/i386/kvm/kvm.c
-@@ -3261,6 +3261,7 @@ static int kvm_get_msrs(X86CPU *cpu)
+@@ -3336,6 +3336,7 @@ static int kvm_get_msrs(X86CPU *cpu)
      struct kvm_msr_entry *msrs = cpu->kvm_msr_buf->entries;
      int ret, i;
      uint64_t mtrr_top_bits;
@@ -536,7 +534,7 @@ index e69abe48e3..4a3077b3f0 100644
  
      kvm_msr_buf_reset(cpu);
  
-@@ -3579,6 +3580,9 @@ static int kvm_get_msrs(X86CPU *cpu)
+@@ -3665,6 +3666,9 @@ static int kvm_get_msrs(X86CPU *cpu)
              break;
          case MSR_KVM_ASYNC_PF_EN:
              env->async_pf_en_msr = msrs[i].data;

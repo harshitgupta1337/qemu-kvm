@@ -1,4 +1,4 @@
-From 67b5eb11440c75e0fea275eccea43266760b831e Mon Sep 17 00:00:00 2001
+From b057b4ebec0f87f21ba4a15adbb2a1bde7240ed5 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 8 Jul 2020 08:35:50 +0200
 Subject: Use qemu-kvm in documentation instead of qemu-system-<arch>
@@ -37,10 +37,10 @@ index 52d6454b93..d74dbdeca9 100644
  .. |I2C| replace:: I\ :sup:`2`\ C
  .. |I2S| replace:: I\ :sup:`2`\ S
 diff --git a/docs/tools/qemu-trace-stap.rst b/docs/tools/qemu-trace-stap.rst
-index fb70445c75..0d9a783112 100644
+index d53073b52b..9e93df084f 100644
 --- a/docs/tools/qemu-trace-stap.rst
 +++ b/docs/tools/qemu-trace-stap.rst
-@@ -45,19 +45,19 @@ The following commands are valid:
+@@ -46,19 +46,19 @@ The following commands are valid:
    any of the listed names. If no *PATTERN* is given, the all possible
    probes will be listed.
  
@@ -63,7 +63,7 @@ index fb70445c75..0d9a783112 100644
  
  .. option:: run OPTIONS BINARY PATTERN...
  
-@@ -89,18 +89,18 @@ The following commands are valid:
+@@ -90,18 +90,18 @@ The following commands are valid:
      Restrict the tracing session so that it only triggers for the process
      identified by *PID*.
  
@@ -85,7 +85,7 @@ index fb70445c75..0d9a783112 100644
  
    To monitor QEMU processes running an alternative binary outside of
    ``$PATH``, displaying verbose information about setup of the
-@@ -108,7 +108,7 @@ The following commands are valid:
+@@ -109,7 +109,7 @@ The following commands are valid:
  
    ::
  
@@ -95,10 +95,10 @@ index fb70445c75..0d9a783112 100644
  See also
  --------
 diff --git a/qemu-options.hx b/qemu-options.hx
-index ac596e01a1..eea5fe9f68 100644
+index ae2c6dbbfc..94c4a8dbaf 100644
 --- a/qemu-options.hx
 +++ b/qemu-options.hx
-@@ -3124,11 +3124,11 @@ SRST
+@@ -3150,11 +3150,11 @@ SRST
  
      ::
  

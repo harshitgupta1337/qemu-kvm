@@ -1,4 +1,4 @@
-From e05f30c4899bfec4084cda3223e7141ddc97be6f Mon Sep 17 00:00:00 2001
+From b071f3eaa77dde1567d70b43d0b2975efe380da2 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 2 Sep 2020 09:39:41 +0200
 Subject: Enable make check
@@ -10,6 +10,9 @@ Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 ---
 Rebase changes (6.1.0):
 - removed unnecessary test changes
+
+Rebase changes (6.2.0 RC0):
+- new way of disabling bios-table-test
 
 Merged patches (6.1.0):
 - 2f129df7d3 redhat: Enable the 'test-block-iothread' test again
@@ -24,14 +27,14 @@ Merged patches (6.1.0):
  tests/qtest/fuzz-virtio-scsi-test.c |  2 +-
  tests/qtest/hd-geo-test.c           |  4 ++++
  tests/qtest/lpc-ich9-test.c         |  2 +-
- tests/qtest/meson.build             | 11 +++--------
+ tests/qtest/meson.build             | 13 ++++---------
  tests/qtest/prom-env-test.c         |  4 ++++
  tests/qtest/test-x86-cpuid-compat.c |  2 ++
  tests/qtest/usb-hcd-xhci-test.c     |  4 ++++
- 14 files changed, 40 insertions(+), 24 deletions(-)
+ 14 files changed, 41 insertions(+), 25 deletions(-)
 
 diff --git a/tests/qemu-iotests/051 b/tests/qemu-iotests/051
-index 7bf29343d7..fd63402d78 100755
+index 1d2fa93a11..c8a2815f54 100755
 --- a/tests/qemu-iotests/051
 +++ b/tests/qemu-iotests/051
 @@ -174,9 +174,9 @@ run_qemu -drive if=virtio
@@ -59,10 +62,10 @@ index 7bf29343d7..fd63402d78 100755
       *)
          ;;
 diff --git a/tests/qtest/bios-tables-test.c b/tests/qtest/bios-tables-test.c
-index 51d3a4e239..fe01fd8b7d 100644
+index 258874167e..62745181a8 100644
 --- a/tests/qtest/bios-tables-test.c
 +++ b/tests/qtest/bios-tables-test.c
-@@ -1303,7 +1303,7 @@ static void test_acpi_virt_tcg_numamem(void)
+@@ -1371,7 +1371,7 @@ static void test_acpi_virt_tcg_numamem(void)
      free_test_data(&data);
  
  }
@@ -71,7 +74,7 @@ index 51d3a4e239..fe01fd8b7d 100644
  static void test_acpi_virt_tcg_pxb(void)
  {
      test_data data = {
-@@ -1335,7 +1335,7 @@ static void test_acpi_virt_tcg_pxb(void)
+@@ -1403,7 +1403,7 @@ static void test_acpi_virt_tcg_pxb(void)
  
      free_test_data(&data);
  }
@@ -80,17 +83,17 @@ index 51d3a4e239..fe01fd8b7d 100644
  static void test_acpi_tcg_acpi_hmat(const char *machine)
  {
      test_data data;
-@@ -1565,7 +1565,7 @@ int main(int argc, char *argv[])
-         qtest_add_func("acpi/virt", test_acpi_virt_tcg);
-         qtest_add_func("acpi/virt/numamem", test_acpi_virt_tcg_numamem);
-         qtest_add_func("acpi/virt/memhp", test_acpi_virt_tcg_memhp);
--        qtest_add_func("acpi/virt/pxb", test_acpi_virt_tcg_pxb);
-+/*        qtest_add_func("acpi/virt/pxb", test_acpi_virt_tcg_pxb); */
-         qtest_add_func("acpi/virt/oem-fields", test_acpi_oem_fields_virt);
+@@ -1644,7 +1644,7 @@ int main(int argc, char *argv[])
+             qtest_add_func("acpi/virt", test_acpi_virt_tcg);
+             qtest_add_func("acpi/virt/numamem", test_acpi_virt_tcg_numamem);
+             qtest_add_func("acpi/virt/memhp", test_acpi_virt_tcg_memhp);
+-            qtest_add_func("acpi/virt/pxb", test_acpi_virt_tcg_pxb);
++/*            qtest_add_func("acpi/virt/pxb", test_acpi_virt_tcg_pxb); */
+             qtest_add_func("acpi/virt/oem-fields", test_acpi_oem_fields_virt);
+         }
      }
-     ret = g_test_run();
 diff --git a/tests/qtest/boot-serial-test.c b/tests/qtest/boot-serial-test.c
-index 96849cec91..81df62e01a 100644
+index 83828ba270..294476b959 100644
 --- a/tests/qtest/boot-serial-test.c
 +++ b/tests/qtest/boot-serial-test.c
 @@ -148,19 +148,23 @@ static testdef_t tests[] = {
@@ -241,17 +244,17 @@ index fe0bef9980..7a9d51579b 100644
  
      qtest_outl(s, 0xcf8, 0x8000f840); /* PMBASE */
 diff --git a/tests/qtest/meson.build b/tests/qtest/meson.build
-index 2bc3efd49f..53ce4b6416 100644
+index c9d8458062..049e06c057 100644
 --- a/tests/qtest/meson.build
 +++ b/tests/qtest/meson.build
-@@ -73,7 +73,6 @@ qtests_i386 = \
+@@ -68,7 +68,6 @@ qtests_i386 = \
+   (config_all_devices.has_key('CONFIG_RTL8139_PCI') ? ['rtl8139-test'] : []) +              \
+   (config_all_devices.has_key('CONFIG_E1000E_PCI_EXPRESS') ? ['fuzz-e1000e-test'] : []) +   \
+   (config_all_devices.has_key('CONFIG_ESP_PCI') ? ['am53c974-test'] : []) +                 \
+-  (unpack_edk2_blobs ? ['bios-tables-test'] : []) +                                         \
+   qtests_pci +                                                                              \
+   ['fdc-test',
     'ide-test',
-    'hd-geo-test',
-    'boot-order-test',
--   'bios-tables-test',
-    'rtc-test',
-    'i440fx-test',
-    'fw_cfg-test',
 @@ -81,7 +80,6 @@ qtests_i386 = \
     'drive_del-test',
     'tco-test',
@@ -280,16 +283,18 @@ index 2bc3efd49f..53ce4b6416 100644
    qtests_pci + ['migration-test', 'numa-test', 'cpu-plug-test', 'drive_del-test']
  
  qtests_sh4 = (config_all_devices.has_key('CONFIG_ISA_TESTDEV') ? ['endianness-test'] : [])
-@@ -186,7 +182,7 @@ qtests_aarch64 = \
+@@ -186,8 +182,8 @@ qtests_aarch64 = \
    ['arm-cpu-features',
     'numa-test',
     'boot-serial-test',
 -   'xlnx-can-test',
+-   'fuzz-xlnx-dp-test',
 +#   'xlnx-can-test',
++#   'fuzz-xlnx-dp-test',
     'migration-test']
  
  qtests_s390x = \
-@@ -195,7 +191,6 @@ qtests_s390x = \
+@@ -196,7 +192,6 @@ qtests_s390x = \
    (config_host.has_key('CONFIG_POSIX') ? ['test-filter-redirector'] : []) +                     \
    ['boot-serial-test',
     'drive_del-test',

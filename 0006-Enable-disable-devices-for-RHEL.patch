@@ -1,4 +1,4 @@
-From 0818ec19b1626de85d061b240e0c369a6fb524fb Mon Sep 17 00:00:00 2001
+From af4c83ed637bfda003ae86133413d53cefda3654 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Thu, 15 Jul 2021 03:22:36 -0400
 Subject: Enable/disable devices for RHEL
@@ -7,29 +7,30 @@ This commit adds all changes related to changes in supported devices.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 --
-Rebase notes (210623):
+Rebase notes (6.1.0):
 - Added CONFIG_TPM (except s390x)
-
-Rebase notes (210714):
 - default-configs moved to configs
-
-Rebaes notes (6.1.0 RC2):
 - Use --with-device-<ARCH> configure option to use rhel configs
 
-Merged patches (210526):
-- c51bf45304 Remove SPICE and QXL from x86_64-rh-devices.mak
+Rebase notes (6.2.0 RC0):
+- Add CONFIG_ISA_FDC
 
-Merged patches (6.1.0 RC1):
+Rebase notes (6.2.0 RC3):
+- Do not remove -no-hpet documentation
+
+Merged patches (6.1.0):
+- c51bf45304 Remove SPICE and QXL from x86_64-rh-devices.mak
 - 02fc745601 aarch64-rh-devices: add CONFIG_PVPANIC_PCI
 - f2fe835153 aarch64-rh-devices: add CONFIG_PXB
 - b5431733ad disable CONFIG_USB_STORAGE_BOT
 - 478ba0cdf6 Disable TPM passthrough
-
-Merged patches (6.1.0):
 - 2504d68a7c aarch64: Add USB storage devices
 - 51c2a3253c disable ac97 audio
+
+Merged patches (6.2.0 RC0):
+- 9f2f9fa2ba disable sga device
 ---
- .distro/qemu-kvm.spec.template                |  12 ++-
+ .distro/qemu-kvm.spec.template                |   9 +-
  .../aarch64-softmmu/aarch64-rh-devices.mak    |  33 ++++++
  .../ppc64-softmmu/ppc64-rh-devices.mak        |  35 ++++++
  configs/devices/rh-virtio.mak                 |  10 ++
@@ -48,12 +49,11 @@ Merged patches (6.1.0):
  hw/ppc/spapr_cpu_core.c                       |   2 +
  hw/timer/hpet.c                               |   8 ++
  hw/usb/meson.build                            |   2 +-
- qemu-options.hx                               |   4 -
  target/arm/cpu_tcg.c                          |  10 ++
  target/ppc/cpu-models.c                       |  10 ++
  target/s390x/cpu_models_sysemu.c              |   3 +
  target/s390x/kvm/kvm.c                        |   8 ++
- 24 files changed, 285 insertions(+), 15 deletions(-)
+ 23 files changed, 283 insertions(+), 10 deletions(-)
  create mode 100644 configs/devices/aarch64-softmmu/aarch64-rh-devices.mak
  create mode 100644 configs/devices/ppc64-softmmu/ppc64-rh-devices.mak
  create mode 100644 configs/devices/rh-virtio.mak
@@ -180,7 +180,7 @@ index 0000000000..d3b38312e1
 +CONFIG_WDT_DIAG288=y
 diff --git a/configs/devices/x86_64-softmmu/x86_64-rh-devices.mak b/configs/devices/x86_64-softmmu/x86_64-rh-devices.mak
 new file mode 100644
-index 0000000000..24b96ba0c4
+index 0000000000..1f7a9ab024
 --- /dev/null
 +++ b/configs/devices/x86_64-softmmu/x86_64-rh-devices.mak
 @@ -0,0 +1,102 @@
@@ -206,6 +206,7 @@ index 0000000000..24b96ba0c4
 +CONFIG_EDU=y
 +CONFIG_FDC=y
 +CONFIG_FDC_SYSBUS=y
++CONFIG_FDC_ISA=y
 +CONFIG_FW_CFG_DMA=y
 +CONFIG_HDA=y
 +CONFIG_HYPERV=y
@@ -253,7 +254,6 @@ index 0000000000..24b96ba0c4
 +CONFIG_SERIAL_ISA=y
 +CONFIG_SERIAL_PCI=y
 +CONFIG_SEV=y
-+CONFIG_SGA=y
 +CONFIG_SMBIOS=y
 +CONFIG_SMBUS_EEPROM=y
 +CONFIG_TEST_DEVICES=y
@@ -297,10 +297,10 @@ index 0000000000..2cd20f54d2
 +# We need "hpet"
 +CONFIG_HPET=y
 diff --git a/hw/acpi/ich9.c b/hw/acpi/ich9.c
-index 778e27b659..802501881f 100644
+index ebe08ed831..381ef2ddcf 100644
 --- a/hw/acpi/ich9.c
 +++ b/hw/acpi/ich9.c
-@@ -424,8 +424,8 @@ void ich9_pm_add_properties(Object *obj, ICH9LPCPMRegs *pm)
+@@ -438,8 +438,8 @@ void ich9_pm_add_properties(Object *obj, ICH9LPCPMRegs *pm)
      static const uint32_t gpe0_len = ICH9_PMIO_GPE0_LEN;
      pm->acpi_memory_hotplug.is_enabled = true;
      pm->cpu_hotplug_legacy = true;
@@ -310,7 +310,7 @@ index 778e27b659..802501881f 100644
 +    pm->disable_s4 = 1;
      pm->s4_val = 2;
      pm->use_acpi_hotplug_bridge = true;
- 
+     pm->keep_pci_slot_hpc = true;
 diff --git a/hw/arm/meson.build b/hw/arm/meson.build
 index 721a8eb8be..87ed4dd914 100644
 --- a/hw/arm/meson.build
@@ -325,7 +325,7 @@ index 721a8eb8be..87ed4dd914 100644
  arm_ss.add(when: 'CONFIG_PXA2XX', if_true: files('pxa2xx.c', 'pxa2xx_gpio.c', 'pxa2xx_pic.c'))
  arm_ss.add(when: 'CONFIG_DIGIC', if_true: files('digic.c'))
 diff --git a/hw/block/fdc.c b/hw/block/fdc.c
-index 9014cd30b3..46cee8c544 100644
+index 21d18ac2e3..97fa6de423 100644
 --- a/hw/block/fdc.c
 +++ b/hw/block/fdc.c
 @@ -48,6 +48,8 @@
@@ -337,7 +337,7 @@ index 9014cd30b3..46cee8c544 100644
  /********************************************************/
  /* debug Floppy devices */
  
-@@ -2320,6 +2322,14 @@ void fdctrl_realize_common(DeviceState *dev, FDCtrl *fdctrl, Error **errp)
+@@ -2337,6 +2339,14 @@ void fdctrl_realize_common(DeviceState *dev, FDCtrl *fdctrl, Error **errp)
      FDrive *drive;
      static int command_tables_inited = 0;
  
@@ -408,7 +408,7 @@ index fdca6ca659..fa1a7eee51 100644
         Also accept 8 MB/16 MB for backward compatibility. */
       if (s->vga.vram_size_mb != 4 && s->vga.vram_size_mb != 8 &&
 diff --git a/hw/ide/piix.c b/hw/ide/piix.c
-index d3e738320b..7c77312463 100644
+index ce89fd0aa3..fbcf802b13 100644
 --- a/hw/ide/piix.c
 +++ b/hw/ide/piix.c
 @@ -232,7 +232,8 @@ static void piix3_ide_class_init(ObjectClass *klass, void *data)
@@ -444,10 +444,10 @@ index baba62f357..bc360347ea 100644
  
  static const TypeInfo i8042_info = {
 diff --git a/hw/net/e1000.c b/hw/net/e1000.c
-index a30546c5d5..c2877978d9 100644
+index f5bc81296d..282d01e374 100644
 --- a/hw/net/e1000.c
 +++ b/hw/net/e1000.c
-@@ -1814,6 +1814,7 @@ static const E1000Info e1000_devices[] = {
+@@ -1821,6 +1821,7 @@ static const E1000Info e1000_devices[] = {
          .revision  = 0x03,
          .phy_id2   = E1000_PHY_ID2_8254xx_DEFAULT,
      },
@@ -455,7 +455,7 @@ index a30546c5d5..c2877978d9 100644
      {
          .name      = "e1000-82544gc",
          .device_id = E1000_DEV_ID_82544GC_COPPER,
-@@ -1826,6 +1827,7 @@ static const E1000Info e1000_devices[] = {
+@@ -1833,6 +1834,7 @@ static const E1000Info e1000_devices[] = {
          .revision  = 0x03,
          .phy_id2   = E1000_PHY_ID2_8254xx_DEFAULT,
      },
@@ -464,7 +464,7 @@ index a30546c5d5..c2877978d9 100644
  
  static void e1000_register_types(void)
 diff --git a/hw/ppc/spapr_cpu_core.c b/hw/ppc/spapr_cpu_core.c
-index 4f316a6f9d..64178f0f9a 100644
+index 58e7341cb7..8ba34f6a1d 100644
 --- a/hw/ppc/spapr_cpu_core.c
 +++ b/hw/ppc/spapr_cpu_core.c
 @@ -370,10 +370,12 @@ static const TypeInfo spapr_cpu_core_type_infos[] = {
@@ -512,23 +512,8 @@ index de853d780d..0776ae6a20 100644
    hw_usb_modules += {'smartcard': usbsmartcard_ss}
  endif
  
-diff --git a/qemu-options.hx b/qemu-options.hx
-index 83aa59a920..ac596e01a1 100644
---- a/qemu-options.hx
-+++ b/qemu-options.hx
-@@ -2412,10 +2412,6 @@ ERST
- 
- DEF("no-hpet", 0, QEMU_OPTION_no_hpet,
-     "-no-hpet        disable HPET\n", QEMU_ARCH_I386)
--SRST
--``-no-hpet``
--    Disable HPET support.
--ERST
- 
- DEF("acpitable", HAS_ARG, QEMU_OPTION_acpitable,
-     "-acpitable [sig=str][,rev=n][,oem_id=str][,oem_table_id=str][,oem_rev=n][,asl_compiler_id=str][,asl_compiler_rev=n][,{data|file}=file1[:file2]...]\n"
 diff --git a/target/arm/cpu_tcg.c b/target/arm/cpu_tcg.c
-index ed444bf436..fafd019539 100644
+index 13d0e9b195..3826fa5122 100644
 --- a/target/arm/cpu_tcg.c
 +++ b/target/arm/cpu_tcg.c
 @@ -22,6 +22,7 @@
@@ -536,7 +521,7 @@ index ed444bf436..fafd019539 100644
  #if !defined(CONFIG_USER_ONLY) || !defined(TARGET_AARCH64)
  
 +#if 0 /* Disabled for Red Hat Enterprise Linux */
- #ifdef CONFIG_TCG
+ #if !defined(CONFIG_USER_ONLY) && defined(CONFIG_TCG)
  static bool arm_v7m_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
  {
 @@ -375,6 +376,7 @@ static void cortex_a9_initfn(Object *obj)
@@ -606,7 +591,7 @@ index ed444bf436..fafd019539 100644
      { .name = "max",         .initfn = arm_max_initfn },
  #endif
 diff --git a/target/ppc/cpu-models.c b/target/ppc/cpu-models.c
-index 87e4228614..6eaa65efff 100644
+index 4baa111713..d779c4d1d5 100644
 --- a/target/ppc/cpu-models.c
 +++ b/target/ppc/cpu-models.c
 @@ -66,6 +66,7 @@
@@ -636,7 +621,7 @@ index 87e4228614..6eaa65efff 100644
      POWERPC_DEF("power7_v2.3",   CPU_POWERPC_POWER7_v23,             POWER7,
                  "POWER7 v2.3")
      POWERPC_DEF("power7+_v2.1",  CPU_POWERPC_POWER7P_v21,            POWER7,
-@@ -782,6 +786,7 @@
+@@ -784,6 +788,7 @@
  /* PowerPC CPU aliases                                                     */
  
  PowerPCCPUAlias ppc_cpu_aliases[] = {
@@ -644,7 +629,7 @@ index 87e4228614..6eaa65efff 100644
      { "403", "403gc" },
      { "405", "405d4" },
      { "405cr", "405crc" },
-@@ -940,12 +945,15 @@ PowerPCCPUAlias ppc_cpu_aliases[] = {
+@@ -942,12 +947,15 @@ PowerPCCPUAlias ppc_cpu_aliases[] = {
      { "7447a", "7447a_v1.2" },
      { "7457a", "7457a_v1.2" },
      { "apollo7pm", "7457a_v1.0" },
@@ -660,15 +645,15 @@ index 87e4228614..6eaa65efff 100644
      { "power7", "power7_v2.3" },
      { "power7+", "power7+_v2.1" },
      { "power8e", "power8e_v2.1" },
-@@ -955,6 +963,7 @@ PowerPCCPUAlias ppc_cpu_aliases[] = {
-     { "power10", "power10_v1.0" },
+@@ -957,6 +965,7 @@ PowerPCCPUAlias ppc_cpu_aliases[] = {
+     { "power10", "power10_v2.0" },
  #endif
  
 +#if 0  /* Disabled for Red Hat Enterprise Linux */
      /* Generic PowerPCs */
  #if defined(TARGET_PPC64)
      { "ppc64", "970fx_v3.1" },
-@@ -962,5 +971,6 @@ PowerPCCPUAlias ppc_cpu_aliases[] = {
+@@ -964,5 +973,6 @@ PowerPCCPUAlias ppc_cpu_aliases[] = {
      { "ppc32", "604" },
      { "ppc", "604" },
      { "default", "604" },

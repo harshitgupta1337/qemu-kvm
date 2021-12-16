@@ -1,4 +1,4 @@
-From 9ca40e0d1c7644ab781dc382effa8eb32f589322 Mon Sep 17 00:00:00 2001
+From 354c9ce982e566ddb3c724a57252986dcb7c36db Mon Sep 17 00:00:00 2001
 From: Andrew Jones <drjones@redhat.com>
 Date: Tue, 21 Jan 2014 10:46:52 +0100
 Subject: globally limit the maximum number of CPUs
@@ -18,10 +18,10 @@ Signed-off-by: Danilo Cesar Lemes de Paula <ddepaula@redhat.com>
  1 file changed, 12 insertions(+)
 
 diff --git a/accel/kvm/kvm-all.c b/accel/kvm/kvm-all.c
-index 0125c17edb..b5d488a027 100644
+index eecd8031cf..8f2a53438f 100644
 --- a/accel/kvm/kvm-all.c
 +++ b/accel/kvm/kvm-all.c
-@@ -2413,6 +2413,18 @@ static int kvm_init(MachineState *ms)
+@@ -2423,6 +2423,18 @@ static int kvm_init(MachineState *ms)
      soft_vcpus_limit = kvm_recommended_vcpus(s);
      hard_vcpus_limit = kvm_max_vcpus(s);
  

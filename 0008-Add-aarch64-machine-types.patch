@@ -1,4 +1,4 @@
-From 38c87d1469539d2b5224d298db85b0fd43d8bb0c Mon Sep 17 00:00:00 2001
+From 19d36c4519a1a560cce60b212e3afdf7eb026e45 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 12:53:31 +0200
 Subject: Add aarch64 machine types
@@ -7,25 +7,25 @@ Adding changes to add RHEL machine types for aarch64 architecture.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 ---
-Rebase notes (210623):
+Rebase notes (6.1.0):
 - Use CONFIG_TPM check when using TPM structures
-
-Rebase notes (6.1.0 rc0):
 - Add support for default_bus_bypass_iommu
-
-Merged patches (6.1.0 rc1):
 - ea4c0b32d9 arm/virt: Register highmem and gic-version as class properties
 - 895e1fa86a hw/arm/virt: Add 8.5 and 9.0 machine types and remove older ones
+
+Merged patches (6.2.0 RC0):
+- 9a3d4fde0e hw/arm/virt: Remove 9.0 machine type
+- f7d04d6695 hw: arm: virt: Add hw_compat_rhel_8_5 to 8.5 machine type
 ---
- hw/arm/virt.c         | 210 +++++++++++++++++++++++++++++++++++++++++-
+ hw/arm/virt.c         | 205 +++++++++++++++++++++++++++++++++++++++++-
  include/hw/arm/virt.h |   8 ++
- 2 files changed, 217 insertions(+), 1 deletion(-)
+ 2 files changed, 212 insertions(+), 1 deletion(-)
 
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index cd1a2d985d..3c8e6de36d 100644
+index 5de4d9d73b..7d51824263 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
-@@ -78,6 +78,7 @@
+@@ -79,6 +79,7 @@
  #include "hw/char/pl011.h"
  #include "qemu/guest-random.h"
  
@@ -33,7 +33,7 @@ index cd1a2d985d..3c8e6de36d 100644
  #define DEFINE_VIRT_MACHINE_LATEST(major, minor, latest) \
      static void virt_##major##_##minor##_class_init(ObjectClass *oc, \
                                                      void *data) \
-@@ -104,7 +105,48 @@
+@@ -105,7 +106,48 @@
      DEFINE_VIRT_MACHINE_LATEST(major, minor, true)
  #define DEFINE_VIRT_MACHINE(major, minor) \
      DEFINE_VIRT_MACHINE_LATEST(major, minor, false)
@@ -83,7 +83,7 @@ index cd1a2d985d..3c8e6de36d 100644
  
  /* Number of external interrupt lines to configure the GIC with */
  #define NUM_IRQS 256
-@@ -2117,6 +2159,7 @@ static void machvirt_init(MachineState *machine)
+@@ -2180,6 +2222,7 @@ static void machvirt_init(MachineState *machine)
      qemu_add_machine_init_done_notifier(&vms->machine_done);
  }
  
@@ -91,7 +91,7 @@ index cd1a2d985d..3c8e6de36d 100644
  static bool virt_get_secure(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -2144,6 +2187,7 @@ static void virt_set_virt(Object *obj, bool value, Error **errp)
+@@ -2207,6 +2250,7 @@ static void virt_set_virt(Object *obj, bool value, Error **errp)
  
      vms->virt = value;
  }
@@ -99,7 +99,7 @@ index cd1a2d985d..3c8e6de36d 100644
  
  static bool virt_get_highmem(Object *obj, Error **errp)
  {
-@@ -2241,6 +2285,7 @@ static void virt_set_acpi(Object *obj, Visitor *v, const char *name,
+@@ -2304,6 +2348,7 @@ static void virt_set_acpi(Object *obj, Visitor *v, const char *name,
      visit_type_OnOffAuto(v, name, &vms->acpi, errp);
  }
  
@@ -107,7 +107,7 @@ index cd1a2d985d..3c8e6de36d 100644
  static bool virt_get_ras(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -2268,6 +2313,7 @@ static void virt_set_mte(Object *obj, bool value, Error **errp)
+@@ -2331,6 +2376,7 @@ static void virt_set_mte(Object *obj, bool value, Error **errp)
  
      vms->mte = value;
  }
@@ -115,7 +115,7 @@ index cd1a2d985d..3c8e6de36d 100644
  
  static char *virt_get_gic_version(Object *obj, Error **errp)
  {
-@@ -2603,6 +2649,7 @@ static int virt_kvm_type(MachineState *ms, const char *type_str)
+@@ -2666,6 +2712,7 @@ static int virt_kvm_type(MachineState *ms, const char *type_str)
      return fixed_ipa ? 0 : requested_pa_size;
  }
  
@@ -123,7 +123,7 @@ index cd1a2d985d..3c8e6de36d 100644
  static void virt_machine_class_init(ObjectClass *oc, void *data)
  {
      MachineClass *mc = MACHINE_CLASS(oc);
-@@ -2948,3 +2995,164 @@ static void virt_machine_2_6_options(MachineClass *mc)
+@@ -3031,3 +3078,159 @@ static void virt_machine_2_6_options(MachineClass *mc)
      vmc->no_pmu = true;
  }
  DEFINE_VIRT_MACHINE(2, 6)
@@ -277,22 +277,17 @@ index cd1a2d985d..3c8e6de36d 100644
 +}
 +type_init(rhel_machine_init);
 +
-+static void rhel900_virt_options(MachineClass *mc)
-+{
-+    compat_props_add(mc->compat_props, arm_rhel_compat, arm_rhel_compat_len);
-+}
-+DEFINE_RHEL_MACHINE_AS_LATEST(9, 0, 0)
-+
 +static void rhel850_virt_options(MachineClass *mc)
 +{
-+    rhel900_virt_options(mc);
++    compat_props_add(mc->compat_props, arm_rhel_compat, arm_rhel_compat_len);
++    compat_props_add(mc->compat_props, hw_compat_rhel_8_5, hw_compat_rhel_8_5_len);
 +}
-+DEFINE_RHEL_MACHINE(8, 5, 0)
++DEFINE_RHEL_MACHINE_AS_LATEST(8, 5, 0)
 diff --git a/include/hw/arm/virt.h b/include/hw/arm/virt.h
-index 9661c46699..ac21ca712a 100644
+index dc6b66ffc8..9364628847 100644
 --- a/include/hw/arm/virt.h
 +++ b/include/hw/arm/virt.h
-@@ -171,9 +171,17 @@ struct VirtMachineState {
+@@ -175,9 +175,17 @@ struct VirtMachineState {
  
  #define VIRT_ECAM_ID(high) (high ? VIRT_HIGH_PCIE_ECAM : VIRT_PCIE_ECAM)
  

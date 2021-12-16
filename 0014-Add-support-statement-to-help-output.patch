@@ -1,4 +1,4 @@
-From 5209e0f91395c9240142f75123edd55a6fcce8d7 Mon Sep 17 00:00:00 2001
+From fcccb5c061b8bbae29de59637c5ad4cf4416281b Mon Sep 17 00:00:00 2001
 From: Eduardo Habkost <ehabkost@redhat.com>
 Date: Wed, 4 Dec 2013 18:53:17 +0100
 Subject: Add support statement to -help output
@@ -21,10 +21,10 @@ Signed-off-by: Eduardo Habkost <ehabkost@redhat.com>
  1 file changed, 9 insertions(+)
 
 diff --git a/softmmu/vl.c b/softmmu/vl.c
-index 5ca11e7469..55673d7302 100644
+index 620a1f1367..d46b8fb4ab 100644
 --- a/softmmu/vl.c
 +++ b/softmmu/vl.c
-@@ -802,9 +802,17 @@ static void version(void)
+@@ -827,9 +827,17 @@ static void version(void)
             QEMU_COPYRIGHT "\n");
  }
  
@@ -42,7 +42,7 @@ index 5ca11e7469..55673d7302 100644
      printf("usage: %s [options] [disk_image]\n\n"
             "'disk_image' is a raw hard disk image for IDE hard disk 0\n\n",
              error_get_progname());
-@@ -830,6 +838,7 @@ static void help(int exitcode)
+@@ -855,6 +863,7 @@ static void help(int exitcode)
             "\n"
             QEMU_HELP_BOTTOM "\n");
  

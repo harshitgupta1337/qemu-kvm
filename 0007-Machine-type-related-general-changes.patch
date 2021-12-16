@@ -1,4 +1,4 @@
-From fd2a04cf2221d8c541a70a66021c12a9b9c93aaa Mon Sep 17 00:00:00 2001
+From ef9b78c3f2810541eac453a3f8a8753763b1378d Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 11 Jan 2019 09:54:45 +0100
 Subject: Machine type related general changes
@@ -8,51 +8,60 @@ split to allow easier review. It contains changes not related to any
 architecture.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+--
+Rebase notes (6.2.0 RC0):
+- Do not duplicate minimal_version_id for piix4_pm
+- Remove empty line chunks in serial.c
+- Remove migration.h include in serial.c
 
-Merged patches (6.1.0 RC1):
-- f2fb42a3c6 redhat: add missing entries in hw_compat_rhel_8_4
-- 1949ec258e hw/arm/virt: Disable PL011 clock migration through hw_compat_rhel_8_3
+Rebase notes (6.2.0 RC1):
+- Update hw_compat_rhel_8_5 (from MR 66)
 
 Merged patches (6.1.0):
+- f2fb42a3c6 redhat: add missing entries in hw_compat_rhel_8_4
+- 1949ec258e hw/arm/virt: Disable PL011 clock migration through hw_compat_rhel_8_3
 - a3995e2eff Remove RHEL 7.0.0 machine type (only generic changes)
 - ad3190a79b Remove RHEL 7.1.0 machine type (only generic changes)
 - 84bbe15d4e Remove RHEL 7.2.0 machine type (only generic changes)
 - 0215eb3356 Remove RHEL 7.3.0 machine types (only generic changes)
 - af69d1ca6e Remove RHEL 7.4.0 machine types (only generic changes)
 - 8f7a74ab78 Remove RHEL 7.5.0 machine types (only generic changes)
+
+Merged patches (6.2.0 RC0):
+- d687ac13d2 redhat: Define hw_compat_rhel_8_5
 ---
- hw/acpi/piix4.c              |   5 +-
+ hw/acpi/piix4.c              |   6 +-
  hw/arm/virt.c                |   2 +-
- hw/char/serial.c             |   4 +
- hw/core/machine.c            | 159 +++++++++++++++++++++++++++++++++++
+ hw/core/machine.c            | 180 +++++++++++++++++++++++++++++++++++
  hw/display/vga-isa.c         |   2 +-
  hw/i386/pc_piix.c            |   2 +
  hw/i386/pc_q35.c             |   2 +
  hw/net/rtl8139.c             |   4 +-
  hw/rtc/mc146818rtc.c         |   2 +
- hw/smbios/smbios.c           |  46 +++++++++-
+ hw/smbios/smbios.c           |  46 ++++++++-
  hw/timer/i8254_common.c      |   2 +-
  hw/usb/hcd-uhci.c            |   4 +-
- hw/usb/hcd-xhci-pci.c        |  59 ++++++++++---
+ hw/usb/hcd-xhci-pci.c        |  59 +++++++++---
  hw/usb/hcd-xhci-pci.h        |   1 +
- include/hw/boards.h          |  18 ++++
+ include/hw/boards.h          |  21 ++++
  include/hw/firmware/smbios.h |   5 +-
  include/hw/i386/pc.h         |   3 +
- 17 files changed, 295 insertions(+), 25 deletions(-)
+ 16 files changed, 315 insertions(+), 26 deletions(-)
 
 diff --git a/hw/acpi/piix4.c b/hw/acpi/piix4.c
-index 48f7a1edbc..af21cb4ac3 100644
+index f0b5fac44a..8d6011c0a3 100644
 --- a/hw/acpi/piix4.c
 +++ b/hw/acpi/piix4.c
-@@ -279,6 +279,7 @@ static const VMStateDescription vmstate_acpi = {
+@@ -278,7 +278,7 @@ static bool piix4_vmstate_need_smbus(void *opaque, int version_id)
+ static const VMStateDescription vmstate_acpi = {
      .name = "piix4_pm",
      .version_id = 3,
-     .minimum_version_id = 3,
+-    .minimum_version_id = 3,
 +    .minimum_version_id = 2,
      .post_load = vmstate_acpi_post_load,
      .fields = (VMStateField[]) {
          VMSTATE_PCI_DEVICE(parent_obj, PIIX4PMState),
-@@ -644,8 +645,8 @@ static void piix4_send_gpe(AcpiDeviceIf *adev, AcpiEventStatusBits ev)
+@@ -644,8 +644,8 @@ static void piix4_send_gpe(AcpiDeviceIf *adev, AcpiEventStatusBits ev)
  
  static Property piix4_pm_properties[] = {
      DEFINE_PROP_UINT32("smb_io_base", PIIX4PMState, smb_io_base, 0),
@@ -61,13 +70,13 @@ index 48f7a1edbc..af21cb4ac3 100644
 +    DEFINE_PROP_UINT8(ACPI_PM_PROP_S3_DISABLED, PIIX4PMState, disable_s3, 1),
 +    DEFINE_PROP_UINT8(ACPI_PM_PROP_S4_DISABLED, PIIX4PMState, disable_s4, 1),
      DEFINE_PROP_UINT8(ACPI_PM_PROP_S4_VAL, PIIX4PMState, s4_val, 2),
-     DEFINE_PROP_BOOL("acpi-pci-hotplug-with-bridge-support", PIIX4PMState,
+     DEFINE_PROP_BOOL(ACPI_PM_PROP_ACPI_PCIHP_BRIDGE, PIIX4PMState,
                       use_acpi_hotplug_bridge, true),
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index 81eda46b0b..cd1a2d985d 100644
+index 30da05dfe0..5de4d9d73b 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
-@@ -1524,7 +1524,7 @@ static void virt_build_smbios(VirtMachineState *vms)
+@@ -1590,7 +1590,7 @@ static void virt_build_smbios(VirtMachineState *vms)
  
      smbios_set_defaults("QEMU", product,
                          vmc->smbios_old_sys_ver ? "1.0" : mc->name, false,
@@ -76,50 +85,35 @@ index 81eda46b0b..cd1a2d985d 100644
  
      smbios_get_tables(MACHINE(vms), NULL, 0,
                        &smbios_tables, &smbios_tables_len,
-diff --git a/hw/char/serial.c b/hw/char/serial.c
-index 7061aacbce..8fa5ab1e8e 100644
---- a/hw/char/serial.c
-+++ b/hw/char/serial.c
-@@ -37,6 +37,7 @@
- #include "trace.h"
- #include "hw/qdev-properties.h"
- #include "hw/qdev-properties-system.h"
-+#include "migration/migration.h"
- 
- #define UART_LCR_DLAB	0x80	/* Divisor latch access bit */
- 
-@@ -770,6 +771,7 @@ static const VMStateDescription vmstate_serial_xmit_fifo = {
- static bool serial_fifo_timeout_timer_needed(void *opaque)
- {
-     SerialState *s = (SerialState *)opaque;
-+
-     return timer_pending(s->fifo_timeout_timer);
- }
- 
-@@ -787,6 +789,7 @@ static const VMStateDescription vmstate_serial_fifo_timeout_timer = {
- static bool serial_timeout_ipending_needed(void *opaque)
- {
-     SerialState *s = (SerialState *)opaque;
-+
-     return s->timeout_ipending != 0;
- }
- 
-@@ -804,6 +807,7 @@ static const VMStateDescription vmstate_serial_timeout_ipending = {
- static bool serial_poll_needed(void *opaque)
- {
-     SerialState *s = (SerialState *)opaque;
-+
-     return s->poll_msl >= 0;
- }
- 
 diff --git a/hw/core/machine.c b/hw/core/machine.c
-index 54e040587d..d681a06a47 100644
+index 53a99abc56..53a3caf4fb 100644
 --- a/hw/core/machine.c
 +++ b/hw/core/machine.c
-@@ -37,6 +37,165 @@
+@@ -37,6 +37,186 @@
  #include "hw/virtio/virtio.h"
  #include "hw/virtio/virtio-pci.h"
  
++/*
++ * Mostly the same as hw_compat_6_0 and hw_compat_6_1
++ */
++GlobalProperty hw_compat_rhel_8_5[] = {
++    /* hw_compat_rhel_8_5 from hw_compat_6_0 */
++    { "gpex-pcihost", "allow-unmapped-accesses", "false" },
++    /* hw_compat_rhel_8_5 from hw_compat_6_0 */
++    { "i8042", "extended-state", "false"},
++    /* hw_compat_rhel_8_5 from hw_compat_6_0 */
++    { "nvme-ns", "eui64-default", "off"},
++    /* hw_compat_rhel_8_5 from hw_compat_6_0 */
++    { "e1000", "init-vet", "off" },
++    /* hw_compat_rhel_8_5 from hw_compat_6_0 */
++    { "e1000e", "init-vet", "off" },
++    /* hw_compat_rhel_8_5 from hw_compat_6_0 */
++    { "vhost-vsock-device", "seqpacket", "off" },
++    /* hw_compat_rhel_8_5 from hw_compat_6_1 */
++    { "vhost-user-vsock-device", "seqpacket", "off" },
++};
++const size_t hw_compat_rhel_8_5_len = G_N_ELEMENTS(hw_compat_rhel_8_5);
++
 +/*
 + * Mostly the same as hw_compat_5_2
 + */
@@ -279,9 +273,9 @@ index 54e040587d..d681a06a47 100644
 +};
 +const size_t hw_compat_rhel_7_6_len = G_N_ELEMENTS(hw_compat_rhel_7_6);
 +
- GlobalProperty hw_compat_6_0[] = {
-     { "gpex-pcihost", "allow-unmapped-accesses", "false" },
-     { "i8042", "extended-state", "false"},
+ GlobalProperty hw_compat_6_1[] = {
+     { "vhost-user-vsock-device", "seqpacket", "off" },
+     { "nvme-ns", "shared", "off" },
 diff --git a/hw/display/vga-isa.c b/hw/display/vga-isa.c
 index 90851e730b..a91c5d7467 100644
 --- a/hw/display/vga-isa.c
@@ -296,7 +290,7 @@ index 90851e730b..a91c5d7467 100644
  };
  
 diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
-index 30b8bd6ea9..eebb4f3141 100644
+index 223dd3e05d..dda3f64f19 100644
 --- a/hw/i386/pc_piix.c
 +++ b/hw/i386/pc_piix.c
 @@ -177,6 +177,8 @@ static void pc_init1(MachineState *machine,
@@ -309,10 +303,10 @@ index 30b8bd6ea9..eebb4f3141 100644
      }
  
 diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
-index 04b4a4788d..e7724fd02c 100644
+index e1e100316d..235054a643 100644
 --- a/hw/i386/pc_q35.c
 +++ b/hw/i386/pc_q35.c
-@@ -199,6 +199,8 @@ static void pc_q35_init(MachineState *machine)
+@@ -200,6 +200,8 @@ static void pc_q35_init(MachineState *machine)
          smbios_set_defaults("QEMU", "Standard PC (Q35 + ICH9, 2009)",
                              mc->name, pcmc->smbios_legacy_mode,
                              pcmc->smbios_uuid_encoded,
@@ -460,10 +454,10 @@ index 050875b497..32935da46c 100644
                               vmstate_pit_channel, PITChannelState),
          VMSTATE_INT64(channels[0].next_transition_time,
 diff --git a/hw/usb/hcd-uhci.c b/hw/usb/hcd-uhci.c
-index 0cb02a6432..962a9622e5 100644
+index d1b5657d72..7930b868fa 100644
 --- a/hw/usb/hcd-uhci.c
 +++ b/hw/usb/hcd-uhci.c
-@@ -1167,12 +1167,14 @@ void usb_uhci_common_realize(PCIDevice *dev, Error **errp)
+@@ -1166,11 +1166,13 @@ void usb_uhci_common_realize(PCIDevice *dev, Error **errp)
      UHCIState *s = UHCI(dev);
      uint8_t *pci_conf = s->dev.config;
      int i;
@@ -471,14 +465,13 @@ index 0cb02a6432..962a9622e5 100644
  
      pci_conf[PCI_CLASS_PROG] = 0x00;
      /* TODO: reset value should be 0. */
-     pci_conf[USB_SBRN] = USB_RELEASE_1; // release number
- 
+     pci_conf[USB_SBRN] = USB_RELEASE_1; /* release number */
 -    pci_config_set_interrupt_pin(pci_conf, u->info.irq_pin + 1);
 +    irq_pin = u->info.irq_pin;
 +    pci_config_set_interrupt_pin(pci_conf, irq_pin + 1);
+     s->irq = pci_allocate_irq(dev);
  
      if (s->masterbus) {
-         USBPort *ports[NB_PORTS];
 diff --git a/hw/usb/hcd-xhci-pci.c b/hw/usb/hcd-xhci-pci.c
 index e934b1a5b1..e18b05e528 100644
 --- a/hw/usb/hcd-xhci-pci.c
@@ -591,13 +584,16 @@ index c193f79443..086a1feb1e 100644
  
  #endif
 diff --git a/include/hw/boards.h b/include/hw/boards.h
-index accd6eff35..f5423f351a 100644
+index 9c1c190104..b0a6e05b48 100644
 --- a/include/hw/boards.h
 +++ b/include/hw/boards.h
-@@ -416,4 +416,22 @@ extern const size_t hw_compat_2_2_len;
+@@ -441,4 +441,25 @@ extern const size_t hw_compat_2_2_len;
  extern GlobalProperty hw_compat_2_1[];
  extern const size_t hw_compat_2_1_len;
  
++extern GlobalProperty hw_compat_rhel_8_5[];
++extern const size_t hw_compat_rhel_8_5_len;
++
 +extern GlobalProperty hw_compat_rhel_8_4[];
 +extern const size_t hw_compat_rhel_8_4_len;
 +
@@ -634,7 +630,7 @@ index 5a0dd0c8cf..2cb1ec2bab 100644
  void smbios_get_tables(MachineState *ms,
                         const struct smbios_phys_mem_area *mem_array,
 diff --git a/include/hw/i386/pc.h b/include/hw/i386/pc.h
-index 88dffe7517..17ad7bfc3a 100644
+index 9ab39e428f..7ccc9a1a07 100644
 --- a/include/hw/i386/pc.h
 +++ b/include/hw/i386/pc.h
 @@ -107,6 +107,9 @@ struct PCMachineClass {

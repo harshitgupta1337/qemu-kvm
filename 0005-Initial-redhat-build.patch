@@ -1,4 +1,4 @@
-From 4a0a5d5019938a8b4b5526d33e1bf3d7dcfc56a5 Mon Sep 17 00:00:00 2001
+From 3308eb892f03c7169f712fe88e74dacd6f05b1fe Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 26 May 2021 10:56:02 +0200
 Subject: Initial redhat build
@@ -13,36 +13,35 @@ several issues are fixed in QEMU tree:
 
 We disable make check due to issues with some of the tests.
 
-This rebase is based on qemu-kvm-5.2.0-13.el9
+This rebase is based on qemu-kvm-6.1.0-8.el9
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 --
-Rebase changes (210526):
+Rebase changes (6.1.0):
 - Move build to .distro
 - Move changes for support file to related commit
 - Added dependency for python3-sphinx-rtd_theme
 - Removed --disable-sheepdog configure option
 - Added new hw-display modules
-
-Rebase changes (210623):
 - SASL initialization moved to ui/vnc-auth-sasl.c
-
-Rebase changes (210714):
 - Add accel-qtest-<arch> and accel-tcg-x86_64 libraries
-
-Rebase changes (6.1.0 rc1):
 - Added hw-usb-host module
-
-Rebase changes (6.1.0 rc4):
 - Disable new configure options (bpf, nvmm, slirp-smbd)
-
-Rebase chagnes (6.1.0):
 - Use -pie for ksmctl build (annocheck complain fix)
+
+Rebase changes (6.2.0):
+- removed --disable-jemalloc and --disable-tcmalloc configure options
+- added audio-oss.so
+- added fdt requirement for x86_64
+- tests/acceptance renamed to tests/avocado
+- added multiboot_dma.bin
+- Add -Wno-string-plus-int to extra flags
+- Updated configure options
 
 Merged patches (6.0.0):
  - 605758c902 Limit build on Power to qemu-img and qemu-ga only
 
-Merged patches (6.1.0 RC1):
+Merged patches (6.1.0):
 - f04f91751f Use cached tarballs
 - 6581165c65 Remove message with running VM count
 - 03c3cac9fc spec-file: build qemu-kvm without SPICE and QXL
@@ -92,11 +91,7 @@ Merged patches (6.1.0 RC1):
 - d7ee259a79 spec: %files: don't use fine grained -docs file list
 - 64cad0c60f spec: %files: Add licenses to qemu-common too
 - c3de4f080a spec: %install: Drop python3 shebang fixup
-
-Merged patches (6.1.0 RC2):
 - 46fc216115 Update local build to work with spec file improvements
-
-Merged patches (6.1.0 RC3):
 - bab9531548 spec: Remove buildldflags
 - c8360ab6a9 spec: Use %make_build macro
 - f6966c66e9 spec: Drop make install sharedir and datadir usage
@@ -106,39 +101,73 @@ Merged patches (6.1.0 RC3):
 - 44c7dda6c3 spec: use %{build_ldflags}
 - 0009a34354 Move virtiofsd to separate package
 -  34d1b200b3 Utilize --firmware configure option
-
-Merged patches (6.1.0):
 - 2800e1dd03 spec: Switch toolchain to Clang/LLVM (except process-patches.sh)
 - e8a70f500f spec: Use safe-stack for x86_64
 - e29445d50d spec: Reenable write support for VMDK etc. in tools
 - a4fe2a3e16 redhat: Disable LTO on non-x86 architectures
 
-fixes
+Merged patches (6.2.0):
+- 333452440b remove sgabios dependency
+- 7d3633f184 enable pulseaudio
+- bd898709b0 spec: disable use of gcrypt for crypto backends in favour of gnutls
+- e4f0c6dee6 spec: Remove block-curl and block-ssh dependency
+- 4dc13bfe63 spec: Build the VDI block driver
+- d2f2ff3c74 spec: Explicitly include compress filter
+- a7d047f9c2 Move ksmtuned files to separate package
+
+With rebase new configure options are introducesed. We use two steps
+configuration - first we disable all options and then enable supported
+options.
+
+With 6.2.0, following changes are done:
+- disabled all audiodev and enable only pa
+  - not use audio-drv-list anymore
+  - disabling oss driver removes oss module (added during rebase to 6.2.0)
+- disable gettext
+- disable l2tpv3
+- enable selinux
+- enable spice-protocol
+  - added needed BuildRequire
+- specify used capstone version
+- specify used fdt version
+
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 ---
  .distro/85-kvm.preset                   |    5 -
  .distro/Makefile                        |  100 +
- .distro/Makefile.common                 |   45 +
+ .distro/Makefile.common                 |   38 +
  .distro/README.tests                    |   39 +
+ .distro/ksm.service                     |   13 -
+ .distro/ksm.sysconfig                   |    4 -
+ .distro/ksmctl.c                        |   77 -
+ .distro/ksmtuned                        |  139 -
+ .distro/ksmtuned.conf                   |   21 -
+ .distro/ksmtuned.service                |   12 -
  .distro/kvm-setup                       |   49 -
  .distro/kvm-setup.service               |   14 -
  .distro/modules-load.conf               |    4 +
  .distro/qemu-guest-agent.service        |    1 -
- .distro/qemu-kvm.spec.template          | 3767 +++++++++++++++++++++++
+ .distro/qemu-kvm.spec.template          | 3817 +++++++++++++++++++++++
  .distro/scripts/extract_build_cmd.py    |   12 +
  .gitignore                              |    1 +
  README.systemtap                        |   43 +
- configure                               |    1 -
- meson.build                             |    6 +-
+ meson.build                             |    4 +-
  scripts/qemu-guest-agent/fsfreeze-hook  |    2 +-
  scripts/systemtap/conf.d/qemu_kvm.conf  |    4 +
  scripts/systemtap/script.d/qemu_kvm.stp |    1 +
  tests/check-block.sh                    |    2 +
  ui/vnc-auth-sasl.c                      |    2 +-
- 19 files changed, 4024 insertions(+), 74 deletions(-)
+ 24 files changed, 4066 insertions(+), 338 deletions(-)
  delete mode 100644 .distro/85-kvm.preset
  create mode 100644 .distro/Makefile
  create mode 100644 .distro/Makefile.common
  create mode 100644 .distro/README.tests
+ delete mode 100644 .distro/ksm.service
+ delete mode 100644 .distro/ksm.sysconfig
+ delete mode 100644 .distro/ksmctl.c
+ delete mode 100644 .distro/ksmtuned
+ delete mode 100644 .distro/ksmtuned.conf
+ delete mode 100644 .distro/ksmtuned.service
  delete mode 100644 .distro/kvm-setup
  delete mode 100644 .distro/kvm-setup.service
  create mode 100644 .distro/modules-load.conf
@@ -196,31 +225,11 @@ index 0000000000..ad913fc990
 +
 +3. Translate the trace record to readable format.
 +  # /usr/share/qemu-kvm/simpletrace.py --no-header /usr/share/qemu-kvm/trace-events /tmp/trace.log
-diff --git a/configure b/configure
-index 9a79a004d7..b0dbdded06 100755
---- a/configure
-+++ b/configure
-@@ -5189,7 +5189,6 @@ if test "$skip_meson" = no; then
-         -Dwerror=$(if test "$werror" = yes; then echo true; else echo false; fi) \
-         -Dstrip=$(if test "$strip_opt" = yes; then echo true; else echo false; fi) \
-         -Db_pie=$(if test "$pie" = yes; then echo true; else echo false; fi) \
--        ${staticpic:+-Db_staticpic=$staticpic} \
-         -Db_coverage=$(if test "$gcov" = yes; then echo true; else echo false; fi) \
-         -Db_lto=$lto -Dcfi=$cfi -Dcfi_debug=$cfi_debug \
-         -Dmalloc=$malloc -Dmalloc_trim=$malloc_trim -Dsparse=$sparse \
 diff --git a/meson.build b/meson.build
-index b3e7ec0e92..17707c8748 100644
+index 96de1a6ef9..5f6ba86dbb 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -1,6 +1,6 @@
- project('qemu', ['c'], meson_version: '>=0.55.0',
-         default_options: ['warning_level=1', 'c_std=gnu11', 'cpp_std=gnu++11', 'b_colorout=auto'] +
--                         (meson.version().version_compare('>=0.56.0') ? [ 'b_staticpic=false' ] : []),
-+                          [ 'b_staticpic=false' ],
-         version: run_command('head', meson.source_root() / 'VERSION').stdout().strip())
- 
- not_found = dependency('', required: false)
-@@ -1790,7 +1790,9 @@ if capstone_opt == 'internal'
+@@ -2108,7 +2108,9 @@ if capstone_opt == 'internal'
      # Include all configuration defines via a header file, which will wind up
      # as a dependency on the object file, and thus changes here will result
      # in a rebuild.

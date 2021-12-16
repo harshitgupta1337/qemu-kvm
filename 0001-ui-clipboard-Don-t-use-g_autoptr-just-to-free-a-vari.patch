@@ -1,0 +1,49 @@
+From cc2f3e2ce9e2a9ab9e52e8f44bee4876e69843da Mon Sep 17 00:00:00 2001
+From: John Snow <jsnow@redhat.com>
+Date: Wed, 17 Nov 2021 09:51:46 -0500
+Subject: ui/clipboard: Don't use g_autoptr just to free a variable
+
+Clang doesn't recognize that the variable is being "used" and will emit
+a warning:
+
+  ../ui/clipboard.c:47:34: error: variable 'old' set but not used [-Werror,-Wunused-but-set-variable]
+      g_autoptr(QemuClipboardInfo) old = NULL;
+                                 ^
+  1 error generated.
+
+OK, fine. Just do things the old way.
+
+Signed-off-by: John Snow <jsnow@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+---
+
+This is temporary commit from upstream submission necessary for build to pass.
+We expect proper fix included upstream later.
+---
+ ui/clipboard.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/ui/clipboard.c b/ui/clipboard.c
+index d7b008d62a..d53576b0f6 100644
+--- a/ui/clipboard.c
++++ b/ui/clipboard.c
+@@ -44,13 +44,14 @@ void qemu_clipboard_peer_release(QemuClipboardPeer *peer,
+ 
+ void qemu_clipboard_update(QemuClipboardInfo *info)
+ {
+-    g_autoptr(QemuClipboardInfo) old = NULL;
++    QemuClipboardInfo *old = NULL;
+     assert(info->selection < QEMU_CLIPBOARD_SELECTION__COUNT);
+ 
+     notifier_list_notify(&clipboard_notifiers, info);
+ 
+     old = cbinfo[info->selection];
+     cbinfo[info->selection] = qemu_clipboard_info_ref(info);
++    g_free(old);
+ }
+ 
+ QemuClipboardInfo *qemu_clipboard_info(QemuClipboardSelection selection)
+-- 
+2.27.0
+

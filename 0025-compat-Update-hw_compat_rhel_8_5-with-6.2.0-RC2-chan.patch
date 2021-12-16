@@ -1,0 +1,31 @@
+From 168f0d56e3a37a7d5fcc59483e2b1181824a23d2 Mon Sep 17 00:00:00 2001
+From: Miroslav Rezanina <mrezanin@redhat.com>
+Date: Wed, 24 Nov 2021 23:51:52 -0500
+Subject: compat: Update hw_compat_rhel_8_5 with 6.2.0 RC2 changes
+
+In RC2 nvme-ns 'shared' default was changed (commit 916b0f0b52).
+
+Adding compat record for RHEL 8.5.0 so we keep it off for downstream
+machinetypes.
+
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/core/machine.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/hw/core/machine.c b/hw/core/machine.c
+index 448a8dd127..669d3d8b91 100644
+--- a/hw/core/machine.c
++++ b/hw/core/machine.c
+@@ -55,6 +55,8 @@ GlobalProperty hw_compat_rhel_8_5[] = {
+     { "vhost-vsock-device", "seqpacket", "off" },
+     /* hw_compat_rhel_8_5 from hw_compat_6_1 */
+     { "vhost-user-vsock-device", "seqpacket", "off" },
++    /* hw_compat_rhel_8_5 from hw_compat_6_1 */
++    { "nvme-ns", "shared", "off" },
+ };
+ const size_t hw_compat_rhel_8_5_len = G_N_ELEMENTS(hw_compat_rhel_8_5);
+ 
+-- 
+2.27.0
+

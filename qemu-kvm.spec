@@ -1,7 +1,7 @@
 %global libfdt_version 1.6.0
 %global libseccomp_version 2.4.0
 %global libusbx_version 1.0.23
-%global meson_version 0.55.3-3
+%global meson_version 0.58.2
 %global usbredir_version 0.7.1
 %global ipxe_version 20200823-5.git4bd064de
 
@@ -13,7 +13,7 @@
 
 %global have_usbredir 1
 %global have_opengl   1
-%global have_fdt      0
+%global have_fdt      1
 %global have_modules_load 0
 %global have_memlock_limits 0
 # Some of these are not relevant for RHEL, but defining them
@@ -86,7 +86,6 @@
 %endif
 %ifarch %{power64}
     %global kvm_target    ppc64
-    %global have_fdt     1
     %global have_memlock_limits 1
 %endif
 %ifarch s390x
@@ -95,11 +94,9 @@
 %endif
 %ifarch ppc
     %global kvm_target    ppc
-    %global have_fdt     1
 %endif
 %ifarch aarch64
     %global kvm_target    aarch64
-    %global have_fdt     1
 %endif
 
 %global target_list %{kvm_target}-softmmu
@@ -132,8 +129,8 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
-Version: 6.1.0
-Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
+Version: 6.2.0
+Release: 1%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -158,44 +155,28 @@ Source31: kvm-x86.conf
 Source36: README.tests
 
 
-Patch0004: 0004-Initial-redhat-build.patch
-Patch0005: 0005-Enable-disable-devices-for-RHEL.patch
-Patch0006: 0006-Machine-type-related-general-changes.patch
-Patch0007: 0007-Add-aarch64-machine-types.patch
-Patch0008: 0008-Add-ppc64-machine-types.patch
-Patch0009: 0009-Add-s390x-machine-types.patch
-Patch0010: 0010-Add-x86_64-machine-types.patch
-Patch0011: 0011-Enable-make-check.patch
-Patch0012: 0012-vfio-cap-number-of-devices-that-can-be-assigned.patch
-Patch0013: 0013-Add-support-statement-to-help-output.patch
-Patch0014: 0014-globally-limit-the-maximum-number-of-CPUs.patch
-Patch0015: 0015-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
-Patch0016: 0016-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
-Patch0017: 0017-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
-Patch0018: 0018-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
-# For bz#2002937 - [qemu][aarch64] Remove 9.0 machine types in arm virt for 9-Beta
-Patch19: kvm-hw-arm-virt-Remove-9.0-machine-type.patch
-# For bz#2000845 - RFE: Remove SGA, deprecate cirrus, and set defaults for QEMU machine-types in RHEL9
-Patch20: kvm-disable-sga-device.patch
-# For bz#2005026 - [s390][virtio-fs] Umount virtiofs shared folder failure from guest side [rhel-9.0.0]
-Patch21: kvm-tools-virtiofsd-Add-fstatfs64-syscall-to-the-seccomp.patch
-# For bz#1998943 - Add machine type compatibility update for 6.1 rebase [s390x]
-Patch22: kvm-redhat-Define-hw_compat_rhel_8_5.patch
-# For bz#1998943 - Add machine type compatibility update for 6.1 rebase [s390x]
-Patch23: kvm-redhat-Add-s390x-machine-type-compatibility-update-f.patch
-# For bz#1984401 - fails to revert snapshot of a VM [balloon/page-poison]
-Patch24: kvm-virtio-balloon-Fix-page-poison-subsection-name.patch
-# For bz#1998942 - Add machine type compatibility update for 6.1 rebase [aarch64]
-Patch25: kvm-hw-arm-virt-Add-hw_compat_rhel_8_5-to-8.5-machine-ty.patch
-# For bz#1996609 - Qemu hit core dump when dump guest memory during live migration
-Patch26: kvm-migration-Make-migration-blocker-work-for-snapshots-.patch
-# For bz#1996609 - Qemu hit core dump when dump guest memory during live migration
-Patch27: kvm-migration-Add-migrate_add_blocker_internal.patch
-# For bz#1996609 - Qemu hit core dump when dump guest memory during live migration
-Patch28: kvm-dump-guest-memory-Block-live-migration.patch
-Patch29: kvm-Fix-for-ppc64le-build.patch
-
-# Source-git patches
+Patch0001: 0001-ui-clipboard-Don-t-use-g_autoptr-just-to-free-a-vari.patch
+Patch0005: 0005-Initial-redhat-build.patch
+Patch0006: 0006-Enable-disable-devices-for-RHEL.patch
+Patch0007: 0007-Machine-type-related-general-changes.patch
+Patch0008: 0008-Add-aarch64-machine-types.patch
+Patch0009: 0009-Add-ppc64-machine-types.patch
+Patch0010: 0010-Add-s390x-machine-types.patch
+Patch0011: 0011-Add-x86_64-machine-types.patch
+Patch0012: 0012-Enable-make-check.patch
+Patch0013: 0013-vfio-cap-number-of-devices-that-can-be-assigned.patch
+Patch0014: 0014-Add-support-statement-to-help-output.patch
+Patch0015: 0015-globally-limit-the-maximum-number-of-CPUs.patch
+Patch0016: 0016-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
+Patch0017: 0017-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
+Patch0018: 0018-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
+Patch0019: 0019-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
+Patch0020: 0020-Fix-virtio-net-pci-vectors-compat.patch
+Patch0021: 0021-x86-rhel-machine-types-Add-pc_rhel_8_5_compat.patch
+Patch0022: 0022-x86-rhel-machine-types-Wire-compat-into-q35-and-i440.patch
+Patch0023: 0023-redhat-virt-rhel8.5.0-Update-machine-type-compatibil.patch
+Patch0024: 0024-redhat-Add-s390x-machine-type-compatibility-handling.patch
+Patch0025: 0025-compat-Update-hw_compat_rhel_8_5-with-6.2.0-RC2-chan.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -206,6 +187,7 @@ BuildRequires: compiler-rt
 BuildRequires: gcc
 %endif
 BuildRequires: meson >= %{meson_version}
+BuildRequires: ninja-build
 BuildRequires: zlib-devel
 BuildRequires: glib2-devel
 BuildRequires: gnutls-devel
@@ -265,7 +247,7 @@ BuildRequires: pkgconfig(gbm)
 BuildRequires: perl-Test-Harness
 BuildRequires: libslirp-devel
 BuildRequires: pulseaudio-libs-devel
-
+BuildRequires: spice-protocol
 
 # Requires for qemu-kvm package
 Requires: %{name}-core = %{epoch}:%{version}-%{release}
@@ -464,6 +446,7 @@ mkdir -p %{qemu_kvm_build}
 %build
 %define disable_everything         \\\
   --audio-drv-list=                \\\
+  --disable-alsa                   \\\
   --disable-attr                   \\\
   --disable-auth-pam               \\\
   --disable-avx2                   \\\
@@ -480,6 +463,7 @@ mkdir -p %{qemu_kvm_build}
   --disable-cfi-debug              \\\
   --disable-cloop                  \\\
   --disable-cocoa                  \\\
+  --disable-coreaudio              \\\
   --disable-coroutine-pool         \\\
   --disable-crypto-afalg           \\\
   --disable-curl                   \\\
@@ -489,10 +473,12 @@ mkdir -p %{qemu_kvm_build}
   --disable-debug-tcg              \\\
   --disable-dmg                    \\\
   --disable-docs                   \\\
+  --disable-dsound                 \\\
   --disable-fdt                    \\\
   --disable-fuse                   \\\
   --disable-fuse-lseek             \\\
   --disable-gcrypt                 \\\
+  --disable-gettext                \\\
   --disable-gio                    \\\
   --disable-glusterfs              \\\
   --disable-gnutls                 \\\
@@ -502,8 +488,9 @@ mkdir -p %{qemu_kvm_build}
   --disable-hax                    \\\
   --disable-hvf                    \\\
   --disable-iconv                  \\\
-  --disable-jemalloc               \\\
+  --disable-jack                   \\\
   --disable-kvm                    \\\
+  --disable-l2tpv3                 \\\
   --disable-libdaxctl              \\\
   --disable-libiscsi               \\\
   --disable-libnfs                 \\\
@@ -530,6 +517,8 @@ mkdir -p %{qemu_kvm_build}
   --disable-numa                   \\\
   --disable-nvmm                   \\\
   --disable-opengl                 \\\
+  --disable-oss                    \\\
+  --disable-pa                     \\\
   --disable-parallels              \\\
   --disable-pie                    \\\
   --disable-pvrdma                 \\\
@@ -545,16 +534,17 @@ mkdir -p %{qemu_kvm_build}
   --disable-sdl                    \\\
   --disable-sdl-image              \\\
   --disable-seccomp                \\\
+  --disable-selinux                \\\
   --disable-slirp                  \\\
   --disable-slirp-smbd             \\\
   --disable-smartcard              \\\
   --disable-snappy                 \\\
   --disable-sparse                 \\\
   --disable-spice                  \\\
+  --disable-spice-protocol         \\\
   --disable-strip                  \\\
   --disable-system                 \\\
   --disable-tcg                    \\\
-  --disable-tcmalloc               \\\
   --disable-tools                  \\\
   --disable-tpm                    \\\
   --disable-u2f                    \\\
@@ -603,7 +593,7 @@ run_configure() {
         --docdir="%{_docdir}" \
         --libexecdir="%{_libexecdir}" \
         --extra-ldflags="%{build_ldflags}" \
-        --extra-cflags="%{optflags}" \
+        --extra-cflags="%{optflags} -Wno-string-plus-int" \
         --with-pkgversion="%{name}-%{version}-%{release}" \
         --with-suffix="%{name}" \
         --firmwarepath=%{firmwaredirs} \
@@ -634,19 +624,18 @@ run_configure \
 %if %{defined block_drivers_ro_list}
   --block-drv-ro-whitelist=%{block_drivers_ro_list} \
 %endif
-  --audio-drv-list=pa \
   --enable-attr \
 %ifarch %{ix86} x86_64
   --enable-avx2 \
 %endif
   --enable-cap-ng \
-  --enable-capstone \
+  --enable-capstone=internal \
   --enable-coroutine-pool \
   --enable-curl \
   --enable-debug-info \
   --enable-docs \
 %if %{have_fdt}
-  --enable-fdt \
+  --enable-fdt=system \
 %endif
   --enable-gnutls \
   --enable-guest-agent \
@@ -669,6 +658,7 @@ run_configure \
 %if %{have_opengl}
   --enable-opengl \
 %endif
+  --enable-pa \
   --enable-pie \
 %if %{have_block_rbd}
   --enable-rbd \
@@ -677,8 +667,10 @@ run_configure \
   --enable-rdma \
 %endif
   --enable-seccomp \
+  --enable-selinux \
   --enable-slirp=system \
   --enable-snappy \
+  --enable-spice-protocol \
   --enable-system \
   --enable-tcg \
   --enable-tools \
@@ -796,7 +788,7 @@ install -D -p -m 0644 %{modprobe_kvm_conf} $RPM_BUILD_ROOT%{_sysconfdir}/modprob
 # Create new directories and put them all under tests-src
 mkdir -p %{buildroot}%{testsdir}/python
 mkdir -p %{buildroot}%{testsdir}/tests
-mkdir -p %{buildroot}%{testsdir}/tests/acceptance
+mkdir -p %{buildroot}%{testsdir}/tests/avocado
 mkdir -p %{buildroot}%{testsdir}/tests/qemu-iotests
 mkdir -p %{buildroot}%{testsdir}/scripts/qmp
 
@@ -805,7 +797,7 @@ install -m 0644 scripts/dump-guest-memory.py \
                 %{buildroot}%{_datadir}/%{name}
 
 # Install avocado_qemu tests
-cp -R %{qemu_kvm_build}/tests/acceptance/* %{buildroot}%{testsdir}/tests/acceptance/
+cp -R %{qemu_kvm_build}/tests/avocado/* %{buildroot}%{testsdir}/tests/avocado/
 
 # Install qemu.py and qmp/ scripts required to run avocado_qemu tests
 cp -R %{qemu_kvm_build}/python/qemu %{buildroot}%{testsdir}/python
@@ -921,6 +913,7 @@ rm -rf %{buildroot}%{_mandir}/man1/virtfs-proxy-helper*
     rm -rf %{buildroot}%{_datadir}/%{name}/kvmvapic.bin
     rm -rf %{buildroot}%{_datadir}/%{name}/linuxboot.bin
     rm -rf %{buildroot}%{_datadir}/%{name}/multiboot.bin
+    rm -rf %{buildroot}%{_datadir}/%{name}/multiboot_dma.bin
     rm -rf %{buildroot}%{_datadir}/%{name}/pvh.bin
 %endif
 
@@ -988,7 +981,6 @@ popd
 %systemd_preun qemu-guest-agent.service
 %postun -n qemu-guest-agent
 %systemd_postun_with_restart qemu-guest-agent.service
-
 
 %if !%{tools_only}
 %post common
@@ -1089,6 +1081,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %ifarch x86_64
     %{_datadir}/%{name}/linuxboot.bin
     %{_datadir}/%{name}/multiboot.bin
+    %{_datadir}/%{name}/multiboot_dma.bin
     %{_datadir}/%{name}/kvmvapic.bin
     %{_datadir}/%{name}/pvh.bin
 %endif
@@ -1162,6 +1155,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Thu Dec 16 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-1
+- Rebase to QEMU 6.2.0 [bz#2027697]
+- Resolves: bz#2027697
+  (Rebase to QEMU 6.2.0)
+
 * Wed Nov 24 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.1.0-8
 - kvm-Move-ksmtuned-files-to-separate-package.patch [bz#1971678]
 - Resolves: bz#1971678

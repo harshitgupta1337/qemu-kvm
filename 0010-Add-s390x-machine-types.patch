@@ -1,4 +1,4 @@
-From 8ae9e40c13f4beb1eedaef46e6b00f562de692e2 Mon Sep 17 00:00:00 2001
+From ea22b5ae0a89ef53f31f67bb6845fd6c45d4f412 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:47:32 +0200
 Subject: Add s390x machine types
@@ -7,15 +7,18 @@ Adding changes to add RHEL machine types for s390x architecture.
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 --
-Merged patches (6.1.0 RC1):
+Merged patches (6.1.0):
 - 64a9a5c971 hw/s390x: Remove the RHEL7-only machine type
 - 395516d62b redhat: s390x: add rhel-8.5.0 compat machine
+
+Merged patches (6.2.0 RC0):
+- 3bf66f4520 redhat: Add s390x machine type compatibility update for 6.1 rebase
 ---
- hw/s390x/s390-virtio-ccw.c | 66 +++++++++++++++++++++++++++++++++++++-
- 1 file changed, 65 insertions(+), 1 deletion(-)
+ hw/s390x/s390-virtio-ccw.c | 67 +++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 66 insertions(+), 1 deletion(-)
 
 diff --git a/hw/s390x/s390-virtio-ccw.c b/hw/s390x/s390-virtio-ccw.c
-index e4b18aef49..9a51dd8de2 100644
+index 653587ea62..4af14cb9ca 100644
 --- a/hw/s390x/s390-virtio-ccw.c
 +++ b/hw/s390x/s390-virtio-ccw.c
 @@ -767,7 +767,7 @@ bool css_migration_enabled(void)
@@ -32,10 +35,10 @@ index e4b18aef49..9a51dd8de2 100644
      type_init(ccw_machine_register_##suffix)
  
 +#if 0 /* Disabled for Red Hat Enterprise Linux */
- static void ccw_machine_6_1_instance_options(MachineState *machine)
+ static void ccw_machine_6_2_instance_options(MachineState *machine)
  {
  }
-@@ -1082,6 +1083,69 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
+@@ -1100,6 +1101,70 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
      compat_props_add(mc->compat_props, compat, G_N_ELEMENTS(compat));
  }
  DEFINE_CCW_MACHINE(2_4, "2.4", false);
@@ -47,6 +50,7 @@ index e4b18aef49..9a51dd8de2 100644
 +
 +static void ccw_machine_rhel850_class_options(MachineClass *mc)
 +{
++    compat_props_add(mc->compat_props, hw_compat_rhel_8_5, hw_compat_rhel_8_5_len);
 +}
 +DEFINE_CCW_MACHINE(rhel850, "rhel8.5.0", true);
 +
