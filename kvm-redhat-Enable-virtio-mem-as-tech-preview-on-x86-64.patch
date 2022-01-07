@@ -1,0 +1,43 @@
+From 24b44713de4b2a47c42dfeea813c8911694367a0 Mon Sep 17 00:00:00 2001
+From: David Hildenbrand <david@redhat.com>
+Date: Fri, 17 Dec 2021 10:00:53 +0100
+Subject: [PATCH 2/2] redhat: Enable virtio-mem as tech-preview on x86-64
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: David Hildenbrand <david@redhat.com>
+RH-MergeRequest: 56: redhat: Enable virtio-mem as tech-preview on x86-64
+RH-Commit: [1/1] 255749cd877b91ce1978b67a088f7c0e181fd85e
+RH-Bugzilla: 2014484
+RH-Acked-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2014484
+Upstream-status: RHEL-only
+
+Everything necesssary for tech-preview of virtio-mem in RHEL9 is
+included in QEMU v6.2. Let's enable it via the config option
+CONFIG_VIRTIO_MEM on x86-64.
+
+Signed-off-by: David Hildenbrand <david@redhat.com>
+---
+ configs/devices/x86_64-softmmu/x86_64-rh-devices.mak | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configs/devices/x86_64-softmmu/x86_64-rh-devices.mak b/configs/devices/x86_64-softmmu/x86_64-rh-devices.mak
+index 1f7a9ab024..dc03fbb671 100644
+--- a/configs/devices/x86_64-softmmu/x86_64-rh-devices.mak
++++ b/configs/devices/x86_64-softmmu/x86_64-rh-devices.mak
+@@ -88,6 +88,7 @@ CONFIG_VGA_CIRRUS=y
+ CONFIG_VGA_PCI=y
+ CONFIG_VHOST_USER=y
+ CONFIG_VHOST_USER_BLK=y
++CONFIG_VIRTIO_MEM=y
+ CONFIG_VIRTIO_PCI=y
+ CONFIG_VIRTIO_VGA=y
+ CONFIG_VMMOUSE=y
+-- 
+2.27.0
+

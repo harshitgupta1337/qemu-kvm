@@ -130,7 +130,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.2.0
-Release: 1%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 2%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -177,6 +177,10 @@ Patch0022: 0022-x86-rhel-machine-types-Wire-compat-into-q35-and-i440.patch
 Patch0023: 0023-redhat-virt-rhel8.5.0-Update-machine-type-compatibil.patch
 Patch0024: 0024-redhat-Add-s390x-machine-type-compatibility-handling.patch
 Patch0025: 0025-compat-Update-hw_compat_rhel_8_5-with-6.2.0-RC2-chan.patch
+# For bz#2008060 - Fix CPU Model for new IBM Z Hardware - qemu part
+Patch26: kvm-redhat-Add-rhel8.6.0-and-rhel9.0.0-machine-types-for.patch
+# For bz#2014484 - [RHEL9] Enable virtio-mem as tech-preview on x86-64 - QEMU
+Patch27: kvm-redhat-Enable-virtio-mem-as-tech-preview-on-x86-64.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1155,6 +1159,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Fri Jan 07 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-2
+- kvm-redhat-Add-rhel8.6.0-and-rhel9.0.0-machine-types-for.patch [bz#2008060]
+- kvm-redhat-Enable-virtio-mem-as-tech-preview-on-x86-64.patch [bz#2014484]
+- Resolves: bz#2008060
+  (Fix CPU Model for new IBM Z Hardware - qemu part)
+- Resolves: bz#2014484
+  ([RHEL9] Enable virtio-mem as tech-preview on x86-64 - QEMU)
+
 * Thu Dec 16 2021 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-1
 - Rebase to QEMU 6.2.0 [bz#2027697]
 - Resolves: bz#2027697
