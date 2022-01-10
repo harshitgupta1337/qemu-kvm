@@ -1,0 +1,46 @@
+From 94987c271c3bdc37216c5baa4c5766b9b7f053a1 Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Mon, 20 Dec 2021 15:58:38 +0100
+Subject: [PATCH 3/6] hw/arm/virt: Rename default_bus_bypass_iommu
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 57: hw/arm/virt: Add 9.0 machine type and remove 8.5 one
+RH-Commit: [3/6] 6b66844ae4629d8c879f7c6abbc5e5017a162e16 (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 2031044
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+branch: c9s
+Brew: 42213566
+Upstream: no
+
+Rename "default_bus_bypass_iommu" into "default-bus-bypass-iommu".
+This mirrors what was done in upstream commit:
+9dad363a223 ("hw/arm/virt: Rename default_bus_bypass_iommu")
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+---
+ hw/arm/virt.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index 984151b7dd..c99ca93e75 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -3136,10 +3136,10 @@ static void rhel_machine_class_init(ObjectClass *oc, void *data)
+                                           "Set the IOMMU type. "
+                                           "Valid values are none and smmuv3");
+ 
+-    object_class_property_add_bool(oc, "default_bus_bypass_iommu",
++    object_class_property_add_bool(oc, "default-bus-bypass-iommu",
+                                    virt_get_default_bus_bypass_iommu,
+                                    virt_set_default_bus_bypass_iommu);
+-    object_class_property_set_description(oc, "default_bus_bypass_iommu",
++    object_class_property_set_description(oc, "default-bus-bypass-iommu",
+                                           "Set on/off to enable/disable "
+                                           "bypass_iommu for default root bus");
+ 
+-- 
+2.27.0
+

@@ -1,0 +1,60 @@
+From 914d9f9eea5d0a944aa93682b03d3189ad37ec9b Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Mon, 20 Dec 2021 15:34:22 +0100
+Subject: [PATCH 4/6] hw/arm/virt: Expose the 'RAS' option
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 57: hw/arm/virt: Add 9.0 machine type and remove 8.5 one
+RH-Commit: [4/6] c8704564d31b23a0f08a6ced946c9a81e2e72c11 (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 2031044
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+branch: c9s
+Brew: 42213566
+Upstream: no
+
+In RHEL9.0 we want to expose the 'RAS' option.
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+---
+ hw/arm/virt.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index c99ca93e75..d433139479 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -2348,7 +2348,6 @@ static void virt_set_acpi(Object *obj, Visitor *v, const char *name,
+     visit_type_OnOffAuto(v, name, &vms->acpi, errp);
+ }
+ 
+-#if 0 /* Disabled for Red Hat Enterprise Linux */
+ static bool virt_get_ras(Object *obj, Error **errp)
+ {
+     VirtMachineState *vms = VIRT_MACHINE(obj);
+@@ -2363,6 +2362,7 @@ static void virt_set_ras(Object *obj, bool value, Error **errp)
+     vms->ras = value;
+ }
+ 
++#if 0 /* Disabled for Red Hat Enterprise Linux */
+ static bool virt_get_mte(Object *obj, Error **errp)
+ {
+     VirtMachineState *vms = VIRT_MACHINE(obj);
+@@ -3143,6 +3143,12 @@ static void rhel_machine_class_init(ObjectClass *oc, void *data)
+                                           "Set on/off to enable/disable "
+                                           "bypass_iommu for default root bus");
+ 
++    object_class_property_add_bool(oc, "ras", virt_get_ras,
++                                   virt_set_ras);
++    object_class_property_set_description(oc, "ras",
++                                          "Set on/off to enable/disable reporting host memory errors "
++                                          "to a KVM guest using ACPI and guest external abort exceptions");
++
+     object_class_property_add_bool(oc, "its", virt_get_its,
+                                    virt_set_its);
+     object_class_property_set_description(oc, "its",
+-- 
+2.27.0
+

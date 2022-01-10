@@ -130,7 +130,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.2.0
-Release: 2%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -181,6 +181,18 @@ Patch0025: 0025-compat-Update-hw_compat_rhel_8_5-with-6.2.0-RC2-chan.patch
 Patch26: kvm-redhat-Add-rhel8.6.0-and-rhel9.0.0-machine-types-for.patch
 # For bz#2014484 - [RHEL9] Enable virtio-mem as tech-preview on x86-64 - QEMU
 Patch27: kvm-redhat-Enable-virtio-mem-as-tech-preview-on-x86-64.patch
+# For bz#2031044 - Add rhel-9.0.0 machine types for RHEL 9.0 [aarch64]
+Patch28: kvm-hw-arm-virt-Register-iommu-as-a-class-property.patch
+# For bz#2031044 - Add rhel-9.0.0 machine types for RHEL 9.0 [aarch64]
+Patch29: kvm-hw-arm-virt-Register-its-as-a-class-property.patch
+# For bz#2031044 - Add rhel-9.0.0 machine types for RHEL 9.0 [aarch64]
+Patch30: kvm-hw-arm-virt-Rename-default_bus_bypass_iommu.patch
+# For bz#2031044 - Add rhel-9.0.0 machine types for RHEL 9.0 [aarch64]
+Patch31: kvm-hw-arm-virt-Expose-the-RAS-option.patch
+# For bz#2031044 - Add rhel-9.0.0 machine types for RHEL 9.0 [aarch64]
+Patch32: kvm-hw-arm-virt-Add-9.0-machine-type-and-remove-8.5-one.patch
+# For bz#2031044 - Add rhel-9.0.0 machine types for RHEL 9.0 [aarch64]
+Patch33: kvm-hw-arm-virt-Check-no_tcg_its-and-minor-style-changes.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1159,6 +1171,16 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Jan 10 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-3
+- kvm-hw-arm-virt-Register-iommu-as-a-class-property.patch [bz#2031044]
+- kvm-hw-arm-virt-Register-its-as-a-class-property.patch [bz#2031044]
+- kvm-hw-arm-virt-Rename-default_bus_bypass_iommu.patch [bz#2031044]
+- kvm-hw-arm-virt-Expose-the-RAS-option.patch [bz#2031044]
+- kvm-hw-arm-virt-Add-9.0-machine-type-and-remove-8.5-one.patch [bz#2031044]
+- kvm-hw-arm-virt-Check-no_tcg_its-and-minor-style-changes.patch [bz#2031044]
+- Resolves: bz#2031044
+  (Add rhel-9.0.0 machine types for RHEL 9.0 [aarch64])
+
 * Fri Jan 07 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-2
 - kvm-redhat-Add-rhel8.6.0-and-rhel9.0.0-machine-types-for.patch [bz#2008060]
 - kvm-redhat-Enable-virtio-mem-as-tech-preview-on-x86-64.patch [bz#2014484]

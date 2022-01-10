@@ -1,0 +1,57 @@
+From 789933e2598f9a525c2a638feca974ca1730a859 Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Mon, 20 Dec 2021 16:04:59 +0100
+Subject: [PATCH 2/6] hw/arm/virt: Register "its" as a class property
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 57: hw/arm/virt: Add 9.0 machine type and remove 8.5 one
+RH-Commit: [2/6] dbd3e994553f00cd19842824f6bd763863a4e484 (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 2031044
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+branch: c9s
+Brew: 42213566
+Upstream: no
+
+Register "its" as a class property.  This mirrors what was done
+in commit 27edeeaafe43 ("virt: Register "its" as class property").
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+---
+ hw/arm/virt.c | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index 7e227b1fa4..984151b7dd 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -3143,6 +3143,12 @@ static void rhel_machine_class_init(ObjectClass *oc, void *data)
+                                           "Set on/off to enable/disable "
+                                           "bypass_iommu for default root bus");
+ 
++    object_class_property_add_bool(oc, "its", virt_get_its,
++                                   virt_set_its);
++    object_class_property_set_description(oc, "its",
++                                          "Set on/off to enable/disable "
++                                          "ITS instantiation");
++
+     object_class_property_add_str(oc, "x-oem-id",
+                                   virt_get_oem_id,
+                                   virt_set_oem_id);
+@@ -3182,11 +3188,6 @@ static void rhel_virt_instance_init(Object *obj)
+     } else {
+         /* Default allows ITS instantiation */
+         vms->its = true;
+-        object_property_add_bool(obj, "its", virt_get_its,
+-                                 virt_set_its);
+-        object_property_set_description(obj, "its",
+-                                        "Set on/off to enable/disable "
+-                                        "ITS instantiation");
+     }
+ 
+     /* Default disallows iommu instantiation */
+-- 
+2.27.0
+
