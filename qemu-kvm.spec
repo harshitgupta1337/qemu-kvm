@@ -130,7 +130,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.2.0
-Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -193,6 +193,12 @@ Patch31: kvm-hw-arm-virt-Expose-the-RAS-option.patch
 Patch32: kvm-hw-arm-virt-Add-9.0-machine-type-and-remove-8.5-one.patch
 # For bz#2031044 - Add rhel-9.0.0 machine types for RHEL 9.0 [aarch64]
 Patch33: kvm-hw-arm-virt-Check-no_tcg_its-and-minor-style-changes.patch
+# For bz#2024544 - Fio workers hangs when running fio with 32 jobs iodepth 32 and QEMU's userspace NVMe driver
+Patch34: kvm-block-nvme-fix-infinite-loop-in-nvme_free_req_queue_.patch
+# For bz#2028623 - [9.0] machine types: 6.2: Fix prefer_sockets
+Patch35: kvm-rhel-machine-types-x86-set-prefer_sockets.patch
+
+# Source-git patches
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1171,6 +1177,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Jan 17 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-4
+- kvm-block-nvme-fix-infinite-loop-in-nvme_free_req_queue_.patch [bz#2024544]
+- kvm-rhel-machine-types-x86-set-prefer_sockets.patch [bz#2028623]
+- Resolves: bz#2024544
+  (Fio workers hangs when running fio with 32 jobs iodepth 32 and QEMU's userspace NVMe driver)
+- Resolves: bz#2028623
+  ([9.0] machine types: 6.2: Fix prefer_sockets)
+
 * Mon Jan 10 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-3
 - kvm-hw-arm-virt-Register-iommu-as-a-class-property.patch [bz#2031044]
 - kvm-hw-arm-virt-Register-its-as-a-class-property.patch [bz#2031044]

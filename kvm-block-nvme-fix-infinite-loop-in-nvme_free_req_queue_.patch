@@ -1,0 +1,71 @@
+From 6989be9d0aa08470f8b287c243dc4bf027d5fbcf Mon Sep 17 00:00:00 2001
+From: Stefan Hajnoczi <stefanha@redhat.com>
+Date: Wed, 8 Dec 2021 15:22:46 +0000
+Subject: [PATCH 1/2] block/nvme: fix infinite loop in nvme_free_req_queue_cb()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Stefan Hajnoczi <stefanha@redhat.com>
+RH-MergeRequest: 58: block/nvme: fix infinite loop in nvme_free_req_queue_cb()
+RH-Commit: [1/1] 544b3f310d791a20c63b51947de0c6cbb60b0d5b (stefanha/centos-stream-qemu-kvm)
+RH-Bugzilla: 2024544
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Hanna Reitz <hreitz@redhat.com>
+
+When the request free list is exhausted the coroutine waits on
+q->free_req_queue for the next free request. Whenever a request is
+completed a BH is scheduled to invoke nvme_free_req_queue_cb() and wake
+up waiting coroutines.
+
+1. nvme_get_free_req() waits for a free request:
+
+    while (q->free_req_head == -1) {
+        ...
+            trace_nvme_free_req_queue_wait(q->s, q->index);
+            qemu_co_queue_wait(&q->free_req_queue, &q->lock);
+        ...
+    }
+
+2. nvme_free_req_queue_cb() wakes up the coroutine:
+
+    while (qemu_co_enter_next(&q->free_req_queue, &q->lock)) {
+       ^--- infinite loop when free_req_head == -1
+    }
+
+nvme_free_req_queue_cb() and the coroutine form an infinite loop when
+q->free_req_head == -1. Fix this by checking q->free_req_head in
+nvme_free_req_queue_cb(). If the free request list is exhausted, don't
+wake waiting coroutines. Eventually an in-flight request will complete
+and the BH will be scheduled again, guaranteeing forward progress.
+
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Reviewed-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Message-id: 20211208152246.244585-1-stefanha@redhat.com
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+(cherry picked from commit cf4fbc3030c974fff726756a7ceef8386cdf500b)
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+---
+ block/nvme.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/block/nvme.c b/block/nvme.c
+index e4f336d79c..fa360b9b3c 100644
+--- a/block/nvme.c
++++ b/block/nvme.c
+@@ -206,8 +206,9 @@ static void nvme_free_req_queue_cb(void *opaque)
+     NVMeQueuePair *q = opaque;
+ 
+     qemu_mutex_lock(&q->lock);
+-    while (qemu_co_enter_next(&q->free_req_queue, &q->lock)) {
+-        /* Retry all pending requests */
++    while (q->free_req_head != -1 &&
++           qemu_co_enter_next(&q->free_req_queue, &q->lock)) {
++        /* Retry waiting requests */
+     }
+     qemu_mutex_unlock(&q->lock);
+ }
+-- 
+2.27.0
+
