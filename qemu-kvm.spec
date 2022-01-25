@@ -130,7 +130,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.2.0
-Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -197,6 +197,12 @@ Patch33: kvm-hw-arm-virt-Check-no_tcg_its-and-minor-style-changes.patch
 Patch34: kvm-block-nvme-fix-infinite-loop-in-nvme_free_req_queue_.patch
 # For bz#2028623 - [9.0] machine types: 6.2: Fix prefer_sockets
 Patch35: kvm-rhel-machine-types-x86-set-prefer_sockets.patch
+# For bz#1945666 - 9.0: x86 machine types
+Patch36: kvm-x86-Add-q35-RHEL-8.6.0-machine-type.patch
+# For bz#1945666 - 9.0: x86 machine types
+Patch37: kvm-x86-Add-q35-RHEL-9.0.0-machine-type.patch
+# For bz#2036669 - DEVICE_DELETED event is not delivered for device frontend if -device is configured via JSON
+Patch38: kvm-softmmu-fix-device-deletion-events-with-device-JSON-.patch
 
 # Source-git patches
 
@@ -1177,6 +1183,15 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Jan 25 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-5
+- kvm-x86-Add-q35-RHEL-8.6.0-machine-type.patch [bz#1945666]
+- kvm-x86-Add-q35-RHEL-9.0.0-machine-type.patch [bz#1945666]
+- kvm-softmmu-fix-device-deletion-events-with-device-JSON-.patch [bz#2036669]
+- Resolves: bz#1945666
+  (9.0: x86 machine types)
+- Resolves: bz#2036669
+  (DEVICE_DELETED event is not delivered for device frontend if -device is configured via JSON)
+
 * Mon Jan 17 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-4
 - kvm-block-nvme-fix-infinite-loop-in-nvme_free_req_queue_.patch [bz#2024544]
 - kvm-rhel-machine-types-x86-set-prefer_sockets.patch [bz#2028623]
