@@ -110,9 +110,23 @@
 %global requires_all_modules                                     \
 %if %{have_opengl}                                               \
 Requires: %{name}-ui-opengl = %{epoch}:%{version}-%{release}     \
+Requires: %{name}-ui-egl-headless = %{epoch}:%{version}-%{release}     \
 %endif                                                           \
+Requires: %{name}-device-display-virtio-gpu = %{epoch}:%{version}-%{release}   \
+Requires: %{name}-device-display-virtio-gpu-gl = %{epoch}:%{version}-%{release}   \
+%ifarch s390x                                                    \
+Requires: %{name}-device-display-virtio-gpu-ccw = %{epoch}:%{version}-%{release}   \
+%else                                                            \
+Requires: %{name}-device-display-virtio-gpu-pci = %{epoch}:%{version}-%{release}   \
+Requires: %{name}-device-display-virtio-gpu-pci-gl = %{epoch}:%{version}-%{release}   \
+%endif                                                           \
+%ifarch x86_64 %{power64}                                        \
+Requires: %{name}-device-display-virtio-vga = %{epoch}:%{version}-%{release}   \
+Requires: %{name}-device-display-virtio-vga-gl = %{epoch}:%{version}-%{release}   \
+%endif                                                           \
+Requires: %{name}-device-usb-host = %{epoch}:%{version}-%{release}   \
 %if %{have_usbredir}                                             \
-Requires: %{name}-hw-usbredir = %{epoch}:%{version}-%{release}   \
+Requires: %{name}-device-usb-redirect = %{epoch}:%{version}-%{release}   \
 %endif                                                           \
 Requires: %{name}-block-rbd = %{epoch}:%{version}-%{release}     \
 Requires: %{name}-audio-pa = %{epoch}:%{version}-%{release}
@@ -130,7 +144,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.2.0
-Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 6%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -315,7 +329,15 @@ Requires: libfdt >= %{libfdt_version}
 emulation for the KVM hypervisor. %{name} acts as a virtual
 machine monitor together with the KVM kernel modules, and emulates the
 hardware for a full system such as a PC and its associated peripherals.
-
+This is a minimalistic installation of %{name}. Functionality provided by
+this package is not ensured and it can change in a future version as some
+functionality can be split out to separate package.
+Before updating this package, it is recommended to check the package
+changelog for information on functionality which might have been moved to
+a separate package to prevent issues due to the moved functionality.
+If apps opt-in to minimalist packaging by depending on %{name}-core, they
+explicitly accept that features may disappear from %{name}-core in future
+updates.
 
 %package common
 Summary: QEMU common files needed by all QEMU targets
@@ -451,15 +473,76 @@ Requires: mesa-libEGL
 Requires: mesa-dri-drivers
 %description ui-opengl
 This package provides opengl support.
+
+%package  ui-egl-headless
+Summary: QEMU EGL headless driver
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+Requires: %{name}-ui-opengl%{?_isa} = %{epoch}:%{version}-%{release}
+%description ui-egl-headless
+This package provides the additional egl-headless UI for QEMU.
 %endif
 
+
+%package device-display-virtio-gpu
+Summary: QEMU virtio-gpu display device
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+%description device-display-virtio-gpu
+This package provides the virtio-gpu display device for QEMU.
+
+%package device-display-virtio-gpu-gl
+Summary: QEMU virtio-gpu-gl display device
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+%description device-display-virtio-gpu-gl
+This package provides the virtio-gpu-gl display device for QEMU.
+
+%ifarch s390x
+%package device-display-virtio-gpu-ccw
+Summary: QEMU virtio-gpu-ccw display device
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+%description device-display-virtio-gpu-ccw
+This package provides the virtio-gpu-ccw display device for QEMU.
+%else
+%package device-display-virtio-gpu-pci
+Summary: QEMU virtio-gpu-pci display device
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+%description device-display-virtio-gpu-pci
+This package provides the virtio-gpu-pci display device for QEMU.
+
+%package device-display-virtio-gpu-pci-gl
+Summary: QEMU virtio-gpu-pci-gl display device
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+%description device-display-virtio-gpu-pci-gl
+This package provides the virtio-gpu-pci-gl display device for QEMU.
+%endif
+
+%ifarch x86_64 %{power64}
+%package device-display-virtio-vga
+Summary: QEMU virtio-vga display device
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+%description device-display-virtio-vga
+This package provides the virtio-vga display device for QEMU.
+
+%package device-display-virtio-vga-gl
+Summary: QEMU virtio-vga-gl display device
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+%description device-display-virtio-vga-gl
+This package provides the virtio-vga-gl display device for QEMU.
+%endif
+
+%package device-usb-host
+Summary: QEMU usb host device
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+%description device-usb-host
+This package provides the USB pass through driver for QEMU.
+
 %if %{have_usbredir}
-%package  hw-usbredir
+%package  device-usb-redirect
 Summary: QEMU usbredir support
 Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
 Requires: usbredir >= 0.7.1
+Provides: %{name}-hw-usbredir
 
-%description hw-usbredir
+%description device-usb-redirect
 This package provides usbredir support.
 %endif
 
@@ -1117,9 +1200,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
     %{_datadir}/%{name}/s390-ccw.img
     %{_datadir}/%{name}/s390-netboot.img
 %endif
-%ifnarch aarch64 s390x
-    %{_libdir}/%{name}/hw-display-virtio-vga.so
-%endif
 %{_datadir}/icons/*
 %{_datadir}/%{name}/linuxboot_dma.bin
 %if %{have_modules_load}
@@ -1137,25 +1217,33 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_datadir}/%{name}/systemtap/script.d/qemu_kvm.stp
 %{_datadir}/%{name}/systemtap/conf.d/qemu_kvm.conf
 
-%{_libdir}/%{name}/hw-display-virtio-gpu.so
-%{_libdir}/%{name}/hw-display-virtio-gpu-gl.so
-%ifarch x86_64 %{power64}
-    %{_libdir}/%{name}/hw-display-virtio-vga-gl.so
-%endif
-%ifarch s390x
-    %{_libdir}/%{name}/hw-s390x-virtio-gpu-ccw.so
-%else
-    %{_libdir}/%{name}/hw-display-virtio-gpu-pci.so
-    %{_libdir}/%{name}/hw-display-virtio-gpu-pci-gl.so
-%endif
-    %{_libdir}/%{name}/accel-qtest-%{kvm_target}.so
 %ifarch x86_64
     %{_libdir}/%{name}/accel-tcg-%{kvm_target}.so
 %endif
-%{_libdir}/%{name}/hw-usb-host.so
+
+%files device-display-virtio-gpu
+%{_libdir}/%{name}/hw-display-virtio-gpu.so
+%files device-display-virtio-gpu-gl
+%{_libdir}/%{name}/hw-display-virtio-gpu-gl.so
+%ifarch s390x
+%files device-display-virtio-gpu-ccw
+    %{_libdir}/%{name}/hw-s390x-virtio-gpu-ccw.so
+%else
+%files device-display-virtio-gpu-pci
+    %{_libdir}/%{name}/hw-display-virtio-gpu-pci.so
+%files device-display-virtio-gpu-pci-gl
+    %{_libdir}/%{name}/hw-display-virtio-gpu-pci-gl.so
+%endif
+%ifarch x86_64 %{power64}
+%files device-display-virtio-vga
+    %{_libdir}/%{name}/hw-display-virtio-vga.so
+%files device-display-virtio-vga-gl
+    %{_libdir}/%{name}/hw-display-virtio-vga-gl.so
+%endif
 
 %files tests
 %{testsdir}
+%{_libdir}/%{name}/accel-qtest-%{kvm_target}.so
 
 %files block-curl
 %{_libdir}/%{name}/block-curl.so
@@ -1170,12 +1258,16 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 %if %{have_opengl}
 %files ui-opengl
-%{_libdir}/%{name}/ui-egl-headless.so
 %{_libdir}/%{name}/ui-opengl.so
+%files ui-egl-headless
+%{_libdir}/%{name}/ui-egl-headless.so
 %endif
 
+%files device-usb-host
+%{_libdir}/%{name}/hw-usb-host.so
+
 %if %{have_usbredir}
-%files hw-usbredir
+%files device-usb-redirect 
     %{_libdir}/%{name}/hw-usb-redirect.so
 %endif
 
@@ -1183,6 +1275,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Wed Feb 02 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-6
+- Moving feature support out of qemu-kvm-core to separate packages (can
+  cause loss of functionality when using only qemu-kvm-core - qemu-kvm keeps
+  same feature set).
+- kvm-spec-Rename-qemu-kvm-hw-usbredir-to-qemu-kvm-device-.patch [bz#2022847]
+- kvm-spec-Split-qemu-kvm-ui-opengl.patch [bz#2022847]
+- kvm-spec-Introduce-packages-for-virtio-gpu-modules.patch [bz#2022847]
+- kvm-spec-Introduce-device-display-virtio-vga-packages.patch [bz#2022847]
+- kvm-spec-Move-usb-host-module-to-separate-package.patch [bz#2022847]
+- kvm-spec-Move-qtest-accel-module-to-tests-package.patch [bz#2022847]
+- kvm-spec-Extend-qemu-kvm-core-description.patch [bz#2022847]
+- Resolves: bz#2022847
+  (qemu-kvm: Align package split with Fedora)
+
 * Tue Jan 25 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-5
 - kvm-x86-Add-q35-RHEL-8.6.0-machine-type.patch [bz#1945666]
 - kvm-x86-Add-q35-RHEL-9.0.0-machine-type.patch [bz#1945666]
