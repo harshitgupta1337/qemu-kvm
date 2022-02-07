@@ -1,0 +1,41 @@
+From 20edf203c8cb314e27409918399aa7cbdc6fdb02 Mon Sep 17 00:00:00 2001
+From: Kevin Wolf <kwolf@redhat.com>
+Date: Tue, 25 Jan 2022 16:15:14 +0100
+Subject: [PATCH 2/5] qemu-storage-daemon: Fix typo in vhost-user-blk help
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+RH-MergeRequest: 63: qemu-storage-daemon: Add vhost-user-blk help
+RH-Commit: [2/2] b7afb670c398799b6e49b926e296771453a55fba (kmwolf/centos-qemu-kvm)
+RH-Bugzilla: 1962088
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Hanna Reitz <hreitz@redhat.com>
+
+The syntax of the fd passing case misses the "addr.type=" key. Add it.
+
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Message-Id: <20220125151514.49035-1-kwolf@redhat.com>
+Reviewed-by: Hanna Reitz <hreitz@redhat.com>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit e66e665f15736f5ee1fbd8087926cb0f1e52f61a)
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+---
+ storage-daemon/qemu-storage-daemon.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/storage-daemon/qemu-storage-daemon.c b/storage-daemon/qemu-storage-daemon.c
+index 9d76d1114d..ec9aa79b55 100644
+--- a/storage-daemon/qemu-storage-daemon.c
++++ b/storage-daemon/qemu-storage-daemon.c
+@@ -111,7 +111,7 @@ static void help(void)
+ "                         export the specified block node as a\n"
+ "                         vhost-user-blk device over UNIX domain socket\n"
+ "  --export [type=]vhost-user-blk,id=<id>,node-name=<node-name>,\n"
+-"           fd,addr.str=<fd>[,writable=on|off]\n"
++"           addr.type=fd,addr.str=<fd>[,writable=on|off]\n"
+ "           [,logical-block-size=<block-size>][,num-queues=<num-queues>]\n"
+ "                         export the specified block node as a\n"
+ "                         vhost-user-blk device over file descriptor\n"
+-- 
+2.27.0
+

@@ -144,7 +144,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.2.0
-Release: 6%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -217,6 +217,16 @@ Patch36: kvm-x86-Add-q35-RHEL-8.6.0-machine-type.patch
 Patch37: kvm-x86-Add-q35-RHEL-9.0.0-machine-type.patch
 # For bz#2036669 - DEVICE_DELETED event is not delivered for device frontend if -device is configured via JSON
 Patch38: kvm-softmmu-fix-device-deletion-events-with-device-JSON-.patch
+# For bz#1962088 - [QSD] wrong help message for the fuse
+Patch39: kvm-qemu-storage-daemon-Add-vhost-user-blk-help.patch
+# For bz#1962088 - [QSD] wrong help message for the fuse
+Patch40: kvm-qemu-storage-daemon-Fix-typo-in-vhost-user-blk-help.patch
+# For bz#2046201 - CVE-2022-0358 qemu-kvm: QEMU: virtiofsd: potential privilege escalation via CVE-2018-13405 [rhel-9.0]
+Patch41: kvm-virtiofsd-Drop-membership-of-all-supplementary-group.patch
+# For bz#2034791 - Booting from Local Snapshot Core Dumped Whose Backing File Is Based on RBD
+Patch42: kvm-block-rbd-fix-handling-of-holes-in-.bdrv_co_block_st.patch
+# For bz#2034791 - Booting from Local Snapshot Core Dumped Whose Backing File Is Based on RBD
+Patch43: kvm-block-rbd-workaround-for-ceph-issue-53784.patch
 
 # Source-git patches
 
@@ -1275,6 +1285,19 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Feb 07 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-7
+- kvm-qemu-storage-daemon-Add-vhost-user-blk-help.patch [bz#1962088]
+- kvm-qemu-storage-daemon-Fix-typo-in-vhost-user-blk-help.patch [bz#1962088]
+- kvm-virtiofsd-Drop-membership-of-all-supplementary-group.patch [bz#2046201]
+- kvm-block-rbd-fix-handling-of-holes-in-.bdrv_co_block_st.patch [bz#2034791]
+- kvm-block-rbd-workaround-for-ceph-issue-53784.patch [bz#2034791]
+- Resolves: bz#1962088
+  ([QSD] wrong help message for the fuse)
+- Resolves: bz#2046201
+  (CVE-2022-0358 qemu-kvm: QEMU: virtiofsd: potential privilege escalation via CVE-2018-13405 [rhel-9.0])
+- Resolves: bz#2034791
+  (Booting from Local Snapshot Core Dumped Whose Backing File Is Based on RBD)
+
 * Wed Feb 02 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-6
 - Moving feature support out of qemu-kvm-core to separate packages (can
   cause loss of functionality when using only qemu-kvm-core - qemu-kvm keeps

@@ -1,0 +1,72 @@
+From 0f4592f79f8c24f84db18a8c39c6056b2a0be524 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Philippe=20Mathieu-Daud=C3=A9?= <philmd@redhat.com>
+Date: Fri, 7 Jan 2022 11:54:19 +0100
+Subject: [PATCH 1/5] qemu-storage-daemon: Add vhost-user-blk help
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+RH-MergeRequest: 63: qemu-storage-daemon: Add vhost-user-blk help
+RH-Commit: [1/2] 6b08fec5d6ceea9f8f3810321099310069e08b53 (kmwolf/centos-qemu-kvm)
+RH-Bugzilla: 1962088
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Hanna Reitz <hreitz@redhat.com>
+
+Add missing vhost-user-blk help:
+
+  $ qemu-storage-daemon -h
+  ...
+    --export [type=]vhost-user-blk,id=<id>,node-name=<node-name>,
+             addr.type=unix,addr.path=<socket-path>[,writable=on|off]
+             [,logical-block-size=<block-size>][,num-queues=<num-queues>]
+                           export the specified block node as a
+                           vhosts-user-blk device over UNIX domain socket
+    --export [type=]vhost-user-blk,id=<id>,node-name=<node-name>,
+             fd,addr.str=<fd>[,writable=on|off]
+             [,logical-block-size=<block-size>][,num-queues=<num-queues>]
+                           export the specified block node as a
+                           vhosts-user-blk device over file descriptor
+  ...
+
+Fixes: 90fc91d50b7 ("convert vhost-user-blk server to block export API")
+Reported-by: Qing Wang <qinwang@redhat.com>
+Reviewed-by: Eric Blake <eblake@redhat.com>
+Signed-off-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Signed-off-by: Philippe Mathieu-Daudé <f4bug@amsat.org>
+Message-Id: <20220107105420.395011-3-f4bug@amsat.org>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit c8cbc9524269d9583749aaaea8aa244add7e1900)
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+---
+ storage-daemon/qemu-storage-daemon.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/storage-daemon/qemu-storage-daemon.c b/storage-daemon/qemu-storage-daemon.c
+index 52cf17e8ac..9d76d1114d 100644
+--- a/storage-daemon/qemu-storage-daemon.c
++++ b/storage-daemon/qemu-storage-daemon.c
+@@ -104,6 +104,19 @@ static void help(void)
+ "                         export the specified block node over FUSE\n"
+ "\n"
+ #endif /* CONFIG_FUSE */
++#ifdef CONFIG_VHOST_USER_BLK_SERVER
++"  --export [type=]vhost-user-blk,id=<id>,node-name=<node-name>,\n"
++"           addr.type=unix,addr.path=<socket-path>[,writable=on|off]\n"
++"           [,logical-block-size=<block-size>][,num-queues=<num-queues>]\n"
++"                         export the specified block node as a\n"
++"                         vhost-user-blk device over UNIX domain socket\n"
++"  --export [type=]vhost-user-blk,id=<id>,node-name=<node-name>,\n"
++"           fd,addr.str=<fd>[,writable=on|off]\n"
++"           [,logical-block-size=<block-size>][,num-queues=<num-queues>]\n"
++"                         export the specified block node as a\n"
++"                         vhost-user-blk device over file descriptor\n"
++"\n"
++#endif /* CONFIG_VHOST_USER_BLK_SERVER */
+ "  --monitor [chardev=]name[,mode=control][,pretty[=on|off]]\n"
+ "                         configure a QMP monitor\n"
+ "\n"
+-- 
+2.27.0
+
