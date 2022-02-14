@@ -1,0 +1,61 @@
+From c08c3fbb2bb8494738fd34ec8fc9dc434ce82f4b Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Wed, 2 Feb 2022 12:16:02 +0100
+Subject: [PATCH 12/12] hw/arm/smmuv3: Fix device reset
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 72: hw/arm/smmuv3: Fix device reset
+RH-Commit: [1/1] 2cfee2f7a03692681224fed96bb4f28406bf460a (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 2042481
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+branch: c9s
+Brew: 42958737
+Upstream: yes
+
+We currently miss a bunch of register resets in the device reset
+function. This sometimes prevents the guest from rebooting after
+a system_reset (with virtio-blk-pci). For instance, we may get
+the following errors:
+
+invalid STE
+smmuv3-iommu-memory-region-0-0 translation failed for iova=0x13a9d2000(SMMU_EVT_C_BAD_STE)
+Invalid read at addr 0x13A9D2000, size 2, region '(null)', reason: rejected
+invalid STE
+smmuv3-iommu-memory-region-0-0 translation failed for iova=0x13a9d2000(SMMU_EVT_C_BAD_STE)
+Invalid write at addr 0x13A9D2000, size 2, region '(null)', reason: rejected
+invalid STE
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+Message-id: 20220202111602.627429-1-eric.auger@redhat.com
+Fixes: 10a83cb988 ("hw/arm/smmuv3: Skeleton")
+Reviewed-by: Peter Maydell <peter.maydell@linaro.org>
+Signed-off-by: Peter Maydell <peter.maydell@linaro.org>
+(cherry picked from commit 43530095e18fd16dcd51a4b385ad2a22c36f5698)
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+---
+ hw/arm/smmuv3.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/hw/arm/smmuv3.c b/hw/arm/smmuv3.c
+index 01b60bee49..1b5640bb98 100644
+--- a/hw/arm/smmuv3.c
++++ b/hw/arm/smmuv3.c
+@@ -276,6 +276,12 @@ static void smmuv3_init_regs(SMMUv3State *s)
+     s->features = 0;
+     s->sid_split = 0;
+     s->aidr = 0x1;
++    s->cr[0] = 0;
++    s->cr0ack = 0;
++    s->irq_ctrl = 0;
++    s->gerror = 0;
++    s->gerrorn = 0;
++    s->statusr = 0;
+ }
+ 
+ static int smmu_get_ste(SMMUv3State *s, dma_addr_t addr, STE *buf,
+-- 
+2.27.0
+

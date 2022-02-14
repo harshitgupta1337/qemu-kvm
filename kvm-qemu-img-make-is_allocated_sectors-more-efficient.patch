@@ -1,0 +1,108 @@
+From a221f5a8ed02690687e6709c49ae0e1e01c5f466 Mon Sep 17 00:00:00 2001
+From: Vladimir Sementsov-Ogievskiy <vsementsov@virtuozzo.com>
+Date: Fri, 17 Dec 2021 17:46:54 +0100
+Subject: [PATCH 09/12] qemu-img: make is_allocated_sectors() more efficient
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+RH-MergeRequest: 70: qemu-img convert: Fix sparseness of output image
+RH-Commit: [2/2] cc05aa4ac506b57ff9b430c007618cdf1485a03f (kmwolf/centos-qemu-kvm)
+RH-Bugzilla: 1882917
+RH-Acked-by: Eric Blake <eblake@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Hanna Reitz <hreitz@redhat.com>
+
+Consider the case when the whole buffer is zero and end is unaligned.
+
+If i <= tail, we return 1 and do one unaligned WRITE, RMW happens.
+
+If i > tail, we do on aligned WRITE_ZERO (or skip if target is zeroed)
+and again one unaligned WRITE, RMW happens.
+
+Let's do better: don't fragment the whole-zero buffer and report it as
+ZERO: in case of zeroed target we just do nothing and avoid RMW. If
+target is not zeroes, one unaligned WRITE_ZERO should not be much worse
+than one unaligned WRITE.
+
+Signed-off-by: Vladimir Sementsov-Ogievskiy <vsementsov@virtuozzo.com>
+Message-Id: <20211217164654.1184218-3-vsementsov@virtuozzo.com>
+Tested-by: Peter Lieven <pl@kamp.de>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit 96054c76ff2db74165385a69f234c57a6bbc941e)
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+---
+ qemu-img.c                 | 23 +++++++++++++++++++----
+ tests/qemu-iotests/122.out |  8 ++------
+ 2 files changed, 21 insertions(+), 10 deletions(-)
+
+diff --git a/qemu-img.c b/qemu-img.c
+index f036a1d428..d7ddfcc528 100644
+--- a/qemu-img.c
++++ b/qemu-img.c
+@@ -1171,19 +1171,34 @@ static int is_allocated_sectors(const uint8_t *buf, int n, int *pnum,
+         }
+     }
+ 
++    if (i == n) {
++        /*
++         * The whole buf is the same.
++         * No reason to split it into chunks, so return now.
++         */
++        *pnum = i;
++        return !is_zero;
++    }
++
+     tail = (sector_num + i) & (alignment - 1);
+     if (tail) {
+         if (is_zero && i <= tail) {
+-            /* treat unallocated areas which only consist
+-             * of a small tail as allocated. */
++            /*
++             * For sure next sector after i is data, and it will rewrite this
++             * tail anyway due to RMW. So, let's just write data now.
++             */
+             is_zero = false;
+         }
+         if (!is_zero) {
+-            /* align up end offset of allocated areas. */
++            /* If possible, align up end offset of allocated areas. */
+             i += alignment - tail;
+             i = MIN(i, n);
+         } else {
+-            /* align down end offset of zero areas. */
++            /*
++             * For sure next sector after i is data, and it will rewrite this
++             * tail anyway due to RMW. Better is avoid RMW and write zeroes up
++             * to aligned bound.
++             */
+             i -= tail;
+         }
+     }
+diff --git a/tests/qemu-iotests/122.out b/tests/qemu-iotests/122.out
+index 69b8e8b803..e18766e167 100644
+--- a/tests/qemu-iotests/122.out
++++ b/tests/qemu-iotests/122.out
+@@ -201,9 +201,7 @@ convert -S 4k
+ { "start": 8192, "length": 4096, "depth": 0, "present": true, "zero": false, "data": true, "offset": OFFSET},
+ { "start": 12288, "length": 4096, "depth": 0, "present": false, "zero": true, "data": false},
+ { "start": 16384, "length": 4096, "depth": 0, "present": true, "zero": false, "data": true, "offset": OFFSET},
+-{ "start": 20480, "length": 46080, "depth": 0, "present": false, "zero": true, "data": false},
+-{ "start": 66560, "length": 1024, "depth": 0, "present": true, "zero": false, "data": true, "offset": OFFSET},
+-{ "start": 67584, "length": 67041280, "depth": 0, "present": false, "zero": true, "data": false}]
++{ "start": 20480, "length": 67088384, "depth": 0, "present": false, "zero": true, "data": false}]
+ 
+ convert -c -S 4k
+ [{ "start": 0, "length": 1024, "depth": 0, "present": true, "zero": false, "data": true},
+@@ -215,9 +213,7 @@ convert -c -S 4k
+ 
+ convert -S 8k
+ [{ "start": 0, "length": 24576, "depth": 0, "present": true, "zero": false, "data": true, "offset": OFFSET},
+-{ "start": 24576, "length": 41984, "depth": 0, "present": false, "zero": true, "data": false},
+-{ "start": 66560, "length": 1024, "depth": 0, "present": true, "zero": false, "data": true, "offset": OFFSET},
+-{ "start": 67584, "length": 67041280, "depth": 0, "present": false, "zero": true, "data": false}]
++{ "start": 24576, "length": 67084288, "depth": 0, "present": false, "zero": true, "data": false}]
+ 
+ convert -c -S 8k
+ [{ "start": 0, "length": 1024, "depth": 0, "present": true, "zero": false, "data": true},
+-- 
+2.27.0
+

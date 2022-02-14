@@ -1,0 +1,28 @@
+From f4f7c62a4658a570d3ad694b64463665fa4b80a7 Mon Sep 17 00:00:00 2001
+From: Paul Lai <plai@redhat.com>
+Date: Fri, 21 Jan 2022 13:14:42 -0500
+Subject: [PATCH 04/12] Enable SGX  -- RH Only
+
+RH-Author: Paul Lai <plai@redhat.com>
+RH-MergeRequest: 65: Enable SGX and add SGX Numa support
+RH-Commit: [4/5] 2cd4ee4a429f5e7b1c32e83a10bf488503603795
+RH-Bugzilla: 2033708
+RH-Acked-by: Paolo Bonzini <None>
+RH-Acked-by: Bandan Das <None>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+---
+ configs/devices/x86_64-softmmu/x86_64-rh-devices.mak | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configs/devices/x86_64-softmmu/x86_64-rh-devices.mak b/configs/devices/x86_64-softmmu/x86_64-rh-devices.mak
+index dc03fbb671..327b1bee62 100644
+--- a/configs/devices/x86_64-softmmu/x86_64-rh-devices.mak
++++ b/configs/devices/x86_64-softmmu/x86_64-rh-devices.mak
+@@ -101,3 +101,4 @@ CONFIG_TPM=y
+ CONFIG_TPM_CRB=y
+ CONFIG_TPM_TIS_ISA=y
+ CONFIG_TPM_EMULATOR=y
++CONFIG_SGX=y
+-- 
+2.27.0
+

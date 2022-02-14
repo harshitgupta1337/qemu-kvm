@@ -1,0 +1,81 @@
+From 51f691acd8042351d005873996d7bf4c7b045508 Mon Sep 17 00:00:00 2001
+From: Kevin Wolf <kwolf@redhat.com>
+Date: Fri, 17 Dec 2021 17:46:53 +0100
+Subject: [PATCH 08/12] iotests: Test qemu-img convert of zeroed data cluster
+
+RH-Author: Kevin Wolf <kwolf@redhat.com>
+RH-MergeRequest: 70: qemu-img convert: Fix sparseness of output image
+RH-Commit: [1/2] 0770582c553ac6b0f18c035f9a0238599d4763cc (kmwolf/centos-qemu-kvm)
+RH-Bugzilla: 1882917
+RH-Acked-by: Eric Blake <eblake@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+RH-Acked-by: Hanna Reitz <hreitz@redhat.com>
+
+This demonstrates what happens when the block status changes in
+sub-min_sparse granularity, but all of the parts are zeroed out. The
+alignment logic in is_allocated_sectors() prevents that the target image
+remains fully sparse as expected, but turns it into a data cluster of
+explicit zeros.
+
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+Signed-off-by: Vladimir Sementsov-Ogievskiy <vsementsov@virtuozzo.com>
+Message-Id: <20211217164654.1184218-2-vsementsov@virtuozzo.com>
+Tested-by: Peter Lieven <pl@kamp.de>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit 51cd8bddd63540514d44808f7920811439baa253)
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+---
+ tests/qemu-iotests/122     |  1 +
+ tests/qemu-iotests/122.out | 10 ++++++++--
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/tests/qemu-iotests/122 b/tests/qemu-iotests/122
+index efb260d822..be0f6b79e5 100755
+--- a/tests/qemu-iotests/122
++++ b/tests/qemu-iotests/122
+@@ -251,6 +251,7 @@ $QEMU_IO -c "write -P 0 0 64k" "$TEST_IMG" 2>&1 | _filter_qemu_io | _filter_test
+ $QEMU_IO -c "write 0 1k" "$TEST_IMG" 2>&1 | _filter_qemu_io | _filter_testdir
+ $QEMU_IO -c "write 8k 1k" "$TEST_IMG" 2>&1 | _filter_qemu_io | _filter_testdir
+ $QEMU_IO -c "write 17k 1k" "$TEST_IMG" 2>&1 | _filter_qemu_io | _filter_testdir
++$QEMU_IO -c "write -P 0 65k 1k" "$TEST_IMG" 2>&1 | _filter_qemu_io | _filter_testdir
+ 
+ for min_sparse in 4k 8k; do
+     echo
+diff --git a/tests/qemu-iotests/122.out b/tests/qemu-iotests/122.out
+index 8fbdac2b39..69b8e8b803 100644
+--- a/tests/qemu-iotests/122.out
++++ b/tests/qemu-iotests/122.out
+@@ -192,6 +192,8 @@ wrote 1024/1024 bytes at offset 8192
+ 1 KiB, X ops; XX:XX:XX.X (XXX YYY/sec and XXX ops/sec)
+ wrote 1024/1024 bytes at offset 17408
+ 1 KiB, X ops; XX:XX:XX.X (XXX YYY/sec and XXX ops/sec)
++wrote 1024/1024 bytes at offset 66560
++1 KiB, X ops; XX:XX:XX.X (XXX YYY/sec and XXX ops/sec)
+ 
+ convert -S 4k
+ [{ "start": 0, "length": 4096, "depth": 0, "present": true, "zero": false, "data": true, "offset": OFFSET},
+@@ -199,7 +201,9 @@ convert -S 4k
+ { "start": 8192, "length": 4096, "depth": 0, "present": true, "zero": false, "data": true, "offset": OFFSET},
+ { "start": 12288, "length": 4096, "depth": 0, "present": false, "zero": true, "data": false},
+ { "start": 16384, "length": 4096, "depth": 0, "present": true, "zero": false, "data": true, "offset": OFFSET},
+-{ "start": 20480, "length": 67088384, "depth": 0, "present": false, "zero": true, "data": false}]
++{ "start": 20480, "length": 46080, "depth": 0, "present": false, "zero": true, "data": false},
++{ "start": 66560, "length": 1024, "depth": 0, "present": true, "zero": false, "data": true, "offset": OFFSET},
++{ "start": 67584, "length": 67041280, "depth": 0, "present": false, "zero": true, "data": false}]
+ 
+ convert -c -S 4k
+ [{ "start": 0, "length": 1024, "depth": 0, "present": true, "zero": false, "data": true},
+@@ -211,7 +215,9 @@ convert -c -S 4k
+ 
+ convert -S 8k
+ [{ "start": 0, "length": 24576, "depth": 0, "present": true, "zero": false, "data": true, "offset": OFFSET},
+-{ "start": 24576, "length": 67084288, "depth": 0, "present": false, "zero": true, "data": false}]
++{ "start": 24576, "length": 41984, "depth": 0, "present": false, "zero": true, "data": false},
++{ "start": 66560, "length": 1024, "depth": 0, "present": true, "zero": false, "data": true, "offset": OFFSET},
++{ "start": 67584, "length": 67041280, "depth": 0, "present": false, "zero": true, "data": false}]
+ 
+ convert -c -S 8k
+ [{ "start": 0, "length": 1024, "depth": 0, "present": true, "zero": false, "data": true},
+-- 
+2.27.0
+

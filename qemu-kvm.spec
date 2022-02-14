@@ -144,7 +144,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.2.0
-Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -227,6 +227,30 @@ Patch41: kvm-virtiofsd-Drop-membership-of-all-supplementary-group.patch
 Patch42: kvm-block-rbd-fix-handling-of-holes-in-.bdrv_co_block_st.patch
 # For bz#2034791 - Booting from Local Snapshot Core Dumped Whose Backing File Is Based on RBD
 Patch43: kvm-block-rbd-workaround-for-ceph-issue-53784.patch
+# For bz#2033708 - [Intel 9.0 Feat] qemu-kvm: SGX 1.5 (SGX1 + Flexible Launch Control) support
+Patch44: kvm-numa-Enable-numa-for-SGX-EPC-sections.patch
+# For bz#2033708 - [Intel 9.0 Feat] qemu-kvm: SGX 1.5 (SGX1 + Flexible Launch Control) support
+Patch45: kvm-numa-Support-SGX-numa-in-the-monitor-and-Libvirt-int.patch
+# For bz#2033708 - [Intel 9.0 Feat] qemu-kvm: SGX 1.5 (SGX1 + Flexible Launch Control) support
+Patch46: kvm-doc-Add-the-SGX-numa-description.patch
+# For bz#2033708 - [Intel 9.0 Feat] qemu-kvm: SGX 1.5 (SGX1 + Flexible Launch Control) support
+Patch47: kvm-Enable-SGX-RH-Only.patch
+# For bz#2033708 - [Intel 9.0 Feat] qemu-kvm: SGX 1.5 (SGX1 + Flexible Launch Control) support
+Patch48: kvm-qapi-Cleanup-SGX-related-comments-and-restore-sectio.patch
+# For bz#2041461 - Inconsistent block status reply in qemu-nbd
+Patch49: kvm-block-io-Update-BSC-only-if-want_zero-is-true.patch
+# For bz#2041461 - Inconsistent block status reply in qemu-nbd
+Patch50: kvm-iotests-block-status-cache-New-test.patch
+# For bz#1882917 - the target image size is incorrect when converting a badly fragmented file
+Patch51: kvm-iotests-Test-qemu-img-convert-of-zeroed-data-cluster.patch
+# For bz#1882917 - the target image size is incorrect when converting a badly fragmented file
+Patch52: kvm-qemu-img-make-is_allocated_sectors-more-efficient.patch
+# For bz#2040123 - Qemu core dumped when do block-stream to a snapshot node on non-enough space storage
+Patch53: kvm-block-backend-prevent-dangling-BDS-pointers-across-a.patch
+# For bz#2040123 - Qemu core dumped when do block-stream to a snapshot node on non-enough space storage
+Patch54: kvm-iotests-stream-error-on-reset-New-test.patch
+# For bz#2042481 - [aarch64] Launch guest with "default-bus-bypass-iommu=off,iommu=smmuv3" and "iommu_platform=on", guest hangs after system_reset
+Patch55: kvm-hw-arm-smmuv3-Fix-device-reset.patch
 
 # Source-git patches
 
@@ -1285,6 +1309,30 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Feb 14 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-8
+- kvm-numa-Enable-numa-for-SGX-EPC-sections.patch [bz#2033708]
+- kvm-numa-Support-SGX-numa-in-the-monitor-and-Libvirt-int.patch [bz#2033708]
+- kvm-doc-Add-the-SGX-numa-description.patch [bz#2033708]
+- kvm-Enable-SGX-RH-Only.patch [bz#2033708]
+- kvm-qapi-Cleanup-SGX-related-comments-and-restore-sectio.patch [bz#2033708]
+- kvm-block-io-Update-BSC-only-if-want_zero-is-true.patch [bz#2041461]
+- kvm-iotests-block-status-cache-New-test.patch [bz#2041461]
+- kvm-iotests-Test-qemu-img-convert-of-zeroed-data-cluster.patch [bz#1882917]
+- kvm-qemu-img-make-is_allocated_sectors-more-efficient.patch [bz#1882917]
+- kvm-block-backend-prevent-dangling-BDS-pointers-across-a.patch [bz#2040123]
+- kvm-iotests-stream-error-on-reset-New-test.patch [bz#2040123]
+- kvm-hw-arm-smmuv3-Fix-device-reset.patch [bz#2042481]
+- Resolves: bz#2033708
+  ([Intel 9.0 Feat] qemu-kvm: SGX 1.5 (SGX1 + Flexible Launch Control) support)
+- Resolves: bz#2041461
+  (Inconsistent block status reply in qemu-nbd)
+- Resolves: bz#1882917
+  (the target image size is incorrect when converting a badly fragmented file)
+- Resolves: bz#2040123
+  (Qemu core dumped when do block-stream to a snapshot node on non-enough space storage)
+- Resolves: bz#2042481
+  ([aarch64] Launch guest with "default-bus-bypass-iommu=off,iommu=smmuv3" and "iommu_platform=on", guest hangs after system_reset)
+
 * Mon Feb 07 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-7
 - kvm-qemu-storage-daemon-Add-vhost-user-blk-help.patch [bz#1962088]
 - kvm-qemu-storage-daemon-Fix-typo-in-vhost-user-blk-help.patch [bz#1962088]
