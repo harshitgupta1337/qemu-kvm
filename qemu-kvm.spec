@@ -144,7 +144,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.2.0
-Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 9%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -251,6 +251,22 @@ Patch53: kvm-block-backend-prevent-dangling-BDS-pointers-across-a.patch
 Patch54: kvm-iotests-stream-error-on-reset-New-test.patch
 # For bz#2042481 - [aarch64] Launch guest with "default-bus-bypass-iommu=off,iommu=smmuv3" and "iommu_platform=on", guest hangs after system_reset
 Patch55: kvm-hw-arm-smmuv3-Fix-device-reset.patch
+# For bz#2046659 - qemu crash after execute blockdev-reopen with  iothread
+Patch56: kvm-block-Lock-AioContext-for-drain_end-in-blockdev-reop.patch
+# For bz#2046659 - qemu crash after execute blockdev-reopen with  iothread
+Patch57: kvm-iotests-Test-blockdev-reopen-with-iothreads-and-thro.patch
+# For bz#2033626 - Qemu core dump when start guest with nbd node or do block jobs to nbd node
+Patch58: kvm-block-nbd-Delete-reconnect-delay-timer-when-done.patch
+# For bz#2033626 - Qemu core dump when start guest with nbd node or do block jobs to nbd node
+Patch59: kvm-block-nbd-Assert-there-are-no-timers-when-closed.patch
+# For bz#2033626 - Qemu core dump when start guest with nbd node or do block jobs to nbd node
+Patch60: kvm-iotests.py-Add-QemuStorageDaemon-class.patch
+# For bz#2033626 - Qemu core dump when start guest with nbd node or do block jobs to nbd node
+Patch61: kvm-iotests-281-Test-lingering-timers.patch
+# For bz#2033626 - Qemu core dump when start guest with nbd node or do block jobs to nbd node
+Patch62: kvm-block-nbd-Move-s-ioc-on-AioContext-change.patch
+# For bz#2033626 - Qemu core dump when start guest with nbd node or do block jobs to nbd node
+Patch63: kvm-iotests-281-Let-NBD-connection-yield-in-iothread.patch
 
 # Source-git patches
 
@@ -1309,6 +1325,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Thu Feb 17 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-9
+- kvm-block-Lock-AioContext-for-drain_end-in-blockdev-reop.patch [bz#2046659]
+- kvm-iotests-Test-blockdev-reopen-with-iothreads-and-thro.patch [bz#2046659]
+- kvm-block-nbd-Delete-reconnect-delay-timer-when-done.patch [bz#2033626]
+- kvm-block-nbd-Assert-there-are-no-timers-when-closed.patch [bz#2033626]
+- kvm-iotests.py-Add-QemuStorageDaemon-class.patch [bz#2033626]
+- kvm-iotests-281-Test-lingering-timers.patch [bz#2033626]
+- kvm-block-nbd-Move-s-ioc-on-AioContext-change.patch [bz#2033626]
+- kvm-iotests-281-Let-NBD-connection-yield-in-iothread.patch [bz#2033626]
+- Resolves: bz#2046659
+  (qemu crash after execute blockdev-reopen with  iothread)
+- Resolves: bz#2033626
+  (Qemu core dump when start guest with nbd node or do block jobs to nbd node)
+
 * Mon Feb 14 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-8
 - kvm-numa-Enable-numa-for-SGX-EPC-sections.patch [bz#2033708]
 - kvm-numa-Support-SGX-numa-in-the-monitor-and-Libvirt-int.patch [bz#2033708]
