@@ -1,0 +1,49 @@
+From 965275cd87f8008f129509c6d6fd0096e8ac2d96 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marc-Andr=C3=A9=20Lureau?= <marcandre.lureau@redhat.com>
+Date: Mon, 14 Feb 2022 15:59:17 +0400
+Subject: [PATCH 3/6] ui/clipboard: fix use-after-free regression
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Gerd Hoffmann <kraxel@redhat.com>
+RH-MergeRequest: 75: fix vnc cut+paste crash
+RH-Commit: [3/4] d8f68e0eb60d9aaa9a703d969f215816bf35f6f0 (kraxel/centos-qemu-kvm)
+RH-Bugzilla: 2042820
+RH-Acked-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+RH-Acked-by: Daniel P. Berrangé <berrange@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+The same info may be used to update the clipboard, and may be freed
+before being ref'ed again.
+
+Fixes: 70a54b01693ed ("ui: avoid compiler warnings from unused clipboard info variable")
+
+Signed-off-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Message-Id: <20220214115917.1679568-1-marcandre.lureau@redhat.com>
+Signed-off-by: Gerd Hoffmann <kraxel@redhat.com>
+---
+ ui/clipboard.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/ui/clipboard.c b/ui/clipboard.c
+index 7672058e84..d7dae13760 100644
+--- a/ui/clipboard.c
++++ b/ui/clipboard.c
+@@ -48,8 +48,10 @@ void qemu_clipboard_update(QemuClipboardInfo *info)
+ 
+     notifier_list_notify(&clipboard_notifiers, info);
+ 
+-    qemu_clipboard_info_unref(cbinfo[info->selection]);
+-    cbinfo[info->selection] = qemu_clipboard_info_ref(info);
++    if (cbinfo[info->selection] != info) {
++        qemu_clipboard_info_unref(cbinfo[info->selection]);
++        cbinfo[info->selection] = qemu_clipboard_info_ref(info);
++    }
+ }
+ 
+ QemuClipboardInfo *qemu_clipboard_info(QemuClipboardSelection selection)
+-- 
+2.27.0
+

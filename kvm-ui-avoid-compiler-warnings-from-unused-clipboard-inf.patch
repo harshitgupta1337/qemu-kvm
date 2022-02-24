@@ -1,0 +1,63 @@
+From c5ff43026547ea20fbb496c5b6734b7e64362151 Mon Sep 17 00:00:00 2001
+From: Gerd Hoffmann <kraxel@redhat.com>
+Date: Mon, 14 Feb 2022 12:37:49 +0100
+Subject: [PATCH 2/6] ui: avoid compiler warnings from unused clipboard info
+ variable
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Gerd Hoffmann <kraxel@redhat.com>
+RH-MergeRequest: 75: fix vnc cut+paste crash
+RH-Commit: [2/4] 6a7982a0bab86bf843fd65842e730a61b2fa2cb0 (kraxel/centos-qemu-kvm)
+RH-Bugzilla: 2042820
+RH-Acked-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+RH-Acked-by: Daniel P. Berrangé <berrange@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+With latest clang 13.0.0 we get
+
+../ui/clipboard.c:47:34: error: variable 'old' set but not used [-Werror,-Wunused-but-set-variable]
+    g_autoptr(QemuClipboardInfo) old = NULL;
+                                 ^
+
+The compiler can't tell that we only declared this variable in
+order to get the side effect of free'ing it when out of scope.
+
+This pattern is a little dubious for a use of g_autoptr, so
+rewrite the code to avoid it.
+
+Reviewed-by: Richard Henderson <richard.henderson@linaro.org>
+Reviewed-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Tested-by: Philippe Mathieu-Daudé <philmd@redhat.com>
+Signed-off-by: Daniel P. Berrangé <berrange@redhat.com>
+[AJB: fix merge conflict]
+Signed-off-by: Alex Bennée <alex.bennee@linaro.org>
+Message-Id: <20211215141949.3512719-2-berrange@redhat.com>
+Message-Id: <20220105135009.1584676-2-alex.bennee@linaro.org>
+(cherry picked from commit 70a54b01693eda3c61814b05d699aba41015ac48)
+---
+ ui/clipboard.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/ui/clipboard.c b/ui/clipboard.c
+index d7b008d62a..7672058e84 100644
+--- a/ui/clipboard.c
++++ b/ui/clipboard.c
+@@ -44,12 +44,11 @@ void qemu_clipboard_peer_release(QemuClipboardPeer *peer,
+ 
+ void qemu_clipboard_update(QemuClipboardInfo *info)
+ {
+-    g_autoptr(QemuClipboardInfo) old = NULL;
+     assert(info->selection < QEMU_CLIPBOARD_SELECTION__COUNT);
+ 
+     notifier_list_notify(&clipboard_notifiers, info);
+ 
+-    old = cbinfo[info->selection];
++    qemu_clipboard_info_unref(cbinfo[info->selection]);
+     cbinfo[info->selection] = qemu_clipboard_info_ref(info);
+ }
+ 
+-- 
+2.27.0
+

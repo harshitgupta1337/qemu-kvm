@@ -144,7 +144,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.2.0
-Release: 9%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 10%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -267,6 +267,18 @@ Patch61: kvm-iotests-281-Test-lingering-timers.patch
 Patch62: kvm-block-nbd-Move-s-ioc-on-AioContext-change.patch
 # For bz#2033626 - Qemu core dump when start guest with nbd node or do block jobs to nbd node
 Patch63: kvm-iotests-281-Let-NBD-connection-yield-in-iothread.patch
+# For bz#2042820 - qemu crash when try to copy and paste contents from client to VM
+Patch64: kvm-Revert-ui-clipboard-Don-t-use-g_autoptr-just-to-free.patch
+# For bz#2042820 - qemu crash when try to copy and paste contents from client to VM
+Patch65: kvm-ui-avoid-compiler-warnings-from-unused-clipboard-inf.patch
+# For bz#2042820 - qemu crash when try to copy and paste contents from client to VM
+Patch66: kvm-ui-clipboard-fix-use-after-free-regression.patch
+# For bz#2042820 - qemu crash when try to copy and paste contents from client to VM
+Patch67: kvm-ui-vnc.c-Fixed-a-deadlock-bug.patch
+# For bz#2044818 - Qemu Core Dumped when migrate -> migrate_cancel -> migrate again during guest is paused
+Patch68: kvm-memory-Fix-incorrect-calls-of-log_global_start-stop.patch
+# For bz#2044818 - Qemu Core Dumped when migrate -> migrate_cancel -> migrate again during guest is paused
+Patch69: kvm-memory-Fix-qemu-crash-on-starting-dirty-log-twice-wi.patch
 
 # Source-git patches
 
@@ -1325,6 +1337,18 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Thu Feb 24 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-10
+- kvm-Revert-ui-clipboard-Don-t-use-g_autoptr-just-to-free.patch [bz#2042820]
+- kvm-ui-avoid-compiler-warnings-from-unused-clipboard-inf.patch [bz#2042820]
+- kvm-ui-clipboard-fix-use-after-free-regression.patch [bz#2042820]
+- kvm-ui-vnc.c-Fixed-a-deadlock-bug.patch [bz#2042820]
+- kvm-memory-Fix-incorrect-calls-of-log_global_start-stop.patch [bz#2044818]
+- kvm-memory-Fix-qemu-crash-on-starting-dirty-log-twice-wi.patch [bz#2044818]
+- Resolves: bz#2042820
+  (qemu crash when try to copy and paste contents from client to VM)
+- Resolves: bz#2044818
+  (Qemu Core Dumped when migrate -> migrate_cancel -> migrate again during guest is paused)
+
 * Thu Feb 17 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-9
 - kvm-block-Lock-AioContext-for-drain_end-in-blockdev-reop.patch [bz#2046659]
 - kvm-iotests-Test-blockdev-reopen-with-iothreads-and-thro.patch [bz#2046659]

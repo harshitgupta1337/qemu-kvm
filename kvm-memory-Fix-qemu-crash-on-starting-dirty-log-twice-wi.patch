@@ -1,0 +1,156 @@
+From b3ed8e344c733bc8c2223c1b9e424a9fbcea56d4 Mon Sep 17 00:00:00 2001
+From: Peter Xu <peterx@redhat.com>
+Date: Mon, 7 Feb 2022 20:30:19 +0800
+Subject: [PATCH 6/6] memory: Fix qemu crash on starting dirty log twice with
+ stopped VM
+
+RH-Author: Peter Xu <peterx@redhat.com>
+RH-MergeRequest: 77: memory: Fix qemu crash on continuous migrations of stopped VM
+RH-Commit: [2/2] 98ed2ef6226ec80a1896ebb554015aded0dc0c18 (peterx/qemu-kvm)
+RH-Bugzilla: 2044818
+RH-Acked-by: Paolo Bonzini <None>
+RH-Acked-by: David Hildenbrand <david@redhat.com>
+RH-Acked-by: quintela1 <quintela@redhat.com>
+
+QEMU can now easily crash with two continuous migration carried out:
+
+(qemu) migrate -d exec:cat>out
+(qemu) migrate_cancel
+(qemu) migrate -d exec:cat>out
+[crash] ../softmmu/memory.c:2782: memory_global_dirty_log_start: Assertion
+`!(global_dirty_tracking & flags)' failed.
+
+It's because memory API provides a way to postpone dirty log stop if the VM is
+stopped, and that'll be re-done until the next VM start.  It was added in 2017
+with commit 1931076077 ("migration: optimize the downtime", 2017-08-01).
+
+However the recent work on allowing dirty tracking to be bitmask broke it,
+which is commit 63b41db4bc ("memory: make global_dirty_tracking a bitmask",
+2021-11-01).
+
+The fix proposed in this patch contains two things:
+
+  (1) Instead of passing over the flags to postpone stop dirty track, we add a
+      global variable (along with current vmstate_change variable) to record
+      what flags to stop dirty tracking.
+
+  (2) When start dirty tracking, instead if remove the vmstate hook directly,
+      we also execute the postponed stop process so that we make sure all the
+      starts and stops will be paired.
+
+This procedure is overlooked in the bitmask-ify work in 2021.
+
+Cc: Hyman Huang <huangy81@chinatelecom.cn>
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2044818
+Fixes: 63b41db4bc ("memory: make global_dirty_tracking a bitmask")
+Signed-off-by: Peter Xu <peterx@redhat.com>
+Message-Id: <20220207123019.27223-1-peterx@redhat.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+(cherry picked from commit a5c90c61a118027b86155cffdf4fe4e2e9de1020)
+Signed-off-by: Peter Xu <peterx@redhat.com>
+---
+ softmmu/memory.c | 61 +++++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 45 insertions(+), 16 deletions(-)
+
+diff --git a/softmmu/memory.c b/softmmu/memory.c
+index 81d4bf1454..0311e362ee 100644
+--- a/softmmu/memory.c
++++ b/softmmu/memory.c
+@@ -2769,19 +2769,32 @@ void memory_global_after_dirty_log_sync(void)
+     MEMORY_LISTENER_CALL_GLOBAL(log_global_after_sync, Forward);
+ }
+ 
++/*
++ * Dirty track stop flags that are postponed due to VM being stopped.  Should
++ * only be used within vmstate_change hook.
++ */
++static unsigned int postponed_stop_flags;
+ static VMChangeStateEntry *vmstate_change;
++static void memory_global_dirty_log_stop_postponed_run(void);
+ 
+ void memory_global_dirty_log_start(unsigned int flags)
+ {
+-    unsigned int old_flags = global_dirty_tracking;
++    unsigned int old_flags;
++
++    assert(flags && !(flags & (~GLOBAL_DIRTY_MASK)));
+ 
+     if (vmstate_change) {
+-        qemu_del_vm_change_state_handler(vmstate_change);
+-        vmstate_change = NULL;
++        /* If there is postponed stop(), operate on it first */
++        postponed_stop_flags &= ~flags;
++        memory_global_dirty_log_stop_postponed_run();
+     }
+ 
+-    assert(flags && !(flags & (~GLOBAL_DIRTY_MASK)));
+-    assert(!(global_dirty_tracking & flags));
++    flags &= ~global_dirty_tracking;
++    if (!flags) {
++        return;
++    }
++
++    old_flags = global_dirty_tracking;
+     global_dirty_tracking |= flags;
+     trace_global_dirty_changed(global_dirty_tracking);
+ 
+@@ -2809,29 +2822,45 @@ static void memory_global_dirty_log_do_stop(unsigned int flags)
+     }
+ }
+ 
++/*
++ * Execute the postponed dirty log stop operations if there is, then reset
++ * everything (including the flags and the vmstate change hook).
++ */
++static void memory_global_dirty_log_stop_postponed_run(void)
++{
++    /* This must be called with the vmstate handler registered */
++    assert(vmstate_change);
++
++    /* Note: postponed_stop_flags can be cleared in log start routine */
++    if (postponed_stop_flags) {
++        memory_global_dirty_log_do_stop(postponed_stop_flags);
++        postponed_stop_flags = 0;
++    }
++
++    qemu_del_vm_change_state_handler(vmstate_change);
++    vmstate_change = NULL;
++}
++
+ static void memory_vm_change_state_handler(void *opaque, bool running,
+                                            RunState state)
+ {
+-    unsigned int flags = (unsigned int)(uintptr_t)opaque;
+     if (running) {
+-        memory_global_dirty_log_do_stop(flags);
+-
+-        if (vmstate_change) {
+-            qemu_del_vm_change_state_handler(vmstate_change);
+-            vmstate_change = NULL;
+-        }
++        memory_global_dirty_log_stop_postponed_run();
+     }
+ }
+ 
+ void memory_global_dirty_log_stop(unsigned int flags)
+ {
+     if (!runstate_is_running()) {
++        /* Postpone the dirty log stop, e.g., to when VM starts again */
+         if (vmstate_change) {
+-            return;
++            /* Batch with previous postponed flags */
++            postponed_stop_flags |= flags;
++        } else {
++            postponed_stop_flags = flags;
++            vmstate_change = qemu_add_vm_change_state_handler(
++                memory_vm_change_state_handler, NULL);
+         }
+-        vmstate_change = qemu_add_vm_change_state_handler(
+-                                memory_vm_change_state_handler,
+-                                (void *)(uintptr_t)flags);
+         return;
+     }
+ 
+-- 
+2.27.0
+
