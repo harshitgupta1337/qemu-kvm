@@ -144,7 +144,7 @@ Obsoletes: %{name}-block-iscsi <= %{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.2.0
-Release: 10%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 11%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -441,15 +441,6 @@ Summary: qemu-pr-helper utility for %{name}
 %description -n qemu-pr-helper
 This package provides the qemu-pr-helper utility that is required for certain 
 SCSI features. 
-
-
-%package -n qemu-virtiofsd
-Summary: QEMU virtio-fs shared file system daemon
-Provides: virtiofsd
-%description -n qemu-virtiofsd
-This package provides virtiofsd daemon. This program is a vhost-user backend
-that implements the virtio-fs device that is used for sharing a host directory
-tree with a guest.
 
 
 %package -n qemu-img
@@ -1109,6 +1100,10 @@ rm -rf %{buildroot}%{_datadir}/%{name}/vgabios*bin
 rm -rf %{buildroot}%{_datadir}/%{name}/bios*.bin
 rm -rf %{buildroot}%{_datadir}/%{name}/sgabios.bin
 
+# Remove virtiofsd (we use separate package for virtiofsd)
+rm -rf %{buildroot}%{_mandir}/man1/virtiofsd.1*
+rm -rf %{buildroot}%{_libexecdir}/virtiofsd
+rm -rf %{buildroot}%{_datadir}/qemu/vhost-user/50-qemu-virtiofsd.json
 
 %if %{have_modules_load}
     install -D -p -m 644 %{_sourcedir}/modules-load.conf %{buildroot}%{_sysconfdir}/modules-load.d/kvm.conf
@@ -1222,14 +1217,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_unitdir}/qemu-pr-helper.socket
 %{_mandir}/man8/qemu-pr-helper.8*
 
-%files -n qemu-virtiofsd
-%{_mandir}/man1/virtiofsd.1*
-%{_libexecdir}/virtiofsd
-# This is the standard location for vhost-user JSON files defined in the
-# vhost-user specification for interoperability with other software. Unlike
-# most other paths we use it's "qemu" instead of "qemu-kvm".
-%{_datadir}/qemu/vhost-user/50-qemu-virtiofsd.json
-
 %files docs
 %doc %{qemudocdir}
 
@@ -1337,6 +1324,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Mar 01 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-11
+- kvm-spec-Remove-qemu-virtiofsd.patch [bz#2055284]
+- Resolves: bz#2055284
+  (Remove the qemu-virtiofsd subpackage)
+
 * Thu Feb 24 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-10
 - kvm-Revert-ui-clipboard-Don-t-use-g_autoptr-just-to-free.patch [bz#2042820]
 - kvm-ui-avoid-compiler-warnings-from-unused-clipboard-inf.patch [bz#2042820]
