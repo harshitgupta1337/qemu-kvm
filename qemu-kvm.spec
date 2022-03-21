@@ -135,16 +135,23 @@ Requires: %{name}-audio-pa = %{epoch}:%{version}-%{release}
 # removes {name}-ui-spice for upgrades from RHEL-8
 # The "<= {version}" assumes RHEL-9 version >= RHEL-8 version (in
 # other words RHEL-9 rebases are done together/before RHEL-8 ones)
+
+# In addition, we obsolete some block drivers as we are no longer support
+# them in default qemu-kvm installation.
+
+# Note: ssh driver wasn't removed yet just disabled due to late handling
+
 %global obsoletes_some_modules                                  \
-Obsoletes: %{name}-ui-spice <= %{version}                       \
-Obsoletes: %{name}-block-gluster <= %{version}                  \
-Obsoletes: %{name}-block-iscsi <= %{version}                    \
+Obsoletes: %{name}-ui-spice <= %{epoch}:%{version}                       \
+Obsoletes: %{name}-block-gluster <= %{epoch}:%{version}                  \
+Obsoletes: %{name}-block-iscsi <= %{epoch}:%{version}                    \
+Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.2.0
-Release: 11%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 12%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -279,6 +286,10 @@ Patch67: kvm-ui-vnc.c-Fixed-a-deadlock-bug.patch
 Patch68: kvm-memory-Fix-incorrect-calls-of-log_global_start-stop.patch
 # For bz#2044818 - Qemu Core Dumped when migrate -> migrate_cancel -> migrate again during guest is paused
 Patch69: kvm-memory-Fix-qemu-crash-on-starting-dirty-log-twice-wi.patch
+# For bz#2062813 - Mark all RHEL-8 and earlier machine types as deprecated [rhel-9.1.0]
+Patch70: kvm-RHEL-mark-old-machine-types-as-deprecated.patch
+# For bz#2062828 - [virtual network][rhel9][vDPA] qemu crash after hot unplug vdpa device [rhel-9.1.0]
+Patch71: kvm-hw-virtio-vdpa-Fix-leak-of-host-notifier-memory-regi.patch
 
 # Source-git patches
 
@@ -594,6 +605,7 @@ Summary: QEMU usbredir support
 Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
 Requires: usbredir >= 0.7.1
 Provides: %{name}-hw-usbredir
+Obsoletes: %{name}-hw-usbredir <= %{epoch}:%{version} 
 
 %description device-usb-redirect
 This package provides usbredir support.
@@ -1324,6 +1336,21 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Mar 21 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-12
+- kvm-RHEL-mark-old-machine-types-as-deprecated.patch [bz#2062813]
+- kvm-hw-virtio-vdpa-Fix-leak-of-host-notifier-memory-regi.patch [bz#2062828]
+- kvm-spec-Fix-obsolete-for-spice-subpackages.patch [bz#2062819 bz#2062817]
+- kvm-spec-Obsolete-old-usb-redir-subpackage.patch [bz#2062819]
+- kvm-spec-Obsolete-ssh-driver.patch [bz#2062817]
+- Resolves: bz#2062828
+  ([virtual network][rhel9][vDPA] qemu crash after hot unplug vdpa device [rhel-9.1.0])
+- Resolves: bz#2062819
+  (Broken upgrade path due to qemu-kvm-hw-usbredir  rename [rhel-9.1.0])
+- Resolves: bz#2062817
+  (Missing qemu-kvm-block-ssh obsolete breaks upgrade path [rhel-9.1.0])
+- Resolves: bz#2062813
+  (Mark all RHEL-8 and earlier machine types as deprecated [rhel-9.1.0])
+
 * Tue Mar 01 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-11
 - kvm-spec-Remove-qemu-virtiofsd.patch [bz#2055284]
 - Resolves: bz#2055284

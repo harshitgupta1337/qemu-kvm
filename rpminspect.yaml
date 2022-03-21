@@ -5,6 +5,7 @@ inspections:
         badfuncs: off
 annocheck:
         - hardened: --skip-cf-protection --skip-property-note --ignore-unknown --verbose
+        - rhel-policy: --skip-cf-protection --skip-property-note --ignore-unknown --verbose
         ignore:
                 - /usr/share/qemu-kvm/s390-ccw.img
                 - /usr/share/qemu-kvm/s390-netboot.img
