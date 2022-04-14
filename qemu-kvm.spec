@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 6.2.0
-Release: 12%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 13%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -290,6 +290,8 @@ Patch69: kvm-memory-Fix-qemu-crash-on-starting-dirty-log-twice-wi.patch
 Patch70: kvm-RHEL-mark-old-machine-types-as-deprecated.patch
 # For bz#2062828 - [virtual network][rhel9][vDPA] qemu crash after hot unplug vdpa device [rhel-9.1.0]
 Patch71: kvm-hw-virtio-vdpa-Fix-leak-of-host-notifier-memory-regi.patch
+# For bz#2065589 - RHEL 9.0 guest with vsock device migration failed from RHEL 9.0 > RHEL 8.6 [rhel-9.1.0]
+Patch72: kvm-RHEL-disable-seqpacket-for-vhost-vsock-device-in-rhe.patch
 
 # Source-git patches
 
@@ -1336,6 +1338,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Thu Apr 14 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-13
+- kvm-RHEL-disable-seqpacket-for-vhost-vsock-device-in-rhe.patch [bz#2065589]
+- Resolves: bz#2065589
+  (RHEL 9.0 guest with vsock device migration failed from RHEL 9.0 > RHEL 8.6 [rhel-9.1.0])
+
 * Mon Mar 21 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-12
 - kvm-RHEL-mark-old-machine-types-as-deprecated.patch [bz#2062813]
 - kvm-hw-virtio-vdpa-Fix-leak-of-host-notifier-memory-regi.patch [bz#2062828]
