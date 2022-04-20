@@ -101,7 +101,7 @@
 
 %global target_list %{kvm_target}-softmmu
 %global block_drivers_rw_list qcow2,raw,file,host_device,nbd,iscsi,rbd,blkdebug,luks,null-co,nvme,copy-on-read,throttle,compress
-%global block_drivers_ro_list vdi,vmdk,vhdx,vpc,https,ssh
+%global block_drivers_ro_list vdi,vmdk,vhdx,vpc,https
 %define qemudocdir %{_docdir}/%{name}
 %global firmwaredirs "%{_datadir}/qemu-firmware:%{_datadir}/ipxe/qemu:%{_datadir}/seavgabios:%{_datadir}/seabios"
 
@@ -150,8 +150,8 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
-Version: 6.2.0
-Release: 13%{?rcrel}%{?dist}%{?cc_suffix}
+Version: 7.0.0
+Release: 1%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -176,122 +176,24 @@ Source31: kvm-x86.conf
 Source36: README.tests
 
 
-Patch0001: 0001-ui-clipboard-Don-t-use-g_autoptr-just-to-free-a-vari.patch
-Patch0005: 0005-Initial-redhat-build.patch
-Patch0006: 0006-Enable-disable-devices-for-RHEL.patch
-Patch0007: 0007-Machine-type-related-general-changes.patch
-Patch0008: 0008-Add-aarch64-machine-types.patch
-Patch0009: 0009-Add-ppc64-machine-types.patch
-Patch0010: 0010-Add-s390x-machine-types.patch
-Patch0011: 0011-Add-x86_64-machine-types.patch
-Patch0012: 0012-Enable-make-check.patch
-Patch0013: 0013-vfio-cap-number-of-devices-that-can-be-assigned.patch
-Patch0014: 0014-Add-support-statement-to-help-output.patch
-Patch0015: 0015-globally-limit-the-maximum-number-of-CPUs.patch
-Patch0016: 0016-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
-Patch0017: 0017-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
-Patch0018: 0018-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
-Patch0019: 0019-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
-Patch0020: 0020-Fix-virtio-net-pci-vectors-compat.patch
-Patch0021: 0021-x86-rhel-machine-types-Add-pc_rhel_8_5_compat.patch
-Patch0022: 0022-x86-rhel-machine-types-Wire-compat-into-q35-and-i440.patch
-Patch0023: 0023-redhat-virt-rhel8.5.0-Update-machine-type-compatibil.patch
-Patch0024: 0024-redhat-Add-s390x-machine-type-compatibility-handling.patch
-Patch0025: 0025-compat-Update-hw_compat_rhel_8_5-with-6.2.0-RC2-chan.patch
-# For bz#2008060 - Fix CPU Model for new IBM Z Hardware - qemu part
-Patch26: kvm-redhat-Add-rhel8.6.0-and-rhel9.0.0-machine-types-for.patch
-# For bz#2014484 - [RHEL9] Enable virtio-mem as tech-preview on x86-64 - QEMU
-Patch27: kvm-redhat-Enable-virtio-mem-as-tech-preview-on-x86-64.patch
-# For bz#2031044 - Add rhel-9.0.0 machine types for RHEL 9.0 [aarch64]
-Patch28: kvm-hw-arm-virt-Register-iommu-as-a-class-property.patch
-# For bz#2031044 - Add rhel-9.0.0 machine types for RHEL 9.0 [aarch64]
-Patch29: kvm-hw-arm-virt-Register-its-as-a-class-property.patch
-# For bz#2031044 - Add rhel-9.0.0 machine types for RHEL 9.0 [aarch64]
-Patch30: kvm-hw-arm-virt-Rename-default_bus_bypass_iommu.patch
-# For bz#2031044 - Add rhel-9.0.0 machine types for RHEL 9.0 [aarch64]
-Patch31: kvm-hw-arm-virt-Expose-the-RAS-option.patch
-# For bz#2031044 - Add rhel-9.0.0 machine types for RHEL 9.0 [aarch64]
-Patch32: kvm-hw-arm-virt-Add-9.0-machine-type-and-remove-8.5-one.patch
-# For bz#2031044 - Add rhel-9.0.0 machine types for RHEL 9.0 [aarch64]
-Patch33: kvm-hw-arm-virt-Check-no_tcg_its-and-minor-style-changes.patch
-# For bz#2024544 - Fio workers hangs when running fio with 32 jobs iodepth 32 and QEMU's userspace NVMe driver
-Patch34: kvm-block-nvme-fix-infinite-loop-in-nvme_free_req_queue_.patch
-# For bz#2028623 - [9.0] machine types: 6.2: Fix prefer_sockets
-Patch35: kvm-rhel-machine-types-x86-set-prefer_sockets.patch
-# For bz#1945666 - 9.0: x86 machine types
-Patch36: kvm-x86-Add-q35-RHEL-8.6.0-machine-type.patch
-# For bz#1945666 - 9.0: x86 machine types
-Patch37: kvm-x86-Add-q35-RHEL-9.0.0-machine-type.patch
-# For bz#2036669 - DEVICE_DELETED event is not delivered for device frontend if -device is configured via JSON
-Patch38: kvm-softmmu-fix-device-deletion-events-with-device-JSON-.patch
-# For bz#1962088 - [QSD] wrong help message for the fuse
-Patch39: kvm-qemu-storage-daemon-Add-vhost-user-blk-help.patch
-# For bz#1962088 - [QSD] wrong help message for the fuse
-Patch40: kvm-qemu-storage-daemon-Fix-typo-in-vhost-user-blk-help.patch
-# For bz#2046201 - CVE-2022-0358 qemu-kvm: QEMU: virtiofsd: potential privilege escalation via CVE-2018-13405 [rhel-9.0]
-Patch41: kvm-virtiofsd-Drop-membership-of-all-supplementary-group.patch
-# For bz#2034791 - Booting from Local Snapshot Core Dumped Whose Backing File Is Based on RBD
-Patch42: kvm-block-rbd-fix-handling-of-holes-in-.bdrv_co_block_st.patch
-# For bz#2034791 - Booting from Local Snapshot Core Dumped Whose Backing File Is Based on RBD
-Patch43: kvm-block-rbd-workaround-for-ceph-issue-53784.patch
-# For bz#2033708 - [Intel 9.0 Feat] qemu-kvm: SGX 1.5 (SGX1 + Flexible Launch Control) support
-Patch44: kvm-numa-Enable-numa-for-SGX-EPC-sections.patch
-# For bz#2033708 - [Intel 9.0 Feat] qemu-kvm: SGX 1.5 (SGX1 + Flexible Launch Control) support
-Patch45: kvm-numa-Support-SGX-numa-in-the-monitor-and-Libvirt-int.patch
-# For bz#2033708 - [Intel 9.0 Feat] qemu-kvm: SGX 1.5 (SGX1 + Flexible Launch Control) support
-Patch46: kvm-doc-Add-the-SGX-numa-description.patch
-# For bz#2033708 - [Intel 9.0 Feat] qemu-kvm: SGX 1.5 (SGX1 + Flexible Launch Control) support
-Patch47: kvm-Enable-SGX-RH-Only.patch
-# For bz#2033708 - [Intel 9.0 Feat] qemu-kvm: SGX 1.5 (SGX1 + Flexible Launch Control) support
-Patch48: kvm-qapi-Cleanup-SGX-related-comments-and-restore-sectio.patch
-# For bz#2041461 - Inconsistent block status reply in qemu-nbd
-Patch49: kvm-block-io-Update-BSC-only-if-want_zero-is-true.patch
-# For bz#2041461 - Inconsistent block status reply in qemu-nbd
-Patch50: kvm-iotests-block-status-cache-New-test.patch
-# For bz#1882917 - the target image size is incorrect when converting a badly fragmented file
-Patch51: kvm-iotests-Test-qemu-img-convert-of-zeroed-data-cluster.patch
-# For bz#1882917 - the target image size is incorrect when converting a badly fragmented file
-Patch52: kvm-qemu-img-make-is_allocated_sectors-more-efficient.patch
-# For bz#2040123 - Qemu core dumped when do block-stream to a snapshot node on non-enough space storage
-Patch53: kvm-block-backend-prevent-dangling-BDS-pointers-across-a.patch
-# For bz#2040123 - Qemu core dumped when do block-stream to a snapshot node on non-enough space storage
-Patch54: kvm-iotests-stream-error-on-reset-New-test.patch
-# For bz#2042481 - [aarch64] Launch guest with "default-bus-bypass-iommu=off,iommu=smmuv3" and "iommu_platform=on", guest hangs after system_reset
-Patch55: kvm-hw-arm-smmuv3-Fix-device-reset.patch
-# For bz#2046659 - qemu crash after execute blockdev-reopen with  iothread
-Patch56: kvm-block-Lock-AioContext-for-drain_end-in-blockdev-reop.patch
-# For bz#2046659 - qemu crash after execute blockdev-reopen with  iothread
-Patch57: kvm-iotests-Test-blockdev-reopen-with-iothreads-and-thro.patch
-# For bz#2033626 - Qemu core dump when start guest with nbd node or do block jobs to nbd node
-Patch58: kvm-block-nbd-Delete-reconnect-delay-timer-when-done.patch
-# For bz#2033626 - Qemu core dump when start guest with nbd node or do block jobs to nbd node
-Patch59: kvm-block-nbd-Assert-there-are-no-timers-when-closed.patch
-# For bz#2033626 - Qemu core dump when start guest with nbd node or do block jobs to nbd node
-Patch60: kvm-iotests.py-Add-QemuStorageDaemon-class.patch
-# For bz#2033626 - Qemu core dump when start guest with nbd node or do block jobs to nbd node
-Patch61: kvm-iotests-281-Test-lingering-timers.patch
-# For bz#2033626 - Qemu core dump when start guest with nbd node or do block jobs to nbd node
-Patch62: kvm-block-nbd-Move-s-ioc-on-AioContext-change.patch
-# For bz#2033626 - Qemu core dump when start guest with nbd node or do block jobs to nbd node
-Patch63: kvm-iotests-281-Let-NBD-connection-yield-in-iothread.patch
-# For bz#2042820 - qemu crash when try to copy and paste contents from client to VM
-Patch64: kvm-Revert-ui-clipboard-Don-t-use-g_autoptr-just-to-free.patch
-# For bz#2042820 - qemu crash when try to copy and paste contents from client to VM
-Patch65: kvm-ui-avoid-compiler-warnings-from-unused-clipboard-inf.patch
-# For bz#2042820 - qemu crash when try to copy and paste contents from client to VM
-Patch66: kvm-ui-clipboard-fix-use-after-free-regression.patch
-# For bz#2042820 - qemu crash when try to copy and paste contents from client to VM
-Patch67: kvm-ui-vnc.c-Fixed-a-deadlock-bug.patch
-# For bz#2044818 - Qemu Core Dumped when migrate -> migrate_cancel -> migrate again during guest is paused
-Patch68: kvm-memory-Fix-incorrect-calls-of-log_global_start-stop.patch
-# For bz#2044818 - Qemu Core Dumped when migrate -> migrate_cancel -> migrate again during guest is paused
-Patch69: kvm-memory-Fix-qemu-crash-on-starting-dirty-log-twice-wi.patch
-# For bz#2062813 - Mark all RHEL-8 and earlier machine types as deprecated [rhel-9.1.0]
-Patch70: kvm-RHEL-mark-old-machine-types-as-deprecated.patch
-# For bz#2062828 - [virtual network][rhel9][vDPA] qemu crash after hot unplug vdpa device [rhel-9.1.0]
-Patch71: kvm-hw-virtio-vdpa-Fix-leak-of-host-notifier-memory-regi.patch
-# For bz#2065589 - RHEL 9.0 guest with vsock device migration failed from RHEL 9.0 > RHEL 8.6 [rhel-9.1.0]
-Patch72: kvm-RHEL-disable-seqpacket-for-vhost-vsock-device-in-rhe.patch
+Patch0004: 0004-Initial-redhat-build.patch
+Patch0005: 0005-Enable-disable-devices-for-RHEL.patch
+Patch0006: 0006-Machine-type-related-general-changes.patch
+Patch0007: 0007-Add-aarch64-machine-types.patch
+Patch0008: 0008-Add-ppc64-machine-types.patch
+Patch0009: 0009-Add-s390x-machine-types.patch
+Patch0010: 0010-Add-x86_64-machine-types.patch
+Patch0011: 0011-Enable-make-check.patch
+Patch0012: 0012-vfio-cap-number-of-devices-that-can-be-assigned.patch
+Patch0013: 0013-Add-support-statement-to-help-output.patch
+Patch0014: 0014-globally-limit-the-maximum-number-of-CPUs.patch
+Patch0015: 0015-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
+Patch0016: 0016-virtio-scsi-Reject-scsi-cd-if-data-plane-enabled-RHE.patch
+Patch0017: 0017-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
+Patch0018: 0018-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
+Patch0019: 0019-WRB-Introduce-RHEL-9.0.0-hw-compat-structure.patch
+Patch0020: 0020-redhat-Update-s390x-machine-type-compatibility-for-r.patch
+Patch0021: 0021-pc-Move-s3-s4-suspend-disabling-to-compat.patch
 
 # Source-git patches
 
@@ -322,7 +224,6 @@ BuildRequires: python3-sphinx_rtd_theme
 BuildRequires: libseccomp-devel >= %{libseccomp_version}
 # For network block driver
 BuildRequires: libcurl-devel
-BuildRequires: libssh-devel
 %if %{have_block_rbd}
 BuildRequires: librbd-devel
 %endif
@@ -513,16 +414,6 @@ using the rbd protocol.
 %endif
 
 
-%package  block-ssh
-Summary: QEMU SSH block driver
-Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
-%description block-ssh
-This package provides the additional SSH block driver for QEMU.
-
-Install this package if you want to access remote disks using
-the Secure Shell (SSH) protocol.
-
-
 %package  audio-pa
 Summary: QEMU PulseAudio audio driver
 Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
@@ -646,6 +537,7 @@ mkdir -p %{qemu_kvm_build}
   --disable-crypto-afalg           \\\
   --disable-curl                   \\\
   --disable-curses                 \\\
+  --disable-dbus-display           \\\
   --disable-debug-info             \\\
   --disable-debug-mutex            \\\
   --disable-debug-tcg              \\\
@@ -676,7 +568,6 @@ mkdir -p %{qemu_kvm_build}
   --disable-libssh                 \\\
   --disable-libudev                \\\
   --disable-libusb                 \\\
-  --disable-libxml2                \\\
   --disable-linux-aio              \\\
   --disable-linux-io-uring         \\\
   --disable-linux-user             \\\
@@ -702,6 +593,7 @@ mkdir -p %{qemu_kvm_build}
   --disable-pvrdma                 \\\
   --disable-qcow1                  \\\
   --disable-qed                    \\\
+  --disable-qga-vss                \\\
   --disable-qom-cast-debug         \\\
   --disable-rbd                    \\\
   --disable-rdma                   \\\
@@ -751,7 +643,6 @@ mkdir -p %{qemu_kvm_build}
   --disable-whpx                   \\\
   --disable-xen                    \\\
   --disable-xen-pci-passthrough    \\\
-  --disable-xfsctl                 \\\
   --disable-xkbcommon              \\\
   --disable-zstd                   \\\
   --with-git-submodules=ignore     \\\
@@ -775,7 +666,7 @@ run_configure() {
         --with-pkgversion="%{name}-%{version}-%{release}" \
         --with-suffix="%{name}" \
         --firmwarepath=%{firmwaredirs} \
-        --meson="%{__meson}" \
+        --meson="internal" \
         --enable-trace-backend=dtrace \
         --with-coroutine=ucontext \
         --with-git=git \
@@ -803,9 +694,6 @@ run_configure \
   --block-drv-ro-whitelist=%{block_drivers_ro_list} \
 %endif
   --enable-attr \
-%ifarch %{ix86} x86_64
-  --enable-avx2 \
-%endif
   --enable-cap-ng \
   --enable-capstone=internal \
   --enable-coroutine-pool \
@@ -822,7 +710,6 @@ run_configure \
 %if %{have_pmem}
   --enable-libpmem \
 %endif
-  --enable-libssh \
   --enable-libusb \
   --enable-libudev \
   --enable-linux-aio \
@@ -874,7 +761,6 @@ run_configure \
 %if %{have_safe_stack}
   --enable-safe-stack \
 %endif
-
 
 %if %{tools_only}
 %make_build qemu-img
@@ -980,7 +866,7 @@ cp -R %{qemu_kvm_build}/tests/avocado/* %{buildroot}%{testsdir}/tests/avocado/
 # Install qemu.py and qmp/ scripts required to run avocado_qemu tests
 cp -R %{qemu_kvm_build}/python/qemu %{buildroot}%{testsdir}/python
 cp -R %{qemu_kvm_build}/scripts/qmp/* %{buildroot}%{testsdir}/scripts/qmp
-install -p -m 0755 tests/Makefile.include %{buildroot}%{testsdir}/tests/
+install -p -m 0644 tests/Makefile.include %{buildroot}%{testsdir}/tests/
 
 # Install qemu-iotests
 cp -R tests/qemu-iotests/* %{buildroot}%{testsdir}/tests/qemu-iotests/
@@ -1114,10 +1000,9 @@ rm -rf %{buildroot}%{_datadir}/%{name}/vgabios*bin
 rm -rf %{buildroot}%{_datadir}/%{name}/bios*.bin
 rm -rf %{buildroot}%{_datadir}/%{name}/sgabios.bin
 
-# Remove virtiofsd (we use separate package for virtiofsd)
-rm -rf %{buildroot}%{_mandir}/man1/virtiofsd.1*
-rm -rf %{buildroot}%{_libexecdir}/virtiofsd
-rm -rf %{buildroot}%{_datadir}/qemu/vhost-user/50-qemu-virtiofsd.json
+# Remove vof roms
+rm -rf %{buildroot}%{_datadir}/%{name}/vof-nvram.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/vof.bin
 
 %if %{have_modules_load}
     install -D -p -m 644 %{_sourcedir}/modules-load.conf %{buildroot}%{_sysconfdir}/modules-load.d/kvm.conf
@@ -1145,6 +1030,10 @@ rm -rf %{buildroot}%{qemudocdir}/specs
 # endif !tools_only
 %endif
 
+# Remove virtiofsd (we use separate package for virtiofsd)
+rm -rf %{buildroot}%{_mandir}/man1/virtiofsd.1*
+rm -rf %{buildroot}%{_libexecdir}/virtiofsd
+rm -rf %{buildroot}%{_datadir}/qemu/vhost-user/50-qemu-virtiofsd.json
 
 %check
 %if !%{tools_only}
@@ -1286,17 +1175,21 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 %files device-display-virtio-gpu
 %{_libdir}/%{name}/hw-display-virtio-gpu.so
+
 %files device-display-virtio-gpu-gl
 %{_libdir}/%{name}/hw-display-virtio-gpu-gl.so
+
 %ifarch s390x
 %files device-display-virtio-gpu-ccw
     %{_libdir}/%{name}/hw-s390x-virtio-gpu-ccw.so
 %else
 %files device-display-virtio-gpu-pci
     %{_libdir}/%{name}/hw-display-virtio-gpu-pci.so
+
 %files device-display-virtio-gpu-pci-gl
     %{_libdir}/%{name}/hw-display-virtio-gpu-pci-gl.so
 %endif
+
 %ifarch x86_64 %{power64}
 %files device-display-virtio-vga
     %{_libdir}/%{name}/hw-display-virtio-vga.so
@@ -1314,8 +1207,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %files block-rbd
 %{_libdir}/%{name}/block-rbd.so
 %endif
-%files block-ssh
-%{_libdir}/%{name}/block-ssh.so
 %files audio-pa
 %{_libdir}/%{name}/audio-pa.so
 
@@ -1330,7 +1221,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_libdir}/%{name}/hw-usb-host.so
 
 %if %{have_usbredir}
-%files device-usb-redirect 
+%files device-usb-redirect
     %{_libdir}/%{name}/hw-usb-redirect.so
 %endif
 
@@ -1338,6 +1229,22 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Wed Apr 20 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-1
+- Rebase to QEMU 7.0.0 [bz#2064757]
+- Do not build ssh block driver anymore [bz#2064500]
+- Removed hpet and parallel port support [bz#2065042]
+- Compatibility support [bz#2064782 bz#2064771]
+- Resolves: bz#2064757
+  (Rebase to QEMU 7.0.0)
+- Resolves: bz#2064500
+  (Install qemu-kvm-6.2.0-11.el9_0.1 failed as conflict with qemu-kvm-block-ssh-6.2.0-11.el9_0.1)
+- Resolves: bz#2065042
+  (Remove upstream-only devices from the qemu-kvm binary)
+- Resolves: bz#2064782
+  (Update machine type compatibility for QEMU 7.0.0 update [s390x])
+- Resolves: bz#2064771
+  (Update machine type compatibility for QEMU 7.0.0 update [x86_64])
+
 * Thu Apr 14 2022 Miroslav Rezanina <mrezanin@redhat.com> - 6.2.0-13
 - kvm-RHEL-disable-seqpacket-for-vhost-vsock-device-in-rhe.patch [bz#2065589]
 - Resolves: bz#2065589
