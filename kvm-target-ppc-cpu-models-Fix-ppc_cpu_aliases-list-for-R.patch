@@ -1,0 +1,48 @@
+From 39642d0d37e2ef61ce7fde0bc284d37a365e4482 Mon Sep 17 00:00:00 2001
+From: Murilo Opsfelder Araujo <muriloo@linux.ibm.com>
+Date: Mon, 2 May 2022 17:59:11 -0300
+Subject: [PATCH 2/2] target/ppc/cpu-models: Fix ppc_cpu_aliases list for RHEL
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Murilo Opsfelder Araújo <muriloo@linux.ibm.com>
+RH-MergeRequest: 81: target/ppc/cpu-models: remove extraneous "#endif"
+RH-Commit: [1/1] 5fff003ad3deb84c6a8e69ab90552a31edb3b058 (mopsfelder/centos-stream-src-qemu-kvm)
+RH-Bugzilla: 2081022
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+The commit b9d28ecdedaf ("Enable/disable devices for RHEL") removed the
+"#if 0" from the beginning of the ppc_cpu_aliases list, which broke the
+build on ppc64le:
+
+    ../target/ppc/cpu-models.c:904:2: error: #endif without #if
+    #endif
+     ^
+    1 error generated.
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2081022
+
+Fixes: b9d28ecdedaf (Enable/disable devices for RHEL)
+Signed-off-by: Murilo Opsfelder Araujo <muriloo@linux.ibm.com>
+---
+ target/ppc/cpu-models.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/target/ppc/cpu-models.c b/target/ppc/cpu-models.c
+index dd78883410..528467eac1 100644
+--- a/target/ppc/cpu-models.c
++++ b/target/ppc/cpu-models.c
+@@ -746,6 +746,7 @@
+ /* PowerPC CPU aliases                                                     */
+ 
+ PowerPCCPUAlias ppc_cpu_aliases[] = {
++#if 0  /* Disabled for Red Hat Enterprise Linux */
+     { "405", "405d4" },
+     { "405cr", "405crc" },
+     { "405gp", "405gpd" },
+-- 
+2.35.1
+

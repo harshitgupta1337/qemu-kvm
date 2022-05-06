@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.0.0
-Release: 1%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 2%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -194,6 +194,10 @@ Patch0018: 0018-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
 Patch0019: 0019-WRB-Introduce-RHEL-9.0.0-hw-compat-structure.patch
 Patch0020: 0020-redhat-Update-s390x-machine-type-compatibility-for-r.patch
 Patch0021: 0021-pc-Move-s3-s4-suspend-disabling-to-compat.patch
+# For bz#2044162 - [RHEL9.1] Enable virtio-mem as tech-preview on ARM64 QEMU
+Patch22: kvm-configs-devices-aarch64-softmmu-Enable-CONFIG_VIRTIO.patch
+# For bz#2081022 - Build regression on ppc64le with c9s qemu-kvm 7.0.0-1 changes
+Patch23: kvm-target-ppc-cpu-models-Fix-ppc_cpu_aliases-list-for-R.patch
 
 # Source-git patches
 
@@ -1229,6 +1233,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Fri May 06 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-2
+- kvm-configs-devices-aarch64-softmmu-Enable-CONFIG_VIRTIO.patch [bz#2044162]
+- kvm-target-ppc-cpu-models-Fix-ppc_cpu_aliases-list-for-R.patch [bz#2081022]
+- Resolves: bz#2044162
+  ([RHEL9.1] Enable virtio-mem as tech-preview on ARM64 QEMU)
+- Resolves: bz#2081022
+  (Build regression on ppc64le with c9s qemu-kvm 7.0.0-1 changes)
+
 * Wed Apr 20 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-1
 - Rebase to QEMU 7.0.0 [bz#2064757]
 - Do not build ssh block driver anymore [bz#2064500]

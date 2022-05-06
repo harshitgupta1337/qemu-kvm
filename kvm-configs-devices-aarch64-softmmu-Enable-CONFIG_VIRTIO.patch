@@ -1,0 +1,41 @@
+From 3a0e9bb88e82cc76ca5efc0595ce94b5dc34749e Mon Sep 17 00:00:00 2001
+From: Gavin Shan <gshan@redhat.com>
+Date: Mon, 25 Apr 2022 13:42:46 +0800
+Subject: [PATCH 1/2] configs/devices/aarch64-softmmu: Enable CONFIG_VIRTIO_MEM
+
+RH-Author: Gavin Shan <gshan@redhat.com>
+RH-MergeRequest: 80: Enable virtio-mem for aarch64
+RH-Commit: [1/1] 1afbd08da6d7c860da8d617a0a932d3660514878 (gwshan/qemu-rhel-9)
+RH-Bugzilla: 2044162
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Eric Auger <eric.auger@redhat.com>
+RH-Acked-by: David Hildenbrand <david@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2044162
+
+This enables virtio-mem device on aarch64 since all needed commits
+are ready.
+
+    b1b87327a9 hw/arm/virt: Support for virtio-mem-pci
+    1263615efe virtio-mem: Correct default THP size for ARM64
+
+Signed-off-by: Gavin Shan <gshan@redhat.com>
+---
+ configs/devices/aarch64-softmmu/aarch64-rh-devices.mak | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configs/devices/aarch64-softmmu/aarch64-rh-devices.mak b/configs/devices/aarch64-softmmu/aarch64-rh-devices.mak
+index 5f6ee1de5b..187938573f 100644
+--- a/configs/devices/aarch64-softmmu/aarch64-rh-devices.mak
++++ b/configs/devices/aarch64-softmmu/aarch64-rh-devices.mak
+@@ -22,6 +22,7 @@ CONFIG_VFIO=y
+ CONFIG_VFIO_PCI=y
+ CONFIG_VIRTIO_MMIO=y
+ CONFIG_VIRTIO_PCI=y
++CONFIG_VIRTIO_MEM=y
+ CONFIG_XIO3130=y
+ CONFIG_NVDIMM=y
+ CONFIG_ACPI_APEI=y
+-- 
+2.35.1
+
