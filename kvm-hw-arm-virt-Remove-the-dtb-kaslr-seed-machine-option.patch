@@ -1,0 +1,76 @@
+From 69f771c3dc641431f3e98497cbd3832edb69284f Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Tue, 3 May 2022 08:56:52 +0200
+Subject: [PATCH 1/5] hw/arm/virt: Remove the dtb-kaslr-seed machine option
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 82: hw/arm/virt: Remove the dtb-kaslr-seed machine option
+RH-Commit: [1/2] a89dcd7f22e04ae39de99795d3f34cdd0b831bc0 (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 2046029
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2046029
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=45133161
+Upstream Status: RHEL-only
+Tested: Boot RHEL guest and check the option is not available
+
+In RHEL we do not want to expose the dtb-kaslr-seed virt machine
+option. Indeed the default 'on' value matches our need as
+random data in the DTB does not cause any boot failure and we
+want to support KASLR for the guest.
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+
+---
+---
+ hw/arm/virt.c | 11 +++--------
+ 1 file changed, 3 insertions(+), 8 deletions(-)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index e06862d22a..bde4f77994 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -2350,6 +2350,7 @@ static void virt_set_its(Object *obj, bool value, Error **errp)
+     vms->its = value;
+ }
+ 
++#if 0 /* Disabled for Red Hat Enterprise Linux */
+ static bool virt_get_dtb_kaslr_seed(Object *obj, Error **errp)
+ {
+     VirtMachineState *vms = VIRT_MACHINE(obj);
+@@ -2363,6 +2364,7 @@ static void virt_set_dtb_kaslr_seed(Object *obj, bool value, Error **errp)
+ 
+     vms->dtb_kaslr_seed = value;
+ }
++#endif /* disabled for RHEL */
+ 
+ static char *virt_get_oem_id(Object *obj, Error **errp)
+ {
+@@ -3346,13 +3348,6 @@ static void rhel_machine_class_init(ObjectClass *oc, void *data)
+                                           "Override the default value of field OEM Table ID "
+                                           "in ACPI table header."
+                                           "The string may be up to 8 bytes in size");
+-
+-    object_class_property_add_bool(oc, "dtb-kaslr-seed",
+-                                   virt_get_dtb_kaslr_seed,
+-                                   virt_set_dtb_kaslr_seed);
+-    object_class_property_set_description(oc, "dtb-kaslr-seed",
+-                                          "Set off to disable passing of kaslr-seed "
+-                                          "dtb node to guest");
+ }
+ 
+ static void rhel_virt_instance_init(Object *obj)
+@@ -3397,7 +3392,7 @@ static void rhel_virt_instance_init(Object *obj)
+     /* MTE is disabled by default and non-configurable for RHEL */
+     vms->mte = false;
+ 
+-    /* Supply a kaslr-seed by default */
++    /* Supply a kaslr-seed by default and non-configurable for RHEL */
+     vms->dtb_kaslr_seed = true;
+ 
+     vms->irqmap = a15irqmap;
+-- 
+2.31.1
+

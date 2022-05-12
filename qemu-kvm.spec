@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.0.0
-Release: 2%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -198,6 +198,16 @@ Patch0021: 0021-pc-Move-s3-s4-suspend-disabling-to-compat.patch
 Patch22: kvm-configs-devices-aarch64-softmmu-Enable-CONFIG_VIRTIO.patch
 # For bz#2081022 - Build regression on ppc64le with c9s qemu-kvm 7.0.0-1 changes
 Patch23: kvm-target-ppc-cpu-models-Fix-ppc_cpu_aliases-list-for-R.patch
+# For bz#2046029 - [WRB] New machine type property - dtb-kaslr-seed
+Patch24: kvm-hw-arm-virt-Remove-the-dtb-kaslr-seed-machine-option.patch
+# For bz#2046029 - [WRB] New machine type property - dtb-kaslr-seed
+Patch25: kvm-hw-arm-virt-Fix-missing-initialization-in-instance-c.patch
+# For bz#1477099 - virtio-iommu (including ACPI, VHOST/VFIO integration, migration support)
+Patch26: kvm-Enable-virtio-iommu-pci-on-aarch64.patch
+# For bz#2037612 - [Win11][tpm][QL41112 PF]  vfio_listener_region_add received unaligned region
+Patch27: kvm-sysemu-tpm-Add-a-stub-function-for-TPM_IS_CRB.patch
+# For bz#2037612 - [Win11][tpm][QL41112 PF]  vfio_listener_region_add received unaligned region
+Patch28: kvm-vfio-common-remove-spurious-tpm-crb-cmd-misalignment.patch
 
 # Source-git patches
 
@@ -1233,6 +1243,19 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Thu May 12 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-3
+- kvm-hw-arm-virt-Remove-the-dtb-kaslr-seed-machine-option.patch [bz#2046029]
+- kvm-hw-arm-virt-Fix-missing-initialization-in-instance-c.patch [bz#2046029]
+- kvm-Enable-virtio-iommu-pci-on-aarch64.patch [bz#1477099]
+- kvm-sysemu-tpm-Add-a-stub-function-for-TPM_IS_CRB.patch [bz#2037612]
+- kvm-vfio-common-remove-spurious-tpm-crb-cmd-misalignment.patch [bz#2037612]
+- Resolves: bz#2046029
+  ([WRB] New machine type property - dtb-kaslr-seed)
+- Resolves: bz#1477099
+  (virtio-iommu (including ACPI, VHOST/VFIO integration, migration support))
+- Resolves: bz#2037612
+  ([Win11][tpm][QL41112 PF]  vfio_listener_region_add received unaligned region)
+
 * Fri May 06 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-2
 - kvm-configs-devices-aarch64-softmmu-Enable-CONFIG_VIRTIO.patch [bz#2044162]
 - kvm-target-ppc-cpu-models-Fix-ppc_cpu_aliases-list-for-R.patch [bz#2081022]

@@ -1,0 +1,56 @@
+From e25c40735d2f022c07481b548d20476222006657 Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Wed, 4 May 2022 11:11:54 +0200
+Subject: [PATCH 2/5] hw/arm/virt: Fix missing initialization in
+ instance/class_init()
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 82: hw/arm/virt: Remove the dtb-kaslr-seed machine option
+RH-Commit: [2/2] 22cbbfc30cf57a09b8acfb25d8a4dff2754c630c (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 2046029
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2046029
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=45133161
+Upstream Status: RHEL-only
+Tested: Boot RHEL guest and check migration from 8.6 to 9.1
+        (with custom additions)
+
+During the 7.0 rebase, the initialization of highmem_mmio and
+highmem_redists was forgotten in rhel_virt_instance_init().
+Fix it to match virt_instance_init() code.
+
+Also mc->smp_props.clusters_supported was missing in
+rhel_machine_class_init().
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+---
+ hw/arm/virt.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index bde4f77994..8be12e121d 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -3286,6 +3286,7 @@ static void rhel_machine_class_init(ObjectClass *oc, void *data)
+     hc->unplug_request = virt_machine_device_unplug_request_cb;
+     hc->unplug = virt_machine_device_unplug_cb;
+     mc->nvdimm_supported = true;
++    mc->smp_props.clusters_supported = true;
+     mc->auto_enable_numa_with_memhp = true;
+     mc->auto_enable_numa_with_memdev = true;
+     mc->default_ram_id = "mach-virt.ram";
+@@ -3366,6 +3367,8 @@ static void rhel_virt_instance_init(Object *obj)
+     vms->gic_version = VIRT_GIC_VERSION_NOSEL;
+ 
+     vms->highmem_ecam = !vmc->no_highmem_ecam;
++    vms->highmem_mmio = true;
++    vms->highmem_redists = true;
+ 
+     if (vmc->no_its) {
+         vms->its = false;
+-- 
+2.31.1
+

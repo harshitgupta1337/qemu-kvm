@@ -1,0 +1,114 @@
+From b90a5878355bd549200ed1eff52ea084325bfc8a Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Fri, 6 May 2022 15:25:10 +0200
+Subject: [PATCH 5/5] vfio/common: remove spurious tpm-crb-cmd misalignment
+ warning
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 84: vfio/common: Remove spurious tpm-crb-cmd misalignment warning
+RH-Commit: [2/2] 9b73a9aec59cb50d5e3468cc553464bf4a73d0a1 (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 2037612
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2037612
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=45166961
+Upstream Status: YES
+Tested: With TPM-CRB and VFIO
+
+The CRB command buffer currently is a RAM MemoryRegion and given
+its base address alignment, it causes an error report on
+vfio_listener_region_add(). This region could have been a RAM device
+region, easing the detection of such safe situation but this option
+was not well received. So let's add a helper function that uses the
+memory region owner type to detect the situation is safe wrt
+the assignment. Other device types can be checked here if such kind
+of problem occurs again.
+
+Conflicts in hw/vfio/common.c
+We don't have 8e3b0cbb721 ("Replace qemu_real_host_page variables with inlined functions")
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+Reviewed-by: Philippe Mathieu-Daudé <f4bug@amsat.org>
+Acked-by: Stefan Berger <stefanb@linux.ibm.com>
+Reviewed-by: Cornelia Huck <cohuck@redhat.com>
+Link: https://lore.kernel.org/r/20220506132510.1847942-3-eric.auger@redhat.com
+Signed-off-by: Alex Williamson <alex.williamson@redhat.com>
+(cherry picked from commit 851d6d1a0ff29a87ec588205842edf6b86d99b5c)
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+---
+ hw/vfio/common.c     | 27 ++++++++++++++++++++++++++-
+ hw/vfio/trace-events |  1 +
+ 2 files changed, 27 insertions(+), 1 deletion(-)
+
+diff --git a/hw/vfio/common.c b/hw/vfio/common.c
+index 080046e3f5..0fbe0d47af 100644
+--- a/hw/vfio/common.c
++++ b/hw/vfio/common.c
+@@ -40,6 +40,7 @@
+ #include "trace.h"
+ #include "qapi/error.h"
+ #include "migration/migration.h"
++#include "sysemu/tpm.h"
+ 
+ VFIOGroupList vfio_group_list =
+     QLIST_HEAD_INITIALIZER(vfio_group_list);
+@@ -861,6 +862,22 @@ static void vfio_unregister_ram_discard_listener(VFIOContainer *container,
+     g_free(vrdl);
+ }
+ 
++static bool vfio_known_safe_misalignment(MemoryRegionSection *section)
++{
++    MemoryRegion *mr = section->mr;
++
++    if (!TPM_IS_CRB(mr->owner)) {
++        return false;
++    }
++
++    /* this is a known safe misaligned region, just trace for debug purpose */
++    trace_vfio_known_safe_misalignment(memory_region_name(mr),
++                                       section->offset_within_address_space,
++                                       section->offset_within_region,
++                                       qemu_real_host_page_size);
++    return true;
++}
++
+ static void vfio_listener_region_add(MemoryListener *listener,
+                                      MemoryRegionSection *section)
+ {
+@@ -884,7 +901,15 @@ static void vfio_listener_region_add(MemoryListener *listener,
+     if (unlikely((section->offset_within_address_space &
+                   ~qemu_real_host_page_mask) !=
+                  (section->offset_within_region & ~qemu_real_host_page_mask))) {
+-        error_report("%s received unaligned region", __func__);
++        if (!vfio_known_safe_misalignment(section)) {
++            error_report("%s received unaligned region %s iova=0x%"PRIx64
++                         " offset_within_region=0x%"PRIx64
++                         " qemu_real_host_page_size=0x%"PRIxPTR,
++                         __func__, memory_region_name(section->mr),
++                         section->offset_within_address_space,
++                         section->offset_within_region,
++                         qemu_real_host_page_size);
++        }
+         return;
+     }
+ 
+diff --git a/hw/vfio/trace-events b/hw/vfio/trace-events
+index 0ef1b5f4a6..582882db91 100644
+--- a/hw/vfio/trace-events
++++ b/hw/vfio/trace-events
+@@ -100,6 +100,7 @@ vfio_listener_region_add_skip(uint64_t start, uint64_t end) "SKIPPING region_add
+ vfio_spapr_group_attach(int groupfd, int tablefd) "Attached groupfd %d to liobn fd %d"
+ vfio_listener_region_add_iommu(uint64_t start, uint64_t end) "region_add [iommu] 0x%"PRIx64" - 0x%"PRIx64
+ vfio_listener_region_add_ram(uint64_t iova_start, uint64_t iova_end, void *vaddr) "region_add [ram] 0x%"PRIx64" - 0x%"PRIx64" [%p]"
++vfio_known_safe_misalignment(const char *name, uint64_t iova, uint64_t offset_within_region, uintptr_t page_size) "Region \"%s\" iova=0x%"PRIx64" offset_within_region=0x%"PRIx64" qemu_real_host_page_size=0x%"PRIxPTR ": cannot be mapped for DMA"
+ vfio_listener_region_add_no_dma_map(const char *name, uint64_t iova, uint64_t size, uint64_t page_size) "Region \"%s\" 0x%"PRIx64" size=0x%"PRIx64" is not aligned to 0x%"PRIx64" and cannot be mapped for DMA"
+ vfio_listener_region_del_skip(uint64_t start, uint64_t end) "SKIPPING region_del 0x%"PRIx64" - 0x%"PRIx64
+ vfio_listener_region_del(uint64_t start, uint64_t end) "region_del 0x%"PRIx64" - 0x%"PRIx64
+-- 
+2.31.1
+

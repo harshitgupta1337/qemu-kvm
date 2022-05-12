@@ -1,0 +1,41 @@
+From 85781b8745fa1581a66f64011d61a4f0c4e103dc Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Fri, 6 May 2022 17:03:11 +0200
+Subject: [PATCH 3/5] Enable virtio-iommu-pci on aarch64
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 83: Enable virtio-iommu-pci on aarch64
+RH-Commit: [1/1] 23e5c0832e52c66adf5fd6daccdc3edddc7ecb8b (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 1477099
+RH-Acked-by: Gavin Shan <gshan@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=1477099
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=45128798
+Upstream Status: RHEL-only
+Tested: With virtio-net-pci and virtio-block-pci
+
+let's enable the virtio-iommu-pci device on aarch64 by
+turning CONFIG_VIRTIO_IOMMU on.
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+---
+ configs/devices/aarch64-softmmu/aarch64-rh-devices.mak | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configs/devices/aarch64-softmmu/aarch64-rh-devices.mak b/configs/devices/aarch64-softmmu/aarch64-rh-devices.mak
+index 187938573f..1618d31b89 100644
+--- a/configs/devices/aarch64-softmmu/aarch64-rh-devices.mak
++++ b/configs/devices/aarch64-softmmu/aarch64-rh-devices.mak
+@@ -23,6 +23,7 @@ CONFIG_VFIO_PCI=y
+ CONFIG_VIRTIO_MMIO=y
+ CONFIG_VIRTIO_PCI=y
+ CONFIG_VIRTIO_MEM=y
++CONFIG_VIRTIO_IOMMU=y
+ CONFIG_XIO3130=y
+ CONFIG_NVDIMM=y
+ CONFIG_ACPI_APEI=y
+-- 
+2.31.1
+

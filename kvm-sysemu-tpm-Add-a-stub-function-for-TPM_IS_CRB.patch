@@ -1,0 +1,54 @@
+From 74b3e92dcb9e343e135a681259514b4fd28086ea Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Fri, 6 May 2022 15:25:09 +0200
+Subject: [PATCH 4/5] sysemu: tpm: Add a stub function for TPM_IS_CRB
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 84: vfio/common: Remove spurious tpm-crb-cmd misalignment warning
+RH-Commit: [1/2] 0ab55ca1aa12a3a7cbdef5a378928f75e030e536 (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 2037612
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2037612
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=45166961
+Upstream Status: YES
+Tested: With TPM-CRB and VFIO
+
+In a subsequent patch, VFIO will need to recognize if
+a memory region owner is a TPM CRB device. Hence VFIO
+needs to use TPM_IS_CRB() even if CONFIG_TPM is unset. So
+let's add a stub function.
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+Suggested-by: Cornelia Huck <cohuck@redhat.com>
+Reviewed-by: Stefan Berger <stefanb@linnux.ibm.com>
+Link: https://lore.kernel.org/r/20220506132510.1847942-2-eric.auger@redhat.com
+Signed-off-by: Alex Williamson <alex.williamson@redhat.com>
+(cherry picked from commit 4168cdad398843ed53d650a27651868b4d3e21c9)
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+---
+ include/sysemu/tpm.h | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/include/sysemu/tpm.h b/include/sysemu/tpm.h
+index 68b2206463..fb40e30ff6 100644
+--- a/include/sysemu/tpm.h
++++ b/include/sysemu/tpm.h
+@@ -80,6 +80,12 @@ static inline TPMVersion tpm_get_version(TPMIf *ti)
+ #define tpm_init()  (0)
+ #define tpm_cleanup()
+ 
++/* needed for an alignment check in non-tpm code */
++static inline Object *TPM_IS_CRB(Object *obj)
++{
++     return NULL;
++}
++
+ #endif /* CONFIG_TPM */
+ 
+ #endif /* QEMU_TPM_H */
+-- 
+2.31.1
+
