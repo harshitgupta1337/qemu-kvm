@@ -1,0 +1,47 @@
+From 4bd48e784ae0c38c89f1a944b06c997fd28c4d37 Mon Sep 17 00:00:00 2001
+From: Miroslav Rezanina <mrezanin@redhat.com>
+Date: Thu, 19 May 2022 04:15:33 -0400
+Subject: [PATCH 16/16] migration: Fix operator type
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 92: Fix build using clang 14
+RH-Commit: [1/1] ad9980e64cf2e39085d68f1ff601444bf2afe228 (mrezanin/centos-src-qemu-kvm)
+RH-Bugzilla: 2064530
+RH-Acked-by: Daniel P. Berrangé <berrange@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+
+Clang spotted an & that should have been an &&; fix it.
+
+Reported by: David Binderman / https://gitlab.com/dcb
+Fixes: 65dacaa04fa ("migration: introduce save_normal_page()")
+Resolves: https://gitlab.com/qemu-project/qemu/-/issues/963
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Message-Id: <20220406102515.96320-1-dgilbert@redhat.com>
+Reviewed-by: Peter Maydell <peter.maydell@linaro.org>
+Reviewed-by: Peter Xu <peterx@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit f912ec5b2d65644116ff496b58d7c9145c19e4c0)
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ migration/ram.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/migration/ram.c b/migration/ram.c
+index 3532f64ecb..0ef4bd63eb 100644
+--- a/migration/ram.c
++++ b/migration/ram.c
+@@ -1289,7 +1289,7 @@ static int save_normal_page(RAMState *rs, RAMBlock *block, ram_addr_t offset,
+                                          offset | RAM_SAVE_FLAG_PAGE));
+     if (async) {
+         qemu_put_buffer_async(rs->f, buf, TARGET_PAGE_SIZE,
+-                              migrate_release_ram() &
++                              migrate_release_ram() &&
+                               migration_in_postcopy());
+     } else {
+         qemu_put_buffer(rs->f, buf, TARGET_PAGE_SIZE);
+-- 
+2.31.1
+

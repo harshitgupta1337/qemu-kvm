@@ -1,0 +1,51 @@
+From 733acef2caea0758edd74fb634b095ce09bf5914 Mon Sep 17 00:00:00 2001
+From: Emanuele Giuseppe Esposito <eesposit@redhat.com>
+Date: Mon, 9 May 2022 03:46:23 -0400
+Subject: [PATCH 15/16] Revert "virtio-scsi: Reject scsi-cd if data plane
+ enabled [RHEL only]"
+
+RH-Author: Emanuele Giuseppe Esposito <eesposit@redhat.com>
+RH-MergeRequest: 91: Revert "virtio-scsi: Reject scsi-cd if data plane enabled [RHEL only]"
+RH-Commit: [1/1] 1af55d792bc9166e5c86272afe8093c76ab41bb4 (eesposit/qemu-kvm)
+RH-Bugzilla: 1995710
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+
+This reverts commit 4e17b1126e.
+
+Over time AioContext usage and coverage has increased, and now block
+backend is capable of handling AioContext change upon eject and insert.
+Therefore the above downstream-only commit is not necessary anymore,
+and can be safely reverted.
+
+X-downstream-only: true
+
+Signed-off-by: Emanuele Giuseppe Esposito <eesposit@redhat.com>
+---
+ hw/scsi/virtio-scsi.c | 9 ---------
+ 1 file changed, 9 deletions(-)
+
+diff --git a/hw/scsi/virtio-scsi.c b/hw/scsi/virtio-scsi.c
+index 2450c9438c..db54d104be 100644
+--- a/hw/scsi/virtio-scsi.c
++++ b/hw/scsi/virtio-scsi.c
+@@ -937,15 +937,6 @@ static void virtio_scsi_hotplug(HotplugHandler *hotplug_dev, DeviceState *dev,
+     AioContext *old_context;
+     int ret;
+ 
+-    /* XXX: Remove this check once block backend is capable of handling
+-     * AioContext change upon eject/insert.
+-     * s->ctx is NULL if ioeventfd is off, s->ctx is qemu_get_aio_context() if
+-     * data plane is not used, both cases are safe for scsi-cd. */
+-    if (s->ctx && s->ctx != qemu_get_aio_context() &&
+-        object_dynamic_cast(OBJECT(dev), "scsi-cd")) {
+-        error_setg(errp, "scsi-cd is not supported by data plane");
+-        return;
+-    }
+     if (s->ctx && !s->dataplane_fenced) {
+         if (blk_op_is_blocked(sd->conf.blk, BLOCK_OP_TYPE_DATAPLANE, errp)) {
+             return;
+-- 
+2.31.1
+

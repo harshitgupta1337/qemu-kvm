@@ -1,0 +1,74 @@
+From 3b05d3464945295112b5d02d142422f524a52054 Mon Sep 17 00:00:00 2001
+From: Gavin Shan <gshan@redhat.com>
+Date: Wed, 11 May 2022 18:01:35 +0800
+Subject: [PATCH 03/16] hw/arm/virt: Consider SMP configuration in CPU topology
+
+RH-Author: Gavin Shan <gshan@redhat.com>
+RH-MergeRequest: 86: hw/arm/virt: Fix the default CPU topology
+RH-Commit: [3/6] 7125b41f038c2b1cb33377d0ef1222f1ea42b648 (gwshan/qemu-rhel-9)
+RH-Bugzilla: 2041823
+RH-Acked-by: Eric Auger <eric.auger@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2041823
+
+Currently, the SMP configuration isn't considered when the CPU
+topology is populated. In this case, it's impossible to provide
+the default CPU-to-NUMA mapping or association based on the socket
+ID of the given CPU.
+
+This takes account of SMP configuration when the CPU topology
+is populated. The die ID for the given CPU isn't assigned since
+it's not supported on arm/virt machine. Besides, the used SMP
+configuration in qtest/numa-test/aarch64_numa_cpu() is corrcted
+to avoid testing failure
+
+Signed-off-by: Gavin Shan <gshan@redhat.com>
+Reviewed-by: Yanan Wang <wangyanan55@huawei.com>
+Acked-by: Igor Mammedov <imammedo@redhat.com>
+Message-id: 20220503140304.855514-4-gshan@redhat.com
+Signed-off-by: Peter Maydell <peter.maydell@linaro.org>
+(cherry picked from commit c9ec4cb5e4936f980889e717524e73896b0200ed)
+Signed-off-by: Gavin Shan <gshan@redhat.com>
+---
+ hw/arm/virt.c | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index 8be12e121d..a87c8d396a 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -2553,6 +2553,7 @@ static const CPUArchIdList *virt_possible_cpu_arch_ids(MachineState *ms)
+     int n;
+     unsigned int max_cpus = ms->smp.max_cpus;
+     VirtMachineState *vms = VIRT_MACHINE(ms);
++    MachineClass *mc = MACHINE_GET_CLASS(vms);
+ 
+     if (ms->possible_cpus) {
+         assert(ms->possible_cpus->len == max_cpus);
+@@ -2566,8 +2567,20 @@ static const CPUArchIdList *virt_possible_cpu_arch_ids(MachineState *ms)
+         ms->possible_cpus->cpus[n].type = ms->cpu_type;
+         ms->possible_cpus->cpus[n].arch_id =
+             virt_cpu_mp_affinity(vms, n);
++
++        assert(!mc->smp_props.dies_supported);
++        ms->possible_cpus->cpus[n].props.has_socket_id = true;
++        ms->possible_cpus->cpus[n].props.socket_id =
++            n / (ms->smp.clusters * ms->smp.cores * ms->smp.threads);
++        ms->possible_cpus->cpus[n].props.has_cluster_id = true;
++        ms->possible_cpus->cpus[n].props.cluster_id =
++            (n / (ms->smp.cores * ms->smp.threads)) % ms->smp.clusters;
++        ms->possible_cpus->cpus[n].props.has_core_id = true;
++        ms->possible_cpus->cpus[n].props.core_id =
++            (n / ms->smp.threads) % ms->smp.cores;
+         ms->possible_cpus->cpus[n].props.has_thread_id = true;
+-        ms->possible_cpus->cpus[n].props.thread_id = n;
++        ms->possible_cpus->cpus[n].props.thread_id =
++            n % ms->smp.threads;
+     }
+     return ms->possible_cpus;
+ }
+-- 
+2.31.1
+

@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.0.0
-Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -208,6 +208,38 @@ Patch26: kvm-Enable-virtio-iommu-pci-on-aarch64.patch
 Patch27: kvm-sysemu-tpm-Add-a-stub-function-for-TPM_IS_CRB.patch
 # For bz#2037612 - [Win11][tpm][QL41112 PF]  vfio_listener_region_add received unaligned region
 Patch28: kvm-vfio-common-remove-spurious-tpm-crb-cmd-misalignment.patch
+# For bz#2041823 - [aarch64][numa] When there are at least 6 Numa nodes serial log shows 'arch topology borken'
+Patch29: kvm-qapi-machine.json-Add-cluster-id.patch
+# For bz#2041823 - [aarch64][numa] When there are at least 6 Numa nodes serial log shows 'arch topology borken'
+Patch30: kvm-qtest-numa-test-Specify-CPU-topology-in-aarch64_numa.patch
+# For bz#2041823 - [aarch64][numa] When there are at least 6 Numa nodes serial log shows 'arch topology borken'
+Patch31: kvm-hw-arm-virt-Consider-SMP-configuration-in-CPU-topolo.patch
+# For bz#2041823 - [aarch64][numa] When there are at least 6 Numa nodes serial log shows 'arch topology borken'
+Patch32: kvm-qtest-numa-test-Correct-CPU-and-NUMA-association-in-.patch
+# For bz#2041823 - [aarch64][numa] When there are at least 6 Numa nodes serial log shows 'arch topology borken'
+Patch33: kvm-hw-arm-virt-Fix-CPU-s-default-NUMA-node-ID.patch
+# For bz#2041823 - [aarch64][numa] When there are at least 6 Numa nodes serial log shows 'arch topology borken'
+Patch34: kvm-hw-acpi-aml-build-Use-existing-CPU-topology-to-build.patch
+# For bz#2079938 - qemu coredump when boot with multi disks (qemu) failed to set up stack guard page: Cannot allocate memory
+Patch35: kvm-coroutine-Rename-qemu_coroutine_inc-dec_pool_size.patch
+# For bz#2079938 - qemu coredump when boot with multi disks (qemu) failed to set up stack guard page: Cannot allocate memory
+Patch36: kvm-coroutine-Revert-to-constant-batch-size.patch
+# For bz#2079347 - Guest boot blocked when scsi disks using same iothread and 100% CPU consumption
+Patch37: kvm-virtio-scsi-fix-ctrl-and-event-handler-functions-in-.patch
+# For bz#2079347 - Guest boot blocked when scsi disks using same iothread and 100% CPU consumption
+Patch38: kvm-virtio-scsi-don-t-waste-CPU-polling-the-event-virtqu.patch
+# For bz#2079347 - Guest boot blocked when scsi disks using same iothread and 100% CPU consumption
+Patch39: kvm-virtio-scsi-clean-up-virtio_scsi_handle_event_vq.patch
+# For bz#2079347 - Guest boot blocked when scsi disks using same iothread and 100% CPU consumption
+Patch40: kvm-virtio-scsi-clean-up-virtio_scsi_handle_ctrl_vq.patch
+# For bz#2079347 - Guest boot blocked when scsi disks using same iothread and 100% CPU consumption
+Patch41: kvm-virtio-scsi-clean-up-virtio_scsi_handle_cmd_vq.patch
+# For bz#2079347 - Guest boot blocked when scsi disks using same iothread and 100% CPU consumption
+Patch42: kvm-virtio-scsi-move-request-related-items-from-.h-to-.c.patch
+# For bz#1995710 - RFE: Allow virtio-scsi CD-ROM media change with IOThreads
+Patch43: kvm-Revert-virtio-scsi-Reject-scsi-cd-if-data-plane-enab.patch
+# For bz#2064530 - Rebuild qemu-kvm with clang-14
+Patch44: kvm-migration-Fix-operator-type.patch
 
 # Source-git patches
 
@@ -1243,6 +1275,34 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Thu May 19 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-4
+- kvm-qapi-machine.json-Add-cluster-id.patch [bz#2041823]
+- kvm-qtest-numa-test-Specify-CPU-topology-in-aarch64_numa.patch [bz#2041823]
+- kvm-hw-arm-virt-Consider-SMP-configuration-in-CPU-topolo.patch [bz#2041823]
+- kvm-qtest-numa-test-Correct-CPU-and-NUMA-association-in-.patch [bz#2041823]
+- kvm-hw-arm-virt-Fix-CPU-s-default-NUMA-node-ID.patch [bz#2041823]
+- kvm-hw-acpi-aml-build-Use-existing-CPU-topology-to-build.patch [bz#2041823]
+- kvm-coroutine-Rename-qemu_coroutine_inc-dec_pool_size.patch [bz#2079938]
+- kvm-coroutine-Revert-to-constant-batch-size.patch [bz#2079938]
+- kvm-virtio-scsi-fix-ctrl-and-event-handler-functions-in-.patch [bz#2079347]
+- kvm-virtio-scsi-don-t-waste-CPU-polling-the-event-virtqu.patch [bz#2079347]
+- kvm-virtio-scsi-clean-up-virtio_scsi_handle_event_vq.patch [bz#2079347]
+- kvm-virtio-scsi-clean-up-virtio_scsi_handle_ctrl_vq.patch [bz#2079347]
+- kvm-virtio-scsi-clean-up-virtio_scsi_handle_cmd_vq.patch [bz#2079347]
+- kvm-virtio-scsi-move-request-related-items-from-.h-to-.c.patch [bz#2079347]
+- kvm-Revert-virtio-scsi-Reject-scsi-cd-if-data-plane-enab.patch [bz#1995710]
+- kvm-migration-Fix-operator-type.patch [bz#2064530]
+- Resolves: bz#2041823
+  ([aarch64][numa] When there are at least 6 Numa nodes serial log shows 'arch topology borken')
+- Resolves: bz#2079938
+  (qemu coredump when boot with multi disks (qemu) failed to set up stack guard page: Cannot allocate memory)
+- Resolves: bz#2079347
+  (Guest boot blocked when scsi disks using same iothread and 100% CPU consumption)
+- Resolves: bz#1995710
+  (RFE: Allow virtio-scsi CD-ROM media change with IOThreads)
+- Resolves: bz#2064530
+  (Rebuild qemu-kvm with clang-14)
+
 * Thu May 12 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-3
 - kvm-hw-arm-virt-Remove-the-dtb-kaslr-seed-machine-option.patch [bz#2046029]
 - kvm-hw-arm-virt-Fix-missing-initialization-in-instance-c.patch [bz#2046029]

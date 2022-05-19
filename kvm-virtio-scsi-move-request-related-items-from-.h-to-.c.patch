@@ -1,0 +1,168 @@
+From 6603f216dbc07a1d221b1665409cfec6cc9960e2 Mon Sep 17 00:00:00 2001
+From: Stefan Hajnoczi <stefanha@redhat.com>
+Date: Tue, 17 May 2022 09:28:26 +0100
+Subject: [PATCH 14/16] virtio-scsi: move request-related items from .h to .c
+
+RH-Author: Stefan Hajnoczi <stefanha@redhat.com>
+RH-MergeRequest: 88: virtio-scsi: fix 100% CPU consumption with IOThreads
+RH-Commit: [6/6] ecdf5289abd04062c85c5ed8e577a5249684a3b0 (stefanha/centos-stream-qemu-kvm)
+RH-Bugzilla: 2079347
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+
+There is no longer a need to expose the request and related APIs in
+virtio-scsi.h since there are no callers outside virtio-scsi.c.
+
+Note the block comment in VirtIOSCSIReq has been adjusted to meet the
+coding style.
+
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Reviewed-by: Paolo Bonzini <pbonzini@redhat.com>
+Message-id: 20220427143541.119567-7-stefanha@redhat.com
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+(cherry picked from commit 3dc584abeef0e1277c2de8c1c1974cb49444eb0a)
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+---
+ hw/scsi/virtio-scsi.c           | 45 ++++++++++++++++++++++++++++++---
+ include/hw/virtio/virtio-scsi.h | 40 -----------------------------
+ 2 files changed, 41 insertions(+), 44 deletions(-)
+
+diff --git a/hw/scsi/virtio-scsi.c b/hw/scsi/virtio-scsi.c
+index df5ff8bab7..2450c9438c 100644
+--- a/hw/scsi/virtio-scsi.c
++++ b/hw/scsi/virtio-scsi.c
+@@ -29,6 +29,43 @@
+ #include "hw/virtio/virtio-access.h"
+ #include "trace.h"
+ 
++typedef struct VirtIOSCSIReq {
++    /*
++     * Note:
++     * - fields up to resp_iov are initialized by virtio_scsi_init_req;
++     * - fields starting at vring are zeroed by virtio_scsi_init_req.
++     */
++    VirtQueueElement elem;
++
++    VirtIOSCSI *dev;
++    VirtQueue *vq;
++    QEMUSGList qsgl;
++    QEMUIOVector resp_iov;
++
++    union {
++        /* Used for two-stage request submission */
++        QTAILQ_ENTRY(VirtIOSCSIReq) next;
++
++        /* Used for cancellation of request during TMFs */
++        int remaining;
++    };
++
++    SCSIRequest *sreq;
++    size_t resp_size;
++    enum SCSIXferMode mode;
++    union {
++        VirtIOSCSICmdResp     cmd;
++        VirtIOSCSICtrlTMFResp tmf;
++        VirtIOSCSICtrlANResp  an;
++        VirtIOSCSIEvent       event;
++    } resp;
++    union {
++        VirtIOSCSICmdReq      cmd;
++        VirtIOSCSICtrlTMFReq  tmf;
++        VirtIOSCSICtrlANReq   an;
++    } req;
++} VirtIOSCSIReq;
++
+ static inline int virtio_scsi_get_lun(uint8_t *lun)
+ {
+     return ((lun[2] << 8) | lun[3]) & 0x3FFF;
+@@ -45,7 +82,7 @@ static inline SCSIDevice *virtio_scsi_device_get(VirtIOSCSI *s, uint8_t *lun)
+     return scsi_device_get(&s->bus, 0, lun[1], virtio_scsi_get_lun(lun));
+ }
+ 
+-void virtio_scsi_init_req(VirtIOSCSI *s, VirtQueue *vq, VirtIOSCSIReq *req)
++static void virtio_scsi_init_req(VirtIOSCSI *s, VirtQueue *vq, VirtIOSCSIReq *req)
+ {
+     VirtIODevice *vdev = VIRTIO_DEVICE(s);
+     const size_t zero_skip =
+@@ -58,7 +95,7 @@ void virtio_scsi_init_req(VirtIOSCSI *s, VirtQueue *vq, VirtIOSCSIReq *req)
+     memset((uint8_t *)req + zero_skip, 0, sizeof(*req) - zero_skip);
+ }
+ 
+-void virtio_scsi_free_req(VirtIOSCSIReq *req)
++static void virtio_scsi_free_req(VirtIOSCSIReq *req)
+ {
+     qemu_iovec_destroy(&req->resp_iov);
+     qemu_sglist_destroy(&req->qsgl);
+@@ -801,8 +838,8 @@ static void virtio_scsi_reset(VirtIODevice *vdev)
+     s->events_dropped = false;
+ }
+ 
+-void virtio_scsi_push_event(VirtIOSCSI *s, SCSIDevice *dev,
+-                            uint32_t event, uint32_t reason)
++static void virtio_scsi_push_event(VirtIOSCSI *s, SCSIDevice *dev,
++                                   uint32_t event, uint32_t reason)
+ {
+     VirtIOSCSICommon *vs = VIRTIO_SCSI_COMMON(s);
+     VirtIOSCSIReq *req;
+diff --git a/include/hw/virtio/virtio-scsi.h b/include/hw/virtio/virtio-scsi.h
+index 2497530064..abdda2cbd0 100644
+--- a/include/hw/virtio/virtio-scsi.h
++++ b/include/hw/virtio/virtio-scsi.h
+@@ -94,42 +94,6 @@ struct VirtIOSCSI {
+     uint32_t host_features;
+ };
+ 
+-typedef struct VirtIOSCSIReq {
+-    /* Note:
+-     * - fields up to resp_iov are initialized by virtio_scsi_init_req;
+-     * - fields starting at vring are zeroed by virtio_scsi_init_req.
+-     * */
+-    VirtQueueElement elem;
+-
+-    VirtIOSCSI *dev;
+-    VirtQueue *vq;
+-    QEMUSGList qsgl;
+-    QEMUIOVector resp_iov;
+-
+-    union {
+-        /* Used for two-stage request submission */
+-        QTAILQ_ENTRY(VirtIOSCSIReq) next;
+-
+-        /* Used for cancellation of request during TMFs */
+-        int remaining;
+-    };
+-
+-    SCSIRequest *sreq;
+-    size_t resp_size;
+-    enum SCSIXferMode mode;
+-    union {
+-        VirtIOSCSICmdResp     cmd;
+-        VirtIOSCSICtrlTMFResp tmf;
+-        VirtIOSCSICtrlANResp  an;
+-        VirtIOSCSIEvent       event;
+-    } resp;
+-    union {
+-        VirtIOSCSICmdReq      cmd;
+-        VirtIOSCSICtrlTMFReq  tmf;
+-        VirtIOSCSICtrlANReq   an;
+-    } req;
+-} VirtIOSCSIReq;
+-
+ static inline void virtio_scsi_acquire(VirtIOSCSI *s)
+ {
+     if (s->ctx) {
+@@ -151,10 +115,6 @@ void virtio_scsi_common_realize(DeviceState *dev,
+                                 Error **errp);
+ 
+ void virtio_scsi_common_unrealize(DeviceState *dev);
+-void virtio_scsi_init_req(VirtIOSCSI *s, VirtQueue *vq, VirtIOSCSIReq *req);
+-void virtio_scsi_free_req(VirtIOSCSIReq *req);
+-void virtio_scsi_push_event(VirtIOSCSI *s, SCSIDevice *dev,
+-                            uint32_t event, uint32_t reason);
+ 
+ void virtio_scsi_dataplane_setup(VirtIOSCSI *s, Error **errp);
+ int virtio_scsi_dataplane_start(VirtIODevice *s);
+-- 
+2.31.1
+

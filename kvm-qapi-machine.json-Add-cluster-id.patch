@@ -1,0 +1,126 @@
+From e97c563f7146098119839aa146a6f25070eb7148 Mon Sep 17 00:00:00 2001
+From: Gavin Shan <gshan@redhat.com>
+Date: Wed, 11 May 2022 18:01:02 +0800
+Subject: [PATCH 01/16] qapi/machine.json: Add cluster-id
+
+RH-Author: Gavin Shan <gshan@redhat.com>
+RH-MergeRequest: 86: hw/arm/virt: Fix the default CPU topology
+RH-Commit: [1/6] 44d7d83008c6d28485ae44f7cced792f4987b919 (gwshan/qemu-rhel-9)
+RH-Bugzilla: 2041823
+RH-Acked-by: Eric Auger <eric.auger@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2041823
+
+This adds cluster-id in CPU instance properties, which will be used
+by arm/virt machine. Besides, the cluster-id is also verified or
+dumped in various spots:
+
+  * hw/core/machine.c::machine_set_cpu_numa_node() to associate
+    CPU with its NUMA node.
+
+  * hw/core/machine.c::machine_numa_finish_cpu_init() to record
+    CPU slots with no NUMA mapping set.
+
+  * hw/core/machine-hmp-cmds.c::hmp_hotpluggable_cpus() to dump
+    cluster-id.
+
+Signed-off-by: Gavin Shan <gshan@redhat.com>
+Reviewed-by: Yanan Wang <wangyanan55@huawei.com>
+Acked-by: Igor Mammedov <imammedo@redhat.com>
+Message-id: 20220503140304.855514-2-gshan@redhat.com
+Signed-off-by: Peter Maydell <peter.maydell@linaro.org>
+(cherry picked from commit 1dcf7001d4bae651129d46d5628b29e93a411d0b)
+Signed-off-by: Gavin Shan <gshan@redhat.com>
+---
+ hw/core/machine-hmp-cmds.c |  4 ++++
+ hw/core/machine.c          | 16 ++++++++++++++++
+ qapi/machine.json          |  6 ++++--
+ 3 files changed, 24 insertions(+), 2 deletions(-)
+
+diff --git a/hw/core/machine-hmp-cmds.c b/hw/core/machine-hmp-cmds.c
+index 4e2f319aeb..5cb5eecbfc 100644
+--- a/hw/core/machine-hmp-cmds.c
++++ b/hw/core/machine-hmp-cmds.c
+@@ -77,6 +77,10 @@ void hmp_hotpluggable_cpus(Monitor *mon, const QDict *qdict)
+         if (c->has_die_id) {
+             monitor_printf(mon, "    die-id: \"%" PRIu64 "\"\n", c->die_id);
+         }
++        if (c->has_cluster_id) {
++            monitor_printf(mon, "    cluster-id: \"%" PRIu64 "\"\n",
++                           c->cluster_id);
++        }
+         if (c->has_core_id) {
+             monitor_printf(mon, "    core-id: \"%" PRIu64 "\"\n", c->core_id);
+         }
+diff --git a/hw/core/machine.c b/hw/core/machine.c
+index dffc3ef4ab..168f4de910 100644
+--- a/hw/core/machine.c
++++ b/hw/core/machine.c
+@@ -890,6 +890,11 @@ void machine_set_cpu_numa_node(MachineState *machine,
+             return;
+         }
+ 
++        if (props->has_cluster_id && !slot->props.has_cluster_id) {
++            error_setg(errp, "cluster-id is not supported");
++            return;
++        }
++
+         if (props->has_socket_id && !slot->props.has_socket_id) {
+             error_setg(errp, "socket-id is not supported");
+             return;
+@@ -909,6 +914,11 @@ void machine_set_cpu_numa_node(MachineState *machine,
+                 continue;
+         }
+ 
++        if (props->has_cluster_id &&
++            props->cluster_id != slot->props.cluster_id) {
++                continue;
++        }
++
+         if (props->has_die_id && props->die_id != slot->props.die_id) {
+                 continue;
+         }
+@@ -1203,6 +1213,12 @@ static char *cpu_slot_to_string(const CPUArchId *cpu)
+         }
+         g_string_append_printf(s, "die-id: %"PRId64, cpu->props.die_id);
+     }
++    if (cpu->props.has_cluster_id) {
++        if (s->len) {
++            g_string_append_printf(s, ", ");
++        }
++        g_string_append_printf(s, "cluster-id: %"PRId64, cpu->props.cluster_id);
++    }
+     if (cpu->props.has_core_id) {
+         if (s->len) {
+             g_string_append_printf(s, ", ");
+diff --git a/qapi/machine.json b/qapi/machine.json
+index d25a481ce4..4c417e32a5 100644
+--- a/qapi/machine.json
++++ b/qapi/machine.json
+@@ -868,10 +868,11 @@
+ # @node-id: NUMA node ID the CPU belongs to
+ # @socket-id: socket number within node/board the CPU belongs to
+ # @die-id: die number within socket the CPU belongs to (since 4.1)
+-# @core-id: core number within die the CPU belongs to
++# @cluster-id: cluster number within die the CPU belongs to (since 7.1)
++# @core-id: core number within cluster the CPU belongs to
+ # @thread-id: thread number within core the CPU belongs to
+ #
+-# Note: currently there are 5 properties that could be present
++# Note: currently there are 6 properties that could be present
+ #       but management should be prepared to pass through other
+ #       properties with device_add command to allow for future
+ #       interface extension. This also requires the filed names to be kept in
+@@ -883,6 +884,7 @@
+   'data': { '*node-id': 'int',
+             '*socket-id': 'int',
+             '*die-id': 'int',
++            '*cluster-id': 'int',
+             '*core-id': 'int',
+             '*thread-id': 'int'
+   }
+-- 
+2.31.1
+

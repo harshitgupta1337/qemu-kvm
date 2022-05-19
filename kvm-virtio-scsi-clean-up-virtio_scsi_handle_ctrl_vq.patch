@@ -1,0 +1,65 @@
+From c6e16a7a5a18ec2bc4f8a6f5cc1c887e18b16cdf Mon Sep 17 00:00:00 2001
+From: Stefan Hajnoczi <stefanha@redhat.com>
+Date: Tue, 17 May 2022 09:28:12 +0100
+Subject: [PATCH 12/16] virtio-scsi: clean up virtio_scsi_handle_ctrl_vq()
+
+RH-Author: Stefan Hajnoczi <stefanha@redhat.com>
+RH-MergeRequest: 88: virtio-scsi: fix 100% CPU consumption with IOThreads
+RH-Commit: [4/6] ca3751b7bfad5163c5b1c81b8525936a848d42ea (stefanha/centos-stream-qemu-kvm)
+RH-Bugzilla: 2079347
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+
+virtio_scsi_handle_ctrl_vq() is only called from hw/scsi/virtio-scsi.c
+now and its return value is no longer used. Remove the function
+prototype from virtio-scsi.h and drop the return value.
+
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Reviewed-by: Paolo Bonzini <pbonzini@redhat.com>
+Message-id: 20220427143541.119567-5-stefanha@redhat.com
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+(cherry picked from commit 73b3b49f1880f236b4d0ffd7efb00280c05a5fab)
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+---
+ hw/scsi/virtio-scsi.c           | 5 +----
+ include/hw/virtio/virtio-scsi.h | 1 -
+ 2 files changed, 1 insertion(+), 5 deletions(-)
+
+diff --git a/hw/scsi/virtio-scsi.c b/hw/scsi/virtio-scsi.c
+index dd2185b943..a47033d91d 100644
+--- a/hw/scsi/virtio-scsi.c
++++ b/hw/scsi/virtio-scsi.c
+@@ -460,16 +460,13 @@ static void virtio_scsi_handle_ctrl_req(VirtIOSCSI *s, VirtIOSCSIReq *req)
+     }
+ }
+ 
+-bool virtio_scsi_handle_ctrl_vq(VirtIOSCSI *s, VirtQueue *vq)
++static void virtio_scsi_handle_ctrl_vq(VirtIOSCSI *s, VirtQueue *vq)
+ {
+     VirtIOSCSIReq *req;
+-    bool progress = false;
+ 
+     while ((req = virtio_scsi_pop_req(s, vq))) {
+-        progress = true;
+         virtio_scsi_handle_ctrl_req(s, req);
+     }
+-    return progress;
+ }
+ 
+ /*
+diff --git a/include/hw/virtio/virtio-scsi.h b/include/hw/virtio/virtio-scsi.h
+index 5957597825..44dc3b81ec 100644
+--- a/include/hw/virtio/virtio-scsi.h
++++ b/include/hw/virtio/virtio-scsi.h
+@@ -152,7 +152,6 @@ void virtio_scsi_common_realize(DeviceState *dev,
+ 
+ void virtio_scsi_common_unrealize(DeviceState *dev);
+ bool virtio_scsi_handle_cmd_vq(VirtIOSCSI *s, VirtQueue *vq);
+-bool virtio_scsi_handle_ctrl_vq(VirtIOSCSI *s, VirtQueue *vq);
+ void virtio_scsi_init_req(VirtIOSCSI *s, VirtQueue *vq, VirtIOSCSIReq *req);
+ void virtio_scsi_free_req(VirtIOSCSIReq *req);
+ void virtio_scsi_push_event(VirtIOSCSI *s, SCSIDevice *dev,
+-- 
+2.31.1
+

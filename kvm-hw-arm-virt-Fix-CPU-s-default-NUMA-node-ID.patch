@@ -1,0 +1,88 @@
+From 14e49ad3b98f01c1ad6fe456469d40a96a43dc3c Mon Sep 17 00:00:00 2001
+From: Gavin Shan <gshan@redhat.com>
+Date: Wed, 11 May 2022 18:01:35 +0800
+Subject: [PATCH 05/16] hw/arm/virt: Fix CPU's default NUMA node ID
+
+RH-Author: Gavin Shan <gshan@redhat.com>
+RH-MergeRequest: 86: hw/arm/virt: Fix the default CPU topology
+RH-Commit: [5/6] 5336f62bc0c53c0417db1d71ef89544907bc28c0 (gwshan/qemu-rhel-9)
+RH-Bugzilla: 2041823
+RH-Acked-by: Eric Auger <eric.auger@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2041823
+
+When CPU-to-NUMA association isn't explicitly provided by users,
+the default one is given by mc->get_default_cpu_node_id(). However,
+the CPU topology isn't fully considered in the default association
+and this causes CPU topology broken warnings on booting Linux guest.
+
+For example, the following warning messages are observed when the
+Linux guest is booted with the following command lines.
+
+/home/gavin/sandbox/qemu.main/build/qemu-system-aarch64 \
+-accel kvm -machine virt,gic-version=host \
+-cpu host \
+-smp 6,sockets=2,cores=3,threads=1 \
+-m 1024M,slots=16,maxmem=64G \
+-object memory-backend-ram,id=mem0,size=128M \
+-object memory-backend-ram,id=mem1,size=128M \
+-object memory-backend-ram,id=mem2,size=128M \
+-object memory-backend-ram,id=mem3,size=128M \
+-object memory-backend-ram,id=mem4,size=128M \
+-object memory-backend-ram,id=mem4,size=384M \
+-numa node,nodeid=0,memdev=mem0 \
+-numa node,nodeid=1,memdev=mem1 \
+-numa node,nodeid=2,memdev=mem2 \
+-numa node,nodeid=3,memdev=mem3 \
+-numa node,nodeid=4,memdev=mem4 \
+-numa node,nodeid=5,memdev=mem5
+:
+alternatives: patching kernel code
+BUG: arch topology borken
+the CLS domain not a subset of the MC domain
+<the above error log repeats>
+BUG: arch topology borken
+the DIE domain not a subset of the NODE domain
+
+With current implementation of mc->get_default_cpu_node_id(),
+CPU#0 to CPU#5 are associated with NODE#0 to NODE#5 separately.
+That's incorrect because CPU#0/1/2 should be associated with same
+NUMA node because they're seated in same socket.
+
+This fixes the issue by considering the socket ID when the default
+CPU-to-NUMA association is provided in virt_possible_cpu_arch_ids().
+With this applied, no more CPU topology broken warnings are seen
+from the Linux guest. The 6 CPUs are associated with NODE#0/1, but
+there are no CPUs associated with NODE#2/3/4/5.
+
+Signed-off-by: Gavin Shan <gshan@redhat.com>
+Reviewed-by: Igor Mammedov <imammedo@redhat.com>
+Reviewed-by: Yanan Wang <wangyanan55@huawei.com>
+Message-id: 20220503140304.855514-6-gshan@redhat.com
+Signed-off-by: Peter Maydell <peter.maydell@linaro.org>
+(cherry picked from commit 4c18bc192386dfbca530e7f550e0992df657818a)
+Signed-off-by: Gavin Shan <gshan@redhat.com>
+---
+ hw/arm/virt.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index a87c8d396a..95d012d6eb 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -2545,7 +2545,9 @@ virt_cpu_index_to_props(MachineState *ms, unsigned cpu_index)
+ 
+ static int64_t virt_get_default_cpu_node_id(const MachineState *ms, int idx)
+ {
+-    return idx % ms->numa_state->num_nodes;
++    int64_t socket_id = ms->possible_cpus->cpus[idx].props.socket_id;
++
++    return socket_id % ms->numa_state->num_nodes;
+ }
+ 
+ static const CPUArchIdList *virt_possible_cpu_arch_ids(MachineState *ms)
+-- 
+2.31.1
+
