@@ -1,0 +1,92 @@
+From e6aae1d0368a152924c38775e517f4e83c1d898b Mon Sep 17 00:00:00 2001
+From: Eric Blake <eblake@redhat.com>
+Date: Wed, 11 May 2022 19:49:23 -0500
+Subject: [PATCH 1/2] qemu-nbd: Pass max connections to blockdev layer
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eric Blake <eblake@redhat.com>
+RH-MergeRequest: 90: Advertise MULTI_CONN on writeable NBD servers
+RH-Commit: [1/2] b0e33fd125bf3523b8b9a4dead3c8bb2342bfd4e (ebblake/centos-qemu-kvm)
+RH-Bugzilla: 1708300
+RH-Acked-by: Nir Soffer <None>
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Daniel P. Berrangé <berrange@redhat.com>
+
+The next patch wants to adjust whether the NBD server code advertises
+MULTI_CONN based on whether it is known if the server limits to
+exactly one client.  For a server started by QMP, this information is
+obtained through nbd_server_start (which can support more than one
+export); but for qemu-nbd (which supports exactly one export), it is
+controlled only by the command-line option -e/--shared.  Since we
+already have a hook function used by qemu-nbd, it's easiest to just
+alter its signature to fit our needs.
+
+Signed-off-by: Eric Blake <eblake@redhat.com>
+Message-Id: <20220512004924.417153-2-eblake@redhat.com>
+Signed-off-by: Kevin Wolf <kwolf@redhat.com>
+(cherry picked from commit a5fced40212ed73c715ca298a2929dd4d99c9999)
+Signed-off-by: Eric Blake <eblake@redhat.com>
+---
+ blockdev-nbd.c      | 8 ++++----
+ include/block/nbd.h | 2 +-
+ qemu-nbd.c          | 2 +-
+ 3 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/blockdev-nbd.c b/blockdev-nbd.c
+index 9840d25a82..add41a23af 100644
+--- a/blockdev-nbd.c
++++ b/blockdev-nbd.c
+@@ -30,18 +30,18 @@ typedef struct NBDServerData {
+ } NBDServerData;
+ 
+ static NBDServerData *nbd_server;
+-static bool is_qemu_nbd;
++static int qemu_nbd_connections = -1; /* Non-negative if this is qemu-nbd */
+ 
+ static void nbd_update_server_watch(NBDServerData *s);
+ 
+-void nbd_server_is_qemu_nbd(bool value)
++void nbd_server_is_qemu_nbd(int max_connections)
+ {
+-    is_qemu_nbd = value;
++    qemu_nbd_connections = max_connections;
+ }
+ 
+ bool nbd_server_is_running(void)
+ {
+-    return nbd_server || is_qemu_nbd;
++    return nbd_server || qemu_nbd_connections >= 0;
+ }
+ 
+ static void nbd_blockdev_client_closed(NBDClient *client, bool ignored)
+diff --git a/include/block/nbd.h b/include/block/nbd.h
+index a98eb665da..c5a29ce1c6 100644
+--- a/include/block/nbd.h
++++ b/include/block/nbd.h
+@@ -344,7 +344,7 @@ void nbd_client_new(QIOChannelSocket *sioc,
+ void nbd_client_get(NBDClient *client);
+ void nbd_client_put(NBDClient *client);
+ 
+-void nbd_server_is_qemu_nbd(bool value);
++void nbd_server_is_qemu_nbd(int max_connections);
+ bool nbd_server_is_running(void);
+ void nbd_server_start(SocketAddress *addr, const char *tls_creds,
+                       const char *tls_authz, uint32_t max_connections,
+diff --git a/qemu-nbd.c b/qemu-nbd.c
+index 713e7557a9..8c25ae93df 100644
+--- a/qemu-nbd.c
++++ b/qemu-nbd.c
+@@ -1087,7 +1087,7 @@ int main(int argc, char **argv)
+ 
+     bs->detect_zeroes = detect_zeroes;
+ 
+-    nbd_server_is_qemu_nbd(true);
++    nbd_server_is_qemu_nbd(shared);
+ 
+     export_opts = g_new(BlockExportOptions, 1);
+     *export_opts = (BlockExportOptions) {
+-- 
+2.31.1
+

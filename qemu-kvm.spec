@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.0.0
-Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -240,6 +240,10 @@ Patch42: kvm-virtio-scsi-move-request-related-items-from-.h-to-.c.patch
 Patch43: kvm-Revert-virtio-scsi-Reject-scsi-cd-if-data-plane-enab.patch
 # For bz#2064530 - Rebuild qemu-kvm with clang-14
 Patch44: kvm-migration-Fix-operator-type.patch
+# For bz#1708300 - RFE: qemu-nbd vs NBD_FLAG_CAN_MULTI_CONN
+Patch45: kvm-qemu-nbd-Pass-max-connections-to-blockdev-layer.patch
+# For bz#1708300 - RFE: qemu-nbd vs NBD_FLAG_CAN_MULTI_CONN
+Patch46: kvm-nbd-server-Allow-MULTI_CONN-for-shared-writable-expo.patch
 
 # Source-git patches
 
@@ -1275,6 +1279,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon May 30 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-5
+- kvm-qemu-nbd-Pass-max-connections-to-blockdev-layer.patch [bz#1708300]
+- kvm-nbd-server-Allow-MULTI_CONN-for-shared-writable-expo.patch [bz#1708300]
+- Resolves: bz#1708300
+  (RFE: qemu-nbd vs NBD_FLAG_CAN_MULTI_CONN)
+
 * Thu May 19 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-4
 - kvm-qapi-machine.json-Add-cluster-id.patch [bz#2041823]
 - kvm-qtest-numa-test-Specify-CPU-topology-in-aarch64_numa.patch [bz#2041823]
