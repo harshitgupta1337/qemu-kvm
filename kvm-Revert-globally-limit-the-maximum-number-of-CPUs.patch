@@ -1,0 +1,58 @@
+From 5ab8613582fd56b847fe75750acb5b7255900b35 Mon Sep 17 00:00:00 2001
+From: Vitaly Kuznetsov <vkuznets@redhat.com>
+Date: Thu, 9 Jun 2022 11:55:15 +0200
+Subject: [PATCH 15/16] Revert "globally limit the maximum number of CPUs"
+
+RH-Author: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-MergeRequest: 99: Revert "globally limit the maximum number of CPUs"
+RH-Commit: [1/1] 13100d4a2209b2190a3654c1f9cf4ebade1e8d24 (vkuznets/qemu-kvm-c9s)
+RH-Bugzilla: 2094270
+RH-Acked-by: Andrew Jones <drjones@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2094270
+Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=45871149
+Upstream Status: RHEL-only
+Tested: with upstream kernel
+
+Downstream QEMU carries a patch that sets the hard limit of possible vCPUs
+to the value that the KVM code of the kernel recommends as soft limit.
+Upstream KVM code has been changed recently to not use an arbitrary soft
+limit anymore, but to cap the value on the amount of available physical
+CPUs of the host. This defeats the purpose of the downstream change in
+QEMU completely. Drop the downstream-only patch to allow CPU overcommit.
+
+This reverts commit 6669f6fa677d43144f39d6ad59725b7ba622f1c2.
+
+Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+---
+ accel/kvm/kvm-all.c | 12 ------------
+ 1 file changed, 12 deletions(-)
+
+diff --git a/accel/kvm/kvm-all.c b/accel/kvm/kvm-all.c
+index fdf0e4d429..5f1377ca04 100644
+--- a/accel/kvm/kvm-all.c
++++ b/accel/kvm/kvm-all.c
+@@ -2430,18 +2430,6 @@ static int kvm_init(MachineState *ms)
+     soft_vcpus_limit = kvm_recommended_vcpus(s);
+     hard_vcpus_limit = kvm_max_vcpus(s);
+ 
+-#ifdef HOST_PPC64
+-    /*
+-     * On POWER, the kernel advertises a soft limit based on the
+-     * number of CPU threads on the host.  We want to allow exceeding
+-     * this for testing purposes, so we don't want to set hard limit
+-     * to soft limit as on x86.
+-     */
+-#else
+-    /* RHEL doesn't support nr_vcpus > soft_vcpus_limit */
+-    hard_vcpus_limit = soft_vcpus_limit;
+-#endif
+-
+     while (nc->name) {
+         if (nc->num > soft_vcpus_limit) {
+             warn_report("Number of %s cpus requested (%d) exceeds "
+-- 
+2.31.1
+

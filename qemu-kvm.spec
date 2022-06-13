@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.0.0
-Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 6%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -244,6 +244,38 @@ Patch44: kvm-migration-Fix-operator-type.patch
 Patch45: kvm-qemu-nbd-Pass-max-connections-to-blockdev-layer.patch
 # For bz#1708300 - RFE: qemu-nbd vs NBD_FLAG_CAN_MULTI_CONN
 Patch46: kvm-nbd-server-Allow-MULTI_CONN-for-shared-writable-expo.patch
+# For bz#2031024 - Add support for fixing thread pool size [QEMU]
+Patch47: kvm-Introduce-event-loop-base-abstract-class.patch
+# For bz#2031024 - Add support for fixing thread pool size [QEMU]
+Patch48: kvm-util-main-loop-Introduce-the-main-loop-into-QOM.patch
+# For bz#2031024 - Add support for fixing thread pool size [QEMU]
+Patch49: kvm-util-event-loop-base-Introduce-options-to-set-the-th.patch
+# For bz#2072379 - Fail to rebuild the reference count tables of qcow2 image on host block devices (e.g. LVs)
+Patch50: kvm-qcow2-Improve-refcount-structure-rebuilding.patch
+# For bz#2072379 - Fail to rebuild the reference count tables of qcow2 image on host block devices (e.g. LVs)
+Patch51: kvm-iotests-108-Test-new-refcount-rebuild-algorithm.patch
+# For bz#2072379 - Fail to rebuild the reference count tables of qcow2 image on host block devices (e.g. LVs)
+Patch52: kvm-qcow2-Add-errp-to-rebuild_refcount_structure.patch
+# For bz#2072379 - Fail to rebuild the reference count tables of qcow2 image on host block devices (e.g. LVs)
+Patch53: kvm-iotests-108-Fix-when-missing-user_allow_other.patch
+# For bz#2070804 - PXE boot crash qemu when using multiqueue vDPA
+Patch54: kvm-virtio-net-setup-vhost_dev-and-notifiers-for-cvq-onl.patch
+# For bz#2070804 - PXE boot crash qemu when using multiqueue vDPA
+Patch55: kvm-virtio-net-align-ctrl_vq-index-for-non-mq-guest-for-.patch
+# For bz#2070804 - PXE boot crash qemu when using multiqueue vDPA
+Patch56: kvm-vhost-vdpa-fix-improper-cleanup-in-net_init_vhost_vd.patch
+# For bz#2070804 - PXE boot crash qemu when using multiqueue vDPA
+Patch57: kvm-vhost-net-fix-improper-cleanup-in-vhost_net_start.patch
+# For bz#2070804 - PXE boot crash qemu when using multiqueue vDPA
+Patch58: kvm-vhost-vdpa-backend-feature-should-set-only-once.patch
+# For bz#2070804 - PXE boot crash qemu when using multiqueue vDPA
+Patch59: kvm-vhost-vdpa-change-name-and-polarity-for-vhost_vdpa_o.patch
+# For bz#2070804 - PXE boot crash qemu when using multiqueue vDPA
+Patch60: kvm-virtio-net-don-t-handle-mq-request-in-userspace-hand.patch
+# For bz#2094270 - Do not set the hard vCPU limit to the soft vCPU limit in downstream qemu-kvm anymore
+Patch61: kvm-Revert-globally-limit-the-maximum-number-of-CPUs.patch
+# For bz#2086262 - [Win11][tpm]vfio_listener_region_del received unaligned region
+Patch62: kvm-vfio-common-remove-spurious-warning-on-vfio_listener.patch
 
 # Source-git patches
 
@@ -1279,6 +1311,34 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Jun 13 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-6
+- kvm-Introduce-event-loop-base-abstract-class.patch [bz#2031024]
+- kvm-util-main-loop-Introduce-the-main-loop-into-QOM.patch [bz#2031024]
+- kvm-util-event-loop-base-Introduce-options-to-set-the-th.patch [bz#2031024]
+- kvm-qcow2-Improve-refcount-structure-rebuilding.patch [bz#2072379]
+- kvm-iotests-108-Test-new-refcount-rebuild-algorithm.patch [bz#2072379]
+- kvm-qcow2-Add-errp-to-rebuild_refcount_structure.patch [bz#2072379]
+- kvm-iotests-108-Fix-when-missing-user_allow_other.patch [bz#2072379]
+- kvm-virtio-net-setup-vhost_dev-and-notifiers-for-cvq-onl.patch [bz#2070804]
+- kvm-virtio-net-align-ctrl_vq-index-for-non-mq-guest-for-.patch [bz#2070804]
+- kvm-vhost-vdpa-fix-improper-cleanup-in-net_init_vhost_vd.patch [bz#2070804]
+- kvm-vhost-net-fix-improper-cleanup-in-vhost_net_start.patch [bz#2070804]
+- kvm-vhost-vdpa-backend-feature-should-set-only-once.patch [bz#2070804]
+- kvm-vhost-vdpa-change-name-and-polarity-for-vhost_vdpa_o.patch [bz#2070804]
+- kvm-virtio-net-don-t-handle-mq-request-in-userspace-hand.patch [bz#2070804]
+- kvm-Revert-globally-limit-the-maximum-number-of-CPUs.patch [bz#2094270]
+- kvm-vfio-common-remove-spurious-warning-on-vfio_listener.patch [bz#2086262]
+- Resolves: bz#2031024
+  (Add support for fixing thread pool size [QEMU])
+- Resolves: bz#2072379
+  (Fail to rebuild the reference count tables of qcow2 image on host block devices (e.g. LVs))
+- Resolves: bz#2070804
+  (PXE boot crash qemu when using multiqueue vDPA)
+- Resolves: bz#2094270
+  (Do not set the hard vCPU limit to the soft vCPU limit in downstream qemu-kvm anymore)
+- Resolves: bz#2086262
+  ([Win11][tpm]vfio_listener_region_del received unaligned region)
+
 * Mon May 30 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-5
 - kvm-qemu-nbd-Pass-max-connections-to-blockdev-layer.patch [bz#1708300]
 - kvm-nbd-server-Allow-MULTI_CONN-for-shared-writable-expo.patch [bz#1708300]

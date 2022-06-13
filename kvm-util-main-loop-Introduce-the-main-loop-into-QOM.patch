@@ -1,0 +1,233 @@
+From b4969662de01848f887a3918e97e516efc213f71 Mon Sep 17 00:00:00 2001
+From: Nicolas Saenz Julienne <nsaenzju@redhat.com>
+Date: Mon, 25 Apr 2022 09:57:22 +0200
+Subject: [PATCH 02/16] util/main-loop: Introduce the main loop into QOM
+
+RH-Author: Nicolas Saenz Julienne <nsaenzju@redhat.com>
+RH-MergeRequest: 93: util/thread-pool: Expose minimum and maximum size
+RH-Commit: [2/3] a481b77e25ad50d13dcbe26b36c551b18c89bddd
+RH-Bugzilla: 2031024
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
+
+'event-loop-base' provides basic property handling for all 'AioContext'
+based event loops. So let's define a new 'MainLoopClass' that inherits
+from it. This will permit tweaking the main loop's properties through
+qapi as well as through the command line using the '-object' keyword[1].
+Only one instance of 'MainLoopClass' might be created at any time.
+
+'EventLoopBaseClass' learns a new callback, 'can_be_deleted()' so as to
+mark 'MainLoop' as non-deletable.
+
+[1] For example:
+      -object main-loop,id=main-loop,aio-max-batch=<value>
+
+Signed-off-by: Nicolas Saenz Julienne <nsaenzju@redhat.com>
+Reviewed-by: Stefan Hajnoczi <stefanha@redhat.com>
+Acked-by: Markus Armbruster <armbru@redhat.com>
+Message-id: 20220425075723.20019-3-nsaenzju@redhat.com
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+(cherry picked from commit 70ac26b9e5ca8374bb3ef3f30b871726673c9f27)
+---
+ event-loop-base.c                | 13 ++++++++
+ include/qemu/main-loop.h         | 10 ++++++
+ include/sysemu/event-loop-base.h |  1 +
+ meson.build                      |  3 +-
+ qapi/qom.json                    | 13 ++++++++
+ util/main-loop.c                 | 56 ++++++++++++++++++++++++++++++++
+ 6 files changed, 95 insertions(+), 1 deletion(-)
+
+diff --git a/event-loop-base.c b/event-loop-base.c
+index a924c73a7c..e7f99a6ec8 100644
+--- a/event-loop-base.c
++++ b/event-loop-base.c
+@@ -73,10 +73,23 @@ static void event_loop_base_complete(UserCreatable *uc, Error **errp)
+     }
+ }
+ 
++static bool event_loop_base_can_be_deleted(UserCreatable *uc)
++{
++    EventLoopBaseClass *bc = EVENT_LOOP_BASE_GET_CLASS(uc);
++    EventLoopBase *backend = EVENT_LOOP_BASE(uc);
++
++    if (bc->can_be_deleted) {
++        return bc->can_be_deleted(backend);
++    }
++
++    return true;
++}
++
+ static void event_loop_base_class_init(ObjectClass *klass, void *class_data)
+ {
+     UserCreatableClass *ucc = USER_CREATABLE_CLASS(klass);
+     ucc->complete = event_loop_base_complete;
++    ucc->can_be_deleted = event_loop_base_can_be_deleted;
+ 
+     object_class_property_add(klass, "aio-max-batch", "int",
+                               event_loop_base_get_param,
+diff --git a/include/qemu/main-loop.h b/include/qemu/main-loop.h
+index d3750c8e76..20c9387654 100644
+--- a/include/qemu/main-loop.h
++++ b/include/qemu/main-loop.h
+@@ -26,9 +26,19 @@
+ #define QEMU_MAIN_LOOP_H
+ 
+ #include "block/aio.h"
++#include "qom/object.h"
++#include "sysemu/event-loop-base.h"
+ 
+ #define SIG_IPI SIGUSR1
+ 
++#define TYPE_MAIN_LOOP  "main-loop"
++OBJECT_DECLARE_TYPE(MainLoop, MainLoopClass, MAIN_LOOP)
++
++struct MainLoop {
++    EventLoopBase parent_obj;
++};
++typedef struct MainLoop MainLoop;
++
+ /**
+  * qemu_init_main_loop: Set up the process so that it can run the main loop.
+  *
+diff --git a/include/sysemu/event-loop-base.h b/include/sysemu/event-loop-base.h
+index 8e77d8b69f..fced4c9fea 100644
+--- a/include/sysemu/event-loop-base.h
++++ b/include/sysemu/event-loop-base.h
+@@ -25,6 +25,7 @@ struct EventLoopBaseClass {
+ 
+     void (*init)(EventLoopBase *base, Error **errp);
+     void (*update_params)(EventLoopBase *base, Error **errp);
++    bool (*can_be_deleted)(EventLoopBase *base);
+ };
+ 
+ struct EventLoopBase {
+diff --git a/meson.build b/meson.build
+index b9c919a55e..5a7c10e639 100644
+--- a/meson.build
++++ b/meson.build
+@@ -2832,7 +2832,8 @@ libqemuutil = static_library('qemuutil',
+                              sources: util_ss.sources() + stub_ss.sources() + genh,
+                              dependencies: [util_ss.dependencies(), libm, threads, glib, socket, malloc, pixman])
+ qemuutil = declare_dependency(link_with: libqemuutil,
+-                              sources: genh + version_res)
++                              sources: genh + version_res,
++                              dependencies: [event_loop_base])
+ 
+ if have_system or have_user
+   decodetree = generator(find_program('scripts/decodetree.py'),
+diff --git a/qapi/qom.json b/qapi/qom.json
+index a2439533c5..7d4a2ac1b9 100644
+--- a/qapi/qom.json
++++ b/qapi/qom.json
+@@ -540,6 +540,17 @@
+             '*poll-grow': 'int',
+             '*poll-shrink': 'int' } }
+ 
++##
++# @MainLoopProperties:
++#
++# Properties for the main-loop object.
++#
++# Since: 7.1
++##
++{ 'struct': 'MainLoopProperties',
++  'base': 'EventLoopBaseProperties',
++  'data': {} }
++
+ ##
+ # @MemoryBackendProperties:
+ #
+@@ -830,6 +841,7 @@
+     { 'name': 'input-linux',
+       'if': 'CONFIG_LINUX' },
+     'iothread',
++    'main-loop',
+     { 'name': 'memory-backend-epc',
+       'if': 'CONFIG_LINUX' },
+     'memory-backend-file',
+@@ -895,6 +907,7 @@
+       'input-linux':                { 'type': 'InputLinuxProperties',
+                                       'if': 'CONFIG_LINUX' },
+       'iothread':                   'IothreadProperties',
++      'main-loop':                  'MainLoopProperties',
+       'memory-backend-epc':         { 'type': 'MemoryBackendEpcProperties',
+                                       'if': 'CONFIG_LINUX' },
+       'memory-backend-file':        'MemoryBackendFileProperties',
+diff --git a/util/main-loop.c b/util/main-loop.c
+index b7b0ce4ca0..5b13f456fa 100644
+--- a/util/main-loop.c
++++ b/util/main-loop.c
+@@ -33,6 +33,7 @@
+ #include "qemu/error-report.h"
+ #include "qemu/queue.h"
+ #include "qemu/compiler.h"
++#include "qom/object.h"
+ 
+ #ifndef _WIN32
+ #include <sys/wait.h>
+@@ -184,6 +185,61 @@ int qemu_init_main_loop(Error **errp)
+     return 0;
+ }
+ 
++static void main_loop_update_params(EventLoopBase *base, Error **errp)
++{
++    if (!qemu_aio_context) {
++        error_setg(errp, "qemu aio context not ready");
++        return;
++    }
++
++    aio_context_set_aio_params(qemu_aio_context, base->aio_max_batch, errp);
++}
++
++MainLoop *mloop;
++
++static void main_loop_init(EventLoopBase *base, Error **errp)
++{
++    MainLoop *m = MAIN_LOOP(base);
++
++    if (mloop) {
++        error_setg(errp, "only one main-loop instance allowed");
++        return;
++    }
++
++    main_loop_update_params(base, errp);
++
++    mloop = m;
++    return;
++}
++
++static bool main_loop_can_be_deleted(EventLoopBase *base)
++{
++    return false;
++}
++
++static void main_loop_class_init(ObjectClass *oc, void *class_data)
++{
++    EventLoopBaseClass *bc = EVENT_LOOP_BASE_CLASS(oc);
++
++    bc->init = main_loop_init;
++    bc->update_params = main_loop_update_params;
++    bc->can_be_deleted = main_loop_can_be_deleted;
++}
++
++static const TypeInfo main_loop_info = {
++    .name = TYPE_MAIN_LOOP,
++    .parent = TYPE_EVENT_LOOP_BASE,
++    .class_init = main_loop_class_init,
++    .instance_size = sizeof(MainLoop),
++};
++
++static void main_loop_register_types(void)
++{
++    type_register_static(&main_loop_info);
++}
++
++type_init(main_loop_register_types)
++
+ static int max_priority;
+ 
+ #ifndef _WIN32
+-- 
+2.31.1
+

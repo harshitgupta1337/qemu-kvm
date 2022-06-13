@@ -1,0 +1,78 @@
+From 3de8fb9f3dba18d04efa10b70bcec641035effc5 Mon Sep 17 00:00:00 2001
+From: Eric Auger <eric.auger@redhat.com>
+Date: Tue, 24 May 2022 05:14:05 -0400
+Subject: [PATCH 16/16] vfio/common: remove spurious warning on
+ vfio_listener_region_del
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 101: vfio/common: remove spurious warning on vfio_listener_region_del
+RH-Commit: [1/1] dac688b8a981ebb964fea79ea198c329b9cdb551 (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 2086262
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+RH-Acked-by: Alex Williamson <None>
+
+    Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2086262
+    Brew: https://brewweb.engineering.redhat.com/brew/taskinfo?taskID=45876133
+    Upstream Status: YES
+    Tested: With TPM-CRB and VFIO
+
+851d6d1a0f ("vfio/common: remove spurious tpm-crb-cmd misalignment
+warning") removed the warning on vfio_listener_region_add() path.
+
+However the same warning also hits on region_del path. Let's remove
+it and reword the dynamic trace as this can be called on both
+map and unmap path.
+
+Contextual Conflict in hw/vfio/common.c
+We don't have 8e3b0cbb721 ("Replace qemu_real_host_page variables with inlined functions")
+
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+Reviewed-by: Cornelia Huck <cohuck@redhat.com>
+Link: https://lore.kernel.org/r/20220524091405.416256-1-eric.auger@redhat.com
+Fixes: 851d6d1a0ff2 ("vfio/common: remove spurious tpm-crb-cmd misalignment warning")
+Signed-off-by: Alex Williamson <alex.williamson@redhat.com>
+(cherry picked from commit ec6600be0dc16982181c7ad80d94c143c0807dd2)
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+---
+ hw/vfio/common.c     | 10 +++++++++-
+ hw/vfio/trace-events |  2 +-
+ 2 files changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/hw/vfio/common.c b/hw/vfio/common.c
+index 0fbe0d47af..637981f9a1 100644
+--- a/hw/vfio/common.c
++++ b/hw/vfio/common.c
+@@ -1145,7 +1145,15 @@ static void vfio_listener_region_del(MemoryListener *listener,
+     if (unlikely((section->offset_within_address_space &
+                   ~qemu_real_host_page_mask) !=
+                  (section->offset_within_region & ~qemu_real_host_page_mask))) {
+-        error_report("%s received unaligned region", __func__);
++        if (!vfio_known_safe_misalignment(section)) {
++            error_report("%s received unaligned region %s iova=0x%"PRIx64
++                         " offset_within_region=0x%"PRIx64
++                         " qemu_real_host_page_size=0x%"PRIxPTR,
++                         __func__, memory_region_name(section->mr),
++                         section->offset_within_address_space,
++                         section->offset_within_region,
++                         qemu_real_host_page_size);
++        }
+         return;
+     }
+ 
+diff --git a/hw/vfio/trace-events b/hw/vfio/trace-events
+index 582882db91..73dffe9e00 100644
+--- a/hw/vfio/trace-events
++++ b/hw/vfio/trace-events
+@@ -100,7 +100,7 @@ vfio_listener_region_add_skip(uint64_t start, uint64_t end) "SKIPPING region_add
+ vfio_spapr_group_attach(int groupfd, int tablefd) "Attached groupfd %d to liobn fd %d"
+ vfio_listener_region_add_iommu(uint64_t start, uint64_t end) "region_add [iommu] 0x%"PRIx64" - 0x%"PRIx64
+ vfio_listener_region_add_ram(uint64_t iova_start, uint64_t iova_end, void *vaddr) "region_add [ram] 0x%"PRIx64" - 0x%"PRIx64" [%p]"
+-vfio_known_safe_misalignment(const char *name, uint64_t iova, uint64_t offset_within_region, uintptr_t page_size) "Region \"%s\" iova=0x%"PRIx64" offset_within_region=0x%"PRIx64" qemu_real_host_page_size=0x%"PRIxPTR ": cannot be mapped for DMA"
++vfio_known_safe_misalignment(const char *name, uint64_t iova, uint64_t offset_within_region, uintptr_t page_size) "Region \"%s\" iova=0x%"PRIx64" offset_within_region=0x%"PRIx64" qemu_real_host_page_size=0x%"PRIxPTR
+ vfio_listener_region_add_no_dma_map(const char *name, uint64_t iova, uint64_t size, uint64_t page_size) "Region \"%s\" 0x%"PRIx64" size=0x%"PRIx64" is not aligned to 0x%"PRIx64" and cannot be mapped for DMA"
+ vfio_listener_region_del_skip(uint64_t start, uint64_t end) "SKIPPING region_del 0x%"PRIx64" - 0x%"PRIx64
+ vfio_listener_region_del(uint64_t start, uint64_t end) "region_del 0x%"PRIx64" - 0x%"PRIx64
+-- 
+2.31.1
+
