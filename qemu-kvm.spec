@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.0.0
-Release: 6%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -276,6 +276,18 @@ Patch60: kvm-virtio-net-don-t-handle-mq-request-in-userspace-hand.patch
 Patch61: kvm-Revert-globally-limit-the-maximum-number-of-CPUs.patch
 # For bz#2086262 - [Win11][tpm]vfio_listener_region_del received unaligned region
 Patch62: kvm-vfio-common-remove-spurious-warning-on-vfio_listener.patch
+# For bz#1952483 - RFE: QEMU's coroutines fail with CFLAGS=-flto on non-x86_64 architectures
+Patch63: kvm-coroutine-ucontext-use-QEMU_DEFINE_STATIC_CO_TLS.patch
+# For bz#1952483 - RFE: QEMU's coroutines fail with CFLAGS=-flto on non-x86_64 architectures
+Patch64: kvm-coroutine-use-QEMU_DEFINE_STATIC_CO_TLS.patch
+# For bz#1952483 - RFE: QEMU's coroutines fail with CFLAGS=-flto on non-x86_64 architectures
+Patch65: kvm-coroutine-win32-use-QEMU_DEFINE_STATIC_CO_TLS.patch
+# For bz#2094252 - Compile the virtio-iommu device on x86_64
+Patch66: kvm-Enable-virtio-iommu-pci-on-x86_64.patch
+# For bz#2092788 - Stalled IO Operations in VM
+Patch67: kvm-linux-aio-fix-unbalanced-plugged-counter-in-laio_io_.patch
+# For bz#2092788 - Stalled IO Operations in VM
+Patch68: kvm-linux-aio-explain-why-max-batch-is-checked-in-laio_i.patch
 
 # Source-git patches
 
@@ -1311,6 +1323,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Jun 27 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-7
+- kvm-coroutine-ucontext-use-QEMU_DEFINE_STATIC_CO_TLS.patch [bz#1952483]
+- kvm-coroutine-use-QEMU_DEFINE_STATIC_CO_TLS.patch [bz#1952483]
+- kvm-coroutine-win32-use-QEMU_DEFINE_STATIC_CO_TLS.patch [bz#1952483]
+- kvm-Enable-virtio-iommu-pci-on-x86_64.patch [bz#2094252]
+- kvm-linux-aio-fix-unbalanced-plugged-counter-in-laio_io_.patch [bz#2092788]
+- kvm-linux-aio-explain-why-max-batch-is-checked-in-laio_i.patch [bz#2092788]
+- Resolves: bz#1952483
+  (RFE: QEMU's coroutines fail with CFLAGS=-flto on non-x86_64 architectures)
+- Resolves: bz#2094252
+  (Compile the virtio-iommu device on x86_64)
+- Resolves: bz#2092788
+  (Stalled IO Operations in VM)
+
 * Mon Jun 13 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-6
 - kvm-Introduce-event-loop-base-abstract-class.patch [bz#2031024]
 - kvm-util-main-loop-Introduce-the-main-loop-into-QOM.patch [bz#2031024]
