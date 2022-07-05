@@ -1,0 +1,95 @@
+From d710394f68eb0b6116dd8ac76f619c192e0d5972 Mon Sep 17 00:00:00 2001
+From: Andrew Jones <drjones@redhat.com>
+Date: Wed, 15 Jun 2022 15:28:27 +0200
+Subject: [PATCH 02/18] RHEL-only: tests/avocado: Switch aarch64 tests from a53
+ to a57
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Daniel P. Berrangé <berrange@redhat.com>
+RH-MergeRequest: 94: i386, aarch64, s390x: deprecate many named CPU models
+RH-Commit: [2/6] e85ef69b42c411a6997e4da10ba05176368769b3 (berrange/centos-src-qemu)
+RH-Bugzilla: 2060839
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2066824
+Upstream Status: RHEL only
+
+We plan to remove the cortex-a53 from the supported cpu types. Switch
+all avocado tests that use it to the cortex-a57, which will work the
+same and we intend to keep. We don't want to try and upstream this
+change since the better upstream change would be to switch from the
+a53 to 'max', but the upstream tests also need to use later guest
+kernels to use 'max' (see qemu upstream commit 0942820408dc
+("hw/arm/virt: Disable LPA2 for -machine virt-6.2")
+
+Signed-off-by: Andrew Jones <drjones@redhat.com>
+---
+ tests/avocado/replay_kernel.py     | 2 +-
+ tests/avocado/reverse_debugging.py | 2 +-
+ tests/avocado/tcg_plugins.py       | 6 +++---
+ 3 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/tests/avocado/replay_kernel.py b/tests/avocado/replay_kernel.py
+index 0b2b0dc692..3a7b5f0748 100644
+--- a/tests/avocado/replay_kernel.py
++++ b/tests/avocado/replay_kernel.py
+@@ -147,7 +147,7 @@ def test_aarch64_virt(self):
+         """
+         :avocado: tags=arch:aarch64
+         :avocado: tags=machine:virt
+-        :avocado: tags=cpu:cortex-a53
++        :avocado: tags=cpu:cortex-a57
+         """
+         kernel_url = ('https://archives.fedoraproject.org/pub/archive/fedora'
+                       '/linux/releases/29/Everything/aarch64/os/images/pxeboot'
+diff --git a/tests/avocado/reverse_debugging.py b/tests/avocado/reverse_debugging.py
+index d2921e70c3..66d185ed42 100644
+--- a/tests/avocado/reverse_debugging.py
++++ b/tests/avocado/reverse_debugging.py
+@@ -198,7 +198,7 @@ def test_aarch64_virt(self):
+         """
+         :avocado: tags=arch:aarch64
+         :avocado: tags=machine:virt
+-        :avocado: tags=cpu:cortex-a53
++        :avocado: tags=cpu:cortex-a57
+         """
+         kernel_url = ('https://archives.fedoraproject.org/pub/archive/fedora'
+                       '/linux/releases/29/Everything/aarch64/os/images/pxeboot'
+diff --git a/tests/avocado/tcg_plugins.py b/tests/avocado/tcg_plugins.py
+index 642d2e49e3..93b3afd823 100644
+--- a/tests/avocado/tcg_plugins.py
++++ b/tests/avocado/tcg_plugins.py
+@@ -68,7 +68,7 @@ def test_aarch64_virt_insn(self):
+         :avocado: tags=accel:tcg
+         :avocado: tags=arch:aarch64
+         :avocado: tags=machine:virt
+-        :avocado: tags=cpu:cortex-a53
++        :avocado: tags=cpu:cortex-a57
+         """
+         kernel_path = self._grab_aarch64_kernel()
+         kernel_command_line = (self.KERNEL_COMMON_COMMAND_LINE +
+@@ -94,7 +94,7 @@ def test_aarch64_virt_insn_icount(self):
+         :avocado: tags=accel:tcg
+         :avocado: tags=arch:aarch64
+         :avocado: tags=machine:virt
+-        :avocado: tags=cpu:cortex-a53
++        :avocado: tags=cpu:cortex-a57
+         """
+         kernel_path = self._grab_aarch64_kernel()
+         kernel_command_line = (self.KERNEL_COMMON_COMMAND_LINE +
+@@ -120,7 +120,7 @@ def test_aarch64_virt_mem_icount(self):
+         :avocado: tags=accel:tcg
+         :avocado: tags=arch:aarch64
+         :avocado: tags=machine:virt
+-        :avocado: tags=cpu:cortex-a53
++        :avocado: tags=cpu:cortex-a57
+         """
+         kernel_path = self._grab_aarch64_kernel()
+         kernel_command_line = (self.KERNEL_COMMON_COMMAND_LINE +
+-- 
+2.35.3
+

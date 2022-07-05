@@ -1,0 +1,87 @@
+From 7c489b54b0bb33445113fbf16e88feb23be68013 Mon Sep 17 00:00:00 2001
+From: Leonardo Bras <leobras@redhat.com>
+Date: Fri, 13 May 2022 03:28:30 -0300
+Subject: [PATCH 07/18] meson.build: Fix docker-test-build@alpine when
+ including linux/errqueue.h
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Leonardo Brás <leobras@redhat.com>
+RH-MergeRequest: 95: MSG_ZEROCOPY + Multifd
+RH-Commit: [1/11] f058eb846fcf611d527a1dd3b0cc399cdc17e3ee (LeoBras/centos-qemu-kvm)
+RH-Bugzilla: 1968509
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+
+A build error happens in alpine CI when linux/errqueue.h is included
+in io/channel-socket.c, due to redefining of 'struct __kernel_timespec':
+
+===
+ninja: job failed: [...]
+In file included from /usr/include/linux/errqueue.h:6,
+                 from ../io/channel-socket.c:29:
+/usr/include/linux/time_types.h:7:8: error: redefinition of 'struct __kernel_timespec'
+    7 | struct __kernel_timespec {
+      |        ^~~~~~~~~~~~~~~~~
+In file included from /usr/include/liburing.h:19,
+                 from /builds/user/qemu/include/block/aio.h:18,
+                 from /builds/user/qemu/include/io/channel.h:26,
+                 from /builds/user/qemu/include/io/channel-socket.h:24,
+                 from ../io/channel-socket.c:24:
+/usr/include/liburing/compat.h:9:8: note: originally defined here
+    9 | struct __kernel_timespec {
+      |        ^~~~~~~~~~~~~~~~~
+ninja: subcommand failed
+===
+
+As above error message suggests, 'struct __kernel_timespec' was already
+defined by liburing/compat.h.
+
+Fix alpine CI by adding test to disable liburing in configure step if a
+redefinition happens between linux/errqueue.h and liburing/compat.h.
+
+[dgilbert: This has been fixed in Alpine issue 13813 and liburing]
+
+Signed-off-by: Leonardo Bras <leobras@redhat.com>
+Message-Id: <20220513062836.965425-2-leobras@redhat.com>
+Reviewed-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit 354081d43de44ebd3497fe08f7f0121a5517d528)
+Signed-off-by: Leonardo Bras <leobras@redhat.com>
+---
+ meson.build | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/meson.build b/meson.build
+index 5a7c10e639..13e3323380 100644
+--- a/meson.build
++++ b/meson.build
+@@ -471,12 +471,23 @@ if not get_option('linux_aio').auto() or have_block
+                            required: get_option('linux_aio'),
+                            kwargs: static_kwargs)
+ endif
++
++linux_io_uring_test = '''
++  #include <liburing.h>
++  #include <linux/errqueue.h>
++
++  int main(void) { return 0; }'''
++
+ linux_io_uring = not_found
+ if not get_option('linux_io_uring').auto() or have_block
+   linux_io_uring = dependency('liburing', version: '>=0.3',
+                               required: get_option('linux_io_uring'),
+                               method: 'pkg-config', kwargs: static_kwargs)
++  if not cc.links(linux_io_uring_test)
++    linux_io_uring = not_found
++  endif
+ endif
++
+ libnfs = not_found
+ if not get_option('libnfs').auto() or have_block
+   libnfs = dependency('libnfs', version: '>=1.9.3',
+-- 
+2.35.3
+

@@ -1,0 +1,102 @@
+From 63255c13492f42a3236d96e706e5f8e70bb4e219 Mon Sep 17 00:00:00 2001
+From: Leonardo Bras <leobras@redhat.com>
+Date: Fri, 13 May 2022 03:28:36 -0300
+Subject: [PATCH 13/18] multifd: Send header packet without flags if
+ zero-copy-send is enabled
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Leonardo Brás <leobras@redhat.com>
+RH-MergeRequest: 95: MSG_ZEROCOPY + Multifd
+RH-Commit: [7/11] 137eea685e387d3d6aff187ec3fcac05bc16b6e3 (LeoBras/centos-qemu-kvm)
+RH-Bugzilla: 1968509
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+
+Since d48c3a0445 ("multifd: Use a single writev on the send side"),
+sending the header packet and the memory pages happens in the same
+writev, which can potentially make the migration faster.
+
+Using channel-socket as example, this works well with the default copying
+mechanism of sendmsg(), but with zero-copy-send=true, it will cause
+the migration to often break.
+
+This happens because the header packet buffer gets reused quite often,
+and there is a high chance that by the time the MSG_ZEROCOPY mechanism get
+to send the buffer, it has already changed, sending the wrong data and
+causing the migration to abort.
+
+It means that, as it is, the buffer for the header packet is not suitable
+for sending with MSG_ZEROCOPY.
+
+In order to enable zero copy for multifd, send the header packet on an
+individual write(), without any flags, and the remanining pages with a
+writev(), as it was happening before. This only changes how a migration
+with zero-copy-send=true works, not changing any current behavior for
+migrations with zero-copy-send=false.
+
+Signed-off-by: Leonardo Bras <leobras@redhat.com>
+Reviewed-by: Peter Xu <peterx@redhat.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Message-Id: <20220513062836.965425-8-leobras@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit b7dbdd8e76cd03453c234dbb9578d20969859d74)
+Signed-off-by: Leonardo Bras <leobras@redhat.com>
+---
+ migration/multifd.c | 22 +++++++++++++++++++---
+ 1 file changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/migration/multifd.c b/migration/multifd.c
+index cdb57439a7..8fca6c970e 100644
+--- a/migration/multifd.c
++++ b/migration/multifd.c
+@@ -619,6 +619,7 @@ static void *multifd_send_thread(void *opaque)
+     MultiFDSendParams *p = opaque;
+     Error *local_err = NULL;
+     int ret = 0;
++    bool use_zero_copy_send = migrate_use_zero_copy_send();
+ 
+     trace_multifd_send_thread_start(p->id);
+     rcu_register_thread();
+@@ -641,9 +642,14 @@ static void *multifd_send_thread(void *opaque)
+         if (p->pending_job) {
+             uint64_t packet_num = p->packet_num;
+             uint32_t flags = p->flags;
+-            p->iovs_num = 1;
+             p->normal_num = 0;
+ 
++            if (use_zero_copy_send) {
++                p->iovs_num = 0;
++            } else {
++                p->iovs_num = 1;
++            }
++
+             for (int i = 0; i < p->pages->num; i++) {
+                 p->normal[p->normal_num] = p->pages->offset[i];
+                 p->normal_num++;
+@@ -667,8 +673,18 @@ static void *multifd_send_thread(void *opaque)
+             trace_multifd_send(p->id, packet_num, p->normal_num, flags,
+                                p->next_packet_size);
+ 
+-            p->iov[0].iov_len = p->packet_len;
+-            p->iov[0].iov_base = p->packet;
++            if (use_zero_copy_send) {
++                /* Send header first, without zerocopy */
++                ret = qio_channel_write_all(p->c, (void *)p->packet,
++                                            p->packet_len, &local_err);
++                if (ret != 0) {
++                    break;
++                }
++            } else {
++                /* Send header using the same writev call */
++                p->iov[0].iov_len = p->packet_len;
++                p->iov[0].iov_base = p->packet;
++            }
+ 
+             ret = qio_channel_writev_all(p->c, p->iov, p->iovs_num,
+                                          &local_err);
+-- 
+2.35.3
+

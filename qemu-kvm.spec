@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.0.0
-Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -288,6 +288,42 @@ Patch66: kvm-Enable-virtio-iommu-pci-on-x86_64.patch
 Patch67: kvm-linux-aio-fix-unbalanced-plugged-counter-in-laio_io_.patch
 # For bz#2092788 - Stalled IO Operations in VM
 Patch68: kvm-linux-aio-explain-why-max-batch-is-checked-in-laio_i.patch
+# For bz#2060839 - Consider deprecating CPU models like "kvm64" / "qemu64" on RHEL 9
+Patch69: kvm-tests-avocado-update-aarch64_virt-test-to-exercise-c.patch
+# For bz#2060839 - Consider deprecating CPU models like "kvm64" / "qemu64" on RHEL 9
+Patch70: kvm-RHEL-only-tests-avocado-Switch-aarch64-tests-from-a5.patch
+# For bz#2060839 - Consider deprecating CPU models like "kvm64" / "qemu64" on RHEL 9
+Patch71: kvm-RHEL-only-AArch64-Drop-unsupported-CPU-types.patch
+# For bz#2060839 - Consider deprecating CPU models like "kvm64" / "qemu64" on RHEL 9
+Patch72: kvm-target-i386-deprecate-CPUs-older-than-x86_64-v2-ABI.patch
+# For bz#2060839 - Consider deprecating CPU models like "kvm64" / "qemu64" on RHEL 9
+Patch73: kvm-target-s390x-deprecate-CPUs-older-than-z14.patch
+# For bz#2060839 - Consider deprecating CPU models like "kvm64" / "qemu64" on RHEL 9
+Patch74: kvm-target-arm-deprecate-named-CPU-models.patch
+# For bz#1968509 - Use MSG_ZEROCOPY on QEMU Live Migration
+Patch75: kvm-meson.build-Fix-docker-test-build-alpine-when-includ.patch
+# For bz#1968509 - Use MSG_ZEROCOPY on QEMU Live Migration
+Patch76: kvm-QIOChannel-Add-flags-on-io_writev-and-introduce-io_f.patch
+# For bz#1968509 - Use MSG_ZEROCOPY on QEMU Live Migration
+Patch77: kvm-QIOChannelSocket-Implement-io_writev-zero-copy-flag-.patch
+# For bz#1968509 - Use MSG_ZEROCOPY on QEMU Live Migration
+Patch78: kvm-migration-Add-zero-copy-send-parameter-for-QMP-HMP-f.patch
+# For bz#1968509 - Use MSG_ZEROCOPY on QEMU Live Migration
+Patch79: kvm-migration-Add-migrate_use_tls-helper.patch
+# For bz#1968509 - Use MSG_ZEROCOPY on QEMU Live Migration
+Patch80: kvm-multifd-multifd_send_sync_main-now-returns-negative-.patch
+# For bz#1968509 - Use MSG_ZEROCOPY on QEMU Live Migration
+Patch81: kvm-multifd-Send-header-packet-without-flags-if-zero-cop.patch
+# For bz#1968509 - Use MSG_ZEROCOPY on QEMU Live Migration
+Patch82: kvm-multifd-Implement-zero-copy-write-in-multifd-migrati.patch
+# For bz#1968509 - Use MSG_ZEROCOPY on QEMU Live Migration
+Patch83: kvm-QIOChannelSocket-Introduce-assert-and-reduce-ifdefs-.patch
+# For bz#1968509 - Use MSG_ZEROCOPY on QEMU Live Migration
+Patch84: kvm-QIOChannelSocket-Fix-zero-copy-send-so-socket-flush-.patch
+# For bz#1968509 - Use MSG_ZEROCOPY on QEMU Live Migration
+Patch85: kvm-migration-Change-zero_copy_send-from-migration-param.patch
+# For bz#2096143 - The migration port is not released if use it again for recovering postcopy migration
+Patch86: kvm-migration-Allow-migrate-recover-to-run-multiple-time.patch
 
 # Source-git patches
 
@@ -1323,6 +1359,32 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Jul 05 2022 Camilla Conte <cconte@redhat.com> - 7.0.0-8
+- kvm-tests-avocado-update-aarch64_virt-test-to-exercise-c.patch [bz#2060839]
+- kvm-RHEL-only-tests-avocado-Switch-aarch64-tests-from-a5.patch [bz#2060839]
+- kvm-RHEL-only-AArch64-Drop-unsupported-CPU-types.patch [bz#2060839]
+- kvm-target-i386-deprecate-CPUs-older-than-x86_64-v2-ABI.patch [bz#2060839]
+- kvm-target-s390x-deprecate-CPUs-older-than-z14.patch [bz#2060839]
+- kvm-target-arm-deprecate-named-CPU-models.patch [bz#2060839]
+- kvm-meson.build-Fix-docker-test-build-alpine-when-includ.patch [bz#1968509]
+- kvm-QIOChannel-Add-flags-on-io_writev-and-introduce-io_f.patch [bz#1968509]
+- kvm-QIOChannelSocket-Implement-io_writev-zero-copy-flag-.patch [bz#1968509]
+- kvm-migration-Add-zero-copy-send-parameter-for-QMP-HMP-f.patch [bz#1968509]
+- kvm-migration-Add-migrate_use_tls-helper.patch [bz#1968509]
+- kvm-multifd-multifd_send_sync_main-now-returns-negative-.patch [bz#1968509]
+- kvm-multifd-Send-header-packet-without-flags-if-zero-cop.patch [bz#1968509]
+- kvm-multifd-Implement-zero-copy-write-in-multifd-migrati.patch [bz#1968509]
+- kvm-QIOChannelSocket-Introduce-assert-and-reduce-ifdefs-.patch [bz#1968509]
+- kvm-QIOChannelSocket-Fix-zero-copy-send-so-socket-flush-.patch [bz#1968509]
+- kvm-migration-Change-zero_copy_send-from-migration-param.patch [bz#1968509]
+- kvm-migration-Allow-migrate-recover-to-run-multiple-time.patch [bz#2096143]
+- Resolves: bz#2060839
+  (Consider deprecating CPU models like "kvm64" / "qemu64" on RHEL 9)
+- Resolves: bz#1968509
+  (Use MSG_ZEROCOPY on QEMU Live Migration)
+- Resolves: bz#2096143
+  (The migration port is not released if use it again for recovering postcopy migration)
+
 * Mon Jun 27 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-7
 - kvm-coroutine-ucontext-use-QEMU_DEFINE_STATIC_CO_TLS.patch [bz#1952483]
 - kvm-coroutine-use-QEMU_DEFINE_STATIC_CO_TLS.patch [bz#1952483]

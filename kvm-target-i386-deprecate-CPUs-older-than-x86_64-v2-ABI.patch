@@ -1,0 +1,273 @@
+From 577b04770e47aed0f88acb4a415ed04ddbe087f1 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Daniel=20P=2E=20Berrang=C3=A9?= <berrange@redhat.com>
+Date: Thu, 17 Mar 2022 17:59:22 +0000
+Subject: [PATCH 04/18] target/i386: deprecate CPUs older than x86_64-v2 ABI
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Daniel P. Berrangé <berrange@redhat.com>
+RH-MergeRequest: 94: i386, aarch64, s390x: deprecate many named CPU models
+RH-Commit: [4/6] 71f6043f11b31ffa841a2e14d24972e571c18a9e (berrange/centos-src-qemu)
+RH-Bugzilla: 2060839
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+
+RHEL-9 is compiled with the x86_64-v2 ABI. We use this as a baseline to
+select which CPUs we want to support, such that there is at least one
+supported guest CPU that can be launched for every physical machine
+capable of running RHEL-9 KVM.
+
+Supported CPUs:
+
+ * QEMU models
+
+      base                     (QEMU internal)
+      host                     (host passthrough)
+      max                      (host passthrough for KVM,
+                                all emulated features for TCG)
+
+ * Intel models
+
+      Icelake-Server
+      Icelake-Server-noTSX
+      Cascadelake-Server        (2019)
+      Cascadelake-Server-noTSX  (2019)
+      Skylake-Server            (2016)
+      Skylake-Server-IBRS       (2016)
+      Skylake-Server-noTSX-IBRS (2016)
+      Skylake-Client            (2015)
+      Skylake-Client-IBRS       (2015)
+      Skylake-Client-noTSX-IBRS (2015)
+      Broadwell                 (2014)
+      Broadwell-IBRS            (2014)
+      Broadwell-noTSX           (2014)
+      Broadwell-noTSX-IBRS      (2014)
+      Haswell                   (2013)
+      Haswell-IBRS              (2013)
+      Haswell-noTSX             (2013)
+      Haswell-noTSX-IBRS        (2013)
+      IvyBridge                 (2012)
+      IvyBridge-IBRS            (2012)
+      SandyBridge               (2011)
+      SandyBridge-IBRS          (2011)
+      Westmere                  (2010)
+      Westmere-IBRS             (2010)
+      Nehalem                   (2008)
+      Nehalem-IBRS              (2008)
+
+      Cooperlake                (2020)
+      Snowridge                 (2019)
+      KnightsMill               (2017)
+      Denverton                 (2016)
+
+ * AMD models
+
+      EPYC-Milan                (2021)
+      EPYC-Rome                 (2019)
+      EPYC                      (2017)
+      EPYC-IBPB                 (2017)
+      Opteron_G5                (2012)
+      Opteron_G4                (2011)
+
+  * Other
+
+      Dhyana                    (2018)
+
+(I've omitted the many -vNNN versions for brevity)
+
+Deprecated CPUs:
+
+      486
+      athlon
+      Conroe
+      core2duo
+      coreduo
+      Icelake-Client       (already deprecated upstream)
+      Icelake-Client-noTSX (already deprecated upstream)
+      kvm32
+      kvm64
+      n270
+      Opteron_G1
+      Opteron_G2
+      Opteron_G3
+      Penryn
+      pentium2
+      pentium3
+      pentium
+      phenom
+      qemu32
+      qemu64
+
+The deprecated CPU models are subject to removal in a future
+major version of RHEL.
+
+Note: this has the effect of deprecating the default built-in CPU
+model 'qemu64'. Applications using QEMU are expected to make an
+explicit choice about which CPU model they want, since no builtin
+default can suit all purposes.
+
+https://bugzilla.redhat.com/show_bug.cgi?id=2060839
+Signed-off-by: Daniel P. Berrangé <berrange@redhat.com>
+---
+ target/i386/cpu.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index cb6b5467d0..87cb641b5f 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -1780,9 +1780,13 @@ static const CPUCaches epyc_milan_cache_info = {
+  *  PT in VMX operation
+  */
+ 
++#define RHEL_CPU_DEPRECATION \
++    "use at least 'Nehalem' / 'Opteron_G4', or 'host' / 'max'"
++
+ static const X86CPUDefinition builtin_x86_defs[] = {
+     {
+         .name = "qemu64",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 0xd,
+         .vendor = CPUID_VENDOR_AMD,
+         .family = 15,
+@@ -1803,6 +1807,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "phenom",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 5,
+         .vendor = CPUID_VENDOR_AMD,
+         .family = 16,
+@@ -1835,6 +1840,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "core2duo",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 10,
+         .vendor = CPUID_VENDOR_INTEL,
+         .family = 6,
+@@ -1877,6 +1883,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "kvm64",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 0xd,
+         .vendor = CPUID_VENDOR_INTEL,
+         .family = 15,
+@@ -1918,6 +1925,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "qemu32",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 4,
+         .vendor = CPUID_VENDOR_INTEL,
+         .family = 6,
+@@ -1932,6 +1940,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "kvm32",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 5,
+         .vendor = CPUID_VENDOR_INTEL,
+         .family = 15,
+@@ -1962,6 +1971,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "coreduo",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 10,
+         .vendor = CPUID_VENDOR_INTEL,
+         .family = 6,
+@@ -1995,6 +2005,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "486",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 1,
+         .vendor = CPUID_VENDOR_INTEL,
+         .family = 4,
+@@ -2007,6 +2018,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "pentium",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 1,
+         .vendor = CPUID_VENDOR_INTEL,
+         .family = 5,
+@@ -2019,6 +2031,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "pentium2",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 2,
+         .vendor = CPUID_VENDOR_INTEL,
+         .family = 6,
+@@ -2031,6 +2044,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "pentium3",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 3,
+         .vendor = CPUID_VENDOR_INTEL,
+         .family = 6,
+@@ -2043,6 +2057,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "athlon",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 2,
+         .vendor = CPUID_VENDOR_AMD,
+         .family = 6,
+@@ -2058,6 +2073,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "n270",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 10,
+         .vendor = CPUID_VENDOR_INTEL,
+         .family = 6,
+@@ -2083,6 +2099,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "Conroe",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 10,
+         .vendor = CPUID_VENDOR_INTEL,
+         .family = 6,
+@@ -2123,6 +2140,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "Penryn",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 10,
+         .vendor = CPUID_VENDOR_INTEL,
+         .family = 6,
+@@ -3832,6 +3850,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "Opteron_G1",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 5,
+         .vendor = CPUID_VENDOR_AMD,
+         .family = 15,
+@@ -3852,6 +3871,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "Opteron_G2",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 5,
+         .vendor = CPUID_VENDOR_AMD,
+         .family = 15,
+@@ -3874,6 +3894,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+     },
+     {
+         .name = "Opteron_G3",
++        .deprecation_note = RHEL_CPU_DEPRECATION,
+         .level = 5,
+         .vendor = CPUID_VENDOR_AMD,
+         .family = 16,
+-- 
+2.35.3
+

@@ -1,0 +1,129 @@
+From 1f8528b71d96c01dd6106f11681f4a4e2776ef5f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Daniel=20P=2E=20Berrang=C3=A9?= <berrange@redhat.com>
+Date: Mon, 21 Mar 2022 12:05:42 +0000
+Subject: [PATCH 06/18] target/arm: deprecate named CPU models
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Daniel P. Berrangé <berrange@redhat.com>
+RH-MergeRequest: 94: i386, aarch64, s390x: deprecate many named CPU models
+RH-Commit: [6/6] afddeb9e898206fd04499f01c48caf7dc1a8b8ef (berrange/centos-src-qemu)
+RH-Bugzilla: 2060839
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+
+KVM requires use of the 'host' CPU model, so named CPU models are only
+needed for TCG. Since we don't consider TCG to be supported we can
+deprecate all the named CPU models. TCG users can rely on 'max' model.
+
+Note: this has the effect of deprecating the default built-in CPU
+model 'cortex-a57'. Applications using QEMU are expected to make an
+explicit choice about which CPU model they want, since no builtin
+default can suit all purposes.
+
+https://bugzilla.redhat.com/show_bug.cgi?id=2060839
+Signed-off-by: Daniel P. Berrangé <berrange@redhat.com>
+---
+ target/arm/cpu-qom.h | 1 +
+ target/arm/cpu.c     | 5 +++++
+ target/arm/cpu.h     | 2 ++
+ target/arm/cpu64.c   | 8 +++++++-
+ target/arm/helper.c  | 2 ++
+ 5 files changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/target/arm/cpu-qom.h b/target/arm/cpu-qom.h
+index 64c44cef2d..82e97249bc 100644
+--- a/target/arm/cpu-qom.h
++++ b/target/arm/cpu-qom.h
+@@ -35,6 +35,7 @@ typedef struct ARMCPUInfo {
+     const char *name;
+     void (*initfn)(Object *obj);
+     void (*class_init)(ObjectClass *oc, void *data);
++    const char *deprecation_note;
+ } ARMCPUInfo;
+ 
+ void arm_cpu_register(const ARMCPUInfo *info);
+diff --git a/target/arm/cpu.c b/target/arm/cpu.c
+index 5d4ca7a227..c74b0fb462 100644
+--- a/target/arm/cpu.c
++++ b/target/arm/cpu.c
+@@ -2105,8 +2105,13 @@ static void arm_cpu_instance_init(Object *obj)
+ static void cpu_register_class_init(ObjectClass *oc, void *data)
+ {
+     ARMCPUClass *acc = ARM_CPU_CLASS(oc);
++    CPUClass *cc = CPU_CLASS(oc);
+ 
+     acc->info = data;
++
++    if (acc->info->deprecation_note) {
++        cc->deprecation_note = acc->info->deprecation_note;
++    }
+ }
+ 
+ void arm_cpu_register(const ARMCPUInfo *info)
+diff --git a/target/arm/cpu.h b/target/arm/cpu.h
+index 23879de5fa..c0c9f680e5 100644
+--- a/target/arm/cpu.h
++++ b/target/arm/cpu.h
+@@ -33,6 +33,8 @@
+ #define KVM_HAVE_MCE_INJECTION 1
+ #endif
+ 
++#define RHEL_CPU_DEPRECATION "use 'host' / 'max'"
++
+ #define EXCP_UDEF            1   /* undefined instruction */
+ #define EXCP_SWI             2   /* software interrupt */
+ #define EXCP_PREFETCH_ABORT  3
+diff --git a/target/arm/cpu64.c b/target/arm/cpu64.c
+index e80b831073..c8f152891c 100644
+--- a/target/arm/cpu64.c
++++ b/target/arm/cpu64.c
+@@ -975,7 +975,8 @@ static void aarch64_a64fx_initfn(Object *obj)
+ #endif /* disabled for RHEL */
+ 
+ static const ARMCPUInfo aarch64_cpus[] = {
+-    { .name = "cortex-a57",         .initfn = aarch64_a57_initfn },
++    { .name = "cortex-a57",         .initfn = aarch64_a57_initfn,
++      .deprecation_note = RHEL_CPU_DEPRECATION },
+ #if 0 /* Disabled for Red Hat Enterprise Linux */
+     { .name = "cortex-a53",         .initfn = aarch64_a53_initfn },
+     { .name = "cortex-a72",         .initfn = aarch64_a72_initfn },
+@@ -1052,8 +1053,13 @@ static void aarch64_cpu_instance_init(Object *obj)
+ static void cpu_register_class_init(ObjectClass *oc, void *data)
+ {
+     ARMCPUClass *acc = ARM_CPU_CLASS(oc);
++    CPUClass *cc = CPU_CLASS(oc);
+ 
+     acc->info = data;
++
++    if (acc->info->deprecation_note) {
++        cc->deprecation_note = acc->info->deprecation_note;
++    }
+ }
+ 
+ void aarch64_cpu_register(const ARMCPUInfo *info)
+diff --git a/target/arm/helper.c b/target/arm/helper.c
+index 7d14650615..3d34f63e49 100644
+--- a/target/arm/helper.c
++++ b/target/arm/helper.c
+@@ -8560,6 +8560,7 @@ void arm_cpu_list(void)
+ static void arm_cpu_add_definition(gpointer data, gpointer user_data)
+ {
+     ObjectClass *oc = data;
++    CPUClass *cc = CPU_CLASS(oc);
+     CpuDefinitionInfoList **cpu_list = user_data;
+     CpuDefinitionInfo *info;
+     const char *typename;
+@@ -8569,6 +8570,7 @@ static void arm_cpu_add_definition(gpointer data, gpointer user_data)
+     info->name = g_strndup(typename,
+                            strlen(typename) - strlen("-" TYPE_ARM_CPU));
+     info->q_typename = g_strdup(typename);
++    info->deprecated = !!cc->deprecation_note;
+ 
+     QAPI_LIST_PREPEND(*cpu_list, info);
+ }
+-- 
+2.35.3
+

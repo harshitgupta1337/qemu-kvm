@@ -1,0 +1,237 @@
+From 055edf068196622a3e1868c9e4c991d410272a6d Mon Sep 17 00:00:00 2001
+From: Andrew Jones <drjones@redhat.com>
+Date: Wed, 15 Jun 2022 15:28:27 +0200
+Subject: [PATCH 03/18] RHEL-only: AArch64: Drop unsupported CPU types
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Daniel P. Berrangé <berrange@redhat.com>
+RH-MergeRequest: 94: i386, aarch64, s390x: deprecate many named CPU models
+RH-Commit: [3/6] 21f54c86dc87e5e75a64459b5a385686bc09640c (berrange/centos-src-qemu)
+RH-Bugzilla: 2060839
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2066824
+Upstream Status: RHEL only
+
+We only need to support AArch64 cpu types and we only need three
+types:
+   1) A base type to use with TCG, i.e. a cpu type with only base
+      features. 'cortex-a57' serves this role and is currently used
+      by libguestfs.
+   2) The 'max' type, which is for both KVM and TCG and is good for
+      tests that just specify 'max' but run under both. 'max' with
+      TCG also provides the VM with all the CPU features TCG
+      supports, which is good for VMs that need features not
+      provided by the basic cortex-a57.
+   3) The host type which is used with KVM.
+
+Signed-off-by: Andrew Jones <drjones@redhat.com>
+---
+ hw/arm/virt.c                  |  4 ++++
+ target/arm/cpu64.c             |  6 ++++++
+ target/arm/cpu_tcg.c           | 12 ++----------
+ tests/qtest/arm-cpu-features.c |  6 ++++++
+ 4 files changed, 18 insertions(+), 10 deletions(-)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index 95d012d6eb..74119976d3 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -239,12 +239,16 @@ static const int a15irqmap[] = {
+ };
+ 
+ static const char *valid_cpus[] = {
++#if 0 /* Disabled for Red Hat Enterprise Linux */
+     ARM_CPU_TYPE_NAME("cortex-a7"),
+     ARM_CPU_TYPE_NAME("cortex-a15"),
+     ARM_CPU_TYPE_NAME("cortex-a53"),
++#endif /* disabled for RHEL */
+     ARM_CPU_TYPE_NAME("cortex-a57"),
++#if 0 /* Disabled for Red Hat Enterprise Linux */
+     ARM_CPU_TYPE_NAME("cortex-a72"),
+     ARM_CPU_TYPE_NAME("a64fx"),
++#endif /* disabled for RHEL */
+     ARM_CPU_TYPE_NAME("host"),
+     ARM_CPU_TYPE_NAME("max"),
+ };
+diff --git a/target/arm/cpu64.c b/target/arm/cpu64.c
+index eb44c05822..e80b831073 100644
+--- a/target/arm/cpu64.c
++++ b/target/arm/cpu64.c
+@@ -146,6 +146,7 @@ static void aarch64_a57_initfn(Object *obj)
+     define_arm_cp_regs(cpu, cortex_a72_a57_a53_cp_reginfo);
+ }
+ 
++#if 0 /* Disabled for Red Hat Enterprise Linux */
+ static void aarch64_a53_initfn(Object *obj)
+ {
+     ARMCPU *cpu = ARM_CPU(obj);
+@@ -249,6 +250,7 @@ static void aarch64_a72_initfn(Object *obj)
+     cpu->gic_vprebits = 5;
+     define_arm_cp_regs(cpu, cortex_a72_a57_a53_cp_reginfo);
+ }
++#endif /* disabled for RHEL */
+ 
+ void arm_cpu_sve_finalize(ARMCPU *cpu, Error **errp)
+ {
+@@ -923,6 +925,7 @@ static void aarch64_max_initfn(Object *obj)
+     qdev_property_add_static(DEVICE(obj), &arm_cpu_lpa2_property);
+ }
+ 
++#if 0 /* Disabled for Red Hat Enterprise Linux */
+ static void aarch64_a64fx_initfn(Object *obj)
+ {
+     ARMCPU *cpu = ARM_CPU(obj);
+@@ -969,12 +972,15 @@ static void aarch64_a64fx_initfn(Object *obj)
+ 
+     /* TODO:  Add A64FX specific HPC extension registers */
+ }
++#endif /* disabled for RHEL */
+ 
+ static const ARMCPUInfo aarch64_cpus[] = {
+     { .name = "cortex-a57",         .initfn = aarch64_a57_initfn },
++#if 0 /* Disabled for Red Hat Enterprise Linux */
+     { .name = "cortex-a53",         .initfn = aarch64_a53_initfn },
+     { .name = "cortex-a72",         .initfn = aarch64_a72_initfn },
+     { .name = "a64fx",              .initfn = aarch64_a64fx_initfn },
++#endif /* disabled for RHEL */
+     { .name = "max",                .initfn = aarch64_max_initfn },
+ #if defined(CONFIG_KVM) || defined(CONFIG_HVF)
+     { .name = "host",               .initfn = aarch64_host_initfn },
+diff --git a/target/arm/cpu_tcg.c b/target/arm/cpu_tcg.c
+index 3826fa5122..74727fc92c 100644
+--- a/target/arm/cpu_tcg.c
++++ b/target/arm/cpu_tcg.c
+@@ -19,10 +19,10 @@
+ #include "hw/boards.h"
+ #endif
+ 
++#if 0 /* Disabled for Red Hat Enterprise Linux */
+ /* CPU models. These are not needed for the AArch64 linux-user build. */
+ #if !defined(CONFIG_USER_ONLY) || !defined(TARGET_AARCH64)
+ 
+-#if 0 /* Disabled for Red Hat Enterprise Linux */
+ #if !defined(CONFIG_USER_ONLY) && defined(CONFIG_TCG)
+ static bool arm_v7m_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
+ {
+@@ -376,7 +376,6 @@ static void cortex_a9_initfn(Object *obj)
+     cpu->ccsidr[1] = 0x200fe019; /* 16k L1 icache. */
+     define_arm_cp_regs(cpu, cortexa9_cp_reginfo);
+ }
+-#endif /* disabled for RHEL */
+ 
+ #ifndef CONFIG_USER_ONLY
+ static uint64_t a15_l2ctlr_read(CPUARMState *env, const ARMCPRegInfo *ri)
+@@ -402,7 +401,6 @@ static const ARMCPRegInfo cortexa15_cp_reginfo[] = {
+     REGINFO_SENTINEL
+ };
+ 
+-#if 0 /* Disabled for Red Hat Enterprise Linux */
+ static void cortex_a7_initfn(Object *obj)
+ {
+     ARMCPU *cpu = ARM_CPU(obj);
+@@ -448,7 +446,6 @@ static void cortex_a7_initfn(Object *obj)
+     cpu->ccsidr[2] = 0x711fe07a; /* 4096K L2 unified cache */
+     define_arm_cp_regs(cpu, cortexa15_cp_reginfo); /* Same as A15 */
+ }
+-#endif /* disabled for RHEL */
+ 
+ static void cortex_a15_initfn(Object *obj)
+ {
+@@ -492,7 +489,6 @@ static void cortex_a15_initfn(Object *obj)
+     define_arm_cp_regs(cpu, cortexa15_cp_reginfo);
+ }
+ 
+-#if 0 /* Disabled for Red Hat Enterprise Linux */
+ static void cortex_m0_initfn(Object *obj)
+ {
+     ARMCPU *cpu = ARM_CPU(obj);
+@@ -933,7 +929,6 @@ static void arm_v7m_class_init(ObjectClass *oc, void *data)
+ 
+     cc->gdb_core_xml_file = "arm-m-profile.xml";
+ }
+-#endif /* disabled for RHEL */
+ 
+ #ifndef TARGET_AARCH64
+ /*
+@@ -1013,7 +1008,6 @@ static void arm_max_initfn(Object *obj)
+ #endif /* !TARGET_AARCH64 */
+ 
+ static const ARMCPUInfo arm_tcg_cpus[] = {
+-#if 0 /* Disabled for Red Hat Enterprise Linux */
+     { .name = "arm926",      .initfn = arm926_initfn },
+     { .name = "arm946",      .initfn = arm946_initfn },
+     { .name = "arm1026",     .initfn = arm1026_initfn },
+@@ -1029,9 +1023,7 @@ static const ARMCPUInfo arm_tcg_cpus[] = {
+     { .name = "cortex-a7",   .initfn = cortex_a7_initfn },
+     { .name = "cortex-a8",   .initfn = cortex_a8_initfn },
+     { .name = "cortex-a9",   .initfn = cortex_a9_initfn },
+-#endif /* disabled for RHEL */
+     { .name = "cortex-a15",  .initfn = cortex_a15_initfn },
+-#if 0 /* Disabled for Red Hat Enterprise Linux */
+     { .name = "cortex-m0",   .initfn = cortex_m0_initfn,
+                              .class_init = arm_v7m_class_init },
+     { .name = "cortex-m3",   .initfn = cortex_m3_initfn,
+@@ -1062,7 +1054,6 @@ static const ARMCPUInfo arm_tcg_cpus[] = {
+     { .name = "pxa270-b1",   .initfn = pxa270b1_initfn },
+     { .name = "pxa270-c0",   .initfn = pxa270c0_initfn },
+     { .name = "pxa270-c5",   .initfn = pxa270c5_initfn },
+-#endif /* disabled for RHEL */
+ #ifndef TARGET_AARCH64
+     { .name = "max",         .initfn = arm_max_initfn },
+ #endif
+@@ -1090,3 +1081,4 @@ static void arm_tcg_cpu_register_types(void)
+ type_init(arm_tcg_cpu_register_types)
+ 
+ #endif /* !CONFIG_USER_ONLY || !TARGET_AARCH64 */
++#endif /* disabled for RHEL */
+diff --git a/tests/qtest/arm-cpu-features.c b/tests/qtest/arm-cpu-features.c
+index f76652143a..fe2a0a070d 100644
+--- a/tests/qtest/arm-cpu-features.c
++++ b/tests/qtest/arm-cpu-features.c
+@@ -440,8 +440,10 @@ static void test_query_cpu_model_expansion(const void *data)
+     assert_error(qts, "host", "The CPU type 'host' requires KVM", NULL);
+ 
+     /* Test expected feature presence/absence for some cpu types */
++#if 0 /* Disabled for Red Hat Enterprise Linux */
+     assert_has_feature_enabled(qts, "cortex-a15", "pmu");
+     assert_has_not_feature(qts, "cortex-a15", "aarch64");
++#endif /* disabled for RHEL */
+ 
+     /* Enabling and disabling pmu should always work. */
+     assert_has_feature_enabled(qts, "max", "pmu");
+@@ -458,6 +460,7 @@ static void test_query_cpu_model_expansion(const void *data)
+         assert_has_feature_enabled(qts, "cortex-a57", "pmu");
+         assert_has_feature_enabled(qts, "cortex-a57", "aarch64");
+ 
++#if 0 /* Disabled for Red Hat Enterprise Linux */
+         assert_has_feature_enabled(qts, "a64fx", "pmu");
+         assert_has_feature_enabled(qts, "a64fx", "aarch64");
+         /*
+@@ -470,6 +473,7 @@ static void test_query_cpu_model_expansion(const void *data)
+                      "{ 'sve384': true }");
+         assert_error(qts, "a64fx", "cannot enable sve640",
+                      "{ 'sve640': true }");
++#endif /* disabled for RHEL */
+ 
+         sve_tests_default(qts, "max");
+         pauth_tests_default(qts, "max");
+@@ -505,9 +509,11 @@ static void test_query_cpu_model_expansion_kvm(const void *data)
+         QDict *resp;
+         char *error;
+ 
++#if 0 /* Disabled for Red Hat Enterprise Linux */
+         assert_error(qts, "cortex-a15",
+             "We cannot guarantee the CPU type 'cortex-a15' works "
+             "with KVM on this host", NULL);
++#endif /* disabled for RHEL */
+ 
+         assert_has_feature_enabled(qts, "host", "aarch64");
+ 
+-- 
+2.35.3
+
