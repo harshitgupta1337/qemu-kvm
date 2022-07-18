@@ -1,0 +1,54 @@
+From 8d45902b4884315ec090e607e9f03606b21001cf Mon Sep 17 00:00:00 2001
+From: Zhenzhong Duan <zhenzhong.duan@intel.com>
+Date: Fri, 24 Jun 2022 17:37:40 +0800
+Subject: [PATCH 05/17] virtio-iommu: Fix migration regression
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 105: virtio-iommu: Fix bypass mode for assigned devices
+RH-Commit: [5/5] 9652c4aaaf88e24083fab1fbc3d1423260c93ca6 (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 2100106
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2100106
+
+We also need to switch to the right address space on dest side
+after loading the device status. DMA to wrong address space is
+destructive.
+
+Fixes: 3facd774962fd ("virtio-iommu: Add bypass mode support to assigned device")
+Suggested-by: Eric Auger <eric.auger@redhat.com>
+Signed-off-by: Zhenzhong Duan <zhenzhong.duan@intel.com>
+Message-Id: <20220624093740.3525267-1-zhenzhong.duan@intel.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+Reviewed-by: Eric Auger <eric.auger@redhat.com>
+(cherry picked from commit d355566bd958e24e7e384da6ea89a9fc88d7bfed)
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+---
+ hw/virtio/virtio-iommu.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/hw/virtio/virtio-iommu.c b/hw/virtio/virtio-iommu.c
+index 44a041dec9..2012835554 100644
+--- a/hw/virtio/virtio-iommu.c
++++ b/hw/virtio/virtio-iommu.c
+@@ -1324,6 +1324,14 @@ static int iommu_post_load(void *opaque, int version_id)
+     VirtIOIOMMU *s = opaque;
+ 
+     g_tree_foreach(s->domains, reconstruct_endpoints, s);
++
++    /*
++     * Memory regions are dynamically turned on/off depending on
++     * 'config.bypass' and attached domain type if there is. After
++     * migration, we need to make sure the memory regions are
++     * still correct.
++     */
++    virtio_iommu_switch_address_space_all(s);
+     return 0;
+ }
+ 
+-- 
+2.31.1
+

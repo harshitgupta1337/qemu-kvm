@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.0.0
-Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 9%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -324,6 +324,40 @@ Patch84: kvm-QIOChannelSocket-Fix-zero-copy-send-so-socket-flush-.patch
 Patch85: kvm-migration-Change-zero_copy_send-from-migration-param.patch
 # For bz#2096143 - The migration port is not released if use it again for recovering postcopy migration
 Patch86: kvm-migration-Allow-migrate-recover-to-run-multiple-time.patch
+# For bz#2100106 - Fix virtio-iommu/vfio bypass
+Patch87: kvm-virtio-iommu-Add-bypass-mode-support-to-assigned-dev.patch
+# For bz#2100106 - Fix virtio-iommu/vfio bypass
+Patch88: kvm-virtio-iommu-Use-recursive-lock-to-avoid-deadlock.patch
+# For bz#2100106 - Fix virtio-iommu/vfio bypass
+Patch89: kvm-virtio-iommu-Add-an-assert-check-in-translate-routin.patch
+# For bz#2100106 - Fix virtio-iommu/vfio bypass
+Patch90: kvm-virtio-iommu-Fix-the-partial-copy-of-probe-request.patch
+# For bz#2100106 - Fix virtio-iommu/vfio bypass
+Patch91: kvm-virtio-iommu-Fix-migration-regression.patch
+# For bz#2098077 - virtio-blk: Can't boot fresh installation from used virtio-blk dasd disk under certain conditions
+Patch92: kvm-pc-bios-s390-ccw-virtio-Introduce-a-macro-for-the-DA.patch
+# For bz#2098077 - virtio-blk: Can't boot fresh installation from used virtio-blk dasd disk under certain conditions
+Patch93: kvm-pc-bios-s390-ccw-bootmap-Improve-the-guessing-logic-.patch
+# For bz#2098077 - virtio-blk: Can't boot fresh installation from used virtio-blk dasd disk under certain conditions
+Patch94: kvm-pc-bios-s390-ccw-virtio-blkdev-Simplify-fix-virtio_i.patch
+# For bz#2098077 - virtio-blk: Can't boot fresh installation from used virtio-blk dasd disk under certain conditions
+Patch95: kvm-pc-bios-s390-ccw-virtio-blkdev-Remove-virtio_assume_.patch
+# For bz#2098077 - virtio-blk: Can't boot fresh installation from used virtio-blk dasd disk under certain conditions
+Patch96: kvm-pc-bios-s390-ccw-virtio-Set-missing-status-bits-whil.patch
+# For bz#2098077 - virtio-blk: Can't boot fresh installation from used virtio-blk dasd disk under certain conditions
+Patch97: kvm-pc-bios-s390-ccw-virtio-Read-device-config-after-fea.patch
+# For bz#2098077 - virtio-blk: Can't boot fresh installation from used virtio-blk dasd disk under certain conditions
+Patch98: kvm-pc-bios-s390-ccw-virtio-Beautify-the-code-for-readin.patch
+# For bz#2098077 - virtio-blk: Can't boot fresh installation from used virtio-blk dasd disk under certain conditions
+Patch99: kvm-pc-bios-s390-ccw-Split-virtio-scsi-code-from-virtio_.patch
+# For bz#2098077 - virtio-blk: Can't boot fresh installation from used virtio-blk dasd disk under certain conditions
+Patch100: kvm-pc-bios-s390-ccw-virtio-blkdev-Request-the-right-fea.patch
+# For bz#2098077 - virtio-blk: Can't boot fresh installation from used virtio-blk dasd disk under certain conditions
+Patch101: kvm-pc-bios-s390-ccw-netboot.mak-Ignore-Clang-s-warnings.patch
+# For bz#1951522 - CVE-2021-3507 qemu-kvm: QEMU: fdc: heap buffer overflow in DMA read data transfers [rhel-9.0]
+Patch102: kvm-hw-block-fdc-Prevent-end-of-track-overrun-CVE-2021-3.patch
+# For bz#1951522 - CVE-2021-3507 qemu-kvm: QEMU: fdc: heap buffer overflow in DMA read data transfers [rhel-9.0]
+Patch103: kvm-tests-qtest-fdc-test-Add-a-regression-test-for-CVE-2.patch
 
 # Source-git patches
 
@@ -1359,6 +1393,31 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Jul 18 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-9
+- kvm-virtio-iommu-Add-bypass-mode-support-to-assigned-dev.patch [bz#2100106]
+- kvm-virtio-iommu-Use-recursive-lock-to-avoid-deadlock.patch [bz#2100106]
+- kvm-virtio-iommu-Add-an-assert-check-in-translate-routin.patch [bz#2100106]
+- kvm-virtio-iommu-Fix-the-partial-copy-of-probe-request.patch [bz#2100106]
+- kvm-virtio-iommu-Fix-migration-regression.patch [bz#2100106]
+- kvm-pc-bios-s390-ccw-virtio-Introduce-a-macro-for-the-DA.patch [bz#2098077]
+- kvm-pc-bios-s390-ccw-bootmap-Improve-the-guessing-logic-.patch [bz#2098077]
+- kvm-pc-bios-s390-ccw-virtio-blkdev-Simplify-fix-virtio_i.patch [bz#2098077]
+- kvm-pc-bios-s390-ccw-virtio-blkdev-Remove-virtio_assume_.patch [bz#2098077]
+- kvm-pc-bios-s390-ccw-virtio-Set-missing-status-bits-whil.patch [bz#2098077]
+- kvm-pc-bios-s390-ccw-virtio-Read-device-config-after-fea.patch [bz#2098077]
+- kvm-pc-bios-s390-ccw-virtio-Beautify-the-code-for-readin.patch [bz#2098077]
+- kvm-pc-bios-s390-ccw-Split-virtio-scsi-code-from-virtio_.patch [bz#2098077]
+- kvm-pc-bios-s390-ccw-virtio-blkdev-Request-the-right-fea.patch [bz#2098077]
+- kvm-pc-bios-s390-ccw-netboot.mak-Ignore-Clang-s-warnings.patch [bz#2098077]
+- kvm-hw-block-fdc-Prevent-end-of-track-overrun-CVE-2021-3.patch [bz#1951522]
+- kvm-tests-qtest-fdc-test-Add-a-regression-test-for-CVE-2.patch [bz#1951522]
+- Resolves: bz#2100106
+  (Fix virtio-iommu/vfio bypass)
+- Resolves: bz#2098077
+  (virtio-blk: Can't boot fresh installation from used virtio-blk dasd disk under certain conditions)
+- Resolves: bz#1951522
+  (CVE-2021-3507 qemu-kvm: QEMU: fdc: heap buffer overflow in DMA read data transfers [rhel-9.0])
+
 * Tue Jul 05 2022 Camilla Conte <cconte@redhat.com> - 7.0.0-8
 - kvm-tests-avocado-update-aarch64_virt-test-to-exercise-c.patch [bz#2060839]
 - kvm-RHEL-only-tests-avocado-Switch-aarch64-tests-from-a5.patch [bz#2060839]

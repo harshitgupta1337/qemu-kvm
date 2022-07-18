@@ -1,0 +1,67 @@
+From b681247c29b59af40c86f8f0ae5709138ae9bf1a Mon Sep 17 00:00:00 2001
+From: Zhenzhong Duan <zhenzhong.duan@intel.com>
+Date: Thu, 23 Jun 2022 10:31:52 +0800
+Subject: [PATCH 04/17] virtio-iommu: Fix the partial copy of probe request
+
+RH-Author: Eric Auger <eric.auger@redhat.com>
+RH-MergeRequest: 105: virtio-iommu: Fix bypass mode for assigned devices
+RH-Commit: [4/5] c402164414a8e69bbb6df20af3c2b6d2589d6f3e (eauger1/centos-qemu-kvm)
+RH-Bugzilla: 2100106
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Peter Xu <peterx@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2100106
+
+The structure of probe request doesn't include the tail, this leads
+to a few field missed to be copied. Currently this isn't an issue as
+those missed field belong to reserved field, just in case reserved
+field will be used in the future.
+
+Changed 4th parameter of virtio_iommu_iov_to_req() to receive size
+of device-readable part.
+
+Fixes: 1733eebb9e75b ("virtio-iommu: Implement RESV_MEM probe request")
+Signed-off-by: Zhenzhong Duan <zhenzhong.duan@intel.com>
+Message-Id: <20220623023152.3473231-1-zhenzhong.duan@intel.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+Reviewed-by: Jean-Philippe Brucker <jean-philippe@linaro.org>
+Reviewed-by: Eric Auger <eric.auger@redhat.com>
+(cherry picked from commit 45461aace83d961e933b27519b81d17b4c690514)
+Signed-off-by: Eric Auger <eric.auger@redhat.com>
+---
+ hw/virtio/virtio-iommu.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/hw/virtio/virtio-iommu.c b/hw/virtio/virtio-iommu.c
+index e970d4d5a6..44a041dec9 100644
+--- a/hw/virtio/virtio-iommu.c
++++ b/hw/virtio/virtio-iommu.c
+@@ -676,11 +676,10 @@ static int virtio_iommu_probe(VirtIOIOMMU *s,
+ 
+ static int virtio_iommu_iov_to_req(struct iovec *iov,
+                                    unsigned int iov_cnt,
+-                                   void *req, size_t req_sz)
++                                   void *req, size_t payload_sz)
+ {
+-    size_t sz, payload_sz = req_sz - sizeof(struct virtio_iommu_req_tail);
++    size_t sz = iov_to_buf(iov, iov_cnt, 0, req, payload_sz);
+ 
+-    sz = iov_to_buf(iov, iov_cnt, 0, req, payload_sz);
+     if (unlikely(sz != payload_sz)) {
+         return VIRTIO_IOMMU_S_INVAL;
+     }
+@@ -693,7 +692,8 @@ static int virtio_iommu_handle_ ## __req(VirtIOIOMMU *s,                \
+                                          unsigned int iov_cnt)          \
+ {                                                                       \
+     struct virtio_iommu_req_ ## __req req;                              \
+-    int ret = virtio_iommu_iov_to_req(iov, iov_cnt, &req, sizeof(req)); \
++    int ret = virtio_iommu_iov_to_req(iov, iov_cnt, &req,               \
++                    sizeof(req) - sizeof(struct virtio_iommu_req_tail));\
+                                                                         \
+     return ret ? ret : virtio_iommu_ ## __req(s, &req);                 \
+ }
+-- 
+2.31.1
+

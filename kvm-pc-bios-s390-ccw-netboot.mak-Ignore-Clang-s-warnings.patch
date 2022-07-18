@@ -1,0 +1,78 @@
+From 56674ee1f25f12978a6a8a1390e11b55b3e0fabe Mon Sep 17 00:00:00 2001
+From: Thomas Huth <thuth@redhat.com>
+Date: Fri, 8 Jul 2022 20:49:01 +0200
+Subject: [PATCH 15/17] pc-bios/s390-ccw/netboot.mak: Ignore Clang's warnings
+ about GNU extensions
+
+RH-Author: Thomas Huth <thuth@redhat.com>
+RH-MergeRequest: 106: pc-bios/s390-ccw: Fix boot from disks with 4k sectors that do not have the typical DASD geometry
+RH-Commit: [10/10] 037dab4df23ebb2b42871bca8c842a53a7204b50 (thuth/qemu-kvm-cs9)
+RH-Bugzilla: 2098077
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: David Hildenbrand <david@redhat.com>
+RH-Acked-by: Cornelia Huck <cohuck@redhat.com>
+
+Bugzilla: http://bugzilla.redhat.com/2098077
+
+commit e2269220acb03e6c6a460c3090d804835e202239
+Author: Thomas Huth <thuth@redhat.com>
+Date:   Mon Jul 4 13:19:03 2022 +0200
+
+    pc-bios/s390-ccw/netboot.mak: Ignore Clang's warnings about GNU extensions
+
+    When compiling the s390-ccw bios with Clang (v14.0), there is currently
+    an unuseful warning like this:
+
+      CC      pc-bios/s390-ccw/ipv6.o
+     ../../roms/SLOF/lib/libnet/ipv6.c:447:18: warning: variable length array
+      folded to constant array as an extension [-Wgnu-folding-constant]
+                    unsigned short raw[ip6size];
+                                   ^
+
+    SLOF is currently GCC-only and cannot be compiled with Clang yet, so
+    it is expected that such extensions sneak in there - and as long as
+    we don't want to compile the code with a compiler that is neither GCC
+    or Clang, it is also not necessary to avoid such extensions.
+
+    Thus these GNU-extension related warnings are completely useless in
+    the s390-ccw bios, especially in the code that is coming from SLOF,
+    so we should simply disable the related warnings here now.
+
+    Message-Id: <20220704111903.62400-13-thuth@redhat.com>
+    Signed-off-by: Thomas Huth <thuth@redhat.com>
+
+Signed-off-by: Thomas Huth <thuth@redhat.com>
+---
+ pc-bios/s390-ccw/netboot.mak | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/pc-bios/s390-ccw/netboot.mak b/pc-bios/s390-ccw/netboot.mak
+index 68b4d7edcb..ad41898cb6 100644
+--- a/pc-bios/s390-ccw/netboot.mak
++++ b/pc-bios/s390-ccw/netboot.mak
+@@ -16,9 +16,12 @@ s390-netboot.elf: $(NETOBJS) libnet.a libc.a
+ s390-netboot.img: s390-netboot.elf
+ 	$(call quiet-command,$(STRIP) --strip-unneeded $< -o $@,"STRIP","$(TARGET_DIR)$@")
+ 
++# SLOF is GCC-only, so ignore warnings about GNU extensions with Clang here
++NO_GNU_WARN := $(call cc-option,-Werror $(QEMU_CFLAGS),-Wno-gnu)
++
+ # libc files:
+ 
+-LIBC_CFLAGS = $(QEMU_CFLAGS) $(CFLAGS) $(LIBC_INC) $(LIBNET_INC) \
++LIBC_CFLAGS = $(QEMU_CFLAGS) $(CFLAGS) $(NO_GNU_WARN) $(LIBC_INC) $(LIBNET_INC) \
+ 	      -MMD -MP -MT $@ -MF $(@:%.o=%.d)
+ 
+ CTYPE_OBJS = isdigit.o isxdigit.o toupper.o
+@@ -52,7 +55,7 @@ libc.a: $(LIBCOBJS)
+ 
+ LIBNETOBJS := args.o dhcp.o dns.o icmpv6.o ipv6.o tcp.o udp.o bootp.o \
+ 	      dhcpv6.o ethernet.o ipv4.o ndp.o tftp.o pxelinux.o
+-LIBNETCFLAGS = $(QEMU_CFLAGS) $(CFLAGS) $(LIBC_INC) $(LIBNET_INC) \
++LIBNETCFLAGS = $(QEMU_CFLAGS) $(CFLAGS) $(NO_GNU_WARN) $(LIBC_INC) $(LIBNET_INC) \
+ 	       -DDHCPARCH=0x1F -MMD -MP -MT $@ -MF $(@:%.o=%.d)
+ 
+ %.o : $(SLOF_DIR)/lib/libnet/%.c
+-- 
+2.31.1
+
