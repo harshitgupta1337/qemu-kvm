@@ -1,0 +1,81 @@
+From 24b8cf88f53f9fc7cb393c9cad908f759980bfee Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 21 Jul 2022 15:38:55 +0200
+Subject: [PATCH 16/32] vhost: Track number of descs in SVQDescState
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 108: Net Control Virtqueue shadow Support
+RH-Commit: [16/27] 26f30cb6dd35c1eb1ddabe25113431bed3d744aa (eperezmartin/qemu-kvm)
+RH-Bugzilla: 1939363
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/1939363
+
+Upstream Status: git://git.qemu.org/qemu.git
+
+commit ac4cfdc6f39c06732d27554523f9d5f8a53b4ffa
+Author: Eugenio Pérez <eperezma@redhat.com>
+Date:   Wed Jul 20 08:59:35 2022 +0200
+
+    vhost: Track number of descs in SVQDescState
+
+    A guest's buffer continuos on GPA may need multiple descriptors on
+    qemu's VA, so SVQ should track its length sepparatedly.
+
+    Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+    Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+    Signed-off-by: Jason Wang <jasowang@redhat.com>
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+---
+ hw/virtio/vhost-shadow-virtqueue.c | 4 ++--
+ hw/virtio/vhost-shadow-virtqueue.h | 6 ++++++
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/hw/virtio/vhost-shadow-virtqueue.c b/hw/virtio/vhost-shadow-virtqueue.c
+index a08e3d4025..4d99075e73 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.c
++++ b/hw/virtio/vhost-shadow-virtqueue.c
+@@ -257,6 +257,7 @@ static int vhost_svq_add(VhostShadowVirtqueue *svq, const struct iovec *out_sg,
+     }
+ 
+     svq->desc_state[qemu_head].elem = elem;
++    svq->desc_state[qemu_head].ndescs = ndescs;
+     vhost_svq_kick(svq);
+     return 0;
+ }
+@@ -418,8 +419,7 @@ static VirtQueueElement *vhost_svq_get_buf(VhostShadowVirtqueue *svq,
+         return NULL;
+     }
+ 
+-    num = svq->desc_state[used_elem.id].elem->in_num +
+-          svq->desc_state[used_elem.id].elem->out_num;
++    num = svq->desc_state[used_elem.id].ndescs;
+     last_used_chain = vhost_svq_last_desc_of_chain(svq, num, used_elem.id);
+     svq->desc_next[last_used_chain] = svq->free_head;
+     svq->free_head = used_elem.id;
+diff --git a/hw/virtio/vhost-shadow-virtqueue.h b/hw/virtio/vhost-shadow-virtqueue.h
+index d646c35054..5c7e7cbab6 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.h
++++ b/hw/virtio/vhost-shadow-virtqueue.h
+@@ -17,6 +17,12 @@
+ 
+ typedef struct SVQDescState {
+     VirtQueueElement *elem;
++
++    /*
++     * Number of descriptors exposed to the device. May or may not match
++     * guest's
++     */
++    unsigned int ndescs;
+ } SVQDescState;
+ 
+ /* Shadow virtqueue to relay notifications */
+-- 
+2.31.1
+

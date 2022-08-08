@@ -1,0 +1,61 @@
+From 3a944d8cd3d35b2398ff68d9ed8ea51d27dfab3c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 21 Jul 2022 15:38:55 +0200
+Subject: [PATCH 12/32] vhost: Move vhost_svq_kick call to vhost_svq_add
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 108: Net Control Virtqueue shadow Support
+RH-Commit: [12/27] 29a7e1fb4992c4beca1e9a3379bb4c8a0f567459 (eperezmartin/qemu-kvm)
+RH-Bugzilla: 1939363
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/1939363
+
+Upstream Status: git://git.qemu.org/qemu.git
+
+commit 98b5adef8493a2bfad6655cfee84299e88bedbf7
+Author: Eugenio Pérez <eperezma@redhat.com>
+Date:   Wed Jul 20 08:59:31 2022 +0200
+
+    vhost: Move vhost_svq_kick call to vhost_svq_add
+
+    The series needs to expose vhost_svq_add with full functionality,
+    including kick
+
+    Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+    Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+    Signed-off-by: Jason Wang <jasowang@redhat.com>
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+---
+ hw/virtio/vhost-shadow-virtqueue.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/hw/virtio/vhost-shadow-virtqueue.c b/hw/virtio/vhost-shadow-virtqueue.c
+index 05cd39d1eb..e3fc3c2658 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.c
++++ b/hw/virtio/vhost-shadow-virtqueue.c
+@@ -246,6 +246,7 @@ static bool vhost_svq_add(VhostShadowVirtqueue *svq, VirtQueueElement *elem)
+     }
+ 
+     svq->ring_id_maps[qemu_head] = elem;
++    vhost_svq_kick(svq);
+     return true;
+ }
+ 
+@@ -306,7 +307,6 @@ static void vhost_handle_guest_kick(VhostShadowVirtqueue *svq)
+                 /* VQ is broken, just return and ignore any other kicks */
+                 return;
+             }
+-            vhost_svq_kick(svq);
+         }
+ 
+         virtio_queue_set_notification(svq->vq, true);
+-- 
+2.31.1
+

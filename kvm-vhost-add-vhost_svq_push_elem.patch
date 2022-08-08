@@ -1,0 +1,83 @@
+From a26eb02b3a49c5d1163685ba5b83b67138c09047 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 21 Jul 2022 15:38:55 +0200
+Subject: [PATCH 17/32] vhost: add vhost_svq_push_elem
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 108: Net Control Virtqueue shadow Support
+RH-Commit: [17/27] d064b40a262f2dfdc9f648d250aa8c8020c40385 (eperezmartin/qemu-kvm)
+RH-Bugzilla: 1939363
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/1939363
+
+Upstream Status: git://git.qemu.org/qemu.git
+
+commit 432efd144e990b6e040862de25f8f0b6a6eeb03d
+Author: Eugenio Pérez <eperezma@redhat.com>
+Date:   Wed Jul 20 08:59:36 2022 +0200
+
+    vhost: add vhost_svq_push_elem
+
+    This function allows external SVQ users to return guest's available
+    buffers.
+
+    Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+    Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+    Signed-off-by: Jason Wang <jasowang@redhat.com>
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+---
+ hw/virtio/vhost-shadow-virtqueue.c | 16 ++++++++++++++++
+ hw/virtio/vhost-shadow-virtqueue.h |  3 +++
+ 2 files changed, 19 insertions(+)
+
+diff --git a/hw/virtio/vhost-shadow-virtqueue.c b/hw/virtio/vhost-shadow-virtqueue.c
+index 4d99075e73..1ce52d5b4a 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.c
++++ b/hw/virtio/vhost-shadow-virtqueue.c
+@@ -428,6 +428,22 @@ static VirtQueueElement *vhost_svq_get_buf(VhostShadowVirtqueue *svq,
+     return g_steal_pointer(&svq->desc_state[used_elem.id].elem);
+ }
+ 
++/**
++ * Push an element to SVQ, returning it to the guest.
++ */
++void vhost_svq_push_elem(VhostShadowVirtqueue *svq,
++                         const VirtQueueElement *elem, uint32_t len)
++{
++    virtqueue_push(svq->vq, elem, len);
++    if (svq->next_guest_avail_elem) {
++        /*
++         * Avail ring was full when vhost_svq_flush was called, so it's a
++         * good moment to make more descriptors available if possible.
++         */
++        vhost_handle_guest_kick(svq);
++    }
++}
++
+ static void vhost_svq_flush(VhostShadowVirtqueue *svq,
+                             bool check_for_avail_queue)
+ {
+diff --git a/hw/virtio/vhost-shadow-virtqueue.h b/hw/virtio/vhost-shadow-virtqueue.h
+index 5c7e7cbab6..d9fc1f1799 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.h
++++ b/hw/virtio/vhost-shadow-virtqueue.h
+@@ -84,6 +84,9 @@ typedef struct VhostShadowVirtqueue {
+ 
+ bool vhost_svq_valid_features(uint64_t features, Error **errp);
+ 
++void vhost_svq_push_elem(VhostShadowVirtqueue *svq,
++                         const VirtQueueElement *elem, uint32_t len);
++
+ void vhost_svq_set_svq_kick_fd(VhostShadowVirtqueue *svq, int svq_kick_fd);
+ void vhost_svq_set_svq_call_fd(VhostShadowVirtqueue *svq, int call_fd);
+ void vhost_svq_get_vring_addr(const VhostShadowVirtqueue *svq,
+-- 
+2.31.1
+

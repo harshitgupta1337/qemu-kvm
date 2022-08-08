@@ -1,0 +1,65 @@
+From df06ce560ddfefde98bef822ec2020382059921f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 21 Jul 2022 15:38:55 +0200
+Subject: [PATCH 10/32] vdpa: Avoid compiler to squash reads to used idx
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 108: Net Control Virtqueue shadow Support
+RH-Commit: [10/27] b28789302d4f64749da26f413763f918161d9b70 (eperezmartin/qemu-kvm)
+RH-Bugzilla: 1939363
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/1939363
+
+Upstream Status: git://git.qemu.org/qemu.git
+
+commit c381abc37f0aba42ed2e3b41cdace8f8438829e4
+Author: Eugenio Pérez <eperezma@redhat.com>
+Date:   Wed Jul 20 08:59:29 2022 +0200
+
+    vdpa: Avoid compiler to squash reads to used idx
+
+    In the next patch we will allow busypolling of this value. The compiler
+    have a running path where shadow_used_idx, last_used_idx, and vring used
+    idx are not modified within the same thread busypolling.
+
+    This was not an issue before since we always cleared device event
+    notifier before checking it, and that could act as memory barrier.
+    However, the busypoll needs something similar to kernel READ_ONCE.
+
+    Let's add it here, sepparated from the polling.
+
+    Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+    Signed-off-by: Jason Wang <jasowang@redhat.com>
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+---
+ hw/virtio/vhost-shadow-virtqueue.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/hw/virtio/vhost-shadow-virtqueue.c b/hw/virtio/vhost-shadow-virtqueue.c
+index 3fbda1e3d4..9c46c3a8fa 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.c
++++ b/hw/virtio/vhost-shadow-virtqueue.c
+@@ -327,11 +327,12 @@ static void vhost_handle_guest_kick_notifier(EventNotifier *n)
+ 
+ static bool vhost_svq_more_used(VhostShadowVirtqueue *svq)
+ {
++    uint16_t *used_idx = &svq->vring.used->idx;
+     if (svq->last_used_idx != svq->shadow_used_idx) {
+         return true;
+     }
+ 
+-    svq->shadow_used_idx = cpu_to_le16(svq->vring.used->idx);
++    svq->shadow_used_idx = cpu_to_le16(*(volatile uint16_t *)used_idx);
+ 
+     return svq->last_used_idx != svq->shadow_used_idx;
+ }
+-- 
+2.31.1
+

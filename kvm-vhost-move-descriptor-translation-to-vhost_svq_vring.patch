@@ -1,0 +1,120 @@
+From 2bdea90bfbce3b8d5bfa86178a942a470b85b835 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 21 Jul 2022 15:38:55 +0200
+Subject: [PATCH 07/32] vhost: move descriptor translation to
+ vhost_svq_vring_write_descs
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 108: Net Control Virtqueue shadow Support
+RH-Commit: [7/27] 5533c72065e4ebf8ea7db966c976a3b29bdafb82 (eperezmartin/qemu-kvm)
+RH-Bugzilla: 1939363
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/1939363
+
+Upstream Status: git://git.qemu.org/qemu.git
+
+commit 009c2549bb9dc7f7061009eb87f2a53d4b364983
+Author: Eugenio Pérez <eperezma@redhat.com>
+Date:   Wed Jul 20 08:59:26 2022 +0200
+
+    vhost: move descriptor translation to vhost_svq_vring_write_descs
+
+    It's done for both in and out descriptors so it's better placed here.
+
+    Acked-by: Jason Wang <jasowang@redhat.com>
+    Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+    Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+    Signed-off-by: Jason Wang <jasowang@redhat.com>
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+---
+ hw/virtio/vhost-shadow-virtqueue.c | 38 +++++++++++++++++++++---------
+ 1 file changed, 27 insertions(+), 11 deletions(-)
+
+diff --git a/hw/virtio/vhost-shadow-virtqueue.c b/hw/virtio/vhost-shadow-virtqueue.c
+index 06d0bb39d9..3fbda1e3d4 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.c
++++ b/hw/virtio/vhost-shadow-virtqueue.c
+@@ -122,17 +122,35 @@ static bool vhost_svq_translate_addr(const VhostShadowVirtqueue *svq,
+     return true;
+ }
+ 
+-static void vhost_vring_write_descs(VhostShadowVirtqueue *svq, hwaddr *sg,
+-                                    const struct iovec *iovec, size_t num,
+-                                    bool more_descs, bool write)
++/**
++ * Write descriptors to SVQ vring
++ *
++ * @svq: The shadow virtqueue
++ * @sg: Cache for hwaddr
++ * @iovec: The iovec from the guest
++ * @num: iovec length
++ * @more_descs: True if more descriptors come in the chain
++ * @write: True if they are writeable descriptors
++ *
++ * Return true if success, false otherwise and print error.
++ */
++static bool vhost_svq_vring_write_descs(VhostShadowVirtqueue *svq, hwaddr *sg,
++                                        const struct iovec *iovec, size_t num,
++                                        bool more_descs, bool write)
+ {
+     uint16_t i = svq->free_head, last = svq->free_head;
+     unsigned n;
+     uint16_t flags = write ? cpu_to_le16(VRING_DESC_F_WRITE) : 0;
+     vring_desc_t *descs = svq->vring.desc;
++    bool ok;
+ 
+     if (num == 0) {
+-        return;
++        return true;
++    }
++
++    ok = vhost_svq_translate_addr(svq, sg, iovec, num);
++    if (unlikely(!ok)) {
++        return false;
+     }
+ 
+     for (n = 0; n < num; n++) {
+@@ -150,6 +168,7 @@ static void vhost_vring_write_descs(VhostShadowVirtqueue *svq, hwaddr *sg,
+     }
+ 
+     svq->free_head = le16_to_cpu(svq->desc_next[last]);
++    return true;
+ }
+ 
+ static bool vhost_svq_add_split(VhostShadowVirtqueue *svq,
+@@ -169,21 +188,18 @@ static bool vhost_svq_add_split(VhostShadowVirtqueue *svq,
+         return false;
+     }
+ 
+-    ok = vhost_svq_translate_addr(svq, sgs, elem->out_sg, elem->out_num);
++    ok = vhost_svq_vring_write_descs(svq, sgs, elem->out_sg, elem->out_num,
++                                     elem->in_num > 0, false);
+     if (unlikely(!ok)) {
+         return false;
+     }
+-    vhost_vring_write_descs(svq, sgs, elem->out_sg, elem->out_num,
+-                            elem->in_num > 0, false);
+-
+ 
+-    ok = vhost_svq_translate_addr(svq, sgs, elem->in_sg, elem->in_num);
++    ok = vhost_svq_vring_write_descs(svq, sgs, elem->in_sg, elem->in_num, false,
++                                     true);
+     if (unlikely(!ok)) {
+         return false;
+     }
+ 
+-    vhost_vring_write_descs(svq, sgs, elem->in_sg, elem->in_num, false, true);
+-
+     /*
+      * Put the entry in the available array (but don't update avail->idx until
+      * they do sync).
+-- 
+2.31.1
+

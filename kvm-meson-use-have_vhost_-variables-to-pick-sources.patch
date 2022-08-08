@@ -1,0 +1,213 @@
+From a7d57a09e33275d5e6649273b5c9da1bc3c92491 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 21 Jul 2022 15:51:53 +0200
+Subject: [PATCH 06/32] meson: use have_vhost_* variables to pick sources
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 108: Net Control Virtqueue shadow Support
+RH-Commit: [6/27] bc3db1efb759c0bc97fde2f4fbb3d6dc404c8d3d (eperezmartin/qemu-kvm)
+RH-Bugzilla: 1939363
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/1939363
+
+Upstream Status: git://git.qemu.org/qemu.git
+
+commit 43b6d7ee1fbc5b5fb7c85d8131fdac1863214ad6
+Author: Paolo Bonzini <pbonzini@redhat.com>
+Date:   Wed Apr 20 17:34:06 2022 +0200
+
+    meson: use have_vhost_* variables to pick sources
+
+    Reviewed-by: Marc-André Lureau <marcandre.lureau@redhat.com>
+    Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+---
+ Kconfig.host            |  3 ---
+ backends/meson.build    |  8 ++++++--
+ hw/net/meson.build      |  8 ++++++--
+ hw/virtio/Kconfig       |  3 ---
+ hw/virtio/meson.build   | 25 ++++++++++++++++---------
+ meson.build             |  1 +
+ net/meson.build         | 12 +++++++-----
+ tests/qtest/meson.build |  4 +++-
+ 8 files changed, 39 insertions(+), 25 deletions(-)
+
+diff --git a/Kconfig.host b/Kconfig.host
+index 60b9c07b5e..1165c4eacd 100644
+--- a/Kconfig.host
++++ b/Kconfig.host
+@@ -22,15 +22,12 @@ config TPM
+ 
+ config VHOST_USER
+     bool
+-    select VHOST
+ 
+ config VHOST_VDPA
+     bool
+-    select VHOST
+ 
+ config VHOST_KERNEL
+     bool
+-    select VHOST
+ 
+ config VIRTFS
+     bool
+diff --git a/backends/meson.build b/backends/meson.build
+index 6e68945528..cb92f639ca 100644
+--- a/backends/meson.build
++++ b/backends/meson.build
+@@ -12,9 +12,13 @@ softmmu_ss.add([files(
+ softmmu_ss.add(when: 'CONFIG_POSIX', if_true: files('rng-random.c'))
+ softmmu_ss.add(when: 'CONFIG_POSIX', if_true: files('hostmem-file.c'))
+ softmmu_ss.add(when: 'CONFIG_LINUX', if_true: files('hostmem-memfd.c'))
+-softmmu_ss.add(when: ['CONFIG_VHOST_USER', 'CONFIG_VIRTIO'], if_true: files('vhost-user.c'))
++if have_vhost_user
++  softmmu_ss.add(when: 'CONFIG_VIRTIO', if_true: files('vhost-user.c'))
++endif
+ softmmu_ss.add(when: 'CONFIG_VIRTIO_CRYPTO', if_true: files('cryptodev-vhost.c'))
+-softmmu_ss.add(when: ['CONFIG_VIRTIO_CRYPTO', 'CONFIG_VHOST_CRYPTO'], if_true: files('cryptodev-vhost-user.c'))
++if have_vhost_user_crypto
++  softmmu_ss.add(when: 'CONFIG_VIRTIO_CRYPTO', if_true: files('cryptodev-vhost-user.c'))
++endif
+ softmmu_ss.add(when: 'CONFIG_GIO', if_true: [files('dbus-vmstate.c'), gio])
+ softmmu_ss.add(when: 'CONFIG_SGX', if_true: files('hostmem-epc.c'))
+ 
+diff --git a/hw/net/meson.build b/hw/net/meson.build
+index 685b75badb..ebac261542 100644
+--- a/hw/net/meson.build
++++ b/hw/net/meson.build
+@@ -46,8 +46,12 @@ specific_ss.add(when: 'CONFIG_XILINX_ETHLITE', if_true: files('xilinx_ethlite.c'
+ softmmu_ss.add(when: 'CONFIG_VIRTIO_NET', if_true: files('net_rx_pkt.c'))
+ specific_ss.add(when: 'CONFIG_VIRTIO_NET', if_true: files('virtio-net.c'))
+ 
+-softmmu_ss.add(when: ['CONFIG_VIRTIO_NET', 'CONFIG_VHOST_NET'], if_true: files('vhost_net.c'), if_false: files('vhost_net-stub.c'))
+-softmmu_ss.add(when: 'CONFIG_ALL', if_true: files('vhost_net-stub.c'))
++if have_vhost_net
++  softmmu_ss.add(when: 'CONFIG_VIRTIO_NET', if_true: files('vhost_net.c'), if_false: files('vhost_net-stub.c'))
++  softmmu_ss.add(when: 'CONFIG_ALL', if_true: files('vhost_net-stub.c'))
++else
++  softmmu_ss.add(files('vhost_net-stub.c'))
++endif
+ 
+ softmmu_ss.add(when: 'CONFIG_ETSEC', if_true: files(
+   'fsl_etsec/etsec.c',
+diff --git a/hw/virtio/Kconfig b/hw/virtio/Kconfig
+index c144d42f9b..8ca7b3d9d6 100644
+--- a/hw/virtio/Kconfig
++++ b/hw/virtio/Kconfig
+@@ -1,6 +1,3 @@
+-config VHOST
+-    bool
+-
+ config VIRTIO
+     bool
+ 
+diff --git a/hw/virtio/meson.build b/hw/virtio/meson.build
+index 67dc77e00f..30a832eb4a 100644
+--- a/hw/virtio/meson.build
++++ b/hw/virtio/meson.build
+@@ -2,18 +2,22 @@ softmmu_virtio_ss = ss.source_set()
+ softmmu_virtio_ss.add(files('virtio-bus.c'))
+ softmmu_virtio_ss.add(when: 'CONFIG_VIRTIO_PCI', if_true: files('virtio-pci.c'))
+ softmmu_virtio_ss.add(when: 'CONFIG_VIRTIO_MMIO', if_true: files('virtio-mmio.c'))
+-softmmu_virtio_ss.add(when: 'CONFIG_VHOST', if_false: files('vhost-stub.c'))
+-
+-softmmu_ss.add_all(when: 'CONFIG_VIRTIO', if_true: softmmu_virtio_ss)
+-softmmu_ss.add(when: 'CONFIG_VIRTIO', if_false: files('vhost-stub.c'))
+-
+-softmmu_ss.add(when: 'CONFIG_ALL', if_true: files('vhost-stub.c'))
+ 
+ virtio_ss = ss.source_set()
+ virtio_ss.add(files('virtio.c'))
+-virtio_ss.add(when: 'CONFIG_VHOST', if_true: files('vhost.c', 'vhost-backend.c', 'vhost-iova-tree.c'))
+-virtio_ss.add(when: 'CONFIG_VHOST_USER', if_true: files('vhost-user.c'))
+-virtio_ss.add(when: 'CONFIG_VHOST_VDPA', if_true: files('vhost-shadow-virtqueue.c', 'vhost-vdpa.c'))
++
++if have_vhost
++  virtio_ss.add(files('vhost.c', 'vhost-backend.c', 'vhost-iova-tree.c'))
++  if have_vhost_user
++    virtio_ss.add(files('vhost-user.c'))
++  endif
++  if have_vhost_vdpa
++    virtio_ss.add(files('vhost-vdpa.c', 'vhost-shadow-virtqueue.c'))
++  endif
++else
++  softmmu_virtio_ss.add(files('vhost-stub.c'))
++endif
++
+ virtio_ss.add(when: 'CONFIG_VIRTIO_BALLOON', if_true: files('virtio-balloon.c'))
+ virtio_ss.add(when: 'CONFIG_VIRTIO_CRYPTO', if_true: files('virtio-crypto.c'))
+ virtio_ss.add(when: ['CONFIG_VIRTIO_CRYPTO', 'CONFIG_VIRTIO_PCI'], if_true: files('virtio-crypto-pci.c'))
+@@ -53,3 +57,6 @@ virtio_pci_ss.add(when: 'CONFIG_VIRTIO_MEM', if_true: files('virtio-mem-pci.c'))
+ virtio_ss.add_all(when: 'CONFIG_VIRTIO_PCI', if_true: virtio_pci_ss)
+ 
+ specific_ss.add_all(when: 'CONFIG_VIRTIO', if_true: virtio_ss)
++softmmu_ss.add_all(when: 'CONFIG_VIRTIO', if_true: softmmu_virtio_ss)
++softmmu_ss.add(when: 'CONFIG_VIRTIO', if_false: files('vhost-stub.c'))
++softmmu_ss.add(when: 'CONFIG_ALL', if_true: files('vhost-stub.c'))
+diff --git a/meson.build b/meson.build
+index 735f538497..9ba675f098 100644
+--- a/meson.build
++++ b/meson.build
+@@ -305,6 +305,7 @@ have_vhost_kernel = 'CONFIG_VHOST_KERNEL' in config_host
+ have_vhost_net_user = 'CONFIG_VHOST_NET_USER' in config_host
+ have_vhost_net_vdpa = 'CONFIG_VHOST_NET_VDPA' in config_host
+ have_vhost_net = 'CONFIG_VHOST_NET' in config_host
++have_vhost = have_vhost_user or have_vhost_vdpa or have_vhost_kernel
+ have_vhost_user_crypto = 'CONFIG_VHOST_CRYPTO' in config_host
+ 
+ # Target-specific libraries and flags
+diff --git a/net/meson.build b/net/meson.build
+index 847bc2ac85..c965e83b26 100644
+--- a/net/meson.build
++++ b/net/meson.build
+@@ -26,10 +26,10 @@ softmmu_ss.add(when: vde, if_true: files('vde.c'))
+ if have_netmap
+   softmmu_ss.add(files('netmap.c'))
+ endif
+-vhost_user_ss = ss.source_set()
+-vhost_user_ss.add(when: 'CONFIG_VIRTIO_NET', if_true: files('vhost-user.c'), if_false: files('vhost-user-stub.c'))
+-softmmu_ss.add_all(when: 'CONFIG_VHOST_NET_USER', if_true: vhost_user_ss)
+-softmmu_ss.add(when: 'CONFIG_ALL', if_true: files('vhost-user-stub.c'))
++if have_vhost_net_user
++  softmmu_ss.add(when: 'CONFIG_VIRTIO_NET', if_true: files('vhost-user.c'), if_false: files('vhost-user-stub.c'))
++  softmmu_ss.add(when: 'CONFIG_ALL', if_true: files('vhost-user-stub.c'))
++endif
+ 
+ softmmu_ss.add(when: 'CONFIG_LINUX', if_true: files('tap-linux.c'))
+ softmmu_ss.add(when: 'CONFIG_BSD', if_true: files('tap-bsd.c'))
+@@ -40,6 +40,8 @@ if not config_host.has_key('CONFIG_LINUX') and not config_host.has_key('CONFIG_B
+ endif
+ softmmu_ss.add(when: 'CONFIG_POSIX', if_true: files(tap_posix))
+ softmmu_ss.add(when: 'CONFIG_WIN32', if_true: files('tap-win32.c'))
+-softmmu_ss.add(when: 'CONFIG_VHOST_NET_VDPA', if_true: files('vhost-vdpa.c'))
++if have_vhost_net_vdpa
++  softmmu_ss.add(files('vhost-vdpa.c'))
++endif
+ 
+ subdir('can')
+diff --git a/tests/qtest/meson.build b/tests/qtest/meson.build
+index 67cd32def1..9f550df900 100644
+--- a/tests/qtest/meson.build
++++ b/tests/qtest/meson.build
+@@ -269,7 +269,9 @@ qos_test_ss.add(
+ if have_virtfs
+   qos_test_ss.add(files('virtio-9p-test.c'))
+ endif
+-qos_test_ss.add(when: 'CONFIG_VHOST_USER', if_true: files('vhost-user-test.c'))
++if have_vhost_user
++  qos_test_ss.add(files('vhost-user-test.c'))
++endif
+ if have_tools and have_vhost_user_blk_server
+   qos_test_ss.add(files('vhost-user-blk-test.c'))
+ endif
+-- 
+2.31.1
+

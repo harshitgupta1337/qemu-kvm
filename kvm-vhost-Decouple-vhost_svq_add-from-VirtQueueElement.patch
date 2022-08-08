@@ -1,0 +1,138 @@
+From 5c8de23e185a1a1f0b19eac3c9fa03411c9f545c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 21 Jul 2022 15:38:55 +0200
+Subject: [PATCH 14/32] vhost: Decouple vhost_svq_add from VirtQueueElement
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 108: Net Control Virtqueue shadow Support
+RH-Commit: [14/27] 463087dd316adc91b9c7a4e6634c6fc1745c1849 (eperezmartin/qemu-kvm)
+RH-Bugzilla: 1939363
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/1939363
+
+Upstream Status: git://git.qemu.org/qemu.git
+
+commit 1f46ae65d85f677b660bda46685dd3e94885a7cb
+Author: Eugenio Pérez <eperezma@redhat.com>
+Date:   Wed Jul 20 08:59:33 2022 +0200
+
+    vhost: Decouple vhost_svq_add from VirtQueueElement
+
+    VirtQueueElement comes from the guest, but we're heading SVQ to be able
+    to modify the element presented to the device without the guest's
+    knowledge.
+
+    To do so, make SVQ accept sg buffers directly, instead of using
+    VirtQueueElement.
+
+    Add vhost_svq_add_element to maintain element convenience.
+
+    Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+    Acked-by: Jason Wang <jasowang@redhat.com>
+    Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+    Signed-off-by: Jason Wang <jasowang@redhat.com>
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+---
+ hw/virtio/vhost-shadow-virtqueue.c | 33 ++++++++++++++++++++----------
+ 1 file changed, 22 insertions(+), 11 deletions(-)
+
+diff --git a/hw/virtio/vhost-shadow-virtqueue.c b/hw/virtio/vhost-shadow-virtqueue.c
+index 1d2bab287b..3cec03d709 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.c
++++ b/hw/virtio/vhost-shadow-virtqueue.c
+@@ -172,30 +172,31 @@ static bool vhost_svq_vring_write_descs(VhostShadowVirtqueue *svq, hwaddr *sg,
+ }
+ 
+ static bool vhost_svq_add_split(VhostShadowVirtqueue *svq,
+-                                VirtQueueElement *elem, unsigned *head)
++                                const struct iovec *out_sg, size_t out_num,
++                                const struct iovec *in_sg, size_t in_num,
++                                unsigned *head)
+ {
+     unsigned avail_idx;
+     vring_avail_t *avail = svq->vring.avail;
+     bool ok;
+-    g_autofree hwaddr *sgs = g_new(hwaddr, MAX(elem->out_num, elem->in_num));
++    g_autofree hwaddr *sgs = g_new(hwaddr, MAX(out_num, in_num));
+ 
+     *head = svq->free_head;
+ 
+     /* We need some descriptors here */
+-    if (unlikely(!elem->out_num && !elem->in_num)) {
++    if (unlikely(!out_num && !in_num)) {
+         qemu_log_mask(LOG_GUEST_ERROR,
+                       "Guest provided element with no descriptors");
+         return false;
+     }
+ 
+-    ok = vhost_svq_vring_write_descs(svq, sgs, elem->out_sg, elem->out_num,
+-                                     elem->in_num > 0, false);
++    ok = vhost_svq_vring_write_descs(svq, sgs, out_sg, out_num, in_num > 0,
++                                     false);
+     if (unlikely(!ok)) {
+         return false;
+     }
+ 
+-    ok = vhost_svq_vring_write_descs(svq, sgs, elem->in_sg, elem->in_num, false,
+-                                     true);
++    ok = vhost_svq_vring_write_descs(svq, sgs, in_sg, in_num, false, true);
+     if (unlikely(!ok)) {
+         return false;
+     }
+@@ -237,17 +238,19 @@ static void vhost_svq_kick(VhostShadowVirtqueue *svq)
+  *
+  * Return -EINVAL if element is invalid, -ENOSPC if dev queue is full
+  */
+-static int vhost_svq_add(VhostShadowVirtqueue *svq, VirtQueueElement *elem)
++static int vhost_svq_add(VhostShadowVirtqueue *svq, const struct iovec *out_sg,
++                          size_t out_num, const struct iovec *in_sg,
++                          size_t in_num, VirtQueueElement *elem)
+ {
+     unsigned qemu_head;
+-    unsigned ndescs = elem->in_num + elem->out_num;
++    unsigned ndescs = in_num + out_num;
+     bool ok;
+ 
+     if (unlikely(ndescs > vhost_svq_available_slots(svq))) {
+         return -ENOSPC;
+     }
+ 
+-    ok = vhost_svq_add_split(svq, elem, &qemu_head);
++    ok = vhost_svq_add_split(svq, out_sg, out_num, in_sg, in_num, &qemu_head);
+     if (unlikely(!ok)) {
+         g_free(elem);
+         return -EINVAL;
+@@ -258,6 +261,14 @@ static int vhost_svq_add(VhostShadowVirtqueue *svq, VirtQueueElement *elem)
+     return 0;
+ }
+ 
++/* Convenience wrapper to add a guest's element to SVQ */
++static int vhost_svq_add_element(VhostShadowVirtqueue *svq,
++                                 VirtQueueElement *elem)
++{
++    return vhost_svq_add(svq, elem->out_sg, elem->out_num, elem->in_sg,
++                         elem->in_num, elem);
++}
++
+ /**
+  * Forward available buffers.
+  *
+@@ -294,7 +305,7 @@ static void vhost_handle_guest_kick(VhostShadowVirtqueue *svq)
+                 break;
+             }
+ 
+-            r = vhost_svq_add(svq, elem);
++            r = vhost_svq_add_element(svq, elem);
+             if (unlikely(r != 0)) {
+                 if (r == -ENOSPC) {
+                     /*
+-- 
+2.31.1
+

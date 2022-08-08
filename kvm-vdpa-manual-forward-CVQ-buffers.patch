@@ -1,0 +1,166 @@
+From c33bc0b7f2b5cfa330a6d89d60ee94de129c65c1 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 21 Jul 2022 16:05:38 +0200
+Subject: [PATCH 23/32] vdpa: manual forward CVQ buffers
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 108: Net Control Virtqueue shadow Support
+RH-Commit: [23/27] ce128d5152be7eebf87e186eb8b58c2ed95aff6d (eperezmartin/qemu-kvm)
+RH-Bugzilla: 1939363
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/1939363
+
+Upstream Status: git://git.qemu.org/qemu.git
+
+commit bd907ae4b00ebedad5e586af05ea3d6490318d45
+Author: Eugenio Pérez <eperezma@redhat.com>
+Date:   Wed Jul 20 08:59:42 2022 +0200
+
+    vdpa: manual forward CVQ buffers
+
+    Do a simple forwarding of CVQ buffers, the same work SVQ could do but
+    through callbacks. No functional change intended.
+
+    Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+    Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+    Signed-off-by: Jason Wang <jasowang@redhat.com>
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+---
+ hw/virtio/vhost-vdpa.c         |  3 +-
+ include/hw/virtio/vhost-vdpa.h |  3 ++
+ net/vhost-vdpa.c               | 58 ++++++++++++++++++++++++++++++++++
+ 3 files changed, 63 insertions(+), 1 deletion(-)
+
+diff --git a/hw/virtio/vhost-vdpa.c b/hw/virtio/vhost-vdpa.c
+index 14b02fe079..49effe5462 100644
+--- a/hw/virtio/vhost-vdpa.c
++++ b/hw/virtio/vhost-vdpa.c
+@@ -417,7 +417,8 @@ static int vhost_vdpa_init_svq(struct vhost_dev *hdev, struct vhost_vdpa *v,
+     for (unsigned n = 0; n < hdev->nvqs; ++n) {
+         g_autoptr(VhostShadowVirtqueue) svq;
+ 
+-        svq = vhost_svq_new(v->iova_tree, NULL, NULL);
++        svq = vhost_svq_new(v->iova_tree, v->shadow_vq_ops,
++                            v->shadow_vq_ops_opaque);
+         if (unlikely(!svq)) {
+             error_setg(errp, "Cannot create svq %u", n);
+             return -1;
+diff --git a/include/hw/virtio/vhost-vdpa.h b/include/hw/virtio/vhost-vdpa.h
+index 7214eb47dc..1111d85643 100644
+--- a/include/hw/virtio/vhost-vdpa.h
++++ b/include/hw/virtio/vhost-vdpa.h
+@@ -15,6 +15,7 @@
+ #include <gmodule.h>
+ 
+ #include "hw/virtio/vhost-iova-tree.h"
++#include "hw/virtio/vhost-shadow-virtqueue.h"
+ #include "hw/virtio/virtio.h"
+ #include "standard-headers/linux/vhost_types.h"
+ 
+@@ -35,6 +36,8 @@ typedef struct vhost_vdpa {
+     /* IOVA mapping used by the Shadow Virtqueue */
+     VhostIOVATree *iova_tree;
+     GPtrArray *shadow_vqs;
++    const VhostShadowVirtqueueOps *shadow_vq_ops;
++    void *shadow_vq_ops_opaque;
+     struct vhost_dev *dev;
+     VhostVDPAHostNotifier notifier[VIRTIO_QUEUE_MAX];
+ } VhostVDPA;
+diff --git a/net/vhost-vdpa.c b/net/vhost-vdpa.c
+index df1e69ee72..2e3b6b10d8 100644
+--- a/net/vhost-vdpa.c
++++ b/net/vhost-vdpa.c
+@@ -11,11 +11,14 @@
+ 
+ #include "qemu/osdep.h"
+ #include "clients.h"
++#include "hw/virtio/virtio-net.h"
+ #include "net/vhost_net.h"
+ #include "net/vhost-vdpa.h"
+ #include "hw/virtio/vhost-vdpa.h"
+ #include "qemu/config-file.h"
+ #include "qemu/error-report.h"
++#include "qemu/log.h"
++#include "qemu/memalign.h"
+ #include "qemu/option.h"
+ #include "qapi/error.h"
+ #include <linux/vhost.h>
+@@ -187,6 +190,57 @@ static NetClientInfo net_vhost_vdpa_info = {
+         .check_peer_type = vhost_vdpa_check_peer_type,
+ };
+ 
++/**
++ * Forward buffer for the moment.
++ */
++static int vhost_vdpa_net_handle_ctrl_avail(VhostShadowVirtqueue *svq,
++                                            VirtQueueElement *elem,
++                                            void *opaque)
++{
++    unsigned int n = elem->out_num + elem->in_num;
++    g_autofree struct iovec *dev_buffers = g_new(struct iovec, n);
++    size_t in_len, dev_written;
++    virtio_net_ctrl_ack status = VIRTIO_NET_ERR;
++    int r;
++
++    memcpy(dev_buffers, elem->out_sg, elem->out_num);
++    memcpy(dev_buffers + elem->out_num, elem->in_sg, elem->in_num);
++
++    r = vhost_svq_add(svq, &dev_buffers[0], elem->out_num, &dev_buffers[1],
++                      elem->in_num, elem);
++    if (unlikely(r != 0)) {
++        if (unlikely(r == -ENOSPC)) {
++            qemu_log_mask(LOG_GUEST_ERROR, "%s: No space on device queue\n",
++                          __func__);
++        }
++        goto out;
++    }
++
++    /*
++     * We can poll here since we've had BQL from the time we sent the
++     * descriptor. Also, we need to take the answer before SVQ pulls by itself,
++     * when BQL is released
++     */
++    dev_written = vhost_svq_poll(svq);
++    if (unlikely(dev_written < sizeof(status))) {
++        error_report("Insufficient written data (%zu)", dev_written);
++    }
++
++out:
++    in_len = iov_from_buf(elem->in_sg, elem->in_num, 0, &status,
++                          sizeof(status));
++    if (unlikely(in_len < sizeof(status))) {
++        error_report("Bad device CVQ written length");
++    }
++    vhost_svq_push_elem(svq, elem, MIN(in_len, sizeof(status)));
++    g_free(elem);
++    return r;
++}
++
++static const VhostShadowVirtqueueOps vhost_vdpa_net_svq_ops = {
++    .avail_handler = vhost_vdpa_net_handle_ctrl_avail,
++};
++
+ static NetClientState *net_vhost_vdpa_init(NetClientState *peer,
+                                            const char *device,
+                                            const char *name,
+@@ -211,6 +265,10 @@ static NetClientState *net_vhost_vdpa_init(NetClientState *peer,
+ 
+     s->vhost_vdpa.device_fd = vdpa_device_fd;
+     s->vhost_vdpa.index = queue_pair_index;
++    if (!is_datapath) {
++        s->vhost_vdpa.shadow_vq_ops = &vhost_vdpa_net_svq_ops;
++        s->vhost_vdpa.shadow_vq_ops_opaque = s;
++    }
+     ret = vhost_vdpa_add(nc, (void *)&s->vhost_vdpa, queue_pair_index, nvqs);
+     if (ret) {
+         qemu_del_net_client(nc);
+-- 
+2.31.1
+

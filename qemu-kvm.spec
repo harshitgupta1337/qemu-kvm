@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.0.0
-Release: 9%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 10%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -358,6 +358,70 @@ Patch101: kvm-pc-bios-s390-ccw-netboot.mak-Ignore-Clang-s-warnings.patch
 Patch102: kvm-hw-block-fdc-Prevent-end-of-track-overrun-CVE-2021-3.patch
 # For bz#1951522 - CVE-2021-3507 qemu-kvm: QEMU: fdc: heap buffer overflow in DMA read data transfers [rhel-9.0]
 Patch103: kvm-tests-qtest-fdc-test-Add-a-regression-test-for-CVE-2.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch104: kvm-vhost-Track-descriptor-chain-in-private-at-SVQ.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch105: kvm-vhost-Fix-device-s-used-descriptor-dequeue.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch106: kvm-hw-virtio-Replace-g_memdup-by-g_memdup2.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch107: kvm-vhost-Fix-element-in-vhost_svq_add-failure.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch108: kvm-meson-create-have_vhost_-variables.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch109: kvm-meson-use-have_vhost_-variables-to-pick-sources.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch110: kvm-vhost-move-descriptor-translation-to-vhost_svq_vring.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch111: kvm-virtio-net-Expose-MAC_TABLE_ENTRIES.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch112: kvm-virtio-net-Expose-ctrl-virtqueue-logic.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch113: kvm-vdpa-Avoid-compiler-to-squash-reads-to-used-idx.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch114: kvm-vhost-Reorder-vhost_svq_kick.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch115: kvm-vhost-Move-vhost_svq_kick-call-to-vhost_svq_add.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch116: kvm-vhost-Check-for-queue-full-at-vhost_svq_add.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch117: kvm-vhost-Decouple-vhost_svq_add-from-VirtQueueElement.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch118: kvm-vhost-Add-SVQDescState.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch119: kvm-vhost-Track-number-of-descs-in-SVQDescState.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch120: kvm-vhost-add-vhost_svq_push_elem.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch121: kvm-vhost-Expose-vhost_svq_add.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch122: kvm-vhost-add-vhost_svq_poll.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch123: kvm-vhost-Add-svq-avail_handler-callback.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch124: kvm-vdpa-Export-vhost_vdpa_dma_map-and-unmap-calls.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch125: kvm-vhost-net-vdpa-add-stubs-for-when-no-virtio-net-devi.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch126: kvm-vdpa-manual-forward-CVQ-buffers.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch127: kvm-vdpa-Buffer-CVQ-support-on-shadow-virtqueue.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch128: kvm-vdpa-Extract-get-features-part-from-vhost_vdpa_get_m.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch129: kvm-vdpa-Add-device-migration-blocker.patch
+# For bz#1939363 - vDPA control virtqueue support in Qemu
+Patch130: kvm-vdpa-Add-x-svq-to-NetdevVhostVDPAOptions.patch
+# For bz#2111994 - RHEL9: skey test in kvm_unit_test got failed
+Patch131: kvm-redhat-Update-linux-headers-linux-kvm.h-to-v5.18-rc6.patch
+# For bz#2111994 - RHEL9: skey test in kvm_unit_test got failed
+Patch132: kvm-target-s390x-kvm-Honor-storage-keys-during-emulation.patch
+# For bz#2095608 - Please correct the error message when try to start qemu with "-M kernel-irqchip=split"
+Patch133: kvm-kvm-don-t-use-perror-without-useful-errno.patch
+# For bz#2099934 - Guest reboot on destination host after postcopy migration completed
+Patch134: kvm-multifd-Copy-pages-before-compressing-them-with-zlib.patch
+# For bz#2099934 - Guest reboot on destination host after postcopy migration completed
+Patch135: kvm-Revert-migration-Simplify-unqueue_page.patch
 
 # Source-git patches
 
@@ -1393,6 +1457,48 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Aug 08 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-10
+- kvm-vhost-Track-descriptor-chain-in-private-at-SVQ.patch [bz#1939363]
+- kvm-vhost-Fix-device-s-used-descriptor-dequeue.patch [bz#1939363]
+- kvm-hw-virtio-Replace-g_memdup-by-g_memdup2.patch [bz#1939363]
+- kvm-vhost-Fix-element-in-vhost_svq_add-failure.patch [bz#1939363]
+- kvm-meson-create-have_vhost_-variables.patch [bz#1939363]
+- kvm-meson-use-have_vhost_-variables-to-pick-sources.patch [bz#1939363]
+- kvm-vhost-move-descriptor-translation-to-vhost_svq_vring.patch [bz#1939363]
+- kvm-virtio-net-Expose-MAC_TABLE_ENTRIES.patch [bz#1939363]
+- kvm-virtio-net-Expose-ctrl-virtqueue-logic.patch [bz#1939363]
+- kvm-vdpa-Avoid-compiler-to-squash-reads-to-used-idx.patch [bz#1939363]
+- kvm-vhost-Reorder-vhost_svq_kick.patch [bz#1939363]
+- kvm-vhost-Move-vhost_svq_kick-call-to-vhost_svq_add.patch [bz#1939363]
+- kvm-vhost-Check-for-queue-full-at-vhost_svq_add.patch [bz#1939363]
+- kvm-vhost-Decouple-vhost_svq_add-from-VirtQueueElement.patch [bz#1939363]
+- kvm-vhost-Add-SVQDescState.patch [bz#1939363]
+- kvm-vhost-Track-number-of-descs-in-SVQDescState.patch [bz#1939363]
+- kvm-vhost-add-vhost_svq_push_elem.patch [bz#1939363]
+- kvm-vhost-Expose-vhost_svq_add.patch [bz#1939363]
+- kvm-vhost-add-vhost_svq_poll.patch [bz#1939363]
+- kvm-vhost-Add-svq-avail_handler-callback.patch [bz#1939363]
+- kvm-vdpa-Export-vhost_vdpa_dma_map-and-unmap-calls.patch [bz#1939363]
+- kvm-vhost-net-vdpa-add-stubs-for-when-no-virtio-net-devi.patch [bz#1939363]
+- kvm-vdpa-manual-forward-CVQ-buffers.patch [bz#1939363]
+- kvm-vdpa-Buffer-CVQ-support-on-shadow-virtqueue.patch [bz#1939363]
+- kvm-vdpa-Extract-get-features-part-from-vhost_vdpa_get_m.patch [bz#1939363]
+- kvm-vdpa-Add-device-migration-blocker.patch [bz#1939363]
+- kvm-vdpa-Add-x-svq-to-NetdevVhostVDPAOptions.patch [bz#1939363]
+- kvm-redhat-Update-linux-headers-linux-kvm.h-to-v5.18-rc6.patch [bz#2111994]
+- kvm-target-s390x-kvm-Honor-storage-keys-during-emulation.patch [bz#2111994]
+- kvm-kvm-don-t-use-perror-without-useful-errno.patch [bz#2095608]
+- kvm-multifd-Copy-pages-before-compressing-them-with-zlib.patch [bz#2099934]
+- kvm-Revert-migration-Simplify-unqueue_page.patch [bz#2099934]
+- Resolves: bz#1939363
+  (vDPA control virtqueue support in Qemu)
+- Resolves: bz#2111994
+  (RHEL9: skey test in kvm_unit_test got failed)
+- Resolves: bz#2095608
+  (Please correct the error message when try to start qemu with "-M kernel-irqchip=split")
+- Resolves: bz#2099934
+  (Guest reboot on destination host after postcopy migration completed)
+
 * Mon Jul 18 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-9
 - kvm-virtio-iommu-Add-bypass-mode-support-to-assigned-dev.patch [bz#2100106]
 - kvm-virtio-iommu-Use-recursive-lock-to-avoid-deadlock.patch [bz#2100106]

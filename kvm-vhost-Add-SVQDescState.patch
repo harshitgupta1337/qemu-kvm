@@ -1,0 +1,135 @@
+From 14200f493243f73152ea4a4b97274f0ec4fb36fa Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 21 Jul 2022 15:38:55 +0200
+Subject: [PATCH 15/32] vhost: Add SVQDescState
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 108: Net Control Virtqueue shadow Support
+RH-Commit: [15/27] 2e2866f22e37cace8598ff44dfcdc07fcc915d6d (eperezmartin/qemu-kvm)
+RH-Bugzilla: 1939363
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/1939363
+
+Upstream Status: git://git.qemu.org/qemu.git
+
+commit 9e87868fcaf5785c8e1490c290505fa32305ff91
+Author: Eugenio Pérez <eperezma@redhat.com>
+Date:   Wed Jul 20 08:59:34 2022 +0200
+
+    vhost: Add SVQDescState
+
+    This will allow SVQ to add context to the different queue elements.
+
+    This patch only store the actual element, no functional change intended.
+
+    Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+    Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+    Signed-off-by: Jason Wang <jasowang@redhat.com>
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+---
+ hw/virtio/vhost-shadow-virtqueue.c | 16 ++++++++--------
+ hw/virtio/vhost-shadow-virtqueue.h |  8 ++++++--
+ 2 files changed, 14 insertions(+), 10 deletions(-)
+
+diff --git a/hw/virtio/vhost-shadow-virtqueue.c b/hw/virtio/vhost-shadow-virtqueue.c
+index 3cec03d709..a08e3d4025 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.c
++++ b/hw/virtio/vhost-shadow-virtqueue.c
+@@ -256,7 +256,7 @@ static int vhost_svq_add(VhostShadowVirtqueue *svq, const struct iovec *out_sg,
+         return -EINVAL;
+     }
+ 
+-    svq->ring_id_maps[qemu_head] = elem;
++    svq->desc_state[qemu_head].elem = elem;
+     vhost_svq_kick(svq);
+     return 0;
+ }
+@@ -411,21 +411,21 @@ static VirtQueueElement *vhost_svq_get_buf(VhostShadowVirtqueue *svq,
+         return NULL;
+     }
+ 
+-    if (unlikely(!svq->ring_id_maps[used_elem.id])) {
++    if (unlikely(!svq->desc_state[used_elem.id].elem)) {
+         qemu_log_mask(LOG_GUEST_ERROR,
+             "Device %s says index %u is used, but it was not available",
+             svq->vdev->name, used_elem.id);
+         return NULL;
+     }
+ 
+-    num = svq->ring_id_maps[used_elem.id]->in_num +
+-          svq->ring_id_maps[used_elem.id]->out_num;
++    num = svq->desc_state[used_elem.id].elem->in_num +
++          svq->desc_state[used_elem.id].elem->out_num;
+     last_used_chain = vhost_svq_last_desc_of_chain(svq, num, used_elem.id);
+     svq->desc_next[last_used_chain] = svq->free_head;
+     svq->free_head = used_elem.id;
+ 
+     *len = used_elem.len;
+-    return g_steal_pointer(&svq->ring_id_maps[used_elem.id]);
++    return g_steal_pointer(&svq->desc_state[used_elem.id].elem);
+ }
+ 
+ static void vhost_svq_flush(VhostShadowVirtqueue *svq,
+@@ -595,7 +595,7 @@ void vhost_svq_start(VhostShadowVirtqueue *svq, VirtIODevice *vdev,
+     memset(svq->vring.desc, 0, driver_size);
+     svq->vring.used = qemu_memalign(qemu_real_host_page_size, device_size);
+     memset(svq->vring.used, 0, device_size);
+-    svq->ring_id_maps = g_new0(VirtQueueElement *, svq->vring.num);
++    svq->desc_state = g_new0(SVQDescState, svq->vring.num);
+     svq->desc_next = g_new0(uint16_t, svq->vring.num);
+     for (unsigned i = 0; i < svq->vring.num - 1; i++) {
+         svq->desc_next[i] = cpu_to_le16(i + 1);
+@@ -620,7 +620,7 @@ void vhost_svq_stop(VhostShadowVirtqueue *svq)
+ 
+     for (unsigned i = 0; i < svq->vring.num; ++i) {
+         g_autofree VirtQueueElement *elem = NULL;
+-        elem = g_steal_pointer(&svq->ring_id_maps[i]);
++        elem = g_steal_pointer(&svq->desc_state[i].elem);
+         if (elem) {
+             virtqueue_detach_element(svq->vq, elem, 0);
+         }
+@@ -632,7 +632,7 @@ void vhost_svq_stop(VhostShadowVirtqueue *svq)
+     }
+     svq->vq = NULL;
+     g_free(svq->desc_next);
+-    g_free(svq->ring_id_maps);
++    g_free(svq->desc_state);
+     qemu_vfree(svq->vring.desc);
+     qemu_vfree(svq->vring.used);
+ }
+diff --git a/hw/virtio/vhost-shadow-virtqueue.h b/hw/virtio/vhost-shadow-virtqueue.h
+index c132c994e9..d646c35054 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.h
++++ b/hw/virtio/vhost-shadow-virtqueue.h
+@@ -15,6 +15,10 @@
+ #include "standard-headers/linux/vhost_types.h"
+ #include "hw/virtio/vhost-iova-tree.h"
+ 
++typedef struct SVQDescState {
++    VirtQueueElement *elem;
++} SVQDescState;
++
+ /* Shadow virtqueue to relay notifications */
+ typedef struct VhostShadowVirtqueue {
+     /* Shadow vring */
+@@ -47,8 +51,8 @@ typedef struct VhostShadowVirtqueue {
+     /* IOVA mapping */
+     VhostIOVATree *iova_tree;
+ 
+-    /* Map for use the guest's descriptors */
+-    VirtQueueElement **ring_id_maps;
++    /* SVQ vring descriptors state */
++    SVQDescState *desc_state;
+ 
+     /* Next VirtQueue element that guest made available */
+     VirtQueueElement *next_guest_avail_elem;
+-- 
+2.31.1
+

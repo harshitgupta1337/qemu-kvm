@@ -1,0 +1,169 @@
+From 49e91b34b62f5da147fa2fb80d203dd675c48f64 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 21 Jul 2022 15:38:55 +0200
+Subject: [PATCH 09/32] virtio-net: Expose ctrl virtqueue logic
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 108: Net Control Virtqueue shadow Support
+RH-Commit: [9/27] c4ab1e35f4ca728df82a687763c662369282c513 (eperezmartin/qemu-kvm)
+RH-Bugzilla: 1939363
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/1939363
+
+Upstream Status: git://git.qemu.org/qemu.git
+
+commit 640b8a1c588b56349b3307d88459ea1cd86181fb
+Author: Eugenio Pérez <eperezma@redhat.com>
+Date:   Wed Jul 20 08:59:28 2022 +0200
+
+    virtio-net: Expose ctrl virtqueue logic
+
+    This allows external vhost-net devices to modify the state of the
+    VirtIO device model once the vhost-vdpa device has acknowledged the
+    control commands.
+
+    Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+    Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+    Signed-off-by: Jason Wang <jasowang@redhat.com>
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+---
+ hw/net/virtio-net.c            | 84 ++++++++++++++++++++--------------
+ include/hw/virtio/virtio-net.h |  4 ++
+ 2 files changed, 53 insertions(+), 35 deletions(-)
+
+diff --git a/hw/net/virtio-net.c b/hw/net/virtio-net.c
+index 2a127f0a3b..59bedba681 100644
+--- a/hw/net/virtio-net.c
++++ b/hw/net/virtio-net.c
+@@ -1433,57 +1433,71 @@ static int virtio_net_handle_mq(VirtIONet *n, uint8_t cmd,
+     return VIRTIO_NET_OK;
+ }
+ 
+-static void virtio_net_handle_ctrl(VirtIODevice *vdev, VirtQueue *vq)
++size_t virtio_net_handle_ctrl_iov(VirtIODevice *vdev,
++                                  const struct iovec *in_sg, unsigned in_num,
++                                  const struct iovec *out_sg,
++                                  unsigned out_num)
+ {
+     VirtIONet *n = VIRTIO_NET(vdev);
+     struct virtio_net_ctrl_hdr ctrl;
+     virtio_net_ctrl_ack status = VIRTIO_NET_ERR;
+-    VirtQueueElement *elem;
+     size_t s;
+     struct iovec *iov, *iov2;
+-    unsigned int iov_cnt;
++
++    if (iov_size(in_sg, in_num) < sizeof(status) ||
++        iov_size(out_sg, out_num) < sizeof(ctrl)) {
++        virtio_error(vdev, "virtio-net ctrl missing headers");
++        return 0;
++    }
++
++    iov2 = iov = g_memdup2(out_sg, sizeof(struct iovec) * out_num);
++    s = iov_to_buf(iov, out_num, 0, &ctrl, sizeof(ctrl));
++    iov_discard_front(&iov, &out_num, sizeof(ctrl));
++    if (s != sizeof(ctrl)) {
++        status = VIRTIO_NET_ERR;
++    } else if (ctrl.class == VIRTIO_NET_CTRL_RX) {
++        status = virtio_net_handle_rx_mode(n, ctrl.cmd, iov, out_num);
++    } else if (ctrl.class == VIRTIO_NET_CTRL_MAC) {
++        status = virtio_net_handle_mac(n, ctrl.cmd, iov, out_num);
++    } else if (ctrl.class == VIRTIO_NET_CTRL_VLAN) {
++        status = virtio_net_handle_vlan_table(n, ctrl.cmd, iov, out_num);
++    } else if (ctrl.class == VIRTIO_NET_CTRL_ANNOUNCE) {
++        status = virtio_net_handle_announce(n, ctrl.cmd, iov, out_num);
++    } else if (ctrl.class == VIRTIO_NET_CTRL_MQ) {
++        status = virtio_net_handle_mq(n, ctrl.cmd, iov, out_num);
++    } else if (ctrl.class == VIRTIO_NET_CTRL_GUEST_OFFLOADS) {
++        status = virtio_net_handle_offloads(n, ctrl.cmd, iov, out_num);
++    }
++
++    s = iov_from_buf(in_sg, in_num, 0, &status, sizeof(status));
++    assert(s == sizeof(status));
++
++    g_free(iov2);
++    return sizeof(status);
++}
++
++static void virtio_net_handle_ctrl(VirtIODevice *vdev, VirtQueue *vq)
++{
++    VirtQueueElement *elem;
+ 
+     for (;;) {
++        size_t written;
+         elem = virtqueue_pop(vq, sizeof(VirtQueueElement));
+         if (!elem) {
+             break;
+         }
+-        if (iov_size(elem->in_sg, elem->in_num) < sizeof(status) ||
+-            iov_size(elem->out_sg, elem->out_num) < sizeof(ctrl)) {
+-            virtio_error(vdev, "virtio-net ctrl missing headers");
++
++        written = virtio_net_handle_ctrl_iov(vdev, elem->in_sg, elem->in_num,
++                                             elem->out_sg, elem->out_num);
++        if (written > 0) {
++            virtqueue_push(vq, elem, written);
++            virtio_notify(vdev, vq);
++            g_free(elem);
++        } else {
+             virtqueue_detach_element(vq, elem, 0);
+             g_free(elem);
+             break;
+         }
+-
+-        iov_cnt = elem->out_num;
+-        iov2 = iov = g_memdup2(elem->out_sg,
+-                               sizeof(struct iovec) * elem->out_num);
+-        s = iov_to_buf(iov, iov_cnt, 0, &ctrl, sizeof(ctrl));
+-        iov_discard_front(&iov, &iov_cnt, sizeof(ctrl));
+-        if (s != sizeof(ctrl)) {
+-            status = VIRTIO_NET_ERR;
+-        } else if (ctrl.class == VIRTIO_NET_CTRL_RX) {
+-            status = virtio_net_handle_rx_mode(n, ctrl.cmd, iov, iov_cnt);
+-        } else if (ctrl.class == VIRTIO_NET_CTRL_MAC) {
+-            status = virtio_net_handle_mac(n, ctrl.cmd, iov, iov_cnt);
+-        } else if (ctrl.class == VIRTIO_NET_CTRL_VLAN) {
+-            status = virtio_net_handle_vlan_table(n, ctrl.cmd, iov, iov_cnt);
+-        } else if (ctrl.class == VIRTIO_NET_CTRL_ANNOUNCE) {
+-            status = virtio_net_handle_announce(n, ctrl.cmd, iov, iov_cnt);
+-        } else if (ctrl.class == VIRTIO_NET_CTRL_MQ) {
+-            status = virtio_net_handle_mq(n, ctrl.cmd, iov, iov_cnt);
+-        } else if (ctrl.class == VIRTIO_NET_CTRL_GUEST_OFFLOADS) {
+-            status = virtio_net_handle_offloads(n, ctrl.cmd, iov, iov_cnt);
+-        }
+-
+-        s = iov_from_buf(elem->in_sg, elem->in_num, 0, &status, sizeof(status));
+-        assert(s == sizeof(status));
+-
+-        virtqueue_push(vq, elem, sizeof(status));
+-        virtio_notify(vdev, vq);
+-        g_free(iov2);
+-        g_free(elem);
+     }
+ }
+ 
+diff --git a/include/hw/virtio/virtio-net.h b/include/hw/virtio/virtio-net.h
+index cce1c554f7..ef234ffe7e 100644
+--- a/include/hw/virtio/virtio-net.h
++++ b/include/hw/virtio/virtio-net.h
+@@ -221,6 +221,10 @@ struct VirtIONet {
+     struct EBPFRSSContext ebpf_rss;
+ };
+ 
++size_t virtio_net_handle_ctrl_iov(VirtIODevice *vdev,
++                                  const struct iovec *in_sg, unsigned in_num,
++                                  const struct iovec *out_sg,
++                                  unsigned out_num);
+ void virtio_net_set_netclient_name(VirtIONet *n, const char *name,
+                                    const char *type);
+ 
+-- 
+2.31.1
+

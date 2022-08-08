@@ -1,0 +1,73 @@
+From cefd6583a8483c7a80f9cde8f7ad4705983af9e7 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 21 Jul 2022 15:38:55 +0200
+Subject: [PATCH 18/32] vhost: Expose vhost_svq_add
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 108: Net Control Virtqueue shadow Support
+RH-Commit: [18/27] bfb44f597d350336113783bcc9b3c9d9d32ff8c0 (eperezmartin/qemu-kvm)
+RH-Bugzilla: 1939363
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/1939363
+
+Upstream Status: git://git.qemu.org/qemu.git
+
+commit d0291f3f284d3bc220cdb13b0d8ac8a44eb5fd4c
+Author: Eugenio Pérez <eperezma@redhat.com>
+Date:   Wed Jul 20 08:59:37 2022 +0200
+
+    vhost: Expose vhost_svq_add
+
+    This allows external parts of SVQ to forward custom buffers to the
+    device.
+
+    Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+    Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+    Signed-off-by: Jason Wang <jasowang@redhat.com>
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+---
+ hw/virtio/vhost-shadow-virtqueue.c | 6 +++---
+ hw/virtio/vhost-shadow-virtqueue.h | 3 +++
+ 2 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/hw/virtio/vhost-shadow-virtqueue.c b/hw/virtio/vhost-shadow-virtqueue.c
+index 1ce52d5b4a..cb879e7b88 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.c
++++ b/hw/virtio/vhost-shadow-virtqueue.c
+@@ -238,9 +238,9 @@ static void vhost_svq_kick(VhostShadowVirtqueue *svq)
+  *
+  * Return -EINVAL if element is invalid, -ENOSPC if dev queue is full
+  */
+-static int vhost_svq_add(VhostShadowVirtqueue *svq, const struct iovec *out_sg,
+-                          size_t out_num, const struct iovec *in_sg,
+-                          size_t in_num, VirtQueueElement *elem)
++int vhost_svq_add(VhostShadowVirtqueue *svq, const struct iovec *out_sg,
++                  size_t out_num, const struct iovec *in_sg, size_t in_num,
++                  VirtQueueElement *elem)
+ {
+     unsigned qemu_head;
+     unsigned ndescs = in_num + out_num;
+diff --git a/hw/virtio/vhost-shadow-virtqueue.h b/hw/virtio/vhost-shadow-virtqueue.h
+index d9fc1f1799..dd78f4bec2 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.h
++++ b/hw/virtio/vhost-shadow-virtqueue.h
+@@ -86,6 +86,9 @@ bool vhost_svq_valid_features(uint64_t features, Error **errp);
+ 
+ void vhost_svq_push_elem(VhostShadowVirtqueue *svq,
+                          const VirtQueueElement *elem, uint32_t len);
++int vhost_svq_add(VhostShadowVirtqueue *svq, const struct iovec *out_sg,
++                  size_t out_num, const struct iovec *in_sg, size_t in_num,
++                  VirtQueueElement *elem);
+ 
+ void vhost_svq_set_svq_kick_fd(VhostShadowVirtqueue *svq, int svq_kick_fd);
+ void vhost_svq_set_svq_call_fd(VhostShadowVirtqueue *svq, int call_fd);
+-- 
+2.31.1
+

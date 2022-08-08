@@ -1,0 +1,84 @@
+From 3a5d325fcb2958318262efac31d5fd25fb062523 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 21 Jul 2022 15:38:55 +0200
+Subject: [PATCH 21/32] vdpa: Export vhost_vdpa_dma_map and unmap calls
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 108: Net Control Virtqueue shadow Support
+RH-Commit: [21/27] 97e7a583bbd3c12a0786d53132812ec41702c190 (eperezmartin/qemu-kvm)
+RH-Bugzilla: 1939363
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/1939363
+
+Upstream Status: git://git.qemu.org/qemu.git
+
+commit 463ba1e3b8cf080812895c5f26d95d8d7db2e692
+Author: Eugenio Pérez <eperezma@redhat.com>
+Date:   Wed Jul 20 08:59:40 2022 +0200
+
+    vdpa: Export vhost_vdpa_dma_map and unmap calls
+
+    Shadow CVQ will copy buffers on qemu VA, so we avoid TOCTOU attacks from
+    the guest that could set a different state in qemu device model and vdpa
+    device.
+
+    To do so, it needs to be able to map these new buffers to the device.
+
+    Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+    Acked-by: Jason Wang <jasowang@redhat.com>
+    Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+    Signed-off-by: Jason Wang <jasowang@redhat.com>
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+---
+ hw/virtio/vhost-vdpa.c         | 7 +++----
+ include/hw/virtio/vhost-vdpa.h | 4 ++++
+ 2 files changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/hw/virtio/vhost-vdpa.c b/hw/virtio/vhost-vdpa.c
+index 28df57b12e..14b02fe079 100644
+--- a/hw/virtio/vhost-vdpa.c
++++ b/hw/virtio/vhost-vdpa.c
+@@ -71,8 +71,8 @@ static bool vhost_vdpa_listener_skipped_section(MemoryRegionSection *section,
+     return false;
+ }
+ 
+-static int vhost_vdpa_dma_map(struct vhost_vdpa *v, hwaddr iova, hwaddr size,
+-                              void *vaddr, bool readonly)
++int vhost_vdpa_dma_map(struct vhost_vdpa *v, hwaddr iova, hwaddr size,
++                       void *vaddr, bool readonly)
+ {
+     struct vhost_msg_v2 msg = {};
+     int fd = v->device_fd;
+@@ -97,8 +97,7 @@ static int vhost_vdpa_dma_map(struct vhost_vdpa *v, hwaddr iova, hwaddr size,
+     return ret;
+ }
+ 
+-static int vhost_vdpa_dma_unmap(struct vhost_vdpa *v, hwaddr iova,
+-                                hwaddr size)
++int vhost_vdpa_dma_unmap(struct vhost_vdpa *v, hwaddr iova, hwaddr size)
+ {
+     struct vhost_msg_v2 msg = {};
+     int fd = v->device_fd;
+diff --git a/include/hw/virtio/vhost-vdpa.h b/include/hw/virtio/vhost-vdpa.h
+index a29dbb3f53..7214eb47dc 100644
+--- a/include/hw/virtio/vhost-vdpa.h
++++ b/include/hw/virtio/vhost-vdpa.h
+@@ -39,4 +39,8 @@ typedef struct vhost_vdpa {
+     VhostVDPAHostNotifier notifier[VIRTIO_QUEUE_MAX];
+ } VhostVDPA;
+ 
++int vhost_vdpa_dma_map(struct vhost_vdpa *v, hwaddr iova, hwaddr size,
++                       void *vaddr, bool readonly);
++int vhost_vdpa_dma_unmap(struct vhost_vdpa *v, hwaddr iova, hwaddr size);
++
+ #endif
+-- 
+2.31.1
+

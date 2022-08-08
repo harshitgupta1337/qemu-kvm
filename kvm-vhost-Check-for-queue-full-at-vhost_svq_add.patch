@@ -1,0 +1,134 @@
+From 893dffb820973361bcef33612a6b924554a856c1 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 21 Jul 2022 15:38:55 +0200
+Subject: [PATCH 13/32] vhost: Check for queue full at vhost_svq_add
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 108: Net Control Virtqueue shadow Support
+RH-Commit: [13/27] d4bd8299fb7733a1e190618dfc92b4b53b7bbeb3 (eperezmartin/qemu-kvm)
+RH-Bugzilla: 1939363
+RH-Acked-by: Stefano Garzarella <sgarzare@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/1939363
+
+Upstream Status: git://git.qemu.org/qemu.git
+
+commit f20b70eb5a68cfd8fef74a13ccdd494ef1cb0221
+Author: Eugenio Pérez <eperezma@redhat.com>
+Date:   Wed Jul 20 08:59:32 2022 +0200
+
+    vhost: Check for queue full at vhost_svq_add
+
+    The series need to expose vhost_svq_add with full functionality,
+    including checking for full queue.
+
+    Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+    Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+    Signed-off-by: Jason Wang <jasowang@redhat.com>
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+---
+ hw/virtio/vhost-shadow-virtqueue.c | 59 +++++++++++++++++-------------
+ 1 file changed, 33 insertions(+), 26 deletions(-)
+
+diff --git a/hw/virtio/vhost-shadow-virtqueue.c b/hw/virtio/vhost-shadow-virtqueue.c
+index e3fc3c2658..1d2bab287b 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.c
++++ b/hw/virtio/vhost-shadow-virtqueue.c
+@@ -233,21 +233,29 @@ static void vhost_svq_kick(VhostShadowVirtqueue *svq)
+  * Add an element to a SVQ.
+  *
+  * The caller must check that there is enough slots for the new element. It
+- * takes ownership of the element: In case of failure, it is free and the SVQ
+- * is considered broken.
++ * takes ownership of the element: In case of failure not ENOSPC, it is free.
++ *
++ * Return -EINVAL if element is invalid, -ENOSPC if dev queue is full
+  */
+-static bool vhost_svq_add(VhostShadowVirtqueue *svq, VirtQueueElement *elem)
++static int vhost_svq_add(VhostShadowVirtqueue *svq, VirtQueueElement *elem)
+ {
+     unsigned qemu_head;
+-    bool ok = vhost_svq_add_split(svq, elem, &qemu_head);
++    unsigned ndescs = elem->in_num + elem->out_num;
++    bool ok;
++
++    if (unlikely(ndescs > vhost_svq_available_slots(svq))) {
++        return -ENOSPC;
++    }
++
++    ok = vhost_svq_add_split(svq, elem, &qemu_head);
+     if (unlikely(!ok)) {
+         g_free(elem);
+-        return false;
++        return -EINVAL;
+     }
+ 
+     svq->ring_id_maps[qemu_head] = elem;
+     vhost_svq_kick(svq);
+-    return true;
++    return 0;
+ }
+ 
+ /**
+@@ -274,7 +282,7 @@ static void vhost_handle_guest_kick(VhostShadowVirtqueue *svq)
+ 
+         while (true) {
+             VirtQueueElement *elem;
+-            bool ok;
++            int r;
+ 
+             if (svq->next_guest_avail_elem) {
+                 elem = g_steal_pointer(&svq->next_guest_avail_elem);
+@@ -286,25 +294,24 @@ static void vhost_handle_guest_kick(VhostShadowVirtqueue *svq)
+                 break;
+             }
+ 
+-            if (elem->out_num + elem->in_num > vhost_svq_available_slots(svq)) {
+-                /*
+-                 * This condition is possible since a contiguous buffer in GPA
+-                 * does not imply a contiguous buffer in qemu's VA
+-                 * scatter-gather segments. If that happens, the buffer exposed
+-                 * to the device needs to be a chain of descriptors at this
+-                 * moment.
+-                 *
+-                 * SVQ cannot hold more available buffers if we are here:
+-                 * queue the current guest descriptor and ignore further kicks
+-                 * until some elements are used.
+-                 */
+-                svq->next_guest_avail_elem = elem;
+-                return;
+-            }
+-
+-            ok = vhost_svq_add(svq, elem);
+-            if (unlikely(!ok)) {
+-                /* VQ is broken, just return and ignore any other kicks */
++            r = vhost_svq_add(svq, elem);
++            if (unlikely(r != 0)) {
++                if (r == -ENOSPC) {
++                    /*
++                     * This condition is possible since a contiguous buffer in
++                     * GPA does not imply a contiguous buffer in qemu's VA
++                     * scatter-gather segments. If that happens, the buffer
++                     * exposed to the device needs to be a chain of descriptors
++                     * at this moment.
++                     *
++                     * SVQ cannot hold more available buffers if we are here:
++                     * queue the current guest descriptor and ignore kicks
++                     * until some elements are used.
++                     */
++                    svq->next_guest_avail_elem = elem;
++                }
++
++                /* VQ is full or broken, just return and ignore kicks */
+                 return;
+             }
+         }
+-- 
+2.31.1
+
