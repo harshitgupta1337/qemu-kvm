@@ -1,0 +1,61 @@
+From b212edc97a471c75f8b8b44ee2a3a2cf82ef14d9 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Fri, 22 Jul 2022 10:26:30 +0200
+Subject: [PATCH 10/11] vdpa: Fix memory listener deletions of iova tree
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 114: vdpa: Fix memory listener deletions of iova tree
+RH-Commit: [3/4] ad71f098b3fa8654962ac7872b5393c37c9825f2 (eperezmartin/qemu-kvm)
+RH-Bugzilla: 2116876
+RH-Acked-by: Jason Wang <jasowang@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+vhost_vdpa_listener_region_del is always deleting the first iova entry
+of the tree, since it's using the needle iova instead of the result's
+one.
+
+This was detected using a vga virtual device in the VM using vdpa SVQ.
+It makes some extra memory adding and deleting, so the wrong one was
+mapped / unmapped. This was undetected before since all the memory was
+mappend and unmapped totally without that device, but other conditions
+could trigger it too:
+
+* mem_region was with .iova = 0, .translated_addr = (correct GPA).
+* iova_tree_find_iova returned right result, but does not update
+  mem_region.
+* iova_tree_remove always removed region with .iova = 0. Right iova were
+  sent to the device.
+* Next map will fill the first region with .iova = 0, causing a mapping
+  with the same iova and device complains, if the next action is a map.
+* Next unmap will cause to try to unmap again iova = 0, causing the
+  device to complain that no region was mapped at iova = 0.
+
+Fixes: 34e3c94edaef ("vdpa: Add custom IOTLB translations to SVQ")
+Reported-by: Lei Yang <leiyang@redhat.com>
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Signed-off-by: Jason Wang <jasowang@redhat.com>
+(cherry picked from commit 75a8ce64f6e37513698857fb4284170da163ed06)
+---
+ hw/virtio/vhost-vdpa.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/hw/virtio/vhost-vdpa.c b/hw/virtio/vhost-vdpa.c
+index f877b354fa..03dc6014b0 100644
+--- a/hw/virtio/vhost-vdpa.c
++++ b/hw/virtio/vhost-vdpa.c
+@@ -288,7 +288,7 @@ static void vhost_vdpa_listener_region_del(MemoryListener *listener,
+ 
+         result = vhost_iova_tree_find_iova(v->iova_tree, &mem_region);
+         iova = result->iova;
+-        vhost_iova_tree_remove(v->iova_tree, &mem_region);
++        vhost_iova_tree_remove(v->iova_tree, result);
+     }
+     vhost_vdpa_iotlb_batch_begin_once(v);
+     ret = vhost_vdpa_dma_unmap(v, iova, int128_get64(llsize));
+-- 
+2.31.1
+

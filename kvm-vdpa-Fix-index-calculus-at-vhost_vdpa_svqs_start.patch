@@ -1,0 +1,45 @@
+From 6335431b70dd55c1d52152d726fa462db2e10eb8 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 12 May 2022 19:57:45 +0200
+Subject: [PATCH 09/11] vdpa: Fix index calculus at vhost_vdpa_svqs_start
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 114: vdpa: Fix memory listener deletions of iova tree
+RH-Commit: [2/4] 9ce732e6bba426f8e00020ee6ad77f972f3e75b5 (eperezmartin/qemu-kvm)
+RH-Bugzilla: 2116876
+RH-Acked-by: Jason Wang <jasowang@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+With the introduction of MQ the index of the vq needs to be calculated
+with the device model vq_index.
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Acked-by: Jason Wang <jasowang@redhat.com>
+Message-Id: <20220512175747.142058-5-eperezma@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit 1c82fdfef8a227518ffecae9d419bcada995c202)
+---
+ hw/virtio/vhost-vdpa.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/hw/virtio/vhost-vdpa.c b/hw/virtio/vhost-vdpa.c
+index a7dfac530f..f877b354fa 100644
+--- a/hw/virtio/vhost-vdpa.c
++++ b/hw/virtio/vhost-vdpa.c
+@@ -1032,7 +1032,7 @@ static bool vhost_vdpa_svqs_start(struct vhost_dev *dev)
+         VirtQueue *vq = virtio_get_queue(dev->vdev, dev->vq_index + i);
+         VhostShadowVirtqueue *svq = g_ptr_array_index(v->shadow_vqs, i);
+         struct vhost_vring_addr addr = {
+-            .index = i,
++            .index = dev->vq_index + i,
+         };
+         int r;
+         bool ok = vhost_vdpa_svq_setup(dev, svq, i, &err);
+-- 
+2.31.1
+

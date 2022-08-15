@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.0.0
-Release: 10%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 11%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -422,6 +422,28 @@ Patch133: kvm-kvm-don-t-use-perror-without-useful-errno.patch
 Patch134: kvm-multifd-Copy-pages-before-compressing-them-with-zlib.patch
 # For bz#2099934 - Guest reboot on destination host after postcopy migration completed
 Patch135: kvm-Revert-migration-Simplify-unqueue_page.patch
+# For bz#2107466 - zerocopy capability can be enabled when set migrate capabilities with multifd and compress/xbzrle together
+Patch136: kvm-QIOChannelSocket-Fix-zero-copy-flush-returning-code-.patch
+# For bz#2107466 - zerocopy capability can be enabled when set migrate capabilities with multifd and compress/xbzrle together
+Patch137: kvm-Add-dirty-sync-missed-zero-copy-migration-stat.patch
+# For bz#2107466 - zerocopy capability can be enabled when set migrate capabilities with multifd and compress/xbzrle together
+Patch138: kvm-migration-multifd-Report-to-user-when-zerocopy-not-w.patch
+# For bz#2107466 - zerocopy capability can be enabled when set migrate capabilities with multifd and compress/xbzrle together
+Patch139: kvm-migration-Avoid-false-positive-on-non-supported-scen.patch
+# For bz#2107466 - zerocopy capability can be enabled when set migrate capabilities with multifd and compress/xbzrle together
+Patch140: kvm-migration-add-remaining-params-has_-true-in-migratio.patch
+# For bz#2107466 - zerocopy capability can be enabled when set migrate capabilities with multifd and compress/xbzrle together
+Patch141: kvm-QIOChannelSocket-Add-support-for-MSG_ZEROCOPY-IPV6.patch
+# For bz#2112303 - virtio-blk: Can't boot fresh installation from used 512 cluster_size image under certain conditions
+Patch142: kvm-pc-bios-s390-ccw-Fix-booting-with-logical-block-size.patch
+# For bz#2116876 - Fixes for vDPA control virtqueue support in Qemu
+Patch143: kvm-vdpa-Fix-bad-index-calculus-at-vhost_vdpa_get_vring_.patch
+# For bz#2116876 - Fixes for vDPA control virtqueue support in Qemu
+Patch144: kvm-vdpa-Fix-index-calculus-at-vhost_vdpa_svqs_start.patch
+# For bz#2116876 - Fixes for vDPA control virtqueue support in Qemu
+Patch145: kvm-vdpa-Fix-memory-listener-deletions-of-iova-tree.patch
+# For bz#2116876 - Fixes for vDPA control virtqueue support in Qemu
+Patch146: kvm-vdpa-Fix-file-descriptor-leak-on-get-features-error.patch
 
 # Source-git patches
 
@@ -1457,6 +1479,25 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Aug 15 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-11
+- kvm-QIOChannelSocket-Fix-zero-copy-flush-returning-code-.patch [bz#2107466]
+- kvm-Add-dirty-sync-missed-zero-copy-migration-stat.patch [bz#2107466]
+- kvm-migration-multifd-Report-to-user-when-zerocopy-not-w.patch [bz#2107466]
+- kvm-migration-Avoid-false-positive-on-non-supported-scen.patch [bz#2107466]
+- kvm-migration-add-remaining-params-has_-true-in-migratio.patch [bz#2107466]
+- kvm-QIOChannelSocket-Add-support-for-MSG_ZEROCOPY-IPV6.patch [bz#2107466]
+- kvm-pc-bios-s390-ccw-Fix-booting-with-logical-block-size.patch [bz#2112303]
+- kvm-vdpa-Fix-bad-index-calculus-at-vhost_vdpa_get_vring_.patch [bz#2116876]
+- kvm-vdpa-Fix-index-calculus-at-vhost_vdpa_svqs_start.patch [bz#2116876]
+- kvm-vdpa-Fix-memory-listener-deletions-of-iova-tree.patch [bz#2116876]
+- kvm-vdpa-Fix-file-descriptor-leak-on-get-features-error.patch [bz#2116876]
+- Resolves: bz#2107466
+  (zerocopy capability can be enabled when set migrate capabilities with multifd and compress/xbzrle together)
+- Resolves: bz#2112303
+  (virtio-blk: Can't boot fresh installation from used 512 cluster_size image under certain conditions)
+- Resolves: bz#2116876
+  (Fixes for vDPA control virtqueue support in Qemu)
+
 * Mon Aug 08 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-10
 - kvm-vhost-Track-descriptor-chain-in-private-at-SVQ.patch [bz#1939363]
 - kvm-vhost-Fix-device-s-used-descriptor-dequeue.patch [bz#1939363]

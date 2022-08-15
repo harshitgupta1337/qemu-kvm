@@ -1,0 +1,58 @@
+From 71857062b7aea29fc418e107244cf4083cd78cd7 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Tue, 2 Aug 2022 13:24:46 +0200
+Subject: [PATCH 11/11] vdpa: Fix file descriptor leak on get features error
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 114: vdpa: Fix memory listener deletions of iova tree
+RH-Commit: [4/4] bdfe6ed4539ecf68dc8bc4519755f9d5c096447d (eperezmartin/qemu-kvm)
+RH-Bugzilla: 2116876
+RH-Acked-by: Jason Wang <jasowang@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Laurent Vivier <lvivier@redhat.com>
+
+File descriptor vdpa_device_fd is not free in the case of returning
+error from vhost_vdpa_get_features. Fixing it by making all errors go to
+the same error path.
+
+Resolves: Coverity CID 1490785
+Fixes: 8170ab3f43 ("vdpa: Extract get features part from vhost_vdpa_get_max_queue_pairs")
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Reviewed-by: Laurent Vivier <lvivier@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Message-Id: <20220802112447.249436-2-eperezma@redhat.com>
+Signed-off-by: Laurent Vivier <laurent@vivier.eu>
+(cherry picked from commit aed5da45daf734ddc543c0791e877dac75e16f61)
+---
+ net/vhost-vdpa.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/net/vhost-vdpa.c b/net/vhost-vdpa.c
+index 50672bcd66..411e71e6c2 100644
+--- a/net/vhost-vdpa.c
++++ b/net/vhost-vdpa.c
+@@ -566,7 +566,7 @@ int net_init_vhost_vdpa(const Netdev *netdev, const char *name,
+     g_autofree NetClientState **ncs = NULL;
+     g_autoptr(VhostIOVATree) iova_tree = NULL;
+     NetClientState *nc;
+-    int queue_pairs, r, i, has_cvq = 0;
++    int queue_pairs, r, i = 0, has_cvq = 0;
+ 
+     assert(netdev->type == NET_CLIENT_DRIVER_VHOST_VDPA);
+     opts = &netdev->u.vhost_vdpa;
+@@ -582,7 +582,7 @@ int net_init_vhost_vdpa(const Netdev *netdev, const char *name,
+ 
+     r = vhost_vdpa_get_features(vdpa_device_fd, &features, errp);
+     if (unlikely(r < 0)) {
+-        return r;
++        goto err;
+     }
+ 
+     queue_pairs = vhost_vdpa_get_max_queue_pairs(vdpa_device_fd, features,
+-- 
+2.31.1
+

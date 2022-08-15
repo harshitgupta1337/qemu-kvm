@@ -1,0 +1,87 @@
+From ac346634c5731407baa9de709dbd4d5cc6f45301 Mon Sep 17 00:00:00 2001
+From: Leonardo Bras <leobras@redhat.com>
+Date: Mon, 11 Jul 2022 18:11:12 -0300
+Subject: [PATCH 02/11] Add dirty-sync-missed-zero-copy migration stat
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Leonardo Brás <leobras@redhat.com>
+RH-MergeRequest: 111: zero-copy-send fixes & improvements
+RH-Commit: [2/6] 115035fd0a4e4b9439c91fb0f5d1a2f9244ba369 (LeoBras/centos-qemu-kvm)
+RH-Bugzilla: 2107466
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Thomas Huth <thuth@redhat.com>
+RH-Acked-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+
+Signed-off-by: Leonardo Bras <leobras@redhat.com>
+Acked-by: Markus Armbruster <armbru@redhat.com>
+Acked-by: Peter Xu <peterx@redhat.com>
+Reviewed-by: Daniel P. Berrangé <berrange@redhat.com>
+Message-Id: <20220711211112.18951-3-leobras@redhat.com>
+Signed-off-by: Dr. David Alan Gilbert <dgilbert@redhat.com>
+(cherry picked from commit cf20c897338067ab4b70a4596fdccaf90c7e29a1)
+Signed-off-by: Leonardo Bras <leobras@redhat.com>
+---
+ migration/migration.c | 2 ++
+ monitor/hmp-cmds.c    | 5 +++++
+ qapi/migration.json   | 7 ++++++-
+ 3 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/migration/migration.c b/migration/migration.c
+index 8fb3eae910..3a3a7a4a50 100644
+--- a/migration/migration.c
++++ b/migration/migration.c
+@@ -1017,6 +1017,8 @@ static void populate_ram_info(MigrationInfo *info, MigrationState *s)
+     info->ram->normal_bytes = ram_counters.normal * page_size;
+     info->ram->mbps = s->mbps;
+     info->ram->dirty_sync_count = ram_counters.dirty_sync_count;
++    info->ram->dirty_sync_missed_zero_copy =
++            ram_counters.dirty_sync_missed_zero_copy;
+     info->ram->postcopy_requests = ram_counters.postcopy_requests;
+     info->ram->page_size = page_size;
+     info->ram->multifd_bytes = ram_counters.multifd_bytes;
+diff --git a/monitor/hmp-cmds.c b/monitor/hmp-cmds.c
+index 634968498b..9cec01de38 100644
+--- a/monitor/hmp-cmds.c
++++ b/monitor/hmp-cmds.c
+@@ -305,6 +305,11 @@ void hmp_info_migrate(Monitor *mon, const QDict *qdict)
+             monitor_printf(mon, "postcopy ram: %" PRIu64 " kbytes\n",
+                            info->ram->postcopy_bytes >> 10);
+         }
++        if (info->ram->dirty_sync_missed_zero_copy) {
++            monitor_printf(mon,
++                           "Zero-copy-send fallbacks happened: %" PRIu64 " times\n",
++                           info->ram->dirty_sync_missed_zero_copy);
++        }
+     }
+ 
+     if (info->has_disk) {
+diff --git a/qapi/migration.json b/qapi/migration.json
+index 5105790cd0..9b38b3c21c 100644
+--- a/qapi/migration.json
++++ b/qapi/migration.json
+@@ -55,6 +55,10 @@
+ # @postcopy-bytes: The number of bytes sent during the post-copy phase
+ #                  (since 7.0).
+ #
++# @dirty-sync-missed-zero-copy: Number of times dirty RAM synchronization could
++#                               not avoid copying dirty pages. This is between
++#                               0 and @dirty-sync-count * @multifd-channels.
++#                               (since 7.1)
+ # Since: 0.14
+ ##
+ { 'struct': 'MigrationStats',
+@@ -65,7 +69,8 @@
+            'postcopy-requests' : 'int', 'page-size' : 'int',
+            'multifd-bytes' : 'uint64', 'pages-per-second' : 'uint64',
+            'precopy-bytes' : 'uint64', 'downtime-bytes' : 'uint64',
+-           'postcopy-bytes' : 'uint64' } }
++           'postcopy-bytes' : 'uint64',
++           'dirty-sync-missed-zero-copy' : 'uint64' } }
+ 
+ ##
+ # @XBZRLECacheStats:
+-- 
+2.31.1
+
