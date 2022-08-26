@@ -1,0 +1,62 @@
+From f92b0ef80b4889ae0beb0b2a026ec3892d576d79 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Tue, 23 Aug 2022 20:30:32 +0200
+Subject: [PATCH 17/23] vdpa: add net_vhost_vdpa_cvq_info NetClientInfo
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 116: vdpa: Restore device state on destination
+RH-Bugzilla: 2114060
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [16/21] c80c9fd89e81fc389e7d02e9d764331ab9fc7a0a (eperezmartin/qemu-kvm)
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2114060
+Upstream status: git@github.com:jasowang/qemu.git net-next
+
+Next patches will add a new info callback to restore NIC status through
+CVQ. Since only the CVQ vhost device is needed, create it with a new
+NetClientInfo.
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Acked-by: Jason Wang <jasowang@redhat.com>
+Signed-off-by: Jason Wang <jasowang@redhat.com>
+(cherry picked from commit 9d379453404303069f93f9b8163ae3805bcd8c2e)
+---
+ net/vhost-vdpa.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/net/vhost-vdpa.c b/net/vhost-vdpa.c
+index ba65736f83..03e4cf1abc 100644
+--- a/net/vhost-vdpa.c
++++ b/net/vhost-vdpa.c
+@@ -334,6 +334,16 @@ static bool vhost_vdpa_net_cvq_map_elem(VhostVDPAState *s,
+     return true;
+ }
+ 
++static NetClientInfo net_vhost_vdpa_cvq_info = {
++    .type = NET_CLIENT_DRIVER_VHOST_VDPA,
++    .size = sizeof(VhostVDPAState),
++    .receive = vhost_vdpa_receive,
++    .cleanup = vhost_vdpa_cleanup,
++    .has_vnet_hdr = vhost_vdpa_has_vnet_hdr,
++    .has_ufo = vhost_vdpa_has_ufo,
++    .check_peer_type = vhost_vdpa_check_peer_type,
++};
++
+ /**
+  * Do not forward commands not supported by SVQ. Otherwise, the device could
+  * accept it and qemu would not know how to update the device model.
+@@ -475,7 +485,7 @@ static NetClientState *net_vhost_vdpa_init(NetClientState *peer,
+         nc = qemu_new_net_client(&net_vhost_vdpa_info, peer, device,
+                                  name);
+     } else {
+-        nc = qemu_new_net_control_client(&net_vhost_vdpa_info, peer,
++        nc = qemu_new_net_control_client(&net_vhost_vdpa_cvq_info, peer,
+                                          device, name);
+     }
+     snprintf(nc->info_str, sizeof(nc->info_str), TYPE_VHOST_VDPA);
+-- 
+2.31.1
+

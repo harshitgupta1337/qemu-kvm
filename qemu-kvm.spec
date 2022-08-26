@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.0.0
-Release: 11%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 12%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -444,6 +444,52 @@ Patch144: kvm-vdpa-Fix-index-calculus-at-vhost_vdpa_svqs_start.patch
 Patch145: kvm-vdpa-Fix-memory-listener-deletions-of-iova-tree.patch
 # For bz#2116876 - Fixes for vDPA control virtqueue support in Qemu
 Patch146: kvm-vdpa-Fix-file-descriptor-leak-on-get-features-error.patch
+# For bz#2120275 - Wrong max_sectors_kb and Maximum transfer length on the pass-through device [rhel-9.1]
+Patch147: kvm-scsi-generic-Fix-emulated-block-limits-VPD-page.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch148: kvm-vhost-Get-vring-base-from-vq-not-svq.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch149: kvm-vdpa-Skip-the-maps-not-in-the-iova-tree.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch150: kvm-vdpa-do-not-save-failed-dma-maps-in-SVQ-iova-tree.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch151: kvm-util-Return-void-on-iova_tree_remove.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch152: kvm-util-accept-iova_tree_remove_parameter-by-value.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch153: kvm-vdpa-Remove-SVQ-vring-from-iova_tree-at-shutdown.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch154: kvm-vdpa-Make-SVQ-vring-unmapping-return-void.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch155: kvm-vhost-Always-store-new-kick-fd-on-vhost_svq_set_svq_.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch156: kvm-vdpa-Use-ring-hwaddr-at-vhost_vdpa_svq_unmap_ring.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch157: kvm-vhost-stop-transfer-elem-ownership-in-vhost_handle_g.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch158: kvm-vhost-use-SVQ-element-ndescs-instead-of-opaque-data-.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch159: kvm-vhost-Delete-useless-read-memory-barrier.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch160: kvm-vhost-Do-not-depend-on-NULL-VirtQueueElement-on-vhos.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch161: kvm-vhost_net-Add-NetClientInfo-start-callback.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch162: kvm-vhost_net-Add-NetClientInfo-stop-callback.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch163: kvm-vdpa-add-net_vhost_vdpa_cvq_info-NetClientInfo.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch164: kvm-vdpa-Move-command-buffers-map-to-start-of-net-device.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch165: kvm-vdpa-extract-vhost_vdpa_net_cvq_add-from-vhost_vdpa_.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch166: kvm-vhost_net-add-NetClientState-load-callback.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch167: kvm-vdpa-Add-virtio-net-mac-address-via-CVQ-at-start.patch
+# For bz#2114060 - vDPA state restore support through control virtqueue in Qemu
+Patch168: kvm-vdpa-Delete-CVQ-migration-blocker.patch
+# For bz#2099541 - qemu coredump with error Assertion `qemu_mutex_iothread_locked()' failed when repeatly hotplug/unplug disks in pause status
+Patch169: kvm-virtio-scsi-fix-race-in-virtio_scsi_dataplane_start.patch
 
 # Source-git patches
 
@@ -1479,6 +1525,37 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Fri Aug 26 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-12
+- kvm-scsi-generic-Fix-emulated-block-limits-VPD-page.patch [bz#2120275]
+- kvm-vhost-Get-vring-base-from-vq-not-svq.patch [bz#2114060]
+- kvm-vdpa-Skip-the-maps-not-in-the-iova-tree.patch [bz#2114060]
+- kvm-vdpa-do-not-save-failed-dma-maps-in-SVQ-iova-tree.patch [bz#2114060]
+- kvm-util-Return-void-on-iova_tree_remove.patch [bz#2114060]
+- kvm-util-accept-iova_tree_remove_parameter-by-value.patch [bz#2114060]
+- kvm-vdpa-Remove-SVQ-vring-from-iova_tree-at-shutdown.patch [bz#2114060]
+- kvm-vdpa-Make-SVQ-vring-unmapping-return-void.patch [bz#2114060]
+- kvm-vhost-Always-store-new-kick-fd-on-vhost_svq_set_svq_.patch [bz#2114060]
+- kvm-vdpa-Use-ring-hwaddr-at-vhost_vdpa_svq_unmap_ring.patch [bz#2114060]
+- kvm-vhost-stop-transfer-elem-ownership-in-vhost_handle_g.patch [bz#2114060]
+- kvm-vhost-use-SVQ-element-ndescs-instead-of-opaque-data-.patch [bz#2114060]
+- kvm-vhost-Delete-useless-read-memory-barrier.patch [bz#2114060]
+- kvm-vhost-Do-not-depend-on-NULL-VirtQueueElement-on-vhos.patch [bz#2114060]
+- kvm-vhost_net-Add-NetClientInfo-start-callback.patch [bz#2114060]
+- kvm-vhost_net-Add-NetClientInfo-stop-callback.patch [bz#2114060]
+- kvm-vdpa-add-net_vhost_vdpa_cvq_info-NetClientInfo.patch [bz#2114060]
+- kvm-vdpa-Move-command-buffers-map-to-start-of-net-device.patch [bz#2114060]
+- kvm-vdpa-extract-vhost_vdpa_net_cvq_add-from-vhost_vdpa_.patch [bz#2114060]
+- kvm-vhost_net-add-NetClientState-load-callback.patch [bz#2114060]
+- kvm-vdpa-Add-virtio-net-mac-address-via-CVQ-at-start.patch [bz#2114060]
+- kvm-vdpa-Delete-CVQ-migration-blocker.patch [bz#2114060]
+- kvm-virtio-scsi-fix-race-in-virtio_scsi_dataplane_start.patch [bz#2099541]
+- Resolves: bz#2120275
+  (Wrong max_sectors_kb and Maximum transfer length on the pass-through device [rhel-9.1])
+- Resolves: bz#2114060
+  (vDPA state restore support through control virtqueue in Qemu)
+- Resolves: bz#2099541
+  (qemu coredump with error Assertion `qemu_mutex_iothread_locked()' failed when repeatly hotplug/unplug disks in pause status)
+
 * Mon Aug 15 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.0.0-11
 - kvm-QIOChannelSocket-Fix-zero-copy-flush-returning-code-.patch [bz#2107466]
 - kvm-Add-dirty-sync-missed-zero-copy-migration-stat.patch [bz#2107466]

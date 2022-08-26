@@ -1,0 +1,182 @@
+From 90697579eaf598614293d75f684d6e8c55f8ab9b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Tue, 23 Aug 2022 20:20:04 +0200
+Subject: [PATCH 06/23] util: accept iova_tree_remove_parameter by value
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 116: vdpa: Restore device state on destination
+RH-Bugzilla: 2114060
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [5/21] ddaf052789e7ab3c67a77c038347113301587ffb (eperezmartin/qemu-kvm)
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2114060
+Upstream status: git@github.com:jasowang/qemu.git net-next
+
+It's convenient to call iova_tree_remove from a map returned from
+iova_tree_find or iova_tree_find_iova. With the current code this is not
+possible, since we will free it, and then we will try to search for it
+again.
+
+Fix it making accepting the map by value, forcing a copy of the
+argument. Not applying a fixes tag, since there is no use like that at
+the moment.
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Signed-off-by: Jason Wang <jasowang@redhat.com>
+(cherry picked from commit d69ba6677405de86b3b617fc7688b549f84cf013)
+---
+ hw/i386/intel_iommu.c       | 6 +++---
+ hw/virtio/vhost-iova-tree.c | 2 +-
+ hw/virtio/vhost-iova-tree.h | 2 +-
+ hw/virtio/vhost-vdpa.c      | 6 +++---
+ include/qemu/iova-tree.h    | 2 +-
+ net/vhost-vdpa.c            | 4 ++--
+ util/iova-tree.c            | 4 ++--
+ 7 files changed, 13 insertions(+), 13 deletions(-)
+
+diff --git a/hw/i386/intel_iommu.c b/hw/i386/intel_iommu.c
+index c64aa81a83..6738cf0929 100644
+--- a/hw/i386/intel_iommu.c
++++ b/hw/i386/intel_iommu.c
+@@ -1157,7 +1157,7 @@ static int vtd_page_walk_one(IOMMUTLBEvent *event, vtd_page_walk_info *info)
+                     return ret;
+                 }
+                 /* Drop any existing mapping */
+-                iova_tree_remove(as->iova_tree, &target);
++                iova_tree_remove(as->iova_tree, target);
+                 /* Recover the correct type */
+                 event->type = IOMMU_NOTIFIER_MAP;
+                 entry->perm = cache_perm;
+@@ -1170,7 +1170,7 @@ static int vtd_page_walk_one(IOMMUTLBEvent *event, vtd_page_walk_info *info)
+             trace_vtd_page_walk_one_skip_unmap(entry->iova, entry->addr_mask);
+             return 0;
+         }
+-        iova_tree_remove(as->iova_tree, &target);
++        iova_tree_remove(as->iova_tree, target);
+     }
+ 
+     trace_vtd_page_walk_one(info->domain_id, entry->iova,
+@@ -3532,7 +3532,7 @@ static void vtd_address_space_unmap(VTDAddressSpace *as, IOMMUNotifier *n)
+ 
+     map.iova = n->start;
+     map.size = size;
+-    iova_tree_remove(as->iova_tree, &map);
++    iova_tree_remove(as->iova_tree, map);
+ }
+ 
+ static void vtd_address_space_unmap_all(IntelIOMMUState *s)
+diff --git a/hw/virtio/vhost-iova-tree.c b/hw/virtio/vhost-iova-tree.c
+index 55fed1fefb..1339a4de8b 100644
+--- a/hw/virtio/vhost-iova-tree.c
++++ b/hw/virtio/vhost-iova-tree.c
+@@ -104,7 +104,7 @@ int vhost_iova_tree_map_alloc(VhostIOVATree *tree, DMAMap *map)
+  * @iova_tree: The vhost iova tree
+  * @map: The map to remove
+  */
+-void vhost_iova_tree_remove(VhostIOVATree *iova_tree, const DMAMap *map)
++void vhost_iova_tree_remove(VhostIOVATree *iova_tree, DMAMap map)
+ {
+     iova_tree_remove(iova_tree->iova_taddr_map, map);
+ }
+diff --git a/hw/virtio/vhost-iova-tree.h b/hw/virtio/vhost-iova-tree.h
+index 6a4f24e0f9..4adfd79ff0 100644
+--- a/hw/virtio/vhost-iova-tree.h
++++ b/hw/virtio/vhost-iova-tree.h
+@@ -22,6 +22,6 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(VhostIOVATree, vhost_iova_tree_delete);
+ const DMAMap *vhost_iova_tree_find_iova(const VhostIOVATree *iova_tree,
+                                         const DMAMap *map);
+ int vhost_iova_tree_map_alloc(VhostIOVATree *iova_tree, DMAMap *map);
+-void vhost_iova_tree_remove(VhostIOVATree *iova_tree, const DMAMap *map);
++void vhost_iova_tree_remove(VhostIOVATree *iova_tree, DMAMap map);
+ 
+ #endif
+diff --git a/hw/virtio/vhost-vdpa.c b/hw/virtio/vhost-vdpa.c
+index cc15b7d8ee..39aa70f52d 100644
+--- a/hw/virtio/vhost-vdpa.c
++++ b/hw/virtio/vhost-vdpa.c
+@@ -238,7 +238,7 @@ static void vhost_vdpa_listener_region_add(MemoryListener *listener,
+ 
+ fail_map:
+     if (v->shadow_vqs_enabled) {
+-        vhost_iova_tree_remove(v->iova_tree, &mem_region);
++        vhost_iova_tree_remove(v->iova_tree, mem_region);
+     }
+ 
+ fail:
+@@ -298,7 +298,7 @@ static void vhost_vdpa_listener_region_del(MemoryListener *listener,
+             return;
+         }
+         iova = result->iova;
+-        vhost_iova_tree_remove(v->iova_tree, result);
++        vhost_iova_tree_remove(v->iova_tree, *result);
+     }
+     vhost_vdpa_iotlb_batch_begin_once(v);
+     ret = vhost_vdpa_dma_unmap(v, iova, int128_get64(llsize));
+@@ -942,7 +942,7 @@ static bool vhost_vdpa_svq_map_ring(struct vhost_vdpa *v, DMAMap *needle,
+                            needle->perm == IOMMU_RO);
+     if (unlikely(r != 0)) {
+         error_setg_errno(errp, -r, "Cannot map region to device");
+-        vhost_iova_tree_remove(v->iova_tree, needle);
++        vhost_iova_tree_remove(v->iova_tree, *needle);
+     }
+ 
+     return r == 0;
+diff --git a/include/qemu/iova-tree.h b/include/qemu/iova-tree.h
+index 16bbfdf5f8..8528e5c98f 100644
+--- a/include/qemu/iova-tree.h
++++ b/include/qemu/iova-tree.h
+@@ -73,7 +73,7 @@ int iova_tree_insert(IOVATree *tree, const DMAMap *map);
+  * all the mappings that are included in the provided range will be
+  * removed from the tree.  Here map->translated_addr is meaningless.
+  */
+-void iova_tree_remove(IOVATree *tree, const DMAMap *map);
++void iova_tree_remove(IOVATree *tree, DMAMap map);
+ 
+ /**
+  * iova_tree_find:
+diff --git a/net/vhost-vdpa.c b/net/vhost-vdpa.c
+index 411e71e6c2..ba65736f83 100644
+--- a/net/vhost-vdpa.c
++++ b/net/vhost-vdpa.c
+@@ -244,7 +244,7 @@ static void vhost_vdpa_cvq_unmap_buf(struct vhost_vdpa *v, void *addr)
+         error_report("Device cannot unmap: %s(%d)", g_strerror(r), r);
+     }
+ 
+-    vhost_iova_tree_remove(tree, map);
++    vhost_iova_tree_remove(tree, *map);
+ }
+ 
+ static size_t vhost_vdpa_net_cvq_cmd_len(void)
+@@ -297,7 +297,7 @@ static bool vhost_vdpa_cvq_map_buf(struct vhost_vdpa *v,
+     return true;
+ 
+ dma_map_err:
+-    vhost_iova_tree_remove(v->iova_tree, &map);
++    vhost_iova_tree_remove(v->iova_tree, map);
+     return false;
+ }
+ 
+diff --git a/util/iova-tree.c b/util/iova-tree.c
+index fee530a579..536789797e 100644
+--- a/util/iova-tree.c
++++ b/util/iova-tree.c
+@@ -164,11 +164,11 @@ void iova_tree_foreach(IOVATree *tree, iova_tree_iterator iterator)
+     g_tree_foreach(tree->tree, iova_tree_traverse, iterator);
+ }
+ 
+-void iova_tree_remove(IOVATree *tree, const DMAMap *map)
++void iova_tree_remove(IOVATree *tree, DMAMap map)
+ {
+     const DMAMap *overlap;
+ 
+-    while ((overlap = iova_tree_find(tree, map))) {
++    while ((overlap = iova_tree_find(tree, &map))) {
+         g_tree_remove(tree->tree, overlap);
+     }
+ }
+-- 
+2.31.1
+

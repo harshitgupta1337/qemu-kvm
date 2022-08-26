@@ -1,0 +1,49 @@
+From 51c1e9cf1612727ec4c6e795576ae8fa0c0b2d4c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Tue, 23 Aug 2022 20:20:05 +0200
+Subject: [PATCH 07/23] vdpa: Remove SVQ vring from iova_tree at shutdown
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 116: vdpa: Restore device state on destination
+RH-Bugzilla: 2114060
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [6/21] f72e67b9c90103151cbf86bff53e8f14b30f0e5b (eperezmartin/qemu-kvm)
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2114060
+Upstream status: git@github.com:jasowang/qemu.git net-next
+
+Although the device will be reset before usage, the right thing to do is
+to clean it.
+
+Reported-by: Lei Yang <leiyang@redhat.com>
+Fixes: 34e3c94eda ("vdpa: Add custom IOTLB translations to SVQ")
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Signed-off-by: Jason Wang <jasowang@redhat.com>
+(cherry picked from commit 0c45fa6c420ec3a1dd9ea9c40fa11bd943bb3be9)
+---
+ hw/virtio/vhost-vdpa.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/hw/virtio/vhost-vdpa.c b/hw/virtio/vhost-vdpa.c
+index 39aa70f52d..e5c264fb29 100644
+--- a/hw/virtio/vhost-vdpa.c
++++ b/hw/virtio/vhost-vdpa.c
+@@ -896,6 +896,12 @@ static bool vhost_vdpa_svq_unmap_ring(struct vhost_vdpa *v,
+ 
+     size = ROUND_UP(result->size, qemu_real_host_page_size);
+     r = vhost_vdpa_dma_unmap(v, result->iova, size);
++    if (unlikely(r < 0)) {
++        error_report("Unable to unmap SVQ vring: %s (%d)", g_strerror(-r), -r);
++        return false;
++    }
++
++    vhost_iova_tree_remove(v->iova_tree, *result);
+     return r == 0;
+ }
+ 
+-- 
+2.31.1
+

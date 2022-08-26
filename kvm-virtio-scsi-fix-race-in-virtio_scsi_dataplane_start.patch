@@ -1,0 +1,117 @@
+From cbcab5ed1686fddeb2c6adb3a3f6ed0678a36e71 Mon Sep 17 00:00:00 2001
+From: Stefan Hajnoczi <stefanha@redhat.com>
+Date: Mon, 8 Aug 2022 12:21:34 -0400
+Subject: [PATCH 23/23] virtio-scsi: fix race in virtio_scsi_dataplane_start()
+
+RH-Author: Stefan Hajnoczi <stefanha@redhat.com>
+RH-MergeRequest: 211: virtio-scsi: fix race in virtio_scsi_dataplane_start() (RHEL src-git)
+RH-Commit: [1/1] 2d4964d8863e259326a73fb918fa2f5f63b4a60a
+RH-Bugzilla: 2099541
+RH-Acked-by: Emanuele Giuseppe Esposito <eesposit@redhat.com>
+RH-Acked-by: Kevin Wolf <kwolf@redhat.com>
+RH-Acked-by: Hanna Reitz <hreitz@redhat.com>
+RH-Acked-by: Paolo Bonzini <pbonzini@redhat.com>
+
+As soon as virtio_scsi_data_plane_start() attaches host notifiers the
+IOThread may start virtqueue processing. There is a race between
+IOThread virtqueue processing and virtio_scsi_data_plane_start() because
+it only assigns s->dataplane_started after attaching host notifiers.
+
+When a virtqueue handler function in the IOThread calls
+virtio_scsi_defer_to_dataplane() it may see !s->dataplane_started and
+attempt to start dataplane even though we're already in the IOThread:
+
+  #0  0x00007f67b360857c __pthread_kill_implementation (libc.so.6 + 0xa257c)
+  #1  0x00007f67b35bbd56 raise (libc.so.6 + 0x55d56)
+  #2  0x00007f67b358e833 abort (libc.so.6 + 0x28833)
+  #3  0x00007f67b358e75b __assert_fail_base.cold (libc.so.6 + 0x2875b)
+  #4  0x00007f67b35b4cd6 __assert_fail (libc.so.6 + 0x4ecd6)
+  #5  0x000055ca87fd411b memory_region_transaction_commit (qemu-kvm + 0x67511b)
+  #6  0x000055ca87e17811 virtio_pci_ioeventfd_assign (qemu-kvm + 0x4b8811)
+  #7  0x000055ca87e14836 virtio_bus_set_host_notifier (qemu-kvm + 0x4b5836)
+  #8  0x000055ca87f8e14e virtio_scsi_set_host_notifier (qemu-kvm + 0x62f14e)
+  #9  0x000055ca87f8dd62 virtio_scsi_dataplane_start (qemu-kvm + 0x62ed62)
+  #10 0x000055ca87e14610 virtio_bus_start_ioeventfd (qemu-kvm + 0x4b5610)
+  #11 0x000055ca87f8c29a virtio_scsi_handle_ctrl (qemu-kvm + 0x62d29a)
+  #12 0x000055ca87fa5902 virtio_queue_host_notifier_read (qemu-kvm + 0x646902)
+  #13 0x000055ca882c099e aio_dispatch_handler (qemu-kvm + 0x96199e)
+  #14 0x000055ca882c1761 aio_poll (qemu-kvm + 0x962761)
+  #15 0x000055ca880e1052 iothread_run (qemu-kvm + 0x782052)
+  #16 0x000055ca882c562a qemu_thread_start (qemu-kvm + 0x96662a)
+
+This patch assigns s->dataplane_started before attaching host notifiers
+so that virtqueue handler functions that run in the IOThread before
+virtio_scsi_data_plane_start() returns correctly identify that dataplane
+does not need to be started. This fix is taken from the virtio-blk
+dataplane code and it's worth adding a comment in virtio-blk as well to
+explain why it works.
+
+Note that s->dataplane_started does not need the AioContext lock because
+it is set before attaching host notifiers and cleared after detaching
+host notifiers. In other words, the IOThread always sees the value true
+and the main loop thread does not modify it while the IOThread is
+active.
+
+Buglink: https://bugzilla.redhat.com/show_bug.cgi?id=2099541
+Reported-by: Qing Wang <qinwang@redhat.com>
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Message-Id: <20220808162134.240405-1-stefanha@redhat.com>
+Reviewed-by: Emanuele Giuseppe Esposito <eesposit@redhat.com>
+Reviewed-by: Michael S. Tsirkin <mst@redhat.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+(cherry picked from commit 9a4b6a63aee885931622549c85669dcca03bed39)
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/block/dataplane/virtio-blk.c |  5 +++++
+ hw/scsi/virtio-scsi-dataplane.c | 11 ++++++++---
+ 2 files changed, 13 insertions(+), 3 deletions(-)
+
+diff --git a/hw/block/dataplane/virtio-blk.c b/hw/block/dataplane/virtio-blk.c
+index 49276e46f2..26f965cabc 100644
+--- a/hw/block/dataplane/virtio-blk.c
++++ b/hw/block/dataplane/virtio-blk.c
+@@ -219,6 +219,11 @@ int virtio_blk_data_plane_start(VirtIODevice *vdev)
+ 
+     memory_region_transaction_commit();
+ 
++    /*
++     * These fields are visible to the IOThread so we rely on implicit barriers
++     * in aio_context_acquire() on the write side and aio_notify_accept() on
++     * the read side.
++     */
+     s->starting = false;
+     vblk->dataplane_started = true;
+     trace_virtio_blk_data_plane_start(s);
+diff --git a/hw/scsi/virtio-scsi-dataplane.c b/hw/scsi/virtio-scsi-dataplane.c
+index 8bb6e6acfc..20bb91766e 100644
+--- a/hw/scsi/virtio-scsi-dataplane.c
++++ b/hw/scsi/virtio-scsi-dataplane.c
+@@ -136,6 +136,14 @@ int virtio_scsi_dataplane_start(VirtIODevice *vdev)
+ 
+     memory_region_transaction_commit();
+ 
++    /*
++     * These fields are visible to the IOThread so we rely on implicit barriers
++     * in aio_context_acquire() on the write side and aio_notify_accept() on
++     * the read side.
++     */
++    s->dataplane_starting = false;
++    s->dataplane_started = true;
++
+     aio_context_acquire(s->ctx);
+     virtio_queue_aio_attach_host_notifier(vs->ctrl_vq, s->ctx);
+     virtio_queue_aio_attach_host_notifier_no_poll(vs->event_vq, s->ctx);
+@@ -143,9 +151,6 @@ int virtio_scsi_dataplane_start(VirtIODevice *vdev)
+     for (i = 0; i < vs->conf.num_queues; i++) {
+         virtio_queue_aio_attach_host_notifier(vs->cmd_vqs[i], s->ctx);
+     }
+-
+-    s->dataplane_starting = false;
+-    s->dataplane_started = true;
+     aio_context_release(s->ctx);
+     return 0;
+ 
+-- 
+2.31.1
+

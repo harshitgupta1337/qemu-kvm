@@ -1,0 +1,80 @@
+From 45305ab202fa2191962152e5a501a9a13e31a0b2 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Tue, 23 Aug 2022 20:30:26 +0200
+Subject: [PATCH 11/23] vhost: stop transfer elem ownership in
+ vhost_handle_guest_kick
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 116: vdpa: Restore device state on destination
+RH-Bugzilla: 2114060
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [10/21] 697a5c0ad59efe27abf447f7965091993bc39756 (eperezmartin/qemu-kvm)
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2114060
+Upstream status: git@github.com:jasowang/qemu.git net-next
+
+It was easier to allow vhost_svq_add to handle the memory. Now that we
+will allow qemu to add elements to a SVQ without the guest's knowledge,
+it's better to handle it in the caller.
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Acked-by: Jason Wang <jasowang@redhat.com>
+Signed-off-by: Jason Wang <jasowang@redhat.com>
+(cherry picked from commit eb42df8bb2c92a7313343d97409cd99ccba25b25)
+---
+ hw/virtio/vhost-shadow-virtqueue.c | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
+
+diff --git a/hw/virtio/vhost-shadow-virtqueue.c b/hw/virtio/vhost-shadow-virtqueue.c
+index f420311b89..2ae47d90a1 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.c
++++ b/hw/virtio/vhost-shadow-virtqueue.c
+@@ -233,9 +233,6 @@ static void vhost_svq_kick(VhostShadowVirtqueue *svq)
+ /**
+  * Add an element to a SVQ.
+  *
+- * The caller must check that there is enough slots for the new element. It
+- * takes ownership of the element: In case of failure not ENOSPC, it is free.
+- *
+  * Return -EINVAL if element is invalid, -ENOSPC if dev queue is full
+  */
+ int vhost_svq_add(VhostShadowVirtqueue *svq, const struct iovec *out_sg,
+@@ -252,7 +249,6 @@ int vhost_svq_add(VhostShadowVirtqueue *svq, const struct iovec *out_sg,
+ 
+     ok = vhost_svq_add_split(svq, out_sg, out_num, in_sg, in_num, &qemu_head);
+     if (unlikely(!ok)) {
+-        g_free(elem);
+         return -EINVAL;
+     }
+ 
+@@ -293,7 +289,7 @@ static void vhost_handle_guest_kick(VhostShadowVirtqueue *svq)
+         virtio_queue_set_notification(svq->vq, false);
+ 
+         while (true) {
+-            VirtQueueElement *elem;
++            g_autofree VirtQueueElement *elem;
+             int r;
+ 
+             if (svq->next_guest_avail_elem) {
+@@ -324,12 +320,14 @@ static void vhost_handle_guest_kick(VhostShadowVirtqueue *svq)
+                      * queue the current guest descriptor and ignore kicks
+                      * until some elements are used.
+                      */
+-                    svq->next_guest_avail_elem = elem;
++                    svq->next_guest_avail_elem = g_steal_pointer(&elem);
+                 }
+ 
+                 /* VQ is full or broken, just return and ignore kicks */
+                 return;
+             }
++            /* elem belongs to SVQ or external caller now */
++            elem = NULL;
+         }
+ 
+         virtio_queue_set_notification(svq->vq, true);
+-- 
+2.31.1
+

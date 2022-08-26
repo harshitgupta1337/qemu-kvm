@@ -1,0 +1,63 @@
+From 2f134d800a7ac521a637a0da2116b2603b12c8c0 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Tue, 23 Aug 2022 20:30:29 +0200
+Subject: [PATCH 14/23] vhost: Do not depend on !NULL VirtQueueElement on
+ vhost_svq_flush
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 116: vdpa: Restore device state on destination
+RH-Bugzilla: 2114060
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [13/21] 93ec7baa2a29031db25d86b7dc1a949388623370 (eperezmartin/qemu-kvm)
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2114060
+Upstream status: git@github.com:jasowang/qemu.git net-next
+
+Since QEMU will be able to inject new elements on CVQ to restore the
+state, we need not to depend on a VirtQueueElement to know if a new
+element has been used by the device or not. Instead of check that, check
+if there are new elements only using used idx on vhost_svq_flush.
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Acked-by: Jason Wang <jasowang@redhat.com>
+Signed-off-by: Jason Wang <jasowang@redhat.com>
+(cherry picked from commit 7599f71c11c08b90f173c35ded1aaa1fdca86f1b)
+---
+ hw/virtio/vhost-shadow-virtqueue.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/hw/virtio/vhost-shadow-virtqueue.c b/hw/virtio/vhost-shadow-virtqueue.c
+index d36afbc547..c0e3c92e96 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.c
++++ b/hw/virtio/vhost-shadow-virtqueue.c
+@@ -499,17 +499,20 @@ static void vhost_svq_flush(VhostShadowVirtqueue *svq,
+ size_t vhost_svq_poll(VhostShadowVirtqueue *svq)
+ {
+     int64_t start_us = g_get_monotonic_time();
++    uint32_t len;
++
+     do {
+-        uint32_t len;
+-        VirtQueueElement *elem = vhost_svq_get_buf(svq, &len);
+-        if (elem) {
+-            return len;
++        if (vhost_svq_more_used(svq)) {
++            break;
+         }
+ 
+         if (unlikely(g_get_monotonic_time() - start_us > 10e6)) {
+             return 0;
+         }
+     } while (true);
++
++    vhost_svq_get_buf(svq, &len);
++    return len;
+ }
+ 
+ /**
+-- 
+2.31.1
+

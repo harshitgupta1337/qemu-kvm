@@ -1,0 +1,73 @@
+From 6a5c236b95ce475c556ccd92c2135ad48474e8fb Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Tue, 23 Aug 2022 20:30:35 +0200
+Subject: [PATCH 20/23] vhost_net: add NetClientState->load() callback
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 116: vdpa: Restore device state on destination
+RH-Bugzilla: 2114060
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [19/21] 439b4133a757b2f1c5f4a1441eca25329896491a (eperezmartin/qemu-kvm)
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2114060
+Upstream status: git@github.com:jasowang/qemu.git net-next
+
+It allows per-net client operations right after device's successful
+start. In particular, to load the device status.
+
+Vhost-vdpa net will use it to add the CVQ buffers to restore the device
+status.
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Acked-by: Jason Wang <jasowang@redhat.com>
+Signed-off-by: Jason Wang <jasowang@redhat.com>
+(cherry picked from commit 302f3d20e68a8a120d431f7ff7cb02a75917f54c)
+---
+ hw/net/vhost_net.c | 7 +++++++
+ include/net/net.h  | 2 ++
+ 2 files changed, 9 insertions(+)
+
+diff --git a/hw/net/vhost_net.c b/hw/net/vhost_net.c
+index 275ece5324..ea3a8be1c9 100644
+--- a/hw/net/vhost_net.c
++++ b/hw/net/vhost_net.c
+@@ -281,6 +281,13 @@ static int vhost_net_start_one(struct vhost_net *net,
+             }
+         }
+     }
++
++    if (net->nc->info->load) {
++        r = net->nc->info->load(net->nc);
++        if (r < 0) {
++            goto fail;
++        }
++    }
+     return 0;
+ fail:
+     file.fd = -1;
+diff --git a/include/net/net.h b/include/net/net.h
+index 476ad45b9a..81d0b21def 100644
+--- a/include/net/net.h
++++ b/include/net/net.h
+@@ -45,6 +45,7 @@ typedef struct NICConf {
+ typedef void (NetPoll)(NetClientState *, bool enable);
+ typedef bool (NetCanReceive)(NetClientState *);
+ typedef int (NetStart)(NetClientState *);
++typedef int (NetLoad)(NetClientState *);
+ typedef void (NetStop)(NetClientState *);
+ typedef ssize_t (NetReceive)(NetClientState *, const uint8_t *, size_t);
+ typedef ssize_t (NetReceiveIOV)(NetClientState *, const struct iovec *, int);
+@@ -74,6 +75,7 @@ typedef struct NetClientInfo {
+     NetReceiveIOV *receive_iov;
+     NetCanReceive *can_receive;
+     NetStart *start;
++    NetLoad *load;
+     NetStop *stop;
+     NetCleanup *cleanup;
+     LinkStatusChanged *link_status_changed;
+-- 
+2.31.1
+

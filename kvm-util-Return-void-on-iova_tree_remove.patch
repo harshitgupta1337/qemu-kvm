@@ -1,0 +1,70 @@
+From 74c829f82eafa8e42ae94f7ace55c8aaed3bb5f4 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Wed, 27 Apr 2022 17:49:31 +0200
+Subject: [PATCH 05/23] util: Return void on iova_tree_remove
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 116: vdpa: Restore device state on destination
+RH-Bugzilla: 2114060
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [4/21] 252287acca896eba7b5d2b62fc6247cfc565ba57 (eperezmartin/qemu-kvm)
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2114060
+Upstream status: Merged
+
+It always returns IOVA_OK so nobody uses it.
+
+Acked-by: Jason Wang <jasowang@redhat.com>
+Reviewed-by: Peter Xu <peterx@redhat.com>
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Message-Id: <20220427154931.3166388-1-eperezma@redhat.com>
+Signed-off-by: Laurent Vivier <laurent@vivier.eu>
+(cherry picked from commit 832fef7cc14d65f99d523f883ef384014e6476a7)
+---
+ include/qemu/iova-tree.h | 4 +---
+ util/iova-tree.c         | 4 +---
+ 2 files changed, 2 insertions(+), 6 deletions(-)
+
+diff --git a/include/qemu/iova-tree.h b/include/qemu/iova-tree.h
+index c938fb0793..16bbfdf5f8 100644
+--- a/include/qemu/iova-tree.h
++++ b/include/qemu/iova-tree.h
+@@ -72,10 +72,8 @@ int iova_tree_insert(IOVATree *tree, const DMAMap *map);
+  * provided.  The range does not need to be exactly what has inserted,
+  * all the mappings that are included in the provided range will be
+  * removed from the tree.  Here map->translated_addr is meaningless.
+- *
+- * Return: 0 if succeeded, or <0 if error.
+  */
+-int iova_tree_remove(IOVATree *tree, const DMAMap *map);
++void iova_tree_remove(IOVATree *tree, const DMAMap *map);
+ 
+ /**
+  * iova_tree_find:
+diff --git a/util/iova-tree.c b/util/iova-tree.c
+index 6dff29c1f6..fee530a579 100644
+--- a/util/iova-tree.c
++++ b/util/iova-tree.c
+@@ -164,15 +164,13 @@ void iova_tree_foreach(IOVATree *tree, iova_tree_iterator iterator)
+     g_tree_foreach(tree->tree, iova_tree_traverse, iterator);
+ }
+ 
+-int iova_tree_remove(IOVATree *tree, const DMAMap *map)
++void iova_tree_remove(IOVATree *tree, const DMAMap *map)
+ {
+     const DMAMap *overlap;
+ 
+     while ((overlap = iova_tree_find(tree, map))) {
+         g_tree_remove(tree->tree, overlap);
+     }
+-
+-    return IOVA_OK;
+ }
+ 
+ /**
+-- 
+2.31.1
+

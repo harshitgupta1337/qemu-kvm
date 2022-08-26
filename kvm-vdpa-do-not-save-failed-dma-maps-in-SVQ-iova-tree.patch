@@ -1,0 +1,83 @@
+From 6d16102aca24bab16c846fe6457071f4466b8e35 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Tue, 23 Aug 2022 20:20:03 +0200
+Subject: [PATCH 04/23] vdpa: do not save failed dma maps in SVQ iova tree
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 116: vdpa: Restore device state on destination
+RH-Bugzilla: 2114060
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [3/21] f9bea39f7fa14c5ef0f85774cbad0ca3b52c4498 (eperezmartin/qemu-kvm)
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2114060
+Upstream status: git@github.com:jasowang/qemu.git net-next
+
+If a map fails for whatever reason, it must not be saved in the tree.
+Otherwise, qemu will try to unmap it in cleanup, leaving to more errors.
+
+Fixes: 34e3c94eda ("vdpa: Add custom IOTLB translations to SVQ")
+Reported-by: Lei Yang <leiyang@redhat.com>
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Acked-by: Jason Wang <jasowang@redhat.com>
+Signed-off-by: Jason Wang <jasowang@redhat.com>
+(cherry picked from commit 6cc2ec65382fde205511ac00a324995ce6ee8f28)
+---
+ hw/virtio/vhost-vdpa.c | 20 +++++++++++++-------
+ 1 file changed, 13 insertions(+), 7 deletions(-)
+
+diff --git a/hw/virtio/vhost-vdpa.c b/hw/virtio/vhost-vdpa.c
+index aa7765c6bc..cc15b7d8ee 100644
+--- a/hw/virtio/vhost-vdpa.c
++++ b/hw/virtio/vhost-vdpa.c
+@@ -174,6 +174,7 @@ static void vhost_vdpa_listener_commit(MemoryListener *listener)
+ static void vhost_vdpa_listener_region_add(MemoryListener *listener,
+                                            MemoryRegionSection *section)
+ {
++    DMAMap mem_region = {};
+     struct vhost_vdpa *v = container_of(listener, struct vhost_vdpa, listener);
+     hwaddr iova;
+     Int128 llend, llsize;
+@@ -210,13 +211,13 @@ static void vhost_vdpa_listener_region_add(MemoryListener *listener,
+ 
+     llsize = int128_sub(llend, int128_make64(iova));
+     if (v->shadow_vqs_enabled) {
+-        DMAMap mem_region = {
+-            .translated_addr = (hwaddr)(uintptr_t)vaddr,
+-            .size = int128_get64(llsize) - 1,
+-            .perm = IOMMU_ACCESS_FLAG(true, section->readonly),
+-        };
++        int r;
+ 
+-        int r = vhost_iova_tree_map_alloc(v->iova_tree, &mem_region);
++        mem_region.translated_addr = (hwaddr)(uintptr_t)vaddr,
++        mem_region.size = int128_get64(llsize) - 1,
++        mem_region.perm = IOMMU_ACCESS_FLAG(true, section->readonly),
++
++        r = vhost_iova_tree_map_alloc(v->iova_tree, &mem_region);
+         if (unlikely(r != IOVA_OK)) {
+             error_report("Can't allocate a mapping (%d)", r);
+             goto fail;
+@@ -230,11 +231,16 @@ static void vhost_vdpa_listener_region_add(MemoryListener *listener,
+                              vaddr, section->readonly);
+     if (ret) {
+         error_report("vhost vdpa map fail!");
+-        goto fail;
++        goto fail_map;
+     }
+ 
+     return;
+ 
++fail_map:
++    if (v->shadow_vqs_enabled) {
++        vhost_iova_tree_remove(v->iova_tree, &mem_region);
++    }
++
+ fail:
+     /*
+      * On the initfn path, store the first error in the container so we
+-- 
+2.31.1
+

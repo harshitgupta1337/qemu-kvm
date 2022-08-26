@@ -1,0 +1,87 @@
+From e1f9986cf77e4b2f16aca7b2523bc75bae0c4d3c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Tue, 23 Aug 2022 20:30:36 +0200
+Subject: [PATCH 21/23] vdpa: Add virtio-net mac address via CVQ at start
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 116: vdpa: Restore device state on destination
+RH-Bugzilla: 2114060
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [20/21] a7920816d5faf7a0cfbb7c2731a48ddfc456b8d4 (eperezmartin/qemu-kvm)
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2114060
+Upstream status: git@github.com:jasowang/qemu.git net-next
+
+This is needed so the destination vdpa device see the same state a the
+guest set in the source.
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Acked-by: Jason Wang <jasowang@redhat.com>
+Signed-off-by: Jason Wang <jasowang@redhat.com>
+(cherry picked from commit f34cd09b13855657a0d49c5ea6a1e37ba9dc2334)
+---
+ net/vhost-vdpa.c | 40 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 40 insertions(+)
+
+diff --git a/net/vhost-vdpa.c b/net/vhost-vdpa.c
+index f09f044ec1..79ebda7de1 100644
+--- a/net/vhost-vdpa.c
++++ b/net/vhost-vdpa.c
+@@ -363,11 +363,51 @@ static ssize_t vhost_vdpa_net_cvq_add(VhostVDPAState *s, size_t out_len,
+     return vhost_svq_poll(svq);
+ }
+ 
++static int vhost_vdpa_net_load(NetClientState *nc)
++{
++    VhostVDPAState *s = DO_UPCAST(VhostVDPAState, nc, nc);
++    const struct vhost_vdpa *v = &s->vhost_vdpa;
++    const VirtIONet *n;
++    uint64_t features;
++
++    assert(nc->info->type == NET_CLIENT_DRIVER_VHOST_VDPA);
++
++    if (!v->shadow_vqs_enabled) {
++        return 0;
++    }
++
++    n = VIRTIO_NET(v->dev->vdev);
++    features = n->parent_obj.guest_features;
++    if (features & BIT_ULL(VIRTIO_NET_F_CTRL_MAC_ADDR)) {
++        const struct virtio_net_ctrl_hdr ctrl = {
++            .class = VIRTIO_NET_CTRL_MAC,
++            .cmd = VIRTIO_NET_CTRL_MAC_ADDR_SET,
++        };
++        char *cursor = s->cvq_cmd_out_buffer;
++        ssize_t dev_written;
++
++        memcpy(cursor, &ctrl, sizeof(ctrl));
++        cursor += sizeof(ctrl);
++        memcpy(cursor, n->mac, sizeof(n->mac));
++
++        dev_written = vhost_vdpa_net_cvq_add(s, sizeof(ctrl) + sizeof(n->mac),
++                                             sizeof(virtio_net_ctrl_ack));
++        if (unlikely(dev_written < 0)) {
++            return dev_written;
++        }
++
++        return *((virtio_net_ctrl_ack *)s->cvq_cmd_in_buffer) != VIRTIO_NET_OK;
++    }
++
++    return 0;
++}
++
+ static NetClientInfo net_vhost_vdpa_cvq_info = {
+     .type = NET_CLIENT_DRIVER_VHOST_VDPA,
+     .size = sizeof(VhostVDPAState),
+     .receive = vhost_vdpa_receive,
+     .start = vhost_vdpa_net_cvq_start,
++    .load = vhost_vdpa_net_load,
+     .stop = vhost_vdpa_net_cvq_stop,
+     .cleanup = vhost_vdpa_cleanup,
+     .has_vnet_hdr = vhost_vdpa_has_vnet_hdr,
+-- 
+2.31.1
+

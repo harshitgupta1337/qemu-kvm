@@ -1,0 +1,67 @@
+From 6cde15c70c86819033337771eb522e94e3ea9e34 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Tue, 23 Aug 2022 20:20:07 +0200
+Subject: [PATCH 09/23] vhost: Always store new kick fd on
+ vhost_svq_set_svq_kick_fd
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Eugenio Pérez <eperezma@redhat.com>
+RH-MergeRequest: 116: vdpa: Restore device state on destination
+RH-Bugzilla: 2114060
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [8/21] a09b8851c39d7cea67414560f6d322e988b9d59a (eperezmartin/qemu-kvm)
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2114060
+Upstream status: git@github.com:jasowang/qemu.git net-next
+
+We can unbind twice a file descriptor if we call twice
+vhost_svq_set_svq_kick_fd because of this. Since it comes from vhost and
+not from SVQ, that file descriptor could be a different thing that
+guest's vhost notifier.
+
+Likewise, it can happens the same if a guest start and stop the device
+multiple times.
+
+Reported-by: Lei Yang <leiyang@redhat.com>
+Fixes: dff4426fa6 ("vhost: Add Shadow VirtQueue kick forwarding capabilities")
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Acked-by: Jason Wang <jasowang@redhat.com>
+Signed-off-by: Jason Wang <jasowang@redhat.com>
+(cherry picked from commit 6867f29c1425add7e0e8d1d8d58cc0ffbb8df0e4)
+---
+ hw/virtio/vhost-shadow-virtqueue.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/hw/virtio/vhost-shadow-virtqueue.c b/hw/virtio/vhost-shadow-virtqueue.c
+index e53aac45f6..f420311b89 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.c
++++ b/hw/virtio/vhost-shadow-virtqueue.c
+@@ -602,13 +602,13 @@ void vhost_svq_set_svq_kick_fd(VhostShadowVirtqueue *svq, int svq_kick_fd)
+         event_notifier_set_handler(svq_kick, NULL);
+     }
+ 
++    event_notifier_init_fd(svq_kick, svq_kick_fd);
+     /*
+      * event_notifier_set_handler already checks for guest's notifications if
+      * they arrive at the new file descriptor in the switch, so there is no
+      * need to explicitly check for them.
+      */
+     if (poll_start) {
+-        event_notifier_init_fd(svq_kick, svq_kick_fd);
+         event_notifier_set(svq_kick);
+         event_notifier_set_handler(svq_kick, vhost_handle_guest_kick_notifier);
+     }
+@@ -655,7 +655,7 @@ void vhost_svq_start(VhostShadowVirtqueue *svq, VirtIODevice *vdev,
+  */
+ void vhost_svq_stop(VhostShadowVirtqueue *svq)
+ {
+-    event_notifier_set_handler(&svq->svq_kick, NULL);
++    vhost_svq_set_svq_kick_fd(svq, VHOST_FILE_UNBIND);
+     g_autofree VirtQueueElement *next_avail_elem = NULL;
+ 
+     if (!svq->vq) {
+-- 
+2.31.1
+
