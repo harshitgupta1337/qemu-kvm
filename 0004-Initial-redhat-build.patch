@@ -1,4 +1,4 @@
-From fc113ecd7c99646a7ced0b99570b5927ae6d595f Mon Sep 17 00:00:00 2001
+From 476f040f14a9287efb6f0bf5b3ca97844bf9fdc3 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 26 May 2021 10:56:02 +0200
 Subject: Initial redhat build
@@ -13,7 +13,7 @@ several issues are fixed in QEMU tree:
 
 We disable make check due to issues with some of the tests.
 
-This rebase is based on qemu-kvm-6.2.0-13.el9
+This rebase is based on qemu-kvm-7.0.0-11.el9
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 --
@@ -49,6 +49,12 @@ Rebase changes (7.0.0):
 - Disable new configure options (dbus-display and qga-vss)
 - Change permissions on installing tests/Makefile.include
 - Remove ssh block driver
+
+Rebase changes (7.1.0 rc0):
+- --disable-vnc-png renamed to --disable-png (upstream)
+- removed --disable-vhost-vsock and --disable-vhost-scsi
+- capstone submodule removed
+- Temporary include capstone build
 
 Merged patches (6.0.0):
  - 605758c902 Limit build on Power to qemu-img and qemu-ga only
@@ -146,7 +152,7 @@ Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 ---
  .distro/85-kvm.preset                   |    5 -
  .distro/Makefile                        |  100 +
- .distro/Makefile.common                 |   40 +
+ .distro/Makefile.common                 |   41 +
  .distro/README.tests                    |   39 +
  .distro/ksm.service                     |   13 -
  .distro/ksm.sysconfig                   |    4 -
@@ -158,18 +164,17 @@ Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
  .distro/kvm-setup.service               |   14 -
  .distro/modules-load.conf               |    4 +
  .distro/qemu-guest-agent.service        |    1 -
- .distro/qemu-kvm.spec.template          | 4034 +++++++++++++++++++++++
+ .distro/qemu-kvm.spec.template          | 4256 +++++++++++++++++++++++
  .distro/rpminspect.yaml                 |    6 +-
  .distro/scripts/extract_build_cmd.py    |   12 +
  .gitignore                              |    1 +
  README.systemtap                        |   43 +
- meson.build                             |    4 +-
  scripts/qemu-guest-agent/fsfreeze-hook  |    2 +-
  scripts/systemtap/conf.d/qemu_kvm.conf  |    4 +
  scripts/systemtap/script.d/qemu_kvm.stp |    1 +
  tests/check-block.sh                    |    2 +
  ui/vnc-auth-sasl.c                      |    2 +-
- 25 files changed, 4290 insertions(+), 339 deletions(-)
+ 24 files changed, 4510 insertions(+), 338 deletions(-)
  delete mode 100644 .distro/85-kvm.preset
  create mode 100644 .distro/Makefile
  create mode 100644 .distro/Makefile.common
@@ -237,21 +242,6 @@ index 0000000000..ad913fc990
 +
 +3. Translate the trace record to readable format.
 +  # /usr/share/qemu-kvm/simpletrace.py --no-header /usr/share/qemu-kvm/trace-events /tmp/trace.log
-diff --git a/meson.build b/meson.build
-index 861de93c4f..6f7e430f0f 100644
---- a/meson.build
-+++ b/meson.build
-@@ -2394,7 +2394,9 @@ if capstone_opt == 'internal'
-     # Include all configuration defines via a header file, which will wind up
-     # as a dependency on the object file, and thus changes here will result
-     # in a rebuild.
--    '-include', 'capstone-defs.h'
-+    '-include', 'capstone-defs.h',
-+
-+    '-Wp,-D_GLIBCXX_ASSERTIONS',
-   ]
- 
-   libcapstone = static_library('capstone',
 diff --git a/scripts/qemu-guest-agent/fsfreeze-hook b/scripts/qemu-guest-agent/fsfreeze-hook
 index 13aafd4845..e9b84ec028 100755
 --- a/scripts/qemu-guest-agent/fsfreeze-hook
@@ -283,11 +273,11 @@ index 0000000000..c04abf9449
 @@ -0,0 +1 @@
 +probe qemu.kvm.simpletrace.handle_qmp_command,qemu.kvm.simpletrace.monitor_protocol_*,qemu.kvm.simpletrace.migrate_set_state {}
 diff --git a/tests/check-block.sh b/tests/check-block.sh
-index f59496396c..d900d8b35e 100755
+index 5de2c1ba0b..6af743f441 100755
 --- a/tests/check-block.sh
 +++ b/tests/check-block.sh
-@@ -48,6 +48,8 @@ if LANG=C bash --version | grep -q 'GNU bash, version [123]' ; then
-     skip "bash version too old ==> Not running the qemu-iotests."
+@@ -22,6 +22,8 @@ if [ -z "$(find . -name 'qemu-system-*' -print)" ]; then
+     skip "No qemu-system binary available ==> Not running the qemu-iotests."
  fi
  
 +exit 0
