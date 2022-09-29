@@ -1,0 +1,50 @@
+From b4a0334826d5b28dd8f63edaa606cc123b60a538 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Thu, 11 Aug 2022 14:53:10 +0200
+Subject: [PATCH 23/29] vdpa: validate MQ CVQ commands
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+RH-MergeRequest: 117: vDPA SVQ Multiqueue support
+RH-Jira: RHELX-57
+RH-Acked-by: Jason Wang <jasowang@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Eugenio Pérez <eperezma@redhat.com>
+RH-Commit: [23/25] b727a8bba49a364c6c9afe3d7bfcc70e3ee942f4 (redhat/centos-stream/src/qemu-kvm)
+
+Upstream: Not merged yet
+
+So we are sure we can update the device model properly before sending to
+the device.
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+---
+ net/vhost-vdpa.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/net/vhost-vdpa.c b/net/vhost-vdpa.c
+index 3950e4f25d..c6cbe2fb5c 100644
+--- a/net/vhost-vdpa.c
++++ b/net/vhost-vdpa.c
+@@ -486,6 +486,15 @@ static bool vhost_vdpa_net_cvq_validate_cmd(const void *out_buf, size_t len)
+                           __func__, ctrl.cmd);
+         };
+         break;
++    case VIRTIO_NET_CTRL_MQ:
++        switch (ctrl.cmd) {
++        case VIRTIO_NET_CTRL_MQ_VQ_PAIRS_SET:
++            return true;
++        default:
++            qemu_log_mask(LOG_GUEST_ERROR, "%s: invalid mq cmd %u\n",
++                          __func__, ctrl.cmd);
++        };
++        break;
+     default:
+         qemu_log_mask(LOG_GUEST_ERROR, "%s: invalid control class %u\n",
+                       __func__, ctrl.class);
+-- 
+2.31.1
+

@@ -1,0 +1,98 @@
+From caa8a1d41ca1f2b9c4d1c6cc287c8ae22063b488 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Tue, 23 Aug 2022 20:30:37 +0200
+Subject: [PATCH 19/29] vdpa: Delete CVQ migration blocker
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+RH-MergeRequest: 117: vDPA SVQ Multiqueue support
+RH-Jira: RHELX-57
+RH-Acked-by: Jason Wang <jasowang@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Eugenio Pérez <eperezma@redhat.com>
+RH-Commit: [19/25] d3e6c009f66e1dc0069323684af28936ae10d155 (redhat/centos-stream/src/qemu-kvm)
+
+We can restore the device state in the destination via CVQ now. Remove
+the migration blocker.
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Acked-by: Jason Wang <jasowang@redhat.com>
+Signed-off-by: Jason Wang <jasowang@redhat.com>
+(cherry picked from commit 0e3fdcffead7c651ce06ab50cffb89e806f04e2b)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+---
+ hw/virtio/vhost-vdpa.c         | 15 ---------------
+ include/hw/virtio/vhost-vdpa.h |  1 -
+ net/vhost-vdpa.c               |  2 --
+ 3 files changed, 18 deletions(-)
+
+diff --git a/hw/virtio/vhost-vdpa.c b/hw/virtio/vhost-vdpa.c
+index 23ae5ef48b..7468e44b87 100644
+--- a/hw/virtio/vhost-vdpa.c
++++ b/hw/virtio/vhost-vdpa.c
+@@ -1033,13 +1033,6 @@ static bool vhost_vdpa_svqs_start(struct vhost_dev *dev)
+         return true;
+     }
+ 
+-    if (v->migration_blocker) {
+-        int r = migrate_add_blocker(v->migration_blocker, &err);
+-        if (unlikely(r < 0)) {
+-            return false;
+-        }
+-    }
+-
+     for (i = 0; i < v->shadow_vqs->len; ++i) {
+         VirtQueue *vq = virtio_get_queue(dev->vdev, dev->vq_index + i);
+         VhostShadowVirtqueue *svq = g_ptr_array_index(v->shadow_vqs, i);
+@@ -1082,10 +1075,6 @@ err:
+         vhost_svq_stop(svq);
+     }
+ 
+-    if (v->migration_blocker) {
+-        migrate_del_blocker(v->migration_blocker);
+-    }
+-
+     return false;
+ }
+ 
+@@ -1101,10 +1090,6 @@ static void vhost_vdpa_svqs_stop(struct vhost_dev *dev)
+         VhostShadowVirtqueue *svq = g_ptr_array_index(v->shadow_vqs, i);
+         vhost_vdpa_svq_unmap_rings(dev, svq);
+     }
+-
+-    if (v->migration_blocker) {
+-        migrate_del_blocker(v->migration_blocker);
+-    }
+ }
+ 
+ static int vhost_vdpa_dev_start(struct vhost_dev *dev, bool started)
+diff --git a/include/hw/virtio/vhost-vdpa.h b/include/hw/virtio/vhost-vdpa.h
+index d10a89303e..1111d85643 100644
+--- a/include/hw/virtio/vhost-vdpa.h
++++ b/include/hw/virtio/vhost-vdpa.h
+@@ -35,7 +35,6 @@ typedef struct vhost_vdpa {
+     bool shadow_vqs_enabled;
+     /* IOVA mapping used by the Shadow Virtqueue */
+     VhostIOVATree *iova_tree;
+-    Error *migration_blocker;
+     GPtrArray *shadow_vqs;
+     const VhostShadowVirtqueueOps *shadow_vq_ops;
+     void *shadow_vq_ops_opaque;
+diff --git a/net/vhost-vdpa.c b/net/vhost-vdpa.c
+index 640434d1ea..6ce68fcd3f 100644
+--- a/net/vhost-vdpa.c
++++ b/net/vhost-vdpa.c
+@@ -555,8 +555,6 @@ static NetClientState *net_vhost_vdpa_init(NetClientState *peer,
+ 
+         s->vhost_vdpa.shadow_vq_ops = &vhost_vdpa_net_svq_ops;
+         s->vhost_vdpa.shadow_vq_ops_opaque = s;
+-        error_setg(&s->vhost_vdpa.migration_blocker,
+-                   "Migration disabled: vhost-vdpa uses CVQ.");
+     }
+     ret = vhost_vdpa_add(nc, (void *)&s->vhost_vdpa, queue_pair_index, nvqs);
+     if (ret) {
+-- 
+2.31.1
+

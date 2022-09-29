@@ -1,0 +1,79 @@
+From c91852883439c3a5349f6787b11b7bc71d6504a5 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Tue, 23 Aug 2022 20:20:08 +0200
+Subject: [PATCH 07/29] vdpa: Use ring hwaddr at vhost_vdpa_svq_unmap_ring
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+RH-MergeRequest: 117: vDPA SVQ Multiqueue support
+RH-Jira: RHELX-57
+RH-Acked-by: Jason Wang <jasowang@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Eugenio Pérez <eperezma@redhat.com>
+RH-Commit: [7/25] 961d9854ae1088fc487b32b605fef207aad08924 (redhat/centos-stream/src/qemu-kvm)
+
+Reduce code duplication.
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Acked-by: Jason Wang <jasowang@redhat.com>
+Signed-off-by: Jason Wang <jasowang@redhat.com>
+(cherry picked from commit 8b6d6119ad7fd983d192f60c4960fb6a9197d995)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+---
+ hw/virtio/vhost-vdpa.c | 17 ++++++++---------
+ 1 file changed, 8 insertions(+), 9 deletions(-)
+
+diff --git a/hw/virtio/vhost-vdpa.c b/hw/virtio/vhost-vdpa.c
+index e208dd000e..23ae5ef48b 100644
+--- a/hw/virtio/vhost-vdpa.c
++++ b/hw/virtio/vhost-vdpa.c
+@@ -884,10 +884,12 @@ static int vhost_vdpa_svq_set_fds(struct vhost_dev *dev,
+ /**
+  * Unmap a SVQ area in the device
+  */
+-static void vhost_vdpa_svq_unmap_ring(struct vhost_vdpa *v,
+-                                      const DMAMap *needle)
++static void vhost_vdpa_svq_unmap_ring(struct vhost_vdpa *v, hwaddr addr)
+ {
+-    const DMAMap *result = vhost_iova_tree_find_iova(v->iova_tree, needle);
++    const DMAMap needle = {
++        .translated_addr = addr,
++    };
++    const DMAMap *result = vhost_iova_tree_find_iova(v->iova_tree, &needle);
+     hwaddr size;
+     int r;
+ 
+@@ -909,17 +911,14 @@ static void vhost_vdpa_svq_unmap_ring(struct vhost_vdpa *v,
+ static void vhost_vdpa_svq_unmap_rings(struct vhost_dev *dev,
+                                        const VhostShadowVirtqueue *svq)
+ {
+-    DMAMap needle = {};
+     struct vhost_vdpa *v = dev->opaque;
+     struct vhost_vring_addr svq_addr;
+ 
+     vhost_svq_get_vring_addr(svq, &svq_addr);
+ 
+-    needle.translated_addr = svq_addr.desc_user_addr;
+-    vhost_vdpa_svq_unmap_ring(v, &needle);
++    vhost_vdpa_svq_unmap_ring(v, svq_addr.desc_user_addr);
+ 
+-    needle.translated_addr = svq_addr.used_user_addr;
+-    vhost_vdpa_svq_unmap_ring(v, &needle);
++    vhost_vdpa_svq_unmap_ring(v, svq_addr.used_user_addr);
+ }
+ 
+ /**
+@@ -997,7 +996,7 @@ static bool vhost_vdpa_svq_map_rings(struct vhost_dev *dev,
+     ok = vhost_vdpa_svq_map_ring(v, &device_region, errp);
+     if (unlikely(!ok)) {
+         error_prepend(errp, "Cannot create vq device region: ");
+-        vhost_vdpa_svq_unmap_ring(v, &driver_region);
++        vhost_vdpa_svq_unmap_ring(v, driver_region.translated_addr);
+     }
+     addr->used_user_addr = device_region.iova;
+ 
+-- 
+2.31.1
+

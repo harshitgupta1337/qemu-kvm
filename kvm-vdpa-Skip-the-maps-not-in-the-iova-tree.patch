@@ -1,0 +1,48 @@
+From 67291df3eca8b3d74567c0e8211c9f7da65e74d4 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Tue, 23 Aug 2022 20:20:02 +0200
+Subject: [PATCH 01/29] vdpa: Skip the maps not in the iova tree
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+RH-MergeRequest: 117: vDPA SVQ Multiqueue support
+RH-Jira: RHELX-57
+RH-Acked-by: Jason Wang <jasowang@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Eugenio Pérez <eperezma@redhat.com>
+RH-Commit: [1/25] d385d5b600ac4f1a9f9fd4f523e5d4078df8478a (redhat/centos-stream/src/qemu-kvm)
+
+Next patch will skip the registering of dma maps that the vdpa device
+rejects in the iova tree. We need to consider that here or we cause a
+SIGSEGV accessing result.
+
+Reported-by: Lei Yang <leiyang@redhat.com>
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Acked-by: Jason Wang <jasowang@redhat.com>
+Signed-off-by: Jason Wang <jasowang@redhat.com>
+(cherry picked from commit 10dab9f2635b9bab23a2b29974b526e62bb61268)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+---
+ hw/virtio/vhost-vdpa.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/hw/virtio/vhost-vdpa.c b/hw/virtio/vhost-vdpa.c
+index 3ff9ce3501..983d3697b0 100644
+--- a/hw/virtio/vhost-vdpa.c
++++ b/hw/virtio/vhost-vdpa.c
+@@ -289,6 +289,10 @@ static void vhost_vdpa_listener_region_del(MemoryListener *listener,
+         };
+ 
+         result = vhost_iova_tree_find_iova(v->iova_tree, &mem_region);
++        if (!result) {
++            /* The memory listener map wasn't mapped */
++            return;
++        }
+         iova = result->iova;
+         vhost_iova_tree_remove(v->iova_tree, result);
+     }
+-- 
+2.31.1
+

@@ -1,0 +1,55 @@
+From cf08dbe33683a66a79ec07b8450f9d3d27cff1c4 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
+Date: Tue, 23 Aug 2022 20:30:27 +0200
+Subject: [PATCH 09/29] vhost: use SVQ element ndescs instead of opaque data
+ for desc validation
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RH-Author: Laurent Vivier <lvivier@redhat.com>
+RH-MergeRequest: 117: vDPA SVQ Multiqueue support
+RH-Jira: RHELX-57
+RH-Acked-by: Jason Wang <jasowang@redhat.com>
+RH-Acked-by: Cindy Lu <lulu@redhat.com>
+RH-Acked-by: Eugenio Pérez <eperezma@redhat.com>
+RH-Commit: [9/25] 071eb2a0db612d516d630a15a1f0fd908ed86fd3 (redhat/centos-stream/src/qemu-kvm)
+
+Since we're going to allow SVQ to add elements without the guest's
+knowledge and without its own VirtQueueElement, it's easier to check if
+an element is a valid head checking a different thing than the
+VirtQueueElement.
+
+Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+Acked-by: Jason Wang <jasowang@redhat.com>
+Signed-off-by: Jason Wang <jasowang@redhat.com>
+(cherry picked from commit 86f5f2546f03a3dfde421c715187b262e29b2848)
+Signed-off-by: Laurent Vivier <lvivier@redhat.com>
+---
+ hw/virtio/vhost-shadow-virtqueue.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/hw/virtio/vhost-shadow-virtqueue.c b/hw/virtio/vhost-shadow-virtqueue.c
+index a1261d4a0f..b35aeef4bd 100644
+--- a/hw/virtio/vhost-shadow-virtqueue.c
++++ b/hw/virtio/vhost-shadow-virtqueue.c
+@@ -414,7 +414,7 @@ static VirtQueueElement *vhost_svq_get_buf(VhostShadowVirtqueue *svq,
+         return NULL;
+     }
+ 
+-    if (unlikely(!svq->desc_state[used_elem.id].elem)) {
++    if (unlikely(!svq->desc_state[used_elem.id].ndescs)) {
+         qemu_log_mask(LOG_GUEST_ERROR,
+             "Device %s says index %u is used, but it was not available",
+             svq->vdev->name, used_elem.id);
+@@ -422,6 +422,7 @@ static VirtQueueElement *vhost_svq_get_buf(VhostShadowVirtqueue *svq,
+     }
+ 
+     num = svq->desc_state[used_elem.id].ndescs;
++    svq->desc_state[used_elem.id].ndescs = 0;
+     last_used_chain = vhost_svq_last_desc_of_chain(svq, num, used_elem.id);
+     svq->desc_next[last_used_chain] = svq->free_head;
+     svq->free_head = used_elem.id;
+-- 
+2.31.1
+
