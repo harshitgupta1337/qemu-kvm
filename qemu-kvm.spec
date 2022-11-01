@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.1.0
-Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -249,6 +249,8 @@ Patch45: kvm-i386-do-kvm_put_msr_feature_control-first-thing-when.patch
 Patch46: kvm-Revert-Re-enable-capstone-internal-build.patch
 # For bz#2108531 - Windows guest reboot after migration with wsl2 installed inside
 Patch47: kvm-target-i386-kvm-fix-kvmclock_current_nsec-Assertion-.patch
+# For bz#2126095 - [rhel9.2][intel_iommu]Booting guest with "-device intel-iommu,intremap=on,device-iotlb=on,caching-mode=on" causes kernel call trace
+Patch48: kvm-Revert-intel_iommu-Fix-irqchip-X2APIC-configuration-.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1281,6 +1283,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Nov 01 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.1.0-4
+- kvm-Revert-intel_iommu-Fix-irqchip-X2APIC-configuration-.patch [bz#2126095]
+- Resolves: bz#2126095
+  ([rhel9.2][intel_iommu]Booting guest with "-device intel-iommu,intremap=on,device-iotlb=on,caching-mode=on" causes kernel call trace)
+
 * Thu Oct 13 2022 Jon Maloy <jmaloy@redhat.com> - 7.1.0-3
 - kvm-target-i386-kvm-fix-kvmclock_current_nsec-Assertion-.patch [bz#2108531]
 - Resolves: bz#2108531
