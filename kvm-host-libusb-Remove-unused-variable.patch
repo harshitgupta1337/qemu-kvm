@@ -1,0 +1,64 @@
+From 529d7d039a8783cb5745330c9731626a608553db Mon Sep 17 00:00:00 2001
+From: Miroslav Rezanina <mrezanin@redhat.com>
+Date: Wed, 9 Nov 2022 05:09:40 -0500
+Subject: [PATCH 3/3] host-libusb: Remove unused variable
+
+RH-Author: Miroslav Rezanina <mrezanin@redhat.com>
+RH-MergeRequest: 122: Remove variables causing 'Unused but set variable' warning on Clang 15
+RH-Bugzilla: 2141218
+RH-Commit: [3/3] 460bd469b6f262074c407475c5003581f8993855 (mrezanin/centos-src-qemu-kvm)
+
+Variable unconnected used in usb_host_auto_check function is only incremented
+but never read as line where it is read was disabled since introducing the code.
+This causes 'Unused but set variable' warning on Clang 15.0.1 compiler.
+
+Removing the variable and disabled code to prevent the warning.
+
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ hw/usb/host-libusb.c | 15 ---------------
+ 1 file changed, 15 deletions(-)
+
+diff --git a/hw/usb/host-libusb.c b/hw/usb/host-libusb.c
+index 28f8af8941..176868d345 100644
+--- a/hw/usb/host-libusb.c
++++ b/hw/usb/host-libusb.c
+@@ -1837,7 +1837,6 @@ static void usb_host_auto_check(void *unused)
+     struct USBAutoFilter *f;
+     libusb_device **devs = NULL;
+     struct libusb_device_descriptor ddesc;
+-    int unconnected = 0;
+     int i, n;
+ 
+     if (usb_host_init() != 0) {
+@@ -1897,9 +1896,6 @@ static void usb_host_auto_check(void *unused)
+         libusb_free_device_list(devs, 1);
+ 
+         QTAILQ_FOREACH(s, &hostdevs, next) {
+-            if (s->dh == NULL) {
+-                unconnected++;
+-            }
+             if (s->seen == 0) {
+                 if (s->dh) {
+                     usb_host_close(s);
+@@ -1908,17 +1904,6 @@ static void usb_host_auto_check(void *unused)
+             }
+             s->seen = 0;
+         }
+-
+-#if 0
+-        if (unconnected == 0) {
+-            /* nothing to watch */
+-            if (usb_auto_timer) {
+-                timer_del(usb_auto_timer);
+-                trace_usb_host_auto_scan_disabled();
+-            }
+-            return;
+-        }
+-#endif
+     }
+ 
+     if (!usb_vmstate) {
+-- 
+2.31.1
+

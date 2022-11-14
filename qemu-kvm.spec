@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.1.0
-Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -251,6 +251,12 @@ Patch46: kvm-Revert-Re-enable-capstone-internal-build.patch
 Patch47: kvm-target-i386-kvm-fix-kvmclock_current_nsec-Assertion-.patch
 # For bz#2126095 - [rhel9.2][intel_iommu]Booting guest with "-device intel-iommu,intremap=on,device-iotlb=on,caching-mode=on" causes kernel call trace
 Patch48: kvm-Revert-intel_iommu-Fix-irqchip-X2APIC-configuration-.patch
+# For bz#2141218 - qemu-kvm build fails with clang 15.0.1 due to false unused variable error
+Patch49: kvm-rtl8139-Remove-unused-variable.patch
+# For bz#2141218 - qemu-kvm build fails with clang 15.0.1 due to false unused variable error
+Patch50: kvm-qemu-img-remove-unused-variable.patch
+# For bz#2141218 - qemu-kvm build fails with clang 15.0.1 due to false unused variable error
+Patch51: kvm-host-libusb-Remove-unused-variable.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1283,6 +1289,13 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Nov 14 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.1.0-5
+- kvm-rtl8139-Remove-unused-variable.patch [bz#2141218]
+- kvm-qemu-img-remove-unused-variable.patch [bz#2141218]
+- kvm-host-libusb-Remove-unused-variable.patch [bz#2141218]
+- Resolves: bz#2141218
+  (qemu-kvm build fails with clang 15.0.1 due to false unused variable error)
+
 * Tue Nov 01 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.1.0-4
 - kvm-Revert-intel_iommu-Fix-irqchip-X2APIC-configuration-.patch [bz#2126095]
 - Resolves: bz#2126095
