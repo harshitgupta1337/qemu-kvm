@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.1.0
-Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 6%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -257,6 +257,10 @@ Patch49: kvm-rtl8139-Remove-unused-variable.patch
 Patch50: kvm-qemu-img-remove-unused-variable.patch
 # For bz#2141218 - qemu-kvm build fails with clang 15.0.1 due to false unused variable error
 Patch51: kvm-host-libusb-Remove-unused-variable.patch
+# For bz#2143170 - The installation can not start when install files (iso) locate on a 4k disk
+Patch52: kvm-block-move-bdrv_qiov_is_aligned-to-file-posix.patch
+# For bz#2143170 - The installation can not start when install files (iso) locate on a 4k disk
+Patch53: kvm-block-use-the-request-length-for-iov-alignment.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1289,6 +1293,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Fri Dec 02 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.1.0-6
+- kvm-block-move-bdrv_qiov_is_aligned-to-file-posix.patch [bz#2143170]
+- kvm-block-use-the-request-length-for-iov-alignment.patch [bz#2143170]
+- Resolves: bz#2143170
+  (The installation can not start when install files (iso) locate on a 4k disk)
+
 * Mon Nov 14 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.1.0-5
 - kvm-rtl8139-Remove-unused-variable.patch [bz#2141218]
 - kvm-qemu-img-remove-unused-variable.patch [bz#2141218]
