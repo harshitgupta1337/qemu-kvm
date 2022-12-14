@@ -151,7 +151,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.1.0
-Release: 6%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -261,6 +261,8 @@ Patch51: kvm-host-libusb-Remove-unused-variable.patch
 Patch52: kvm-block-move-bdrv_qiov_is_aligned-to-file-posix.patch
 # For bz#2143170 - The installation can not start when install files (iso) locate on a 4k disk
 Patch53: kvm-block-use-the-request-length-for-iov-alignment.patch
+# For bz#2149108 - CVE-2022-4172 qemu-kvm: QEMU: ACPI ERST: memory corruption issues in read_erst_record and write_erst_record [rhel-9]
+Patch54: kvm-hw-acpi-erst.c-Fix-memory-handling-issues.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1293,6 +1295,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Wed Dec 14 2022 Jon Maloy <jmaloy@redhat.com> - 7.1.0-7
+- kvm-hw-acpi-erst.c-Fix-memory-handling-issues.patch [bz#2149108]
+- Resolves: bz#2149108
+  (CVE-2022-4172 qemu-kvm: QEMU: ACPI ERST: memory corruption issues in read_erst_record and write_erst_record [rhel-9])
+
 * Fri Dec 02 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.1.0-6
 - kvm-block-move-bdrv_qiov_is_aligned-to-file-posix.patch [bz#2143170]
 - kvm-block-use-the-request-length-for-iov-alignment.patch [bz#2143170]
