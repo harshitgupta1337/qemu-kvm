@@ -1,7 +1,7 @@
 %global libfdt_version 1.6.0
 %global libseccomp_version 2.4.0
 %global libusbx_version 1.0.23
-%global meson_version 0.58.2
+%global meson_version 0.61.3
 %global usbredir_version 0.7.1
 %global ipxe_version 20200823-5.git4bd064de
 
@@ -113,16 +113,13 @@ Requires: %{name}-ui-opengl = %{epoch}:%{version}-%{release}     \
 Requires: %{name}-ui-egl-headless = %{epoch}:%{version}-%{release}     \
 %endif                                                           \
 Requires: %{name}-device-display-virtio-gpu = %{epoch}:%{version}-%{release}   \
-Requires: %{name}-device-display-virtio-gpu-gl = %{epoch}:%{version}-%{release}   \
 %ifarch s390x                                                    \
 Requires: %{name}-device-display-virtio-gpu-ccw = %{epoch}:%{version}-%{release}   \
 %else                                                            \
 Requires: %{name}-device-display-virtio-gpu-pci = %{epoch}:%{version}-%{release}   \
-Requires: %{name}-device-display-virtio-gpu-pci-gl = %{epoch}:%{version}-%{release}   \
 %endif                                                           \
 %ifarch x86_64 %{power64}                                        \
 Requires: %{name}-device-display-virtio-vga = %{epoch}:%{version}-%{release}   \
-Requires: %{name}-device-display-virtio-vga-gl = %{epoch}:%{version}-%{release}   \
 %endif                                                           \
 Requires: %{name}-device-usb-host = %{epoch}:%{version}-%{release}   \
 %if %{have_usbredir}                                             \
@@ -150,8 +147,8 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
-Version: 7.1.0
-Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
+Version: 7.2.0
+Release: 1%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -177,92 +174,23 @@ Source36: README.tests
 
 
 Patch0004: 0004-Initial-redhat-build.patch
-Patch0005: 0005-Re-enable-capstone-internal-build.patch
-Patch0006: 0006-Enable-disable-devices-for-RHEL.patch
-Patch0007: 0007-Machine-type-related-general-changes.patch
-Patch0008: 0008-Add-aarch64-machine-types.patch
-Patch0009: 0009-Add-ppc64-machine-types.patch
-Patch0010: 0010-Add-s390x-machine-types.patch
-Patch0011: 0011-Add-x86_64-machine-types.patch
-Patch0012: 0012-Enable-make-check.patch
-Patch0013: 0013-vfio-cap-number-of-devices-that-can-be-assigned.patch
-Patch0014: 0014-Add-support-statement-to-help-output.patch
-Patch0015: 0015-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
-Patch0016: 0016-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
-Patch0017: 0017-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
-Patch0018: 0018-Introduce-upstream-7.0-compat-changes.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch19: kvm-vdpa-Skip-the-maps-not-in-the-iova-tree.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch20: kvm-vdpa-do-not-save-failed-dma-maps-in-SVQ-iova-tree.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch21: kvm-util-accept-iova_tree_remove_parameter-by-value.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch22: kvm-vdpa-Remove-SVQ-vring-from-iova_tree-at-shutdown.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch23: kvm-vdpa-Make-SVQ-vring-unmapping-return-void.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch24: kvm-vhost-Always-store-new-kick-fd-on-vhost_svq_set_svq_.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch25: kvm-vdpa-Use-ring-hwaddr-at-vhost_vdpa_svq_unmap_ring.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch26: kvm-vhost-stop-transfer-elem-ownership-in-vhost_handle_g.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch27: kvm-vhost-use-SVQ-element-ndescs-instead-of-opaque-data-.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch28: kvm-vhost-Delete-useless-read-memory-barrier.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch29: kvm-vhost-Do-not-depend-on-NULL-VirtQueueElement-on-vhos.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch30: kvm-vhost_net-Add-NetClientInfo-start-callback.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch31: kvm-vhost_net-Add-NetClientInfo-stop-callback.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch32: kvm-vdpa-add-net_vhost_vdpa_cvq_info-NetClientInfo.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch33: kvm-vdpa-Move-command-buffers-map-to-start-of-net-device.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch34: kvm-vdpa-extract-vhost_vdpa_net_cvq_add-from-vhost_vdpa_.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch35: kvm-vhost_net-add-NetClientState-load-callback.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch36: kvm-vdpa-Add-virtio-net-mac-address-via-CVQ-at-start.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch37: kvm-vdpa-Delete-CVQ-migration-blocker.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch38: kvm-vdpa-Make-VhostVDPAState-cvq_cmd_in_buffer-control-a.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch39: kvm-vdpa-extract-vhost_vdpa_net_load_mac-from-vhost_vdpa.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch40: kvm-vdpa-Add-vhost_vdpa_net_load_mq.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch41: kvm-vdpa-validate-MQ-CVQ-commands.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch42: kvm-virtio-net-Update-virtio-net-curr_queue_pairs-in-vdp.patch
-# For RHELX-57 - vDPA SVQ Multiqueue support 
-Patch43: kvm-vdpa-Allow-MQ-feature-in-SVQ.patch
-# For bz#2125281 - [RHEL9.1] Guests in VMX root operation fail to reboot with QEMU's 'system_reset' command [rhel-9.2.0]
-Patch44: kvm-i386-reset-KVM-nested-state-upon-CPU-reset.patch
-# For bz#2125281 - [RHEL9.1] Guests in VMX root operation fail to reboot with QEMU's 'system_reset' command [rhel-9.2.0]
-Patch45: kvm-i386-do-kvm_put_msr_feature_control-first-thing-when.patch
-# For bz#2127825 - Use capstone for qemu-kvm build
-Patch46: kvm-Revert-Re-enable-capstone-internal-build.patch
-# For bz#2108531 - Windows guest reboot after migration with wsl2 installed inside
-Patch47: kvm-target-i386-kvm-fix-kvmclock_current_nsec-Assertion-.patch
-# For bz#2126095 - [rhel9.2][intel_iommu]Booting guest with "-device intel-iommu,intremap=on,device-iotlb=on,caching-mode=on" causes kernel call trace
-Patch48: kvm-Revert-intel_iommu-Fix-irqchip-X2APIC-configuration-.patch
-# For bz#2141218 - qemu-kvm build fails with clang 15.0.1 due to false unused variable error
-Patch49: kvm-rtl8139-Remove-unused-variable.patch
-# For bz#2141218 - qemu-kvm build fails with clang 15.0.1 due to false unused variable error
-Patch50: kvm-qemu-img-remove-unused-variable.patch
-# For bz#2141218 - qemu-kvm build fails with clang 15.0.1 due to false unused variable error
-Patch51: kvm-host-libusb-Remove-unused-variable.patch
-# For bz#2143170 - The installation can not start when install files (iso) locate on a 4k disk
-Patch52: kvm-block-move-bdrv_qiov_is_aligned-to-file-posix.patch
-# For bz#2143170 - The installation can not start when install files (iso) locate on a 4k disk
-Patch53: kvm-block-use-the-request-length-for-iov-alignment.patch
-# For bz#2149108 - CVE-2022-4172 qemu-kvm: QEMU: ACPI ERST: memory corruption issues in read_erst_record and write_erst_record [rhel-9]
-Patch54: kvm-hw-acpi-erst.c-Fix-memory-handling-issues.patch
+Patch0005: 0005-Enable-disable-devices-for-RHEL.patch
+Patch0006: 0006-Machine-type-related-general-changes.patch
+Patch0007: 0007-Add-aarch64-machine-types.patch
+Patch0008: 0008-Add-ppc64-machine-types.patch
+Patch0009: 0009-Add-s390x-machine-types.patch
+Patch0010: 0010-Add-x86_64-machine-types.patch
+Patch0011: 0011-Enable-make-check.patch
+Patch0012: 0012-vfio-cap-number-of-devices-that-can-be-assigned.patch
+Patch0013: 0013-Add-support-statement-to-help-output.patch
+Patch0014: 0014-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
+Patch0015: 0015-BZ1653590-Require-at-least-64kiB-pages-for-downstrea.patch
+Patch0016: 0016-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
+Patch0018: 0018-Addd-7.2-compat-bits-for-RHEL-9.1-machine-type.patch
+Patch0019: 0019-redhat-Update-s390x-machine-type-compatibility-for-Q.patch
+Patch0020: 0020-redhat-aarch64-add-rhel9.2.0-virt-machine-type.patch
+Patch0021: 0021-redhat-Add-new-rhel-9.2.0-s390x-machine-type.patch
+Patch0022: 0022-x86-rhel-9.2.0-machine-type.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -361,10 +289,10 @@ Requires: edk2-ovmf
 %ifarch aarch64
 Requires: edk2-aarch64
 %endif
-Requires: capstone
 
 Requires: libseccomp >= %{libseccomp_version}
 Requires: libusbx >= %{libusbx_version}
+Requires: capstone
 %if %{have_fdt}
 Requires: libfdt >= %{libfdt_version}
 %endif
@@ -515,30 +443,20 @@ Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
 %description device-display-virtio-gpu
 This package provides the virtio-gpu display device for QEMU.
 
-%package device-display-virtio-gpu-gl
-Summary: QEMU virtio-gpu-gl display device
-Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
-%description device-display-virtio-gpu-gl
-This package provides the virtio-gpu-gl display device for QEMU.
-
 %ifarch s390x
 %package device-display-virtio-gpu-ccw
 Summary: QEMU virtio-gpu-ccw display device
 Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+Requires: %{name}-device-display-virtio-gpu = %{epoch}:%{version}-%{release}
 %description device-display-virtio-gpu-ccw
 This package provides the virtio-gpu-ccw display device for QEMU.
 %else
 %package device-display-virtio-gpu-pci
 Summary: QEMU virtio-gpu-pci display device
 Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+Requires: %{name}-device-display-virtio-gpu = %{epoch}:%{version}-%{release}
 %description device-display-virtio-gpu-pci
 This package provides the virtio-gpu-pci display device for QEMU.
-
-%package device-display-virtio-gpu-pci-gl
-Summary: QEMU virtio-gpu-pci-gl display device
-Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
-%description device-display-virtio-gpu-pci-gl
-This package provides the virtio-gpu-pci-gl display device for QEMU.
 %endif
 
 %ifarch x86_64 %{power64}
@@ -547,12 +465,6 @@ Summary: QEMU virtio-vga display device
 Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
 %description device-display-virtio-vga
 This package provides the virtio-vga display device for QEMU.
-
-%package device-display-virtio-vga-gl
-Summary: QEMU virtio-vga-gl display device
-Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
-%description device-display-virtio-vga-gl
-This package provides the virtio-vga-gl display device for QEMU.
 %endif
 
 %package device-usb-host
@@ -589,6 +501,7 @@ mkdir -p %{qemu_kvm_build}
   --disable-auth-pam               \\\
   --disable-avx2                   \\\
   --disable-avx512f                \\\
+  --disable-blkio                  \\\
   --disable-block-drv-whitelist-in-tools \\\
   --disable-bochs                  \\\
   --disable-bpf                    \\\
@@ -678,6 +591,7 @@ mkdir -p %{qemu_kvm_build}
   --disable-slirp-smbd             \\\
   --disable-smartcard              \\\
   --disable-snappy                 \\\
+  --disable-sndio                  \\\
   --disable-sparse                 \\\
   --disable-spice                  \\\
   --disable-spice-protocol         \\\
@@ -733,7 +647,7 @@ run_configure() {
         --with-pkgversion="%{name}-%{version}-%{release}" \
         --with-suffix="%{name}" \
         --firmwarepath=%{firmwaredirs} \
-        --meson="internal" \
+        --meson="%{__meson}" \
         --enable-trace-backend=dtrace \
         --with-coroutine=ucontext \
         --with-git=git \
@@ -800,7 +714,7 @@ run_configure \
 %endif
   --enable-seccomp \
   --enable-selinux \
-  --enable-slirp=system \
+  --enable-slirp \
   --enable-snappy \
   --enable-spice-protocol \
   --enable-system \
@@ -1085,6 +999,16 @@ install -D -m 0644 %{_sourcedir}/bridge.conf %{buildroot}%{_sysconfdir}/%{name}/
 install -m 0644 contrib/systemd/qemu-pr-helper.service %{buildroot}%{_unitdir}
 install -m 0644 contrib/systemd/qemu-pr-helper.socket %{buildroot}%{_unitdir}
 
+# We do not support gl display devices so we can remove their modules as they
+# do not have expected functionality included.
+#
+# https://gitlab.com/qemu-project/qemu/-/issues/1352 was filed to stop building these
+# modules in case all dependencies are not satisfied.
+
+rm -rf %{buildroot}%{_libdir}/%{name}/hw-display-virtio-gpu-gl.so
+rm -rf %{buildroot}%{_libdir}/%{name}/hw-display-virtio-gpu-pci-gl.so
+rm -rf %{buildroot}%{_libdir}/%{name}/hw-display-virtio-vga-gl.so
+
 # We need to make the block device modules and other qemu SO files executable
 # otherwise RPM won't pick up their dependencies.
 chmod +x %{buildroot}%{_libdir}/%{name}/*.so
@@ -1242,25 +1166,17 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %files device-display-virtio-gpu
 %{_libdir}/%{name}/hw-display-virtio-gpu.so
 
-%files device-display-virtio-gpu-gl
-%{_libdir}/%{name}/hw-display-virtio-gpu-gl.so
-
 %ifarch s390x
 %files device-display-virtio-gpu-ccw
     %{_libdir}/%{name}/hw-s390x-virtio-gpu-ccw.so
 %else
 %files device-display-virtio-gpu-pci
     %{_libdir}/%{name}/hw-display-virtio-gpu-pci.so
-
-%files device-display-virtio-gpu-pci-gl
-    %{_libdir}/%{name}/hw-display-virtio-gpu-pci-gl.so
 %endif
 
 %ifarch x86_64 %{power64}
 %files device-display-virtio-vga
     %{_libdir}/%{name}/hw-display-virtio-vga.so
-%files device-display-virtio-vga-gl
-    %{_libdir}/%{name}/hw-display-virtio-vga-gl.so
 %endif
 
 %files tests
@@ -1295,6 +1211,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Thu Dec 15 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-1
+- Rebase to QEMU 7.2.0 [bz#2135806]
+- Resolves: bz#2135806
+  (Rebase to QEMU 7.2 for RHEL 9.2.0)
+
 * Wed Dec 14 2022 Jon Maloy <jmaloy@redhat.com> - 7.1.0-7
 - kvm-hw-acpi-erst.c-Fix-memory-handling-issues.patch [bz#2149108]
 - Resolves: bz#2149108

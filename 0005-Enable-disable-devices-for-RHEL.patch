@@ -1,6 +1,6 @@
-From ae20ca5826cd237e727cff1663177f7f863fab21 Mon Sep 17 00:00:00 2001
+From 90366cd2ead5a5301aaceed56477d2e6d9f1b3cd Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
-Date: Thu, 15 Jul 2021 03:22:36 -0400
+Date: Wed, 7 Dec 2022 03:05:48 -0500
 Subject: Enable/disable devices for RHEL
 
 This commit adds all changes related to changes in supported devices.
@@ -28,6 +28,9 @@ Rebase notes (7.1.0 rc0):
 
 Rebase notes (7.1.0 rc3):
 - Added CONFIG_VHOST_USER_FS option (all archs)
+
+Rebase notes (7.2.0 rc20):
+- Removed disabling a15mpcore.c as no longer needed
 
 Merged patches (6.1.0):
 - c51bf45304 Remove SPICE and QXL from x86_64-rh-devices.mak
@@ -59,7 +62,7 @@ Merged patches (7.1.0 rc0):
  .../x86_64-softmmu/x86_64-rh-devices.mak      | 109 ++++++++++++++++++
  hw/arm/meson.build                            |   2 +-
  hw/block/fdc.c                                |  10 ++
- hw/cpu/meson.build                            |   5 +-
+ hw/cpu/meson.build                            |   3 +-
  hw/display/cirrus_vga.c                       |   5 +-
  hw/ide/piix.c                                 |   5 +-
  hw/input/pckbd.c                              |   2 +
@@ -70,7 +73,7 @@ Merged patches (7.1.0 rc0):
  target/ppc/cpu-models.c                       |   9 ++
  target/s390x/cpu_models_sysemu.c              |   3 +
  target/s390x/kvm/kvm.c                        |   8 ++
- 19 files changed, 285 insertions(+), 13 deletions(-)
+ 19 files changed, 283 insertions(+), 13 deletions(-)
  create mode 100644 configs/devices/aarch64-softmmu/aarch64-rh-devices.mak
  create mode 100644 configs/devices/ppc64-softmmu/ppc64-rh-devices.mak
  create mode 100644 configs/devices/rh-virtio.mak
@@ -364,24 +367,21 @@ index 64ae4a6899..9b8e782c19 100644
          error_setg(errp, "Cannot choose a fallback FDrive type of 'auto'");
          return;
 diff --git a/hw/cpu/meson.build b/hw/cpu/meson.build
-index 9e52fee9e7..bb71c9f3e7 100644
+index 9e52fee9e7..87c209a754 100644
 --- a/hw/cpu/meson.build
 +++ b/hw/cpu/meson.build
-@@ -1,6 +1,7 @@
+@@ -1,4 +1,5 @@
 -softmmu_ss.add(files('core.c', 'cluster.c'))
 +#softmmu_ss.add(files('core.c', 'cluster.c'))
 +softmmu_ss.add(files('core.c'))
  
  specific_ss.add(when: 'CONFIG_ARM11MPCORE', if_true: files('arm11mpcore.c'))
  specific_ss.add(when: 'CONFIG_REALVIEW', if_true: files('realview_mpcore.c'))
- specific_ss.add(when: 'CONFIG_A9MPCORE', if_true: files('a9mpcore.c'))
--specific_ss.add(when: 'CONFIG_A15MPCORE', if_true: files('a15mpcore.c'))
-+#specific_ss.add(when: 'CONFIG_A15MPCORE', if_true: files('a15mpcore.c'))
 diff --git a/hw/display/cirrus_vga.c b/hw/display/cirrus_vga.c
-index 3bb6a58698..6447fdb02e 100644
+index 6e8c747c46..1948ebee8e 100644
 --- a/hw/display/cirrus_vga.c
 +++ b/hw/display/cirrus_vga.c
-@@ -2945,7 +2945,10 @@ static void pci_cirrus_vga_realize(PCIDevice *dev, Error **errp)
+@@ -2946,7 +2946,10 @@ static void pci_cirrus_vga_realize(PCIDevice *dev, Error **errp)
      PCIDeviceClass *pc = PCI_DEVICE_GET_CLASS(dev);
      int16_t device_id = pc->device_id;
  
@@ -394,10 +394,10 @@ index 3bb6a58698..6447fdb02e 100644
       * Also accept 8 MB/16 MB for backward compatibility.
       */
 diff --git a/hw/ide/piix.c b/hw/ide/piix.c
-index 9a9b28078e..f3ce3fbcee 100644
+index 267dbf37db..87fcda4062 100644
 --- a/hw/ide/piix.c
 +++ b/hw/ide/piix.c
-@@ -197,7 +197,8 @@ static void piix3_ide_class_init(ObjectClass *klass, void *data)
+@@ -199,7 +199,8 @@ static void piix3_ide_class_init(ObjectClass *klass, void *data)
      k->device_id = PCI_DEVICE_ID_INTEL_82371SB_1;
      k->class_id = PCI_CLASS_STORAGE_IDE;
      set_bit(DEVICE_CATEGORY_STORAGE, dc->categories);
@@ -407,7 +407,7 @@ index 9a9b28078e..f3ce3fbcee 100644
  }
  
  static const TypeInfo piix3_ide_info = {
-@@ -220,6 +221,8 @@ static void piix4_ide_class_init(ObjectClass *klass, void *data)
+@@ -222,6 +223,8 @@ static void piix4_ide_class_init(ObjectClass *klass, void *data)
      k->class_id = PCI_CLASS_STORAGE_IDE;
      set_bit(DEVICE_CATEGORY_STORAGE, dc->categories);
      dc->hotpluggable = false;
@@ -480,10 +480,10 @@ index 793df42e21..cd3c305471 100644
  endif
  
 diff --git a/target/arm/cpu_tcg.c b/target/arm/cpu_tcg.c
-index 3099b38e32..10d91c4ef0 100644
+index 9a2cef7d05..a528ff9a3d 100644
 --- a/target/arm/cpu_tcg.c
 +++ b/target/arm/cpu_tcg.c
-@@ -147,6 +147,7 @@ void define_cortex_a72_a57_a53_cp_reginfo(ARMCPU *cpu)
+@@ -151,6 +151,7 @@ void define_cortex_a72_a57_a53_cp_reginfo(ARMCPU *cpu)
  /* CPU models. These are not needed for the AArch64 linux-user build. */
  #if !defined(CONFIG_USER_ONLY) || !defined(TARGET_AARCH64)
  
@@ -491,7 +491,7 @@ index 3099b38e32..10d91c4ef0 100644
  #if !defined(CONFIG_USER_ONLY) && defined(CONFIG_TCG)
  static bool arm_v7m_cpu_exec_interrupt(CPUState *cs, int interrupt_request)
  {
-@@ -500,6 +501,7 @@ static void cortex_a9_initfn(Object *obj)
+@@ -504,6 +505,7 @@ static void cortex_a9_initfn(Object *obj)
      cpu->isar.reset_pmcr_el0 = 0x41093000;
      define_arm_cp_regs(cpu, cortexa9_cp_reginfo);
  }
@@ -499,7 +499,7 @@ index 3099b38e32..10d91c4ef0 100644
  
  #ifndef CONFIG_USER_ONLY
  static uint64_t a15_l2ctlr_read(CPUARMState *env, const ARMCPRegInfo *ri)
-@@ -524,6 +526,7 @@ static const ARMCPRegInfo cortexa15_cp_reginfo[] = {
+@@ -528,6 +530,7 @@ static const ARMCPRegInfo cortexa15_cp_reginfo[] = {
        .access = PL1_RW, .type = ARM_CP_CONST, .resetvalue = 0 },
  };
  
@@ -507,7 +507,7 @@ index 3099b38e32..10d91c4ef0 100644
  static void cortex_a7_initfn(Object *obj)
  {
      ARMCPU *cpu = ARM_CPU(obj);
-@@ -572,6 +575,7 @@ static void cortex_a7_initfn(Object *obj)
+@@ -576,6 +579,7 @@ static void cortex_a7_initfn(Object *obj)
      cpu->isar.reset_pmcr_el0 = 0x41072000;
      define_arm_cp_regs(cpu, cortexa15_cp_reginfo); /* Same as A15 */
  }
@@ -515,7 +515,7 @@ index 3099b38e32..10d91c4ef0 100644
  
  static void cortex_a15_initfn(Object *obj)
  {
-@@ -618,6 +622,7 @@ static void cortex_a15_initfn(Object *obj)
+@@ -624,6 +628,7 @@ static void cortex_a15_initfn(Object *obj)
      define_arm_cp_regs(cpu, cortexa15_cp_reginfo);
  }
  
@@ -523,7 +523,7 @@ index 3099b38e32..10d91c4ef0 100644
  static void cortex_m0_initfn(Object *obj)
  {
      ARMCPU *cpu = ARM_CPU(obj);
-@@ -1058,6 +1063,7 @@ static void arm_v7m_class_init(ObjectClass *oc, void *data)
+@@ -1065,6 +1070,7 @@ static void arm_v7m_class_init(ObjectClass *oc, void *data)
  
      cc->gdb_core_xml_file = "arm-m-profile.xml";
  }
@@ -531,7 +531,7 @@ index 3099b38e32..10d91c4ef0 100644
  
  #ifndef TARGET_AARCH64
  /*
-@@ -1125,6 +1131,7 @@ static void arm_max_initfn(Object *obj)
+@@ -1132,6 +1138,7 @@ static void arm_max_initfn(Object *obj)
  #endif /* !TARGET_AARCH64 */
  
  static const ARMCPUInfo arm_tcg_cpus[] = {
@@ -539,7 +539,7 @@ index 3099b38e32..10d91c4ef0 100644
      { .name = "arm926",      .initfn = arm926_initfn },
      { .name = "arm946",      .initfn = arm946_initfn },
      { .name = "arm1026",     .initfn = arm1026_initfn },
-@@ -1140,7 +1147,9 @@ static const ARMCPUInfo arm_tcg_cpus[] = {
+@@ -1147,7 +1154,9 @@ static const ARMCPUInfo arm_tcg_cpus[] = {
      { .name = "cortex-a7",   .initfn = cortex_a7_initfn },
      { .name = "cortex-a8",   .initfn = cortex_a8_initfn },
      { .name = "cortex-a9",   .initfn = cortex_a9_initfn },
@@ -549,7 +549,7 @@ index 3099b38e32..10d91c4ef0 100644
      { .name = "cortex-m0",   .initfn = cortex_m0_initfn,
                               .class_init = arm_v7m_class_init },
      { .name = "cortex-m3",   .initfn = cortex_m3_initfn,
-@@ -1171,6 +1180,7 @@ static const ARMCPUInfo arm_tcg_cpus[] = {
+@@ -1178,6 +1187,7 @@ static const ARMCPUInfo arm_tcg_cpus[] = {
      { .name = "pxa270-b1",   .initfn = pxa270b1_initfn },
      { .name = "pxa270-c0",   .initfn = pxa270c0_initfn },
      { .name = "pxa270-c5",   .initfn = pxa270c5_initfn },
@@ -634,10 +634,10 @@ index d8a141a023..d086b1c39c 100644
  
      /* detect missing features if any to properly report them */
 diff --git a/target/s390x/kvm/kvm.c b/target/s390x/kvm/kvm.c
-index 7bd8db0e7b..81cb489694 100644
+index 3ac7ec9acf..97da1a6424 100644
 --- a/target/s390x/kvm/kvm.c
 +++ b/target/s390x/kvm/kvm.c
-@@ -2520,6 +2520,14 @@ void kvm_s390_apply_cpu_model(const S390CPUModel *model, Error **errp)
+@@ -2529,6 +2529,14 @@ void kvm_s390_apply_cpu_model(const S390CPUModel *model, Error **errp)
          error_setg(errp, "KVM doesn't support CPU models");
          return;
      }

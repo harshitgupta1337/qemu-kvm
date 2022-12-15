@@ -1,4 +1,4 @@
-From 0833b7e925c98253c90c9de18758517f2778f77d Mon Sep 17 00:00:00 2001
+From badfb1290c8eea8a2e1769b2392c7899d5077698 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 2 Sep 2020 09:39:41 +0200
 Subject: Enable make check
@@ -48,7 +48,7 @@ Merged patches (7.1.0 rc0):
  12 files changed, 18 insertions(+), 19 deletions(-)
 
 diff --git a/tests/avocado/replay_kernel.py b/tests/avocado/replay_kernel.py
-index 0b2b0dc692..3a7b5f0748 100644
+index 00a26e4a0c..fe5ecf238a 100644
 --- a/tests/avocado/replay_kernel.py
 +++ b/tests/avocado/replay_kernel.py
 @@ -147,7 +147,7 @@ def test_aarch64_virt(self):
@@ -118,20 +118,20 @@ index 5052883fb6..b5286f4b12 100644
      qtest_outl(s, 0xcf8, 0x80001010);
      qtest_outl(s, 0xcfc, 0xe1020000);
 diff --git a/tests/qtest/fuzz-virtio-scsi-test.c b/tests/qtest/fuzz-virtio-scsi-test.c
-index 71c91b0356..dae4139c17 100644
+index e37b48b2cc..88647da054 100644
 --- a/tests/qtest/fuzz-virtio-scsi-test.c
 +++ b/tests/qtest/fuzz-virtio-scsi-test.c
 @@ -19,7 +19,7 @@ static void test_mmio_oob_from_memory_region_cache(void)
  {
      QTestState *s;
  
--    s = qtest_init("-M pc-q35-5.2 -display none -m 512M "
-+    s = qtest_init("-M pc-q35-rhel8.4.0 -display none -m 512M "
+-    s = qtest_init("-M pc-q35-5.2 -m 512M "
++    s = qtest_init("-M pc-q35-rhel8.4.0 -m 512M "
                     "-device virtio-scsi,num_queues=8,addr=03.0 ");
  
      qtest_outl(s, 0xcf8, 0x80001811);
 diff --git a/tests/qtest/intel-hda-test.c b/tests/qtest/intel-hda-test.c
-index a58c98e4d1..c8387e39ce 100644
+index d4a8db6fd6..1a796ec15a 100644
 --- a/tests/qtest/intel-hda-test.c
 +++ b/tests/qtest/intel-hda-test.c
 @@ -38,7 +38,7 @@ static void test_issue542_ich6(void)
@@ -144,18 +144,18 @@ index a58c98e4d1..c8387e39ce 100644
  
      qtest_outl(s, 0xcf8, 0x80000804);
 diff --git a/tests/qtest/libqos/meson.build b/tests/qtest/libqos/meson.build
-index fd5d6e5ae1..d9409560cd 100644
+index 32f028872c..1e78a1a055 100644
 --- a/tests/qtest/libqos/meson.build
 +++ b/tests/qtest/libqos/meson.build
-@@ -44,7 +44,7 @@ libqos_srcs = files(
+@@ -43,7 +43,7 @@ libqos_srcs = files(
          'virtio-rng.c',
          'virtio-scsi.c',
          'virtio-serial.c',
 -        'virtio-iommu.c',
 +#        'virtio-iommu.c',
+         'virtio-gpio.c',
          'generic-pcihost.c',
  
-         # qgraph machines:
 diff --git a/tests/qtest/lpc-ich9-test.c b/tests/qtest/lpc-ich9-test.c
 index 8ac95b89f7..cd2102555c 100644
 --- a/tests/qtest/lpc-ich9-test.c
@@ -170,10 +170,10 @@ index 8ac95b89f7..cd2102555c 100644
  
      qtest_outl(s, 0xcf8, 0x8000f840); /* PMBASE */
 diff --git a/tests/qtest/meson.build b/tests/qtest/meson.build
-index be4b30dea2..2c3d62a9fe 100644
+index c07a5b1a5f..9df3f9f8b9 100644
 --- a/tests/qtest/meson.build
 +++ b/tests/qtest/meson.build
-@@ -76,7 +76,6 @@ qtests_i386 = \
+@@ -82,7 +82,6 @@ qtests_i386 = \
     config_all_devices.has_key('CONFIG_Q35') and                                             \
     config_all_devices.has_key('CONFIG_VIRTIO_PCI') and                                      \
     slirp.found() ? ['virtio-net-failover'] : []) +                                          \
@@ -181,7 +181,7 @@ index be4b30dea2..2c3d62a9fe 100644
    qtests_pci +                                                                              \
    qtests_cxl +                                                                              \
    ['fdc-test',
-@@ -90,7 +89,6 @@ qtests_i386 = \
+@@ -96,7 +95,6 @@ qtests_i386 = \
     'drive_del-test',
     'tco-test',
     'cpu-plug-test',
@@ -189,7 +189,7 @@ index be4b30dea2..2c3d62a9fe 100644
     'vmgenid-test',
     'migration-test',
     'test-x86-cpuid-compat',
-@@ -212,15 +210,13 @@ qtests_arm = \
+@@ -209,15 +207,13 @@ qtests_arm = \
  
  # TODO: once aarch64 TCG is fixed on ARM 32 bit host, make bios-tables-test unconditional
  qtests_aarch64 = \
@@ -206,7 +206,7 @@ index be4b30dea2..2c3d62a9fe 100644
  
  qtests_s390x = \
    (slirp.found() ? ['pxe-test', 'test-netfilter'] : []) +                 \
-@@ -228,7 +224,6 @@ qtests_s390x = \
+@@ -225,7 +221,6 @@ qtests_s390x = \
    (config_host.has_key('CONFIG_POSIX') ? ['test-filter-redirector'] : []) +                     \
    ['boot-serial-test',
     'drive_del-test',
@@ -245,7 +245,7 @@ index 10ef9d2a91..3855873050 100644
  
      qtest_start("-device nec-usb-xhci,id=xhci"
 diff --git a/tests/qtest/virtio-net-failover.c b/tests/qtest/virtio-net-failover.c
-index 443ee56de9..1bccb3bab9 100644
+index 4a809590bf..1bf3fa641c 100644
 --- a/tests/qtest/virtio-net-failover.c
 +++ b/tests/qtest/virtio-net-failover.c
 @@ -25,6 +25,7 @@

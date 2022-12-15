@@ -1,4 +1,4 @@
-From 6a14fc5e35a8cec7f049c203d6dc2390fac175f1 Mon Sep 17 00:00:00 2001
+From 1973257ed781a93943f27f1518933e8c09c50f88 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:47:32 +0200
 Subject: Add s390x machine types
@@ -27,26 +27,29 @@ Merged patches (7.1.0 rc0):
 - 1d6439527a WRB: Introduce RHEL 9.0.0 hw compat structure (only hw/s390x/s390-virtio-ccw.c chunk)
 - c8ad21ca31 redhat: Update s390x machine type compatibility for rebase to QEMU 7.0.0
 - 5bcf8d874c target/s390x: deprecate CPUs older than z14
+
+Merged patches (7.2.0 rc0):
+- 0be2889fa2 Introduce upstream 7.0 compat changes (only applicable parts)
 ---
- hw/s390x/s390-virtio-ccw.c       | 107 +++++++++++++++++++++++++++++++
+ hw/s390x/s390-virtio-ccw.c       | 108 +++++++++++++++++++++++++++++++
  target/s390x/cpu_models.c        |  11 ++++
  target/s390x/cpu_models.h        |   2 +
  target/s390x/cpu_models_sysemu.c |   2 +
- 4 files changed, 122 insertions(+)
+ 4 files changed, 123 insertions(+)
 
 diff --git a/hw/s390x/s390-virtio-ccw.c b/hw/s390x/s390-virtio-ccw.c
-index cc3097bfee..4c68d72000 100644
+index 2e64ffab45..8d5221fbb1 100644
 --- a/hw/s390x/s390-virtio-ccw.c
 +++ b/hw/s390x/s390-virtio-ccw.c
-@@ -792,6 +792,7 @@ bool css_migration_enabled(void)
+@@ -823,6 +823,7 @@ bool css_migration_enabled(void)
      }                                                                         \
      type_init(ccw_machine_register_##suffix)
  
 +#if 0 /* Disabled for Red Hat Enterprise Linux */
- static void ccw_machine_7_1_instance_options(MachineState *machine)
+ static void ccw_machine_7_2_instance_options(MachineState *machine)
  {
  }
-@@ -1131,6 +1132,112 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
+@@ -1186,6 +1187,113 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
      compat_props_add(mc->compat_props, compat, G_N_ELEMENTS(compat));
  }
  DEFINE_CCW_MACHINE(2_4, "2.4", false);
@@ -62,6 +65,7 @@ index cc3097bfee..4c68d72000 100644
 +
 +static void ccw_machine_rhel900_class_options(MachineClass *mc)
 +{
++    compat_props_add(mc->compat_props, hw_compat_rhel_9_1, hw_compat_rhel_9_1_len);
 +    compat_props_add(mc->compat_props, hw_compat_rhel_9_0, hw_compat_rhel_9_0_len);
 +}
 +DEFINE_CCW_MACHINE(rhel900, "rhel9.0.0", true);
@@ -205,7 +209,7 @@ index c3a4f80633..739770dc15 100644
  
  static void s390_qemu_cpu_model_class_init(ObjectClass *oc, void *data)
 diff --git a/target/s390x/cpu_models.h b/target/s390x/cpu_models.h
-index 74d1f87e4f..372160bcd7 100644
+index fb1adc8b21..d76745afa9 100644
 --- a/target/s390x/cpu_models.h
 +++ b/target/s390x/cpu_models.h
 @@ -38,6 +38,8 @@ struct S390CPUDef {

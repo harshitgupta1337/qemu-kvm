@@ -1,4 +1,4 @@
-From 2092b90c5d7791bedbdb4ba067c90ae44d355e66 Mon Sep 17 00:00:00 2001
+From 0804844e4755377be6d2ebad578794ad9f4f3f31 Mon Sep 17 00:00:00 2001
 From: Bandan Das <bsd@redhat.com>
 Date: Tue, 3 Dec 2013 20:05:13 +0100
 Subject: vfio: cap number of devices that can be assigned

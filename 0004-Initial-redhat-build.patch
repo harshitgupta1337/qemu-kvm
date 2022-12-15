@@ -1,4 +1,4 @@
-From 476f040f14a9287efb6f0bf5b3ca97844bf9fdc3 Mon Sep 17 00:00:00 2001
+From ccc4a5bdc8c2f27678312364a7c12aeafd009bb6 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 26 May 2021 10:56:02 +0200
 Subject: Initial redhat build
@@ -13,7 +13,7 @@ several issues are fixed in QEMU tree:
 
 We disable make check due to issues with some of the tests.
 
-This rebase is based on qemu-kvm-7.0.0-11.el9
+This rebase is based on qemu-kvm-7.1.0-7.el9
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 --
@@ -55,6 +55,16 @@ Rebase changes (7.1.0 rc0):
 - removed --disable-vhost-vsock and --disable-vhost-scsi
 - capstone submodule removed
 - Temporary include capstone build
+
+Rebase changes (7.2.0 rc0):
+- Switch --enable-slirp=system to --enable-slirp
+
+Rebaes changes (7.2.0 rc2):
+- Added new configure options (blkio and sndio, both disabled)
+
+Rebase changes (7.2.0):
+- Fix SRPM name generation to work on Fedora 37
+- Switch back to system meson
 
 Merged patches (6.0.0):
  - 605758c902 Limit build on Power to qemu-img and qemu-ga only
@@ -148,25 +158,23 @@ Merged patches (7.0.0):
 - d46d2710b2 spec: Obsolete old usb redir subpackage
 - 6f52a50b68 spec: Obsolete ssh driver
 
+Merged patches (7.2.0 rc4):
+- 8c6834feb6 Remove opengl display device subpackages (C9S MR 124)
+- 0ecc97f29e spec: Add requires for packages with additional virtio-gpu variants (C9S MR 124)
+
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+fix
 ---
- .distro/85-kvm.preset                   |    5 -
  .distro/Makefile                        |  100 +
  .distro/Makefile.common                 |   41 +
  .distro/README.tests                    |   39 +
- .distro/ksm.service                     |   13 -
- .distro/ksm.sysconfig                   |    4 -
- .distro/ksmctl.c                        |   77 -
- .distro/ksmtuned                        |  139 -
- .distro/ksmtuned.conf                   |   21 -
- .distro/ksmtuned.service                |   12 -
- .distro/kvm-setup                       |   49 -
- .distro/kvm-setup.service               |   14 -
  .distro/modules-load.conf               |    4 +
  .distro/qemu-guest-agent.service        |    1 -
- .distro/qemu-kvm.spec.template          | 4256 +++++++++++++++++++++++
+ .distro/qemu-kvm.spec.template          | 4315 +++++++++++++++++++++++
  .distro/rpminspect.yaml                 |    6 +-
  .distro/scripts/extract_build_cmd.py    |   12 +
+ .distro/scripts/process-patches.sh      |    4 +
  .gitignore                              |    1 +
  README.systemtap                        |   43 +
  scripts/qemu-guest-agent/fsfreeze-hook  |    2 +-
@@ -174,19 +182,10 @@ Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
  scripts/systemtap/script.d/qemu_kvm.stp |    1 +
  tests/check-block.sh                    |    2 +
  ui/vnc-auth-sasl.c                      |    2 +-
- 24 files changed, 4510 insertions(+), 338 deletions(-)
- delete mode 100644 .distro/85-kvm.preset
+ 16 files changed, 4573 insertions(+), 4 deletions(-)
  create mode 100644 .distro/Makefile
  create mode 100644 .distro/Makefile.common
  create mode 100644 .distro/README.tests
- delete mode 100644 .distro/ksm.service
- delete mode 100644 .distro/ksm.sysconfig
- delete mode 100644 .distro/ksmctl.c
- delete mode 100644 .distro/ksmtuned
- delete mode 100644 .distro/ksmtuned.conf
- delete mode 100644 .distro/ksmtuned.service
- delete mode 100644 .distro/kvm-setup
- delete mode 100644 .distro/kvm-setup.service
  create mode 100644 .distro/modules-load.conf
  create mode 100644 .distro/qemu-kvm.spec.template
  create mode 100644 README.systemtap
