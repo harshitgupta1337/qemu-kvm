@@ -148,7 +148,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.2.0
-Release: 1%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 2%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -191,6 +191,7 @@ Patch0019: 0019-redhat-Update-s390x-machine-type-compatibility-for-Q.patch
 Patch0020: 0020-redhat-aarch64-add-rhel9.2.0-virt-machine-type.patch
 Patch0021: 0021-redhat-Add-new-rhel-9.2.0-s390x-machine-type.patch
 Patch0022: 0022-x86-rhel-9.2.0-machine-type.patch
+Patch23: kvm-redhat-fix-virt-rhel9.2.0-compat-props.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -327,6 +328,10 @@ Requires: seabios-bin >= 1.10.2-1
 Requires: seavgabios-bin >= 1.12.0-3
 Requires: ipxe-roms-qemu >= %{ipxe_version}
 %endif
+# Removal -gl modules as they do not provide any functionality - see bz#2149022
+Obsoletes: %{name}-device-display-virtio-gpu-gl <= %{epoch}:%{version}
+Obsoletes: %{name}-device-display-virtio-gpu-pci-gl <= %{epoch}:%{version}
+Obsoletes: %{name}-device-display-virtio-vga-gl <= %{epoch}:%{version}
 
 %description common
 %{name} is an open source virtualizer that provides hardware emulation for
@@ -494,6 +499,10 @@ mkdir -p %{qemu_kvm_build}
 
 
 %build
+
+# Necessary hack for ZUUL CI
+ulimit -n 10240
+
 %define disable_everything         \\\
   --audio-drv-list=                \\\
   --disable-alsa                   \\\
@@ -1211,6 +1220,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Dec 20 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-2
+- Fix updating from 7.1.0
+- kvm-redhat-fix-virt-rhel9.2.0-compat-props.patch[bz#2154640]
+- Resolves: bz#2154640
+  ([aarch64] qemu fails to load "efi-virtio.rom" romfile when creating virtio-net-pci)
+
 * Thu Dec 15 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-1
 - Rebase to QEMU 7.2.0 [bz#2135806]
 - Resolves: bz#2135806
