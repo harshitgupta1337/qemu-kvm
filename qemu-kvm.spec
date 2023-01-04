@@ -148,7 +148,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.2.0
-Release: 2%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -192,6 +192,22 @@ Patch0020: 0020-redhat-aarch64-add-rhel9.2.0-virt-machine-type.patch
 Patch0021: 0021-redhat-Add-new-rhel-9.2.0-s390x-machine-type.patch
 Patch0022: 0022-x86-rhel-9.2.0-machine-type.patch
 Patch23: kvm-redhat-fix-virt-rhel9.2.0-compat-props.patch
+# For bz#2113840 - [RHEL9.2] Memory mapping optimization for virt machine
+Patch24: kvm-hw-arm-virt-Introduce-virt_set_high_memmap-helper.patch
+# For bz#2113840 - [RHEL9.2] Memory mapping optimization for virt machine
+Patch25: kvm-hw-arm-virt-Rename-variable-size-to-region_size-in-v.patch
+# For bz#2113840 - [RHEL9.2] Memory mapping optimization for virt machine
+Patch26: kvm-hw-arm-virt-Introduce-variable-region_base-in-virt_s.patch
+# For bz#2113840 - [RHEL9.2] Memory mapping optimization for virt machine
+Patch27: kvm-hw-arm-virt-Introduce-virt_get_high_memmap_enabled-h.patch
+# For bz#2113840 - [RHEL9.2] Memory mapping optimization for virt machine
+Patch28: kvm-hw-arm-virt-Improve-high-memory-region-address-assig.patch
+# For bz#2113840 - [RHEL9.2] Memory mapping optimization for virt machine
+Patch29: kvm-hw-arm-virt-Add-compact-highmem-property.patch
+# For bz#2113840 - [RHEL9.2] Memory mapping optimization for virt machine
+Patch30: kvm-hw-arm-virt-Add-properties-to-disable-high-memory-re.patch
+# For bz#2113840 - [RHEL9.2] Memory mapping optimization for virt machine
+Patch31: kvm-hw-arm-virt-Enable-compat-high-memory-region-address.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1220,6 +1236,18 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Wed Jan 04 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-3
+- kvm-hw-arm-virt-Introduce-virt_set_high_memmap-helper.patch [bz#2113840]
+- kvm-hw-arm-virt-Rename-variable-size-to-region_size-in-v.patch [bz#2113840]
+- kvm-hw-arm-virt-Introduce-variable-region_base-in-virt_s.patch [bz#2113840]
+- kvm-hw-arm-virt-Introduce-virt_get_high_memmap_enabled-h.patch [bz#2113840]
+- kvm-hw-arm-virt-Improve-high-memory-region-address-assig.patch [bz#2113840]
+- kvm-hw-arm-virt-Add-compact-highmem-property.patch [bz#2113840]
+- kvm-hw-arm-virt-Add-properties-to-disable-high-memory-re.patch [bz#2113840]
+- kvm-hw-arm-virt-Enable-compat-high-memory-region-address.patch [bz#2113840]
+- Resolves: bz#2113840
+  ([RHEL9.2] Memory mapping optimization for virt machine)
+
 * Tue Dec 20 2022 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-2
 - Fix updating from 7.1.0
 - kvm-redhat-fix-virt-rhel9.2.0-compat-props.patch[bz#2154640]
