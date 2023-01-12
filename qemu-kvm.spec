@@ -148,7 +148,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.2.0
-Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -208,6 +208,8 @@ Patch29: kvm-hw-arm-virt-Add-compact-highmem-property.patch
 Patch30: kvm-hw-arm-virt-Add-properties-to-disable-high-memory-re.patch
 # For bz#2113840 - [RHEL9.2] Memory mapping optimization for virt machine
 Patch31: kvm-hw-arm-virt-Enable-compat-high-memory-region-address.patch
+# For bz#2155749 - [regression][stable guest abi][qemu-kvm7.2]Migration failed due to virtio-rng device between RHEL8.8 and RHEL9.2/MSI-X
+Patch32: kvm-virtio-rng-pci-fix-migration-compat-for-vectors.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1236,6 +1238,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Thu Jan 12 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-4
+- kvm-virtio-rng-pci-fix-migration-compat-for-vectors.patch [bz#2155749]
+- kvm-Update-QGA-service-for-new-command-line.patch [bz#2156515]
+- Resolves: bz#2155749
+  ([regression][stable guest abi][qemu-kvm7.2]Migration failed due to virtio-rng device between RHEL8.8 and RHEL9.2/MSI-X)
+- Resolves: bz#2156515
+  ([guest-agent] Replace '-blacklist' to '-block-rpcs' in qemu-ga config file)
+
 * Wed Jan 04 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-3
 - kvm-hw-arm-virt-Introduce-virt_set_high_memmap-helper.patch [bz#2113840]
 - kvm-hw-arm-virt-Rename-variable-size-to-region_size-in-v.patch [bz#2113840]
