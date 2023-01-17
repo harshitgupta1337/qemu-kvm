@@ -148,7 +148,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.2.0
-Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -210,6 +210,68 @@ Patch30: kvm-hw-arm-virt-Add-properties-to-disable-high-memory-re.patch
 Patch31: kvm-hw-arm-virt-Enable-compat-high-memory-region-address.patch
 # For bz#2155749 - [regression][stable guest abi][qemu-kvm7.2]Migration failed due to virtio-rng device between RHEL8.8 and RHEL9.2/MSI-X
 Patch32: kvm-virtio-rng-pci-fix-migration-compat-for-vectors.patch
+# For bz#1905805 - support config interrupt in vhost-vdpa qemu
+Patch33: kvm-virtio-introduce-macro-VIRTIO_CONFIG_IRQ_IDX.patch
+# For bz#1905805 - support config interrupt in vhost-vdpa qemu
+Patch34: kvm-virtio-pci-decouple-notifier-from-interrupt-process.patch
+# For bz#1905805 - support config interrupt in vhost-vdpa qemu
+Patch35: kvm-virtio-pci-decouple-the-single-vector-from-the-inter.patch
+# For bz#1905805 - support config interrupt in vhost-vdpa qemu
+Patch36: kvm-vhost-introduce-new-VhostOps-vhost_set_config_call.patch
+# For bz#1905805 - support config interrupt in vhost-vdpa qemu
+Patch37: kvm-vhost-vdpa-add-support-for-config-interrupt.patch
+# For bz#1905805 - support config interrupt in vhost-vdpa qemu
+Patch38: kvm-virtio-add-support-for-configure-interrupt.patch
+# For bz#1905805 - support config interrupt in vhost-vdpa qemu
+Patch39: kvm-vhost-add-support-for-configure-interrupt.patch
+# For bz#1905805 - support config interrupt in vhost-vdpa qemu
+Patch40: kvm-virtio-net-add-support-for-configure-interrupt.patch
+# For bz#1905805 - support config interrupt in vhost-vdpa qemu
+Patch41: kvm-virtio-mmio-add-support-for-configure-interrupt.patch
+# For bz#1905805 - support config interrupt in vhost-vdpa qemu
+Patch42: kvm-virtio-pci-add-support-for-configure-interrupt.patch
+# For bz#2159408 - [s390x] VMs with ISM passthrough don't autostart after leapp upgrade from RHEL 8
+Patch43: kvm-s390x-s390-virtio-ccw-Activate-zPCI-features-on-s390.patch
+# For bz#2124856 - VM with virtio interface and iommu=on will crash when try to migrate
+Patch44: kvm-vhost-fix-vq-dirty-bitmap-syncing-when-vIOMMU-is-ena.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch45: kvm-block-drop-bdrv_remove_filter_or_cow_child.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch46: kvm-qed-Don-t-yield-in-bdrv_qed_co_drain_begin.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch47: kvm-test-bdrv-drain-Don-t-yield-in-.bdrv_co_drained_begi.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch48: kvm-block-Revert-.bdrv_drained_begin-end-to-non-coroutin.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch49: kvm-block-Remove-drained_end_counter.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch50: kvm-block-Inline-bdrv_drain_invoke.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch51: kvm-block-Fix-locking-for-bdrv_reopen_queue_child.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch52: kvm-block-Drain-individual-nodes-during-reopen.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch53: kvm-block-Don-t-use-subtree-drains-in-bdrv_drop_intermed.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch54: kvm-stream-Replace-subtree-drain-with-a-single-node-drai.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch55: kvm-block-Remove-subtree-drains.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch56: kvm-block-Call-drain-callbacks-only-once.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch57: kvm-block-Remove-ignore_bds_parents-parameter-from-drain.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch58: kvm-block-Drop-out-of-coroutine-in-bdrv_do_drained_begin.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch59: kvm-block-Don-t-poll-in-bdrv_replace_child_noperm.patch
+# For bz#2155112 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch60: kvm-block-Remove-poll-parameter-from-bdrv_parent_drained.patch
+# For bz#1979276 - SVM: non atomic memslot updates cause boot failure with seabios and cpu-pm=on
+Patch61: kvm-accel-introduce-accelerator-blocker-API.patch
+# For bz#1979276 - SVM: non atomic memslot updates cause boot failure with seabios and cpu-pm=on
+Patch62: kvm-KVM-keep-track-of-running-ioctls.patch
+# For bz#1979276 - SVM: non atomic memslot updates cause boot failure with seabios and cpu-pm=on
+Patch63: kvm-kvm-Atomic-memslot-updates.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1238,6 +1300,49 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Jan 17 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-5
+- kvm-virtio-introduce-macro-VIRTIO_CONFIG_IRQ_IDX.patch [bz#1905805]
+- kvm-virtio-pci-decouple-notifier-from-interrupt-process.patch [bz#1905805]
+- kvm-virtio-pci-decouple-the-single-vector-from-the-inter.patch [bz#1905805]
+- kvm-vhost-introduce-new-VhostOps-vhost_set_config_call.patch [bz#1905805]
+- kvm-vhost-vdpa-add-support-for-config-interrupt.patch [bz#1905805]
+- kvm-virtio-add-support-for-configure-interrupt.patch [bz#1905805]
+- kvm-vhost-add-support-for-configure-interrupt.patch [bz#1905805]
+- kvm-virtio-net-add-support-for-configure-interrupt.patch [bz#1905805]
+- kvm-virtio-mmio-add-support-for-configure-interrupt.patch [bz#1905805]
+- kvm-virtio-pci-add-support-for-configure-interrupt.patch [bz#1905805]
+- kvm-s390x-s390-virtio-ccw-Activate-zPCI-features-on-s390.patch [bz#2159408]
+- kvm-vhost-fix-vq-dirty-bitmap-syncing-when-vIOMMU-is-ena.patch [bz#2124856]
+- kvm-block-drop-bdrv_remove_filter_or_cow_child.patch [bz#2155112]
+- kvm-qed-Don-t-yield-in-bdrv_qed_co_drain_begin.patch [bz#2155112]
+- kvm-test-bdrv-drain-Don-t-yield-in-.bdrv_co_drained_begi.patch [bz#2155112]
+- kvm-block-Revert-.bdrv_drained_begin-end-to-non-coroutin.patch [bz#2155112]
+- kvm-block-Remove-drained_end_counter.patch [bz#2155112]
+- kvm-block-Inline-bdrv_drain_invoke.patch [bz#2155112]
+- kvm-block-Fix-locking-for-bdrv_reopen_queue_child.patch [bz#2155112]
+- kvm-block-Drain-individual-nodes-during-reopen.patch [bz#2155112]
+- kvm-block-Don-t-use-subtree-drains-in-bdrv_drop_intermed.patch [bz#2155112]
+- kvm-stream-Replace-subtree-drain-with-a-single-node-drai.patch [bz#2155112]
+- kvm-block-Remove-subtree-drains.patch [bz#2155112]
+- kvm-block-Call-drain-callbacks-only-once.patch [bz#2155112]
+- kvm-block-Remove-ignore_bds_parents-parameter-from-drain.patch [bz#2155112]
+- kvm-block-Drop-out-of-coroutine-in-bdrv_do_drained_begin.patch [bz#2155112]
+- kvm-block-Don-t-poll-in-bdrv_replace_child_noperm.patch [bz#2155112]
+- kvm-block-Remove-poll-parameter-from-bdrv_parent_drained.patch [bz#2155112]
+- kvm-accel-introduce-accelerator-blocker-API.patch [bz#1979276]
+- kvm-KVM-keep-track-of-running-ioctls.patch [bz#1979276]
+- kvm-kvm-Atomic-memslot-updates.patch [bz#1979276]
+- Resolves: bz#1905805
+  (support config interrupt in vhost-vdpa qemu)
+- Resolves: bz#2159408
+  ([s390x] VMs with ISM passthrough don't autostart after leapp upgrade from RHEL 8)
+- Resolves: bz#2124856
+  (VM with virtio interface and iommu=on will crash when try to migrate)
+- Resolves: bz#2155112
+  (Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled))
+- Resolves: bz#1979276
+  (SVM: non atomic memslot updates cause boot failure with seabios and cpu-pm=on)
+
 * Thu Jan 12 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-4
 - kvm-virtio-rng-pci-fix-migration-compat-for-vectors.patch [bz#2155749]
 - kvm-Update-QGA-service-for-new-command-line.patch [bz#2156515]
