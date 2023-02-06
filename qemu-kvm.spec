@@ -148,7 +148,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.2.0
-Release: 6%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -290,6 +290,32 @@ Patch70: kvm-s390x-pci-shrink-DMA-aperture-to-be-bound-by-vfio-DM.patch
 Patch71: kvm-s390x-pci-reset-ISM-passthrough-devices-on-shutdown-.patch
 # For bz#2149191 - [RFE][guest-agent] - USB bus type support
 Patch72: kvm-qga-linux-add-usb-support-to-guest-get-fsinfo.patch
+# For bz#2104412 - vDPA ASID support in Qemu
+Patch73: kvm-vdpa-use-v-shadow_vqs_enabled-in-vhost_vdpa_svqs_sta.patch
+# For bz#2104412 - vDPA ASID support in Qemu
+Patch74: kvm-vhost-set-SVQ-device-call-handler-at-SVQ-start.patch
+# For bz#2104412 - vDPA ASID support in Qemu
+Patch75: kvm-vhost-allocate-SVQ-device-file-descriptors-at-device.patch
+# For bz#2104412 - vDPA ASID support in Qemu
+Patch76: kvm-vhost-move-iova_tree-set-to-vhost_svq_start.patch
+# For bz#2104412 - vDPA ASID support in Qemu
+Patch77: kvm-vdpa-add-vhost_vdpa_net_valid_svq_features.patch
+# For bz#2104412 - vDPA ASID support in Qemu
+Patch78: kvm-vdpa-request-iova_range-only-once.patch
+# For bz#2104412 - vDPA ASID support in Qemu
+Patch79: kvm-vdpa-move-SVQ-vring-features-check-to-net.patch
+# For bz#2104412 - vDPA ASID support in Qemu
+Patch80: kvm-vdpa-allocate-SVQ-array-unconditionally.patch
+# For bz#2104412 - vDPA ASID support in Qemu
+Patch81: kvm-vdpa-add-asid-parameter-to-vhost_vdpa_dma_map-unmap.patch
+# For bz#2104412 - vDPA ASID support in Qemu
+Patch82: kvm-vdpa-store-x-svq-parameter-in-VhostVDPAState.patch
+# For bz#2104412 - vDPA ASID support in Qemu
+Patch83: kvm-vdpa-add-shadow_data-to-vhost_vdpa.patch
+# For bz#2104412 - vDPA ASID support in Qemu
+Patch84: kvm-vdpa-always-start-CVQ-in-SVQ-mode-if-possible.patch
+# For bz#2104412 - vDPA ASID support in Qemu
+Patch85: kvm-vdpa-fix-VHOST_BACKEND_F_IOTLB_ASID-flag-check.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -657,6 +683,7 @@ ulimit -n 10240
   --disable-libssh                 \\\
   --disable-libudev                \\\
   --disable-libusb                 \\\
+  --disable-libvduse               \\\
   --disable-linux-aio              \\\
   --disable-linux-io-uring         \\\
   --disable-linux-user             \\\
@@ -712,6 +739,7 @@ ulimit -n 10240
   --disable-user                   \\\
   --disable-vde                    \\\
   --disable-vdi                    \\\
+  --disable-vduse-blk-export       \\\
   --disable-vhost-crypto           \\\
   --disable-vhost-kernel           \\\
   --disable-vhost-net              \\\
@@ -1318,6 +1346,26 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Feb 06 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-7
+- kvm-vdpa-use-v-shadow_vqs_enabled-in-vhost_vdpa_svqs_sta.patch [bz#2104412]
+- kvm-vhost-set-SVQ-device-call-handler-at-SVQ-start.patch [bz#2104412]
+- kvm-vhost-allocate-SVQ-device-file-descriptors-at-device.patch [bz#2104412]
+- kvm-vhost-move-iova_tree-set-to-vhost_svq_start.patch [bz#2104412]
+- kvm-vdpa-add-vhost_vdpa_net_valid_svq_features.patch [bz#2104412]
+- kvm-vdpa-request-iova_range-only-once.patch [bz#2104412]
+- kvm-vdpa-move-SVQ-vring-features-check-to-net.patch [bz#2104412]
+- kvm-vdpa-allocate-SVQ-array-unconditionally.patch [bz#2104412]
+- kvm-vdpa-add-asid-parameter-to-vhost_vdpa_dma_map-unmap.patch [bz#2104412]
+- kvm-vdpa-store-x-svq-parameter-in-VhostVDPAState.patch [bz#2104412]
+- kvm-vdpa-add-shadow_data-to-vhost_vdpa.patch [bz#2104412]
+- kvm-vdpa-always-start-CVQ-in-SVQ-mode-if-possible.patch [bz#2104412]
+- kvm-vdpa-fix-VHOST_BACKEND_F_IOTLB_ASID-flag-check.patch [bz#2104412]
+- kvm-spec-Disable-VDUSE.patch [bz#2128222]
+- Resolves: bz#2104412
+  (vDPA ASID support in Qemu)
+- Resolves: bz#2128222
+  (VDUSE block export should be disabled in builds for now)
+
 * Mon Jan 30 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-6
 - kvm-virtio_net-Modify-virtio_net_get_config-to-early-ret.patch [bz#2141088]
 - kvm-virtio_net-copy-VIRTIO_NET_S_ANNOUNCE-if-device-mode.patch [bz#2141088]
