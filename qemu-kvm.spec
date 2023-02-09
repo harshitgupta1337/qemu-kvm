@@ -148,7 +148,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.2.0
-Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -316,6 +316,46 @@ Patch83: kvm-vdpa-add-shadow_data-to-vhost_vdpa.patch
 Patch84: kvm-vdpa-always-start-CVQ-in-SVQ-mode-if-possible.patch
 # For bz#2104412 - vDPA ASID support in Qemu
 Patch85: kvm-vdpa-fix-VHOST_BACKEND_F_IOTLB_ASID-flag-check.patch
+# For bz#2150180 - qemu-img finishes successfully while having errors in commit or bitmaps operations
+Patch86: kvm-qcow2-Fix-theoretical-corruption-in-store_bitmap-err.patch
+# For bz#2150180 - qemu-img finishes successfully while having errors in commit or bitmaps operations
+Patch87: kvm-qemu-img-commit-Report-errors-while-closing-the-imag.patch
+# For bz#2150180 - qemu-img finishes successfully while having errors in commit or bitmaps operations
+Patch88: kvm-qemu-img-bitmap-Report-errors-while-closing-the-imag.patch
+# For bz#2150180 - qemu-img finishes successfully while having errors in commit or bitmaps operations
+Patch89: kvm-qemu-iotests-Test-qemu-img-bitmap-commit-exit-code-o.patch
+# For bz#2165280 - [kvm-unit-tests] debug-wp-migration fails
+Patch90: kvm-accel-tcg-Test-CPUJumpCache-in-tb_jmp_cache_clear_pa.patch
+# For bz#1860292 - RFE: add extent_size_hint information to qemu-img info
+Patch91: kvm-block-Improve-empty-format-specific-info-dump.patch
+# For bz#1860292 - RFE: add extent_size_hint information to qemu-img info
+Patch92: kvm-block-file-Add-file-specific-image-info.patch
+# For bz#1860292 - RFE: add extent_size_hint information to qemu-img info
+Patch93: kvm-block-vmdk-Change-extent-info-type.patch
+# For bz#1860292 - RFE: add extent_size_hint information to qemu-img info
+Patch94: kvm-block-Split-BlockNodeInfo-off-of-ImageInfo.patch
+# For bz#1860292 - RFE: add extent_size_hint information to qemu-img info
+Patch95: kvm-qemu-img-Use-BlockNodeInfo.patch
+# For bz#1860292 - RFE: add extent_size_hint information to qemu-img info
+Patch96: kvm-block-qapi-Let-bdrv_query_image_info-recurse.patch
+# For bz#1860292 - RFE: add extent_size_hint information to qemu-img info
+Patch97: kvm-block-qapi-Introduce-BlockGraphInfo.patch
+# For bz#1860292 - RFE: add extent_size_hint information to qemu-img info
+Patch98: kvm-block-qapi-Add-indentation-to-bdrv_node_info_dump.patch
+# For bz#1860292 - RFE: add extent_size_hint information to qemu-img info
+Patch99: kvm-iotests-Filter-child-node-information.patch
+# For bz#1860292 - RFE: add extent_size_hint information to qemu-img info
+Patch100: kvm-iotests-106-214-308-Read-only-one-size-line.patch
+# For bz#1860292 - RFE: add extent_size_hint information to qemu-img info
+Patch101: kvm-qemu-img-Let-info-print-block-graph.patch
+# For bz#1860292 - RFE: add extent_size_hint information to qemu-img info
+Patch102: kvm-qemu-img-Change-info-key-names-for-protocol-nodes.patch
+# For bz#2155173 - [vhost-user] unable to start vhost net: 71: falling back on userspace
+Patch103: kvm-Revert-vhost-user-Monitor-slave-channel-in-vhost_use.patch
+# For bz#2155173 - [vhost-user] unable to start vhost net: 71: falling back on userspace
+Patch104: kvm-Revert-vhost-user-Introduce-nested-event-loop-in-vho.patch
+# For bz#2162569 - [transitional device][virtio-rng-pci-transitional]Stable Guest ABI failed between RHEL 8.6 to RHEL 9.2
+Patch105: kvm-virtio-rng-pci-fix-transitional-migration-compat-for.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1346,6 +1386,38 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Thu Feb 09 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-8
+- kvm-qcow2-Fix-theoretical-corruption-in-store_bitmap-err.patch [bz#2150180]
+- kvm-qemu-img-commit-Report-errors-while-closing-the-imag.patch [bz#2150180]
+- kvm-qemu-img-bitmap-Report-errors-while-closing-the-imag.patch [bz#2150180]
+- kvm-qemu-iotests-Test-qemu-img-bitmap-commit-exit-code-o.patch [bz#2150180]
+- kvm-accel-tcg-Test-CPUJumpCache-in-tb_jmp_cache_clear_pa.patch [bz#2165280]
+- kvm-block-Improve-empty-format-specific-info-dump.patch [bz#1860292]
+- kvm-block-file-Add-file-specific-image-info.patch [bz#1860292]
+- kvm-block-vmdk-Change-extent-info-type.patch [bz#1860292]
+- kvm-block-Split-BlockNodeInfo-off-of-ImageInfo.patch [bz#1860292]
+- kvm-qemu-img-Use-BlockNodeInfo.patch [bz#1860292]
+- kvm-block-qapi-Let-bdrv_query_image_info-recurse.patch [bz#1860292]
+- kvm-block-qapi-Introduce-BlockGraphInfo.patch [bz#1860292]
+- kvm-block-qapi-Add-indentation-to-bdrv_node_info_dump.patch [bz#1860292]
+- kvm-iotests-Filter-child-node-information.patch [bz#1860292]
+- kvm-iotests-106-214-308-Read-only-one-size-line.patch [bz#1860292]
+- kvm-qemu-img-Let-info-print-block-graph.patch [bz#1860292]
+- kvm-qemu-img-Change-info-key-names-for-protocol-nodes.patch [bz#1860292]
+- kvm-Revert-vhost-user-Monitor-slave-channel-in-vhost_use.patch [bz#2155173]
+- kvm-Revert-vhost-user-Introduce-nested-event-loop-in-vho.patch [bz#2155173]
+- kvm-virtio-rng-pci-fix-transitional-migration-compat-for.patch [bz#2162569]
+- Resolves: bz#2150180
+  (qemu-img finishes successfully while having errors in commit or bitmaps operations)
+- Resolves: bz#2165280
+  ([kvm-unit-tests] debug-wp-migration fails)
+- Resolves: bz#1860292
+  (RFE: add extent_size_hint information to qemu-img info)
+- Resolves: bz#2155173
+  ([vhost-user] unable to start vhost net: 71: falling back on userspace)
+- Resolves: bz#2162569
+  ([transitional device][virtio-rng-pci-transitional]Stable Guest ABI failed between RHEL 8.6 to RHEL 9.2)
+
 * Mon Feb 06 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-7
 - kvm-vdpa-use-v-shadow_vqs_enabled-in-vhost_vdpa_svqs_sta.patch [bz#2104412]
 - kvm-vhost-set-SVQ-device-call-handler-at-SVQ-start.patch [bz#2104412]
