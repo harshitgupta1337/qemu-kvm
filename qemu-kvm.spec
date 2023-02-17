@@ -148,7 +148,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.2.0
-Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 9%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -356,6 +356,22 @@ Patch103: kvm-Revert-vhost-user-Monitor-slave-channel-in-vhost_use.patch
 Patch104: kvm-Revert-vhost-user-Introduce-nested-event-loop-in-vho.patch
 # For bz#2162569 - [transitional device][virtio-rng-pci-transitional]Stable Guest ABI failed between RHEL 8.6 to RHEL 9.2
 Patch105: kvm-virtio-rng-pci-fix-transitional-migration-compat-for.patch
+# For bz#2169232 - RFE: reconnect option for stream socket back-end
+Patch106: kvm-tests-qtest-netdev-test-stream-and-dgram-backends.patch
+# For bz#2169232 - RFE: reconnect option for stream socket back-end
+Patch107: kvm-net-stream-add-a-new-option-to-automatically-reconne.patch
+# For bz#2158704 - RFE: Prefer /dev/userfaultfd over userfaultfd(2) syscall
+Patch108: kvm-linux-headers-Update-to-v6.1.patch
+# For bz#2158704 - RFE: Prefer /dev/userfaultfd over userfaultfd(2) syscall
+Patch109: kvm-util-userfaultfd-Add-uffd_open.patch
+# For bz#2158704 - RFE: Prefer /dev/userfaultfd over userfaultfd(2) syscall
+Patch110: kvm-util-userfaultfd-Support-dev-userfaultfd.patch
+# For bz#2169732 - Multifd migration fails under a weak network/socket ordering race
+Patch111: kvm-io-Add-support-for-MSG_PEEK-for-socket-channel.patch
+# For bz#2169732 - Multifd migration fails under a weak network/socket ordering race
+Patch112: kvm-migration-check-magic-value-for-deciding-the-mapping.patch
+# For bz#2168172 - [s390x] qemu-kvm coredumps when SE crashes
+Patch113: kvm-target-s390x-arch_dump-Fix-memory-corruption-in-s390.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1386,6 +1402,24 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Fri Feb 17 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-9
+- kvm-tests-qtest-netdev-test-stream-and-dgram-backends.patch [bz#2169232]
+- kvm-net-stream-add-a-new-option-to-automatically-reconne.patch [bz#2169232]
+- kvm-linux-headers-Update-to-v6.1.patch [bz#2158704]
+- kvm-util-userfaultfd-Add-uffd_open.patch [bz#2158704]
+- kvm-util-userfaultfd-Support-dev-userfaultfd.patch [bz#2158704]
+- kvm-io-Add-support-for-MSG_PEEK-for-socket-channel.patch [bz#2169732]
+- kvm-migration-check-magic-value-for-deciding-the-mapping.patch [bz#2169732]
+- kvm-target-s390x-arch_dump-Fix-memory-corruption-in-s390.patch [bz#2168172]
+- Resolves: bz#2169232
+  (RFE: reconnect option for stream socket back-end)
+- Resolves: bz#2158704
+  (RFE: Prefer /dev/userfaultfd over userfaultfd(2) syscall)
+- Resolves: bz#2169732
+  (Multifd migration fails under a weak network/socket ordering race)
+- Resolves: bz#2168172
+  ([s390x] qemu-kvm coredumps when SE crashes)
+
 * Thu Feb 09 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-8
 - kvm-qcow2-Fix-theoretical-corruption-in-store_bitmap-err.patch [bz#2150180]
 - kvm-qemu-img-commit-Report-errors-while-closing-the-imag.patch [bz#2150180]
