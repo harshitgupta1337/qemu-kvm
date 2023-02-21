@@ -148,7 +148,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.2.0
-Release: 9%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 10%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -372,6 +372,8 @@ Patch111: kvm-io-Add-support-for-MSG_PEEK-for-socket-channel.patch
 Patch112: kvm-migration-check-magic-value-for-deciding-the-mapping.patch
 # For bz#2168172 - [s390x] qemu-kvm coredumps when SE crashes
 Patch113: kvm-target-s390x-arch_dump-Fix-memory-corruption-in-s390.patch
+# For bz#2168209 - Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled)
+Patch114: kvm-block-temporarily-hold-the-new-AioContext-of-bs_top-.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1402,6 +1404,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Feb 21 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-10
+- kvm-block-temporarily-hold-the-new-AioContext-of-bs_top-.patch [bz#2168209]
+- Resolves: bz#2168209
+  (Qemu coredump after do snapshot of mirrored top image and its converted base image(iothread enabled))
+
 * Fri Feb 17 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-9
 - kvm-tests-qtest-netdev-test-stream-and-dgram-backends.patch [bz#2169232]
 - kvm-net-stream-add-a-new-option-to-automatically-reconne.patch [bz#2169232]
