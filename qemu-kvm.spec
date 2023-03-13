@@ -148,7 +148,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.2.0
-Release: 11%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 12%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -376,6 +376,30 @@ Patch113: kvm-target-s390x-arch_dump-Fix-memory-corruption-in-s390.patch
 Patch114: kvm-block-temporarily-hold-the-new-AioContext-of-bs_top-.patch
 # For bz#2169904 - [SVVP] job 'Check SMBIOS Table Specific Requirements' failed on win2022
 Patch115: kvm-hw-smbios-fix-field-corruption-in-type-4-table.patch
+# For bz#2155748 - qemu crash on void blk_drain(BlockBackend *): Assertion qemu_in_main_thread() failed
+Patch116: kvm-scsi-protect-req-aiocb-with-AioContext-lock.patch
+# For bz#2155748 - qemu crash on void blk_drain(BlockBackend *): Assertion qemu_in_main_thread() failed
+Patch117: kvm-dma-helpers-prevent-dma_blk_cb-vs-dma_aio_cancel-rac.patch
+# For bz#2155748 - qemu crash on void blk_drain(BlockBackend *): Assertion qemu_in_main_thread() failed
+Patch118: kvm-virtio-scsi-reset-SCSI-devices-from-main-loop-thread.patch
+# For bz#2175660 - Guest hangs when starting or rebooting
+Patch119: kvm-qatomic-add-smp_mb__before-after_rmw.patch
+# For bz#2175660 - Guest hangs when starting or rebooting
+Patch120: kvm-qemu-thread-posix-cleanup-fix-document-QemuEvent.patch
+# For bz#2175660 - Guest hangs when starting or rebooting
+Patch121: kvm-qemu-thread-win32-cleanup-fix-document-QemuEvent.patch
+# For bz#2175660 - Guest hangs when starting or rebooting
+Patch122: kvm-edu-add-smp_mb__after_rmw.patch
+# For bz#2175660 - Guest hangs when starting or rebooting
+Patch123: kvm-aio-wait-switch-to-smp_mb__after_rmw.patch
+# For bz#2175660 - Guest hangs when starting or rebooting
+Patch124: kvm-qemu-coroutine-lock-add-smp_mb__after_rmw.patch
+# For bz#2175660 - Guest hangs when starting or rebooting
+Patch125: kvm-physmem-add-missing-memory-barrier.patch
+# For bz#2175660 - Guest hangs when starting or rebooting
+Patch126: kvm-async-update-documentation-of-the-memory-barriers.patch
+# For bz#2175660 - Guest hangs when starting or rebooting
+Patch127: kvm-async-clarify-usage-of-barriers-in-the-polling-case.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1406,6 +1430,24 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Sun Mar 12 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-12
+- kvm-scsi-protect-req-aiocb-with-AioContext-lock.patch [bz#2155748]
+- kvm-dma-helpers-prevent-dma_blk_cb-vs-dma_aio_cancel-rac.patch [bz#2155748]
+- kvm-virtio-scsi-reset-SCSI-devices-from-main-loop-thread.patch [bz#2155748]
+- kvm-qatomic-add-smp_mb__before-after_rmw.patch [bz#2175660]
+- kvm-qemu-thread-posix-cleanup-fix-document-QemuEvent.patch [bz#2175660]
+- kvm-qemu-thread-win32-cleanup-fix-document-QemuEvent.patch [bz#2175660]
+- kvm-edu-add-smp_mb__after_rmw.patch [bz#2175660]
+- kvm-aio-wait-switch-to-smp_mb__after_rmw.patch [bz#2175660]
+- kvm-qemu-coroutine-lock-add-smp_mb__after_rmw.patch [bz#2175660]
+- kvm-physmem-add-missing-memory-barrier.patch [bz#2175660]
+- kvm-async-update-documentation-of-the-memory-barriers.patch [bz#2175660]
+- kvm-async-clarify-usage-of-barriers-in-the-polling-case.patch [bz#2175660]
+- Resolves: bz#2155748
+  (qemu crash on void blk_drain(BlockBackend *): Assertion qemu_in_main_thread() failed)
+- Resolves: bz#2175660
+  (Guest hangs when starting or rebooting)
+
 * Mon Mar 06 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-11
 - kvm-hw-smbios-fix-field-corruption-in-type-4-table.patch [bz#2169904]
 - Resolves: bz#2169904
