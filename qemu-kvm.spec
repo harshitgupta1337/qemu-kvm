@@ -148,7 +148,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 7.2.0
-Release: 13%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 14%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -1446,6 +1446,13 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Mar 20 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-14
+- Rebuild for 9.2 release
+- Resolves: bz#2173590
+  (bugs in emulation of BMI instructions (for libguestfs without KVM))
+- Resolves: bz#2156876
+  ([virtual network][rhel7.9_guest] qemu-kvm: vhost vring error in virtqueue 1: Invalid argument (22))
+
 * Mon Mar 20 2023 Miroslav Rezanina <mrezanin@redhat.com> - 7.2.0-13
 - kvm-target-i386-fix-operand-size-of-unary-SSE-operations.patch [bz#2173590]
 - kvm-tests-tcg-i386-Introduce-and-use-reg_t-consistently.patch [bz#2173590]
