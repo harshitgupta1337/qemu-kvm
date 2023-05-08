@@ -148,7 +148,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.0.0
-Release: 1%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 2%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -189,6 +189,12 @@ Patch0016: 0016-qga-linux-add-usb-support-to-guest-get-fsinfo.patch
 Patch0017: 0017-Add-RHEL-9.2.0-compat-structure.patch
 Patch0018: 0018-redhat-hw-i386-pc-Update-x86-machine-type-compatibil.patch
 Patch0019: 0019-Disable-unwanted-new-devices.patch
+# For bz#2087047 - Disk detach is unsuccessful while the guest is still booting
+Patch20: kvm-acpi-pcihp-allow-repeating-hot-unplug-requests.patch
+# For bz#1934134 - ACPI table limits warning when booting guest with 512 VCPUs
+Patch21: kvm-hw-acpi-limit-warning-on-acpi-table-size-to-pc-machi.patch
+# For bz#1934134 - ACPI table limits warning when booting guest with 512 VCPUs
+Patch22: kvm-hw-acpi-Mark-acpi-blobs-as-resizable-on-RHEL-pc-mach.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1211,6 +1217,15 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon May 08 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-2
+- kvm-acpi-pcihp-allow-repeating-hot-unplug-requests.patch [bz#2087047]
+- kvm-hw-acpi-limit-warning-on-acpi-table-size-to-pc-machi.patch [bz#1934134]
+- kvm-hw-acpi-Mark-acpi-blobs-as-resizable-on-RHEL-pc-mach.patch [bz#1934134]
+- Resolves: bz#2087047
+  (Disk detach is unsuccessful while the guest is still booting)
+- Resolves: bz#1934134
+  (ACPI table limits warning when booting guest with 512 VCPUs)
+
 * Thu Apr 20 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-1
 - Rebase to QEMU 8.0.0
 - Resolves: bz#2180898
