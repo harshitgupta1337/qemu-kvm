@@ -148,7 +148,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.0.0
-Release: 2%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -195,6 +195,10 @@ Patch20: kvm-acpi-pcihp-allow-repeating-hot-unplug-requests.patch
 Patch21: kvm-hw-acpi-limit-warning-on-acpi-table-size-to-pc-machi.patch
 # For bz#1934134 - ACPI table limits warning when booting guest with 512 VCPUs
 Patch22: kvm-hw-acpi-Mark-acpi-blobs-as-resizable-on-RHEL-pc-mach.patch
+# For bz#2058982 - Qemu core dump if cut off nfs storage during migration
+Patch23: kvm-migration-Handle-block-device-inactivation-failures-.patch
+# For bz#2058982 - Qemu core dump if cut off nfs storage during migration
+Patch24: kvm-migration-Minor-control-flow-simplification.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1217,6 +1221,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon May 15 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-3
+- kvm-migration-Handle-block-device-inactivation-failures-.patch [bz#2058982]
+- kvm-migration-Minor-control-flow-simplification.patch [bz#2058982]
+- Resolves: bz#2058982
+  (Qemu core dump if cut off nfs storage during migration)
+
 * Mon May 08 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-2
 - kvm-acpi-pcihp-allow-repeating-hot-unplug-requests.patch [bz#2087047]
 - kvm-hw-acpi-limit-warning-on-acpi-table-size-to-pc-machi.patch [bz#1934134]
