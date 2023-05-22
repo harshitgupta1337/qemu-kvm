@@ -148,7 +148,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.0.0
-Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -199,6 +199,116 @@ Patch22: kvm-hw-acpi-Mark-acpi-blobs-as-resizable-on-RHEL-pc-mach.patch
 Patch23: kvm-migration-Handle-block-device-inactivation-failures-.patch
 # For bz#2058982 - Qemu core dump if cut off nfs storage during migration
 Patch24: kvm-migration-Minor-control-flow-simplification.patch
+# For bz#2058982 - Qemu core dump if cut off nfs storage during migration
+Patch25: kvm-migration-Attempt-disk-reactivation-in-more-failure-.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch26: kvm-util-mmap-alloc-qemu_fd_getfs.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch27: kvm-vl.c-Create-late-backends-before-migration-object.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch28: kvm-migration-postcopy-Detect-file-system-on-dest-host.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch29: kvm-migration-mark-mixed-functions-that-can-suspend.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch30: kvm-postcopy-ram-do-not-use-qatomic_mb_read.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch31: kvm-migration-remove-extra-whitespace-character-for-code.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch32: kvm-migration-Merge-ram_counters-and-ram_atomic_counters.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch33: kvm-migration-Update-atomic-stats-out-of-the-mutex.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch34: kvm-migration-Make-multifd_bytes-atomic.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch35: kvm-migration-Make-dirty_sync_missed_zero_copy-atomic.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch36: kvm-migration-Make-precopy_bytes-atomic.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch37: kvm-migration-Make-downtime_bytes-atomic.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch38: kvm-migration-Make-dirty_sync_count-atomic.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch39: kvm-migration-Make-postcopy_requests-atomic.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch40: kvm-migration-Rename-duplicate-to-zero_pages.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch41: kvm-migration-Rename-normal-to-normal_pages.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch42: kvm-migration-rename-enabled_capabilities-to-capabilitie.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch43: kvm-migration-Pass-migrate_caps_check-the-old-and-new-ca.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch44: kvm-migration-move-migration_global_dump-to-migration-hm.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch45: kvm-spice-move-client_migrate_info-command-to-ui.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch46: kvm-migration-Create-migrate_cap_set.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch47: kvm-migration-Create-options.c.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch48: kvm-migration-Move-migrate_colo_enabled-to-options.c.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch49: kvm-migration-Move-migrate_use_compression-to-options.c.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch50: kvm-migration-Move-migrate_use_events-to-options.c.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch51: kvm-migration-Move-migrate_use_multifd-to-options.c.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch52: kvm-migration-Move-migrate_use_zero_copy_send-to-options.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch53: kvm-migration-Move-migrate_use_xbzrle-to-options.c.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch54: kvm-migration-Move-migrate_use_block-to-options.c.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch55: kvm-migration-Move-migrate_use_return-to-options.c.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch56: kvm-migration-Create-migrate_rdma_pin_all-function.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch57: kvm-migration-Move-migrate_caps_check-to-options.c.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch58: kvm-migration-Move-qmp_query_migrate_capabilities-to-opt.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch59: kvm-migration-Move-qmp_migrate_set_capabilities-to-optio.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch60: kvm-migration-Move-migrate_cap_set-to-options.c.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch61: kvm-migration-Move-parameters-functions-to-option.c.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch62: kvm-migration-Use-migrate_max_postcopy_bandwidth.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch63: kvm-migration-Move-migrate_use_block_incremental-to-opti.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch64: kvm-migration-Create-migrate_throttle_trigger_threshold.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch65: kvm-migration-Create-migrate_checkpoint_delay.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch66: kvm-migration-Create-migrate_max_cpu_throttle.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch67: kvm-migration-Move-migrate_announce_params-to-option.c.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch68: kvm-migration-Create-migrate_cpu_throttle_initial-to-opt.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch69: kvm-migration-Create-migrate_cpu_throttle_increment-func.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch70: kvm-migration-Create-migrate_cpu_throttle_tailslow-funct.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch71: kvm-migration-Move-migrate_postcopy-to-options.c.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch72: kvm-migration-Create-migrate_max_bandwidth-function.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch73: kvm-migration-Move-migrate_use_tls-to-options.c.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch74: kvm-migration-Move-qmp_migrate_set_parameters-to-options.patch
+# For bz#2057267 - Migration with postcopy fail when vm set with shared memory
+Patch75: kvm-migration-Allow-postcopy_ram_supported_by_host-to-re.patch
+# For bz#2185688 - [qemu-kvm] no response with QMP command block_resize
+Patch76: kvm-block-bdrv-blk_co_unref-for-calls-in-coroutine-conte.patch
+# For bz#2185688 - [qemu-kvm] no response with QMP command block_resize
+Patch77: kvm-block-Don-t-call-no_coroutine_fns-in-qmp_block_resiz.patch
+# For bz#2185688 - [qemu-kvm] no response with QMP command block_resize
+Patch78: kvm-iotests-Use-alternative-CPU-type-that-is-not-depreca.patch
+# For bz#2185688 - [qemu-kvm] no response with QMP command block_resize
+Patch79: kvm-iotests-Test-resizing-image-attached-to-an-iothread.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -215,6 +325,7 @@ BuildRequires: glib2-devel
 BuildRequires: gnutls-devel
 BuildRequires: cyrus-sasl-devel
 BuildRequires: libaio-devel
+BuildRequires: liburing-devel
 BuildRequires: python3-devel
 BuildRequires: libattr-devel
 BuildRequires: libusbx-devel >= %{libusbx_version}
@@ -713,6 +824,7 @@ run_configure \
   --enable-libusb \
   --enable-libudev \
   --enable-linux-aio \
+  --enable-linux-io-uring \
   --enable-lzo \
   --enable-malloc-trim \
   --enable-modules \
@@ -1221,6 +1333,72 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon May 22 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-4
+- kvm-migration-Attempt-disk-reactivation-in-more-failure-.patch [bz#2058982]
+- kvm-util-mmap-alloc-qemu_fd_getfs.patch [bz#2057267]
+- kvm-vl.c-Create-late-backends-before-migration-object.patch [bz#2057267]
+- kvm-migration-postcopy-Detect-file-system-on-dest-host.patch [bz#2057267]
+- kvm-migration-mark-mixed-functions-that-can-suspend.patch [bz#2057267]
+- kvm-postcopy-ram-do-not-use-qatomic_mb_read.patch [bz#2057267]
+- kvm-migration-remove-extra-whitespace-character-for-code.patch [bz#2057267]
+- kvm-migration-Merge-ram_counters-and-ram_atomic_counters.patch [bz#2057267]
+- kvm-migration-Update-atomic-stats-out-of-the-mutex.patch [bz#2057267]
+- kvm-migration-Make-multifd_bytes-atomic.patch [bz#2057267]
+- kvm-migration-Make-dirty_sync_missed_zero_copy-atomic.patch [bz#2057267]
+- kvm-migration-Make-precopy_bytes-atomic.patch [bz#2057267]
+- kvm-migration-Make-downtime_bytes-atomic.patch [bz#2057267]
+- kvm-migration-Make-dirty_sync_count-atomic.patch [bz#2057267]
+- kvm-migration-Make-postcopy_requests-atomic.patch [bz#2057267]
+- kvm-migration-Rename-duplicate-to-zero_pages.patch [bz#2057267]
+- kvm-migration-Rename-normal-to-normal_pages.patch [bz#2057267]
+- kvm-migration-rename-enabled_capabilities-to-capabilitie.patch [bz#2057267]
+- kvm-migration-Pass-migrate_caps_check-the-old-and-new-ca.patch [bz#2057267]
+- kvm-migration-move-migration_global_dump-to-migration-hm.patch [bz#2057267]
+- kvm-spice-move-client_migrate_info-command-to-ui.patch [bz#2057267]
+- kvm-migration-Create-migrate_cap_set.patch [bz#2057267]
+- kvm-migration-Create-options.c.patch [bz#2057267]
+- kvm-migration-Move-migrate_colo_enabled-to-options.c.patch [bz#2057267]
+- kvm-migration-Move-migrate_use_compression-to-options.c.patch [bz#2057267]
+- kvm-migration-Move-migrate_use_events-to-options.c.patch [bz#2057267]
+- kvm-migration-Move-migrate_use_multifd-to-options.c.patch [bz#2057267]
+- kvm-migration-Move-migrate_use_zero_copy_send-to-options.patch [bz#2057267]
+- kvm-migration-Move-migrate_use_xbzrle-to-options.c.patch [bz#2057267]
+- kvm-migration-Move-migrate_use_block-to-options.c.patch [bz#2057267]
+- kvm-migration-Move-migrate_use_return-to-options.c.patch [bz#2057267]
+- kvm-migration-Create-migrate_rdma_pin_all-function.patch [bz#2057267]
+- kvm-migration-Move-migrate_caps_check-to-options.c.patch [bz#2057267]
+- kvm-migration-Move-qmp_query_migrate_capabilities-to-opt.patch [bz#2057267]
+- kvm-migration-Move-qmp_migrate_set_capabilities-to-optio.patch [bz#2057267]
+- kvm-migration-Move-migrate_cap_set-to-options.c.patch [bz#2057267]
+- kvm-migration-Move-parameters-functions-to-option.c.patch [bz#2057267]
+- kvm-migration-Use-migrate_max_postcopy_bandwidth.patch [bz#2057267]
+- kvm-migration-Move-migrate_use_block_incremental-to-opti.patch [bz#2057267]
+- kvm-migration-Create-migrate_throttle_trigger_threshold.patch [bz#2057267]
+- kvm-migration-Create-migrate_checkpoint_delay.patch [bz#2057267]
+- kvm-migration-Create-migrate_max_cpu_throttle.patch [bz#2057267]
+- kvm-migration-Move-migrate_announce_params-to-option.c.patch [bz#2057267]
+- kvm-migration-Create-migrate_cpu_throttle_initial-to-opt.patch [bz#2057267]
+- kvm-migration-Create-migrate_cpu_throttle_increment-func.patch [bz#2057267]
+- kvm-migration-Create-migrate_cpu_throttle_tailslow-funct.patch [bz#2057267]
+- kvm-migration-Move-migrate_postcopy-to-options.c.patch [bz#2057267]
+- kvm-migration-Create-migrate_max_bandwidth-function.patch [bz#2057267]
+- kvm-migration-Move-migrate_use_tls-to-options.c.patch [bz#2057267]
+- kvm-migration-Move-qmp_migrate_set_parameters-to-options.patch [bz#2057267]
+- kvm-migration-Allow-postcopy_ram_supported_by_host-to-re.patch [bz#2057267]
+- kvm-block-bdrv-blk_co_unref-for-calls-in-coroutine-conte.patch [bz#2185688]
+- kvm-block-Don-t-call-no_coroutine_fns-in-qmp_block_resiz.patch [bz#2185688]
+- kvm-iotests-Use-alternative-CPU-type-that-is-not-depreca.patch [bz#2185688]
+- kvm-iotests-Test-resizing-image-attached-to-an-iothread.patch [bz#2185688]
+- kvm-Enable-Linux-io_uring.patch [bz#1947230]
+- Resolves: bz#2058982
+  (Qemu core dump if cut off nfs storage during migration)
+- Resolves: bz#2057267
+  (Migration with postcopy fail when vm set with shared memory)
+- Resolves: bz#2185688
+  ([qemu-kvm] no response with QMP command block_resize)
+- Resolves: bz#1947230
+  (Enable QEMU support for io_uring in RHEL9)
+
 * Mon May 15 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-3
 - kvm-migration-Handle-block-device-inactivation-failures-.patch [bz#2058982]
 - kvm-migration-Minor-control-flow-simplification.patch [bz#2058982]
