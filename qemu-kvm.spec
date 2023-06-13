@@ -148,7 +148,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.0.0
-Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -309,6 +309,48 @@ Patch77: kvm-block-Don-t-call-no_coroutine_fns-in-qmp_block_resiz.patch
 Patch78: kvm-iotests-Use-alternative-CPU-type-that-is-not-depreca.patch
 # For bz#2185688 - [qemu-kvm] no response with QMP command block_resize
 Patch79: kvm-iotests-Test-resizing-image-attached-to-an-iothread.patch
+# For bz#2186725 - Qemu hang when commit during fio running(iothread enable)
+Patch80: kvm-block-compile-out-assert_bdrv_graph_readable-by-defa.patch
+# For bz#2186725 - Qemu hang when commit during fio running(iothread enable)
+Patch81: kvm-graph-lock-Disable-locking-for-now.patch
+# For bz#2186725 - Qemu hang when commit during fio running(iothread enable)
+Patch82: kvm-nbd-server-Fix-drained_poll-to-wake-coroutine-in-rig.patch
+# For bz#2186725 - Qemu hang when commit during fio running(iothread enable)
+Patch83: kvm-iotests-Test-commit-with-iothreads-and-ongoing-I-O.patch
+# For RHEL-516 - CVE-2023-2680 qemu-kvm: QEMU: hcd-ehci: DMA reentrancy issue (incomplete fix for CVE-2021-3750) [rhel-9]
+Patch84: kvm-memory-prevent-dma-reentracy-issues.patch
+# For RHEL-516 - CVE-2023-2680 qemu-kvm: QEMU: hcd-ehci: DMA reentrancy issue (incomplete fix for CVE-2021-3750) [rhel-9]
+Patch85: kvm-async-Add-an-optional-reentrancy-guard-to-the-BH-API.patch
+# For RHEL-516 - CVE-2023-2680 qemu-kvm: QEMU: hcd-ehci: DMA reentrancy issue (incomplete fix for CVE-2021-3750) [rhel-9]
+Patch86: kvm-checkpatch-add-qemu_bh_new-aio_bh_new-checks.patch
+# For RHEL-516 - CVE-2023-2680 qemu-kvm: QEMU: hcd-ehci: DMA reentrancy issue (incomplete fix for CVE-2021-3750) [rhel-9]
+Patch87: kvm-hw-replace-most-qemu_bh_new-calls-with-qemu_bh_new_g.patch
+# For RHEL-516 - CVE-2023-2680 qemu-kvm: QEMU: hcd-ehci: DMA reentrancy issue (incomplete fix for CVE-2021-3750) [rhel-9]
+Patch88: kvm-lsi53c895a-disable-reentrancy-detection-for-script-R.patch
+# For RHEL-516 - CVE-2023-2680 qemu-kvm: QEMU: hcd-ehci: DMA reentrancy issue (incomplete fix for CVE-2021-3750) [rhel-9]
+Patch89: kvm-bcm2835_property-disable-reentrancy-detection-for-io.patch
+# For RHEL-516 - CVE-2023-2680 qemu-kvm: QEMU: hcd-ehci: DMA reentrancy issue (incomplete fix for CVE-2021-3750) [rhel-9]
+Patch90: kvm-raven-disable-reentrancy-detection-for-iomem.patch
+# For RHEL-516 - CVE-2023-2680 qemu-kvm: QEMU: hcd-ehci: DMA reentrancy issue (incomplete fix for CVE-2021-3750) [rhel-9]
+Patch91: kvm-apic-disable-reentrancy-detection-for-apic-msi.patch
+# For RHEL-516 - CVE-2023-2680 qemu-kvm: QEMU: hcd-ehci: DMA reentrancy issue (incomplete fix for CVE-2021-3750) [rhel-9]
+Patch92: kvm-async-avoid-use-after-free-on-re-entrancy-guard.patch
+# For RHEL-516 - CVE-2023-2680 qemu-kvm: QEMU: hcd-ehci: DMA reentrancy issue (incomplete fix for CVE-2021-3750) [rhel-9]
+Patch93: kvm-loongarch-mark-loongarch_ipi_iocsr-re-entrnacy-safe.patch
+# For RHEL-516 - CVE-2023-2680 qemu-kvm: QEMU: hcd-ehci: DMA reentrancy issue (incomplete fix for CVE-2021-3750) [rhel-9]
+Patch94: kvm-memory-stricter-checks-prior-to-unsetting-engaged_in.patch
+# For RHEL-516 - CVE-2023-2680 qemu-kvm: QEMU: hcd-ehci: DMA reentrancy issue (incomplete fix for CVE-2021-3750) [rhel-9]
+Patch95: kvm-lsi53c895a-disable-reentrancy-detection-for-MMIO-reg.patch
+# For RHEL-516 - CVE-2023-2680 qemu-kvm: QEMU: hcd-ehci: DMA reentrancy issue (incomplete fix for CVE-2021-3750) [rhel-9]
+Patch96: kvm-hw-scsi-lsi53c895a-Fix-reentrancy-issues-in-the-LSI-.patch
+# For bz#2189423 - Failed to migrate VM from rhel 9.3 to rhel 9.2
+Patch97: kvm-hw-pci-Disable-PCI_ERR_UNCOR_MASK-register-for-machi.patch
+# For bz#2196289 - Fix number of ready channels on multifd
+Patch98: kvm-multifd-Fix-the-number-of-channels-ready.patch
+# For bz#2168500 - [IBM 9.3 FEAT] KVM: Improve memory reclaiming for z15 Secure Execution guests - qemu part
+Patch99: kvm-util-async-teardown-wire-up-query-command-line-optio.patch
+# For bz#2168500 - [IBM 9.3 FEAT] KVM: Improve memory reclaiming for z15 Secure Execution guests - qemu part
+Patch100: kvm-s390x-pv-Fix-spurious-warning-with-asynchronous-tear.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1333,6 +1375,39 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Jun 13 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-5
+- kvm-block-compile-out-assert_bdrv_graph_readable-by-defa.patch [bz#2186725]
+- kvm-graph-lock-Disable-locking-for-now.patch [bz#2186725]
+- kvm-nbd-server-Fix-drained_poll-to-wake-coroutine-in-rig.patch [bz#2186725]
+- kvm-iotests-Test-commit-with-iothreads-and-ongoing-I-O.patch [bz#2186725]
+- kvm-memory-prevent-dma-reentracy-issues.patch [RHEL-516]
+- kvm-async-Add-an-optional-reentrancy-guard-to-the-BH-API.patch [RHEL-516]
+- kvm-checkpatch-add-qemu_bh_new-aio_bh_new-checks.patch [RHEL-516]
+- kvm-hw-replace-most-qemu_bh_new-calls-with-qemu_bh_new_g.patch [RHEL-516]
+- kvm-lsi53c895a-disable-reentrancy-detection-for-script-R.patch [RHEL-516]
+- kvm-bcm2835_property-disable-reentrancy-detection-for-io.patch [RHEL-516]
+- kvm-raven-disable-reentrancy-detection-for-iomem.patch [RHEL-516]
+- kvm-apic-disable-reentrancy-detection-for-apic-msi.patch [RHEL-516]
+- kvm-async-avoid-use-after-free-on-re-entrancy-guard.patch [RHEL-516]
+- kvm-loongarch-mark-loongarch_ipi_iocsr-re-entrnacy-safe.patch [RHEL-516]
+- kvm-memory-stricter-checks-prior-to-unsetting-engaged_in.patch [RHEL-516]
+- kvm-lsi53c895a-disable-reentrancy-detection-for-MMIO-reg.patch [RHEL-516]
+- kvm-hw-scsi-lsi53c895a-Fix-reentrancy-issues-in-the-LSI-.patch [RHEL-516]
+- kvm-hw-pci-Disable-PCI_ERR_UNCOR_MASK-register-for-machi.patch [bz#2189423]
+- kvm-multifd-Fix-the-number-of-channels-ready.patch [bz#2196289]
+- kvm-util-async-teardown-wire-up-query-command-line-optio.patch [bz#2168500]
+- kvm-s390x-pv-Fix-spurious-warning-with-asynchronous-tear.patch [bz#2168500]
+- Resolves: bz#2186725
+  (Qemu hang when commit during fio running(iothread enable))
+- Resolves: RHEL-516
+  (CVE-2023-2680 qemu-kvm: QEMU: hcd-ehci: DMA reentrancy issue (incomplete fix for CVE-2021-3750) [rhel-9])
+- Resolves: bz#2189423
+  (Failed to migrate VM from rhel 9.3 to rhel 9.2)
+- Resolves: bz#2196289
+  (Fix number of ready channels on multifd)
+- Resolves: bz#2168500
+  ([IBM 9.3 FEAT] KVM: Improve memory reclaiming for z15 Secure Execution guests - qemu part)
+
 * Mon May 22 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-4
 - kvm-migration-Attempt-disk-reactivation-in-more-failure-.patch [bz#2058982]
 - kvm-util-mmap-alloc-qemu_fd_getfs.patch [bz#2057267]
