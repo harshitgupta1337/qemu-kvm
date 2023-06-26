@@ -100,7 +100,7 @@
 %endif
 
 %global target_list %{kvm_target}-softmmu
-%global block_drivers_rw_list qcow2,raw,file,host_device,nbd,iscsi,rbd,blkdebug,luks,null-co,nvme,copy-on-read,throttle,compress
+%global block_drivers_rw_list qcow2,raw,file,host_device,nbd,iscsi,rbd,blkdebug,luks,null-co,nvme,copy-on-read,throttle,compress,virtio-blk-vdpa-blk,virtio-blk-vfio-pci,virtio-blk-vhost-user,io_uring,nvme-io_uring
 %global block_drivers_ro_list vdi,vmdk,vhdx,vpc,https
 %define qemudocdir %{_docdir}/%{name}
 %global firmwaredirs "%{_datadir}/qemu-firmware:%{_datadir}/ipxe/qemu:%{_datadir}/seavgabios:%{_datadir}/seabios"
@@ -125,6 +125,7 @@ Requires: %{name}-device-usb-host = %{epoch}:%{version}-%{release}   \
 %if %{have_usbredir}                                             \
 Requires: %{name}-device-usb-redirect = %{epoch}:%{version}-%{release}   \
 %endif                                                           \
+Requires: %{name}-block-blkio = %{epoch}:%{version}-%{release}   \
 Requires: %{name}-block-rbd = %{epoch}:%{version}-%{release}     \
 Requires: %{name}-audio-pa = %{epoch}:%{version}-%{release}
 
@@ -148,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.0.0
-Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 6%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -351,6 +352,14 @@ Patch98: kvm-multifd-Fix-the-number-of-channels-ready.patch
 Patch99: kvm-util-async-teardown-wire-up-query-command-line-optio.patch
 # For bz#2168500 - [IBM 9.3 FEAT] KVM: Improve memory reclaiming for z15 Secure Execution guests - qemu part
 Patch100: kvm-s390x-pv-Fix-spurious-warning-with-asynchronous-tear.patch
+# For bz#2216201 - [qemu-kvm]VM reports vulnerabilty to mmio_stale_data on patched host with microcode
+Patch101: kvm-target-i386-add-support-for-FLUSH_L1D-feature.patch
+# For bz#2216201 - [qemu-kvm]VM reports vulnerabilty to mmio_stale_data on patched host with microcode
+Patch102: kvm-target-i386-add-support-for-FB_CLEAR-feature.patch
+# For bz#2180076 - [qemu-kvm] support fd passing for libblkio QEMU BlockDrivers
+Patch103: kvm-block-blkio-use-qemu_open-to-support-fd-passing-for-.patch
+# For bz#2180076 - [qemu-kvm] support fd passing for libblkio QEMU BlockDrivers
+Patch104: kvm-qapi-add-fdset-feature-for-BlockdevOptionsVirtioBlkV.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -367,6 +376,7 @@ BuildRequires: glib2-devel
 BuildRequires: gnutls-devel
 BuildRequires: cyrus-sasl-devel
 BuildRequires: libaio-devel
+BuildRequires: libblkio-devel
 BuildRequires: liburing-devel
 BuildRequires: python3-devel
 BuildRequires: libattr-devel
@@ -552,6 +562,17 @@ the functionality of the installed %{name} package
 
 Install this package if you want access to the avocado_qemu
 tests, or qemu-iotests.
+
+
+%package  block-blkio
+Summary: QEMU libblkio block drivers
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+%description block-blkio
+This package provides the additional libblkio block drivers for QEMU.
+
+Install this package if you want to use virtio-blk-vdpa-blk,
+virtio-blk-vfio-pci, virtio-blk-vhost-user, io_uring, and nvme-io_uring block
+drivers provided by libblkio.
 
 
 %package  block-curl
@@ -847,6 +868,7 @@ run_configure \
   --block-drv-ro-whitelist=%{block_drivers_ro_list} \
 %endif
   --enable-attr \
+  --enable-blkio \
   --enable-cap-ng \
   --enable-capstone \
   --enable-coroutine-pool \
@@ -1347,6 +1369,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{testsdir}
 %{_libdir}/%{name}/accel-qtest-%{kvm_target}.so
 
+%files block-blkio
+%{_libdir}/%{name}/block-blkio.so
+
 %files block-curl
 %{_libdir}/%{name}/block-curl.so
 %if %{have_block_rbd}
@@ -1375,6 +1400,19 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Jun 26 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-6
+- kvm-target-i386-add-support-for-FLUSH_L1D-feature.patch [bz#2216201]
+- kvm-target-i386-add-support-for-FB_CLEAR-feature.patch [bz#2216201]
+- kvm-block-blkio-use-qemu_open-to-support-fd-passing-for-.patch [bz#2180076]
+- kvm-qapi-add-fdset-feature-for-BlockdevOptionsVirtioBlkV.patch [bz#2180076]
+- kvm-Enable-libblkio-block-drivers.patch [bz#2213317]
+- Resolves: bz#2216201
+  ([qemu-kvm]VM reports vulnerabilty to mmio_stale_data on patched host with microcode)
+- Resolves: bz#2180076
+  ([qemu-kvm] support fd passing for libblkio QEMU BlockDrivers)
+- Resolves: bz#2213317
+  (Enable libblkio-based block drivers in QEMU)
+
 * Tue Jun 13 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-5
 - kvm-block-compile-out-assert_bdrv_graph_readable-by-defa.patch [bz#2186725]
 - kvm-graph-lock-Disable-locking-for-now.patch [bz#2186725]
