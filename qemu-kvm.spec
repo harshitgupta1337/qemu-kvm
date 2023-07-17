@@ -100,7 +100,7 @@
 %endif
 
 %global target_list %{kvm_target}-softmmu
-%global block_drivers_rw_list qcow2,raw,file,host_device,nbd,iscsi,rbd,blkdebug,luks,null-co,nvme,copy-on-read,throttle,compress,virtio-blk-vdpa-blk,virtio-blk-vfio-pci,virtio-blk-vhost-user,io_uring,nvme-io_uring
+%global block_drivers_rw_list qcow2,raw,file,host_device,nbd,iscsi,rbd,blkdebug,luks,null-co,nvme,copy-on-read,throttle,compress,virtio-blk-vhost-vdpa,virtio-blk-vfio-pci,virtio-blk-vhost-user,io_uring,nvme-io_uring
 %global block_drivers_ro_list vdi,vmdk,vhdx,vpc,https
 %define qemudocdir %{_docdir}/%{name}
 %global firmwaredirs "%{_datadir}/qemu-firmware:%{_datadir}/ipxe/qemu:%{_datadir}/seavgabios:%{_datadir}/seabios"
@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.0.0
-Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -372,6 +372,80 @@ Patch108: kvm-vhost-fix-vhost_dev_enable_notifiers-error-case.patch
 Patch109: kvm-kvm-reuse-per-vcpu-stats-fd-to-avoid-vcpu-interrupti.patch
 # For bz#2128929 - [rhel9.2] hotplug/hotunplug mlx vdpa device to the occupied addr port, then qemu core dump occurs after shutdown guest
 Patch110: kvm-vhost-vdpa-do-not-cleanup-the-vdpa-vhost-net-structu.patch
+# For bz#2211609 - With virtio-iommu and vfio-pci, qemu reports "warning: virtio-iommu page mask 0xfffffffffffff000 does not match 0x40201000"
+# For bz#2211634 - [aarch64] With virtio-iommu and vfio-pci, qemu coredump when host using kernel-64k package
+Patch111: kvm-virtio-iommu-Fix-64kB-host-page-size-VFIO-device-ass.patch
+# For bz#2211609 - With virtio-iommu and vfio-pci, qemu reports "warning: virtio-iommu page mask 0xfffffffffffff000 does not match 0x40201000"
+# For bz#2211634 - [aarch64] With virtio-iommu and vfio-pci, qemu coredump when host using kernel-64k package
+Patch112: kvm-virtio-iommu-Rework-the-traces-in-virtio_iommu_set_p.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch113: kvm-vfio-pci-add-support-for-VF-token.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch114: kvm-vfio-migration-Skip-log_sync-during-migration-SETUP-.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch115: kvm-vfio-pci-Static-Resizable-BAR-capability.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch116: kvm-vfio-pci-Fix-a-use-after-free-issue.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch117: kvm-util-vfio-helpers-Use-g_file_read_link.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch118: kvm-migration-Make-all-functions-check-have-the-same-for.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch119: kvm-migration-Move-migration_properties-to-options.c.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch120: kvm-migration-Add-switchover-ack-capability.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch121: kvm-migration-Implement-switchover-ack-logic.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch122: kvm-migration-Enable-switchover-ack-capability.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch123: kvm-vfio-migration-Refactor-vfio_save_block-to-return-sa.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch124: kvm-vfio-migration-Store-VFIO-migration-flags-in-VFIOMig.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch125: kvm-vfio-migration-Add-VFIO-migration-pre-copy-support.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch126: kvm-vfio-migration-Add-support-for-switchover-ack-capabi.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch127: kvm-vfio-Implement-a-common-device-info-helper.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch128: kvm-hw-vfio-pci-quirks-Support-alternate-offset-for-GPUD.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch129: kvm-vfio-pci-Call-vfio_prepare_kvm_msi_virq_batch-in-MSI.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch130: kvm-vfio-migration-Reset-bytes_transferred-properly.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch131: kvm-vfio-migration-Make-VFIO-migration-non-experimental.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch132: kvm-vfio-pci-Fix-a-segfault-in-vfio_realize.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch133: kvm-vfio-pci-Free-leaked-timer-in-vfio_realize-error-pat.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch134: kvm-hw-vfio-pci-quirks-Sanitize-capability-pointer.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch135: kvm-vfio-pci-Disable-INTx-in-vfio_realize-error-path.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch136: kvm-vfio-migration-Change-vIOMMU-blocker-from-global-to-.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch137: kvm-vfio-migration-Free-resources-when-vfio_migration_re.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch138: kvm-vfio-migration-Remove-print-of-Migration-disabled.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch139: kvm-vfio-migration-Return-bool-type-for-vfio_migration_r.patch
+# For bz#2192818 - [VFIO LM] Live migration
+Patch140: kvm-vfio-Fix-null-pointer-dereference-bug-in-vfio_bars_f.patch
+# For bz#2220866 - Misaligned symbol for s390-ccw image during qemu-kvm build
+Patch141: kvm-pc-bios-s390-ccw-Makefile-Use-z-noexecstack-to-silen.patch
+# For bz#2220866 - Misaligned symbol for s390-ccw image during qemu-kvm build
+Patch142: kvm-pc-bios-s390-ccw-Fix-indentation-in-start.S.patch
+# For bz#2220866 - Misaligned symbol for s390-ccw image during qemu-kvm build
+Patch143: kvm-pc-bios-s390-ccw-Provide-space-for-initial-stack-fra.patch
+# For bz#2220866 - Misaligned symbol for s390-ccw image during qemu-kvm build
+Patch144: kvm-pc-bios-s390-ccw-Don-t-use-__bss_start-with-the-larl.patch
+# For bz#2222579 - PNG screendump doesn't save screen correctly
+Patch145: kvm-ui-Fix-pixel-colour-channel-order-for-PNG-screenshot.patch
+# For bz#2213317 - Enable libblkio-based block drivers in QEMU
+Patch146: kvm-block-blkio-fix-module_block.py-parsing.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1412,6 +1486,57 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Jul 17 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-8
+- kvm-virtio-iommu-Fix-64kB-host-page-size-VFIO-device-ass.patch [bz#2211609 bz#2211634]
+- kvm-virtio-iommu-Rework-the-traces-in-virtio_iommu_set_p.patch [bz#2211609 bz#2211634]
+- kvm-vfio-pci-add-support-for-VF-token.patch [bz#2192818]
+- kvm-vfio-migration-Skip-log_sync-during-migration-SETUP-.patch [bz#2192818]
+- kvm-vfio-pci-Static-Resizable-BAR-capability.patch [bz#2192818]
+- kvm-vfio-pci-Fix-a-use-after-free-issue.patch [bz#2192818]
+- kvm-util-vfio-helpers-Use-g_file_read_link.patch [bz#2192818]
+- kvm-migration-Make-all-functions-check-have-the-same-for.patch [bz#2192818]
+- kvm-migration-Move-migration_properties-to-options.c.patch [bz#2192818]
+- kvm-migration-Add-switchover-ack-capability.patch [bz#2192818]
+- kvm-migration-Implement-switchover-ack-logic.patch [bz#2192818]
+- kvm-migration-Enable-switchover-ack-capability.patch [bz#2192818]
+- kvm-vfio-migration-Refactor-vfio_save_block-to-return-sa.patch [bz#2192818]
+- kvm-vfio-migration-Store-VFIO-migration-flags-in-VFIOMig.patch [bz#2192818]
+- kvm-vfio-migration-Add-VFIO-migration-pre-copy-support.patch [bz#2192818]
+- kvm-vfio-migration-Add-support-for-switchover-ack-capabi.patch [bz#2192818]
+- kvm-vfio-Implement-a-common-device-info-helper.patch [bz#2192818]
+- kvm-hw-vfio-pci-quirks-Support-alternate-offset-for-GPUD.patch [bz#2192818]
+- kvm-vfio-pci-Call-vfio_prepare_kvm_msi_virq_batch-in-MSI.patch [bz#2192818]
+- kvm-vfio-migration-Reset-bytes_transferred-properly.patch [bz#2192818]
+- kvm-vfio-migration-Make-VFIO-migration-non-experimental.patch [bz#2192818]
+- kvm-vfio-pci-Fix-a-segfault-in-vfio_realize.patch [bz#2192818]
+- kvm-vfio-pci-Free-leaked-timer-in-vfio_realize-error-pat.patch [bz#2192818]
+- kvm-hw-vfio-pci-quirks-Sanitize-capability-pointer.patch [bz#2192818]
+- kvm-vfio-pci-Disable-INTx-in-vfio_realize-error-path.patch [bz#2192818]
+- kvm-vfio-migration-Change-vIOMMU-blocker-from-global-to-.patch [bz#2192818]
+- kvm-vfio-migration-Free-resources-when-vfio_migration_re.patch [bz#2192818]
+- kvm-vfio-migration-Remove-print-of-Migration-disabled.patch [bz#2192818]
+- kvm-vfio-migration-Return-bool-type-for-vfio_migration_r.patch [bz#2192818]
+- kvm-vfio-Fix-null-pointer-dereference-bug-in-vfio_bars_f.patch [bz#2192818]
+- kvm-pc-bios-s390-ccw-Makefile-Use-z-noexecstack-to-silen.patch [bz#2220866]
+- kvm-pc-bios-s390-ccw-Fix-indentation-in-start.S.patch [bz#2220866]
+- kvm-pc-bios-s390-ccw-Provide-space-for-initial-stack-fra.patch [bz#2220866]
+- kvm-pc-bios-s390-ccw-Don-t-use-__bss_start-with-the-larl.patch [bz#2220866]
+- kvm-ui-Fix-pixel-colour-channel-order-for-PNG-screenshot.patch [bz#2222579]
+- kvm-block-blkio-fix-module_block.py-parsing.patch [bz#2213317]
+- kvm-Fix-virtio-blk-vhost-vdpa-typo-in-spec-file.patch [bz#2213317]
+- Resolves: bz#2211609
+  (With virtio-iommu and vfio-pci, qemu reports "warning: virtio-iommu page mask 0xfffffffffffff000 does not match 0x40201000")
+- Resolves: bz#2211634
+  ([aarch64] With virtio-iommu and vfio-pci, qemu coredump when host using kernel-64k package)
+- Resolves: bz#2192818
+  ([VFIO LM] Live migration)
+- Resolves: bz#2220866
+  (Misaligned symbol for s390-ccw image during qemu-kvm build)
+- Resolves: bz#2222579
+  (PNG screendump doesn't save screen correctly)
+- Resolves: bz#2213317
+  (Enable libblkio-based block drivers in QEMU)
+
 * Mon Jul 10 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-7
 - kvm-numa-Validate-cluster-and-NUMA-node-boundary-if-requ.patch [bz#2171363]
 - kvm-hw-arm-Validate-cluster-and-NUMA-node-boundary.patch [bz#2171363]
