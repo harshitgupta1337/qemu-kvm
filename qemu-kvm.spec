@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.0.0
-Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 9%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -446,6 +446,28 @@ Patch144: kvm-pc-bios-s390-ccw-Don-t-use-__bss_start-with-the-larl.patch
 Patch145: kvm-ui-Fix-pixel-colour-channel-order-for-PNG-screenshot.patch
 # For bz#2213317 - Enable libblkio-based block drivers in QEMU
 Patch146: kvm-block-blkio-fix-module_block.py-parsing.patch
+# For bz#2176702 - [RHEL9][virtio-scsi] scsi-hd cannot hot-plug successfully after hot-plug it repeatly
+Patch147: kvm-scsi-fetch-unit-attention-when-creating-the-request.patch
+# For bz#2176702 - [RHEL9][virtio-scsi] scsi-hd cannot hot-plug successfully after hot-plug it repeatly
+Patch148: kvm-scsi-cleanup-scsi_clear_unit_attention.patch
+# For bz#2176702 - [RHEL9][virtio-scsi] scsi-hd cannot hot-plug successfully after hot-plug it repeatly
+Patch149: kvm-scsi-clear-unit-attention-only-for-REPORT-LUNS-comma.patch
+# For RHEL-794 - Backport s390x fixes from QEMU 8.1
+Patch150: kvm-s390x-ap-Wire-up-the-device-request-notifier-interfa.patch
+# For bz#2196295 - Multifd flushes its channels 10 times per second
+Patch151: kvm-multifd-Create-property-multifd-flush-after-each-sec.patch
+# For bz#2196295 - Multifd flushes its channels 10 times per second
+Patch152: kvm-multifd-Protect-multifd_send_sync_main-calls.patch
+# For bz#2196295 - Multifd flushes its channels 10 times per second
+Patch153: kvm-multifd-Only-flush-once-each-full-round-of-memory.patch
+# For RHEL-582 - [passt][rhel 9.3] qemu core dump occurs when guest is shutdown after hotunplug/hotplug a passt interface
+Patch154: kvm-net-socket-prepare-to-cleanup-net_init_socket.patch
+# For RHEL-582 - [passt][rhel 9.3] qemu core dump occurs when guest is shutdown after hotunplug/hotplug a passt interface
+Patch155: kvm-net-socket-move-fd-type-checking-to-its-own-function.patch
+# For RHEL-582 - [passt][rhel 9.3] qemu core dump occurs when guest is shutdown after hotunplug/hotplug a passt interface
+Patch156: kvm-net-socket-remove-net_init_socket.patch
+# For bz#2215819 - Migration test failed while guest with PCIe devices
+Patch157: kvm-pcie-Add-hotplug-detect-state-register-to-cmask.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -757,6 +779,19 @@ Obsoletes: %{name}-hw-usbredir <= %{epoch}:%{version}
 This package provides usbredir support.
 %endif
 
+%package  ui-dbus
+Summary: QEMU D-Bus UI driver
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+%description ui-dbus
+This package provides the additional D-Bus UI for QEMU.
+
+%package  audio-dbus
+Summary: QEMU D-Bus audio driver
+Requires: %{name}-common%{?_isa} = %{epoch}:%{version}-%{release}
+Requires: %{name}-ui-dbus = %{epoch}:%{version}-%{release}
+%description audio-dbus
+This package provides the additional D-Bus audio driver for QEMU.
+
 %prep
 %setup -q -n qemu-%{version}%{?rcstr}
 %autopatch -p1
@@ -959,11 +994,13 @@ run_configure \
   --enable-capstone \
   --enable-coroutine-pool \
   --enable-curl \
+  --enable-dbus-display \
   --enable-debug-info \
   --enable-docs \
 %if %{have_fdt}
   --enable-fdt=system \
 %endif
+  --enable-gio \
   --enable-gnutls \
   --enable-guest-agent \
   --enable-iconv \
@@ -1482,10 +1519,42 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
     %{_libdir}/%{name}/hw-usb-redirect.so
 %endif
 
+%files audio-dbus
+%{_libdir}/%{name}/audio-dbus.so
+
+%files ui-dbus
+%{_libdir}/%{name}/ui-dbus.so
+
 # endif !tools_only
 %endif
 
 %changelog
+* Mon Jul 24 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-9
+- kvm-scsi-fetch-unit-attention-when-creating-the-request.patch [bz#2176702]
+- kvm-scsi-cleanup-scsi_clear_unit_attention.patch [bz#2176702]
+- kvm-scsi-clear-unit-attention-only-for-REPORT-LUNS-comma.patch [bz#2176702]
+- kvm-s390x-ap-Wire-up-the-device-request-notifier-interfa.patch [RHEL-794]
+- kvm-multifd-Create-property-multifd-flush-after-each-sec.patch [bz#2196295]
+- kvm-multifd-Protect-multifd_send_sync_main-calls.patch [bz#2196295]
+- kvm-multifd-Only-flush-once-each-full-round-of-memory.patch [bz#2196295]
+- kvm-net-socket-prepare-to-cleanup-net_init_socket.patch [RHEL-582]
+- kvm-net-socket-move-fd-type-checking-to-its-own-function.patch [RHEL-582]
+- kvm-net-socket-remove-net_init_socket.patch [RHEL-582]
+- kvm-pcie-Add-hotplug-detect-state-register-to-cmask.patch [bz#2215819]
+- kvm-spec-Build-DBUS-display.patch [bz#2207940]
+- Resolves: bz#2176702
+  ([RHEL9][virtio-scsi] scsi-hd cannot hot-plug successfully after hot-plug it repeatly)
+- Resolves: RHEL-794
+  (Backport s390x fixes from QEMU 8.1)
+- Resolves: bz#2196295
+  (Multifd flushes its channels 10 times per second)
+- Resolves: RHEL-582
+  ([passt][rhel 9.3] qemu core dump occurs when guest is shutdown after hotunplug/hotplug a passt interface)
+- Resolves: bz#2215819
+  (Migration test failed while guest with PCIe devices)
+- Resolves: bz#2207940
+  ([RFE] Enable qemu-ui-dbus subpackage)
+
 * Mon Jul 17 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-8
 - kvm-virtio-iommu-Fix-64kB-host-page-size-VFIO-device-ass.patch [bz#2211609 bz#2211634]
 - kvm-virtio-iommu-Rework-the-traces-in-virtio_iommu_set_p.patch [bz#2211609 bz#2211634]
