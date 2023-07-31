@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.0.0
-Release: 9%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 10%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -468,6 +468,24 @@ Patch155: kvm-net-socket-move-fd-type-checking-to-its-own-function.patch
 Patch156: kvm-net-socket-remove-net_init_socket.patch
 # For bz#2215819 - Migration test failed while guest with PCIe devices
 Patch157: kvm-pcie-Add-hotplug-detect-state-register-to-cmask.patch
+# For bz#2174676 - Guest hit EXT4-fs error on host 4K disk  when repeatedly hot-plug/unplug running IO disk [RHEL9]
+Patch158: kvm-util-iov-Make-qiov_slice-public.patch
+# For bz#2174676 - Guest hit EXT4-fs error on host 4K disk  when repeatedly hot-plug/unplug running IO disk [RHEL9]
+Patch159: kvm-block-Collapse-padded-I-O-vecs-exceeding-IOV_MAX.patch
+# For bz#2174676 - Guest hit EXT4-fs error on host 4K disk  when repeatedly hot-plug/unplug running IO disk [RHEL9]
+Patch160: kvm-util-iov-Remove-qemu_iovec_init_extended.patch
+# For bz#2174676 - Guest hit EXT4-fs error on host 4K disk  when repeatedly hot-plug/unplug running IO disk [RHEL9]
+Patch161: kvm-iotests-iov-padding-New-test.patch
+# For bz#2174676 - Guest hit EXT4-fs error on host 4K disk  when repeatedly hot-plug/unplug running IO disk [RHEL9]
+Patch162: kvm-block-Fix-pad_request-s-request-restriction.patch
+# For RHEL-573 - [mlx vhost_vdpa][rhel 9.3]live migration fail with "net vdpa cannot migrate with CVQ feature"
+Patch163: kvm-vdpa-do-not-block-migration-if-device-has-cvq-and-x-.patch
+# For bz#2040509 - [RFE]:Add support for changing "tx_queue_size" to a setable value
+Patch164: kvm-virtio-net-correctly-report-maximum-tx_queue_size-va.patch
+# For bz#2223691 - [machine type 9.2]Failed to migrate VM from RHEL 9.3 to RHEL 9.2
+Patch165: kvm-hw-pci-Disable-PCI_ERR_UNCOR_MASK-reg-for-machine-ty.patch
+# For bz#2141965 - [TPM][vhost-vdpa][rhel9.2]Boot a guest with "vhost-vdpa + TPM emulator", qemu output: qemu-kvm: vhost_vdpa_listener_region_add received unaligned region
+Patch166: kvm-vhost-vdpa-mute-unaligned-memory-error-report.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1529,6 +1547,27 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Jul 31 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-10
+- kvm-util-iov-Make-qiov_slice-public.patch [bz#2174676]
+- kvm-block-Collapse-padded-I-O-vecs-exceeding-IOV_MAX.patch [bz#2174676]
+- kvm-util-iov-Remove-qemu_iovec_init_extended.patch [bz#2174676]
+- kvm-iotests-iov-padding-New-test.patch [bz#2174676]
+- kvm-block-Fix-pad_request-s-request-restriction.patch [bz#2174676]
+- kvm-vdpa-do-not-block-migration-if-device-has-cvq-and-x-.patch [RHEL-573]
+- kvm-virtio-net-correctly-report-maximum-tx_queue_size-va.patch [bz#2040509]
+- kvm-hw-pci-Disable-PCI_ERR_UNCOR_MASK-reg-for-machine-ty.patch [bz#2223691]
+- kvm-vhost-vdpa-mute-unaligned-memory-error-report.patch [bz#2141965]
+- Resolves: bz#2174676
+  (Guest hit EXT4-fs error on host 4K disk  when repeatedly hot-plug/unplug running IO disk [RHEL9])
+- Resolves: RHEL-573
+  ([mlx vhost_vdpa][rhel 9.3]live migration fail with "net vdpa cannot migrate with CVQ feature")
+- Resolves: bz#2040509
+  ([RFE]:Add support for changing "tx_queue_size" to a setable value)
+- Resolves: bz#2223691
+  ([machine type 9.2]Failed to migrate VM from RHEL 9.3 to RHEL 9.2)
+- Resolves: bz#2141965
+  ([TPM][vhost-vdpa][rhel9.2]Boot a guest with "vhost-vdpa + TPM emulator", qemu output: qemu-kvm: vhost_vdpa_listener_region_add received unaligned region)
+
 * Mon Jul 24 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-9
 - kvm-scsi-fetch-unit-attention-when-creating-the-request.patch [bz#2176702]
 - kvm-scsi-cleanup-scsi_clear_unit_attention.patch [bz#2176702]
