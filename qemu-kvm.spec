@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.0.0
-Release: 10%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 11%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -486,6 +486,38 @@ Patch164: kvm-virtio-net-correctly-report-maximum-tx_queue_size-va.patch
 Patch165: kvm-hw-pci-Disable-PCI_ERR_UNCOR_MASK-reg-for-machine-ty.patch
 # For bz#2141965 - [TPM][vhost-vdpa][rhel9.2]Boot a guest with "vhost-vdpa + TPM emulator", qemu output: qemu-kvm: vhost_vdpa_listener_region_add received unaligned region
 Patch166: kvm-vhost-vdpa-mute-unaligned-memory-error-report.patch
+# For bz#2225354 - [vdpa-blk] The new driver virtio-blk-vhost-user not work in VM booting
+# For bz#2225439 - [vdpa-blk] read-only=on option not work on driver virtio-blk-vhost-vdpa
+Patch167: kvm-block-blkio-enable-the-completion-eventfd.patch
+# For bz#2225354 - [vdpa-blk] The new driver virtio-blk-vhost-user not work in VM booting
+# For bz#2225439 - [vdpa-blk] read-only=on option not work on driver virtio-blk-vhost-vdpa
+Patch168: kvm-block-blkio-do-not-use-open-flags-in-qemu_open.patch
+# For bz#2225354 - [vdpa-blk] The new driver virtio-blk-vhost-user not work in VM booting
+# For bz#2225439 - [vdpa-blk] read-only=on option not work on driver virtio-blk-vhost-vdpa
+Patch169: kvm-block-blkio-move-blkio_connect-in-the-drivers-functi.patch
+# For bz#2225354 - [vdpa-blk] The new driver virtio-blk-vhost-user not work in VM booting
+# For bz#2225439 - [vdpa-blk] read-only=on option not work on driver virtio-blk-vhost-vdpa
+Patch170: kvm-block-blkio-retry-blkio_connect-if-it-fails-using-fd.patch
+# For bz#2225354 - [vdpa-blk] The new driver virtio-blk-vhost-user not work in VM booting
+# For bz#2225439 - [vdpa-blk] read-only=on option not work on driver virtio-blk-vhost-vdpa
+Patch171: kvm-block-blkio-fall-back-on-using-path-when-fd-setting-.patch
+# For bz#2225354 - [vdpa-blk] The new driver virtio-blk-vhost-user not work in VM booting
+# For bz#2225439 - [vdpa-blk] read-only=on option not work on driver virtio-blk-vhost-vdpa
+Patch172: kvm-block-blkio-use-blkio_set_int-fd-to-check-fd-support.patch
+# For bz#2229133 - Backport some virtio-iommu and smmu fixes
+Patch173: kvm-hw-virtio-iommu-Fix-potential-OOB-access-in-virtio_i.patch
+# For bz#2229133 - Backport some virtio-iommu and smmu fixes
+Patch174: kvm-virtio-iommu-Standardize-granule-extraction-and-form.patch
+# For bz#2229133 - Backport some virtio-iommu and smmu fixes
+Patch175: kvm-hw-arm-smmu-Handle-big-endian-hosts-correctly.patch
+# For bz#2214839 - [AMDSERVER 9.3 Bug] Qemu SEV reduced-phys-bits fixes
+Patch176: kvm-qapi-i386-sev-Change-the-reduced-phys-bits-value-fro.patch
+# For bz#2214839 - [AMDSERVER 9.3 Bug] Qemu SEV reduced-phys-bits fixes
+Patch177: kvm-qemu-options.hx-Update-the-reduced-phys-bits-documen.patch
+# For bz#2214839 - [AMDSERVER 9.3 Bug] Qemu SEV reduced-phys-bits fixes
+Patch178: kvm-i386-sev-Update-checks-and-information-related-to-re.patch
+# For bz#2214839 - [AMDSERVER 9.3 Bug] Qemu SEV reduced-phys-bits fixes
+Patch179: kvm-i386-cpu-Update-how-the-EBX-register-of-CPUID-0x8000.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1211,7 +1243,6 @@ rm %{buildroot}%{_bindir}/qemu-system-%{kvm_target}
 rm %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}.stp
 rm %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}-simpletrace.stp
 rm %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-%{kvm_target}-log.stp
-rm %{buildroot}%{_bindir}/elf2dmp
 
 # Install simpletrace
 install -m 0755 scripts/simpletrace.py %{buildroot}%{_datadir}/%{name}/simpletrace.py
@@ -1423,6 +1454,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_bindir}/qemu-keymap
 %{_bindir}/qemu-edid
 %{_bindir}/qemu-trace-stap
+%{_bindir}/elf2dmp
 %{_datadir}/%{name}/simpletrace.py*
 %{_datadir}/%{name}/tracetool/*.py*
 %{_datadir}/%{name}/tracetool/backend/*.py*
@@ -1547,6 +1579,32 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Aug 07 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-11
+- kvm-block-blkio-enable-the-completion-eventfd.patch [bz#2225354 bz#2225439]
+- kvm-block-blkio-do-not-use-open-flags-in-qemu_open.patch [bz#2225354 bz#2225439]
+- kvm-block-blkio-move-blkio_connect-in-the-drivers-functi.patch [bz#2225354 bz#2225439]
+- kvm-block-blkio-retry-blkio_connect-if-it-fails-using-fd.patch [bz#2225354 bz#2225439]
+- kvm-block-blkio-fall-back-on-using-path-when-fd-setting-.patch [bz#2225354 bz#2225439]
+- kvm-block-blkio-use-blkio_set_int-fd-to-check-fd-support.patch [bz#2225354 bz#2225439]
+- kvm-hw-virtio-iommu-Fix-potential-OOB-access-in-virtio_i.patch [bz#2229133]
+- kvm-virtio-iommu-Standardize-granule-extraction-and-form.patch [bz#2229133]
+- kvm-hw-arm-smmu-Handle-big-endian-hosts-correctly.patch [bz#2229133]
+- kvm-qapi-i386-sev-Change-the-reduced-phys-bits-value-fro.patch [bz#2214839]
+- kvm-qemu-options.hx-Update-the-reduced-phys-bits-documen.patch [bz#2214839]
+- kvm-i386-sev-Update-checks-and-information-related-to-re.patch [bz#2214839]
+- kvm-i386-cpu-Update-how-the-EBX-register-of-CPUID-0x8000.patch [bz#2214839]
+- kvm-Provide-elf2dmp-binary-in-qemu-tools.patch [bz#2165917]
+- Resolves: bz#2225354
+  ([vdpa-blk] The new driver virtio-blk-vhost-user not work in VM booting)
+- Resolves: bz#2225439
+  ([vdpa-blk] read-only=on option not work on driver virtio-blk-vhost-vdpa)
+- Resolves: bz#2229133
+  (Backport some virtio-iommu and smmu fixes)
+- Resolves: bz#2214839
+  ([AMDSERVER 9.3 Bug] Qemu SEV reduced-phys-bits fixes)
+- Resolves: bz#2165917
+  (qemu-kvm: contrib/elf2dmp: Windows Server 2022 support)
+
 * Mon Jul 31 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-10
 - kvm-util-iov-Make-qiov_slice-public.patch [bz#2174676]
 - kvm-block-Collapse-padded-I-O-vecs-exceeding-IOV_MAX.patch [bz#2174676]
