@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.0.0
-Release: 11%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 12%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -518,6 +518,20 @@ Patch177: kvm-qemu-options.hx-Update-the-reduced-phys-bits-documen.patch
 Patch178: kvm-i386-sev-Update-checks-and-information-related-to-re.patch
 # For bz#2214839 - [AMDSERVER 9.3 Bug] Qemu SEV reduced-phys-bits fixes
 Patch179: kvm-i386-cpu-Update-how-the-EBX-register-of-CPUID-0x8000.patch
+# For bz#2094913 - Add EPYC-Genoa CPU model in qemu
+Patch180: kvm-target-i386-allow-versioned-CPUs-to-specify-new-cach.patch
+# For bz#2094913 - Add EPYC-Genoa CPU model in qemu
+Patch181: kvm-target-i386-Add-new-EPYC-CPU-versions-with-updated-c.patch
+# For bz#2094913 - Add EPYC-Genoa CPU model in qemu
+Patch182: kvm-target-i386-Add-a-couple-of-feature-bits-in-8000_000.patch
+# For bz#2094913 - Add EPYC-Genoa CPU model in qemu
+Patch183: kvm-target-i386-Add-feature-bits-for-CPUID_Fn80000021_EA.patch
+# For bz#2094913 - Add EPYC-Genoa CPU model in qemu
+Patch184: kvm-target-i386-Add-missing-feature-bits-in-EPYC-Milan-m.patch
+# For bz#2094913 - Add EPYC-Genoa CPU model in qemu
+Patch185: kvm-target-i386-Add-VNMI-and-automatic-IBRS-feature-bits.patch
+# For bz#2094913 - Add EPYC-Genoa CPU model in qemu
+Patch186: kvm-target-i386-Add-EPYC-Genoa-model-to-support-Zen-4-pr.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1579,6 +1593,17 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Aug 21 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-12
+- kvm-target-i386-allow-versioned-CPUs-to-specify-new-cach.patch [bz#2094913]
+- kvm-target-i386-Add-new-EPYC-CPU-versions-with-updated-c.patch [bz#2094913]
+- kvm-target-i386-Add-a-couple-of-feature-bits-in-8000_000.patch [bz#2094913]
+- kvm-target-i386-Add-feature-bits-for-CPUID_Fn80000021_EA.patch [bz#2094913]
+- kvm-target-i386-Add-missing-feature-bits-in-EPYC-Milan-m.patch [bz#2094913]
+- kvm-target-i386-Add-VNMI-and-automatic-IBRS-feature-bits.patch [bz#2094913]
+- kvm-target-i386-Add-EPYC-Genoa-model-to-support-Zen-4-pr.patch [bz#2094913]
+- Resolves: bz#2094913
+  (Add EPYC-Genoa CPU model in qemu)
+
 * Mon Aug 07 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.0.0-11
 - kvm-block-blkio-enable-the-completion-eventfd.patch [bz#2225354 bz#2225439]
 - kvm-block-blkio-do-not-use-open-flags-in-qemu_open.patch [bz#2225354 bz#2225439]
