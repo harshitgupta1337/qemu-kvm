@@ -1,0 +1,61 @@
+From 719e2ac147c64d3caa1b86fb94a4182e9ff43f1b Mon Sep 17 00:00:00 2001
+From: Thomas Huth <thuth@redhat.com>
+Date: Tue, 22 Aug 2023 14:36:29 +0200
+Subject: Fix x86 machine type compatibility for qemu-kvm 8.1.0
+
+Jira: https://issues.redhat.com/browse/RHEL-874
+Upstream Status: RHEL-only
+
+Upstream changes pcmc->default_smbios_ep_type in the -8.0 machine
+type, so we should reflect this change in our -rhel9.2.0 machine
+types (and older).
+
+While we're at it, add a comment that the pcmc->enforce_amd_1tb_hole
+setting comes from pc_i440fx_7_0_machine_options() in pc_piix.c.
+
+Signed-off-by: Thomas Huth <thuth@redhat.com>
+---
+ hw/i386/pc_piix.c | 6 +++++-
+ hw/i386/pc_q35.c  | 5 ++++-
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/hw/i386/pc_piix.c b/hw/i386/pc_piix.c
+index 014c017344..10a8d7576d 100644
+--- a/hw/i386/pc_piix.c
++++ b/hw/i386/pc_piix.c
+@@ -1014,9 +1014,13 @@ static void pc_machine_rhel760_options(MachineClass *m)
+     pcmc->kvmclock_create_always = false;
+     /* From pc_i440fx_5_1_machine_options() */
+     pcmc->pci_root_uid = 1;
++    /* From pc_i440fx_7_0_machine_options() */
+     pcmc->enforce_amd_1tb_hole = false;
++    /* From pc_i440fx_8_0_machine_options() */
++    pcmc->default_smbios_ep_type = SMBIOS_ENTRY_POINT_TYPE_32;
++
+     compat_props_add(m->compat_props, hw_compat_rhel_9_3,
+-		     hw_compat_rhel_9_3_len);
++                     hw_compat_rhel_9_3_len);
+     compat_props_add(m->compat_props, pc_rhel_9_3_compat,
+                      pc_rhel_9_3_compat_len);
+     compat_props_add(m->compat_props, hw_compat_rhel_9_2,
+diff --git a/hw/i386/pc_q35.c b/hw/i386/pc_q35.c
+index 0b8adb0adb..a205226381 100644
+--- a/hw/i386/pc_q35.c
++++ b/hw/i386/pc_q35.c
+@@ -722,9 +722,12 @@ static void pc_q35_machine_rhel920_options(MachineClass *m)
+     pcmc->smbios_stream_product = "RHEL";
+     pcmc->smbios_stream_version = "9.2.0";
+ 
++    /* From pc_q35_8_0_machine_options() */
++    pcmc->default_smbios_ep_type = SMBIOS_ENTRY_POINT_TYPE_32;
++
+     compat_props_add(m->compat_props, hw_compat_rhel_9_3,
+                      hw_compat_rhel_9_3_len);
+-     compat_props_add(m->compat_props, pc_rhel_9_3_compat,
++    compat_props_add(m->compat_props, pc_rhel_9_3_compat,
+                      pc_rhel_9_3_compat_len);
+     compat_props_add(m->compat_props, hw_compat_rhel_9_2,
+                      hw_compat_rhel_9_2_len);
+-- 
+2.39.3
+

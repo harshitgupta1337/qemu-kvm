@@ -1,4 +1,4 @@
-From 738db8353055eb6fd902513949c6659af8b401d0 Mon Sep 17 00:00:00 2001
+From 301a52cd6a94e98e69b8beac2810e76f1cc47073 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 2 Sep 2020 09:39:41 +0200
 Subject: Enable make check
@@ -24,40 +24,45 @@ Rebase changes (7.0.0):
 - Remove unnecessary changes in iotest 051
 - Remove changes in bios-tables-test.c and prom-env-test.c qtests
 
-Rebase changes (7.1.0 rc0):
+Rebase changes (7.1.0):
 - Disable bcm2835-dma-test (added upstream)
 
-Rebase changes (8.0.0-rc1):
+Rebase changes (8.0.0):
 - Removed chunks for disabling bios-table-test (protected upstream)
-
-Rebase change (8.0.0-rc2):
 - Disable new qemu-iotests execution
 - Revert change in tco qtest (blocking test run)
+
+Rebase changes (8.1.0):
+- Do not disable device-plug-test for s390x
 
 Merged patches (6.1.0):
 - 2f129df7d3 redhat: Enable the 'test-block-iothread' test again
 
-Merged patches (7.1.0 rc0):
+Merged patches (7.1.0):
 - 64d736640e RHEL-only: tests/avocado: Switch aarch64 tests from a53 to a57
+
+Merged patches (8.1.0):
+- f468163234 iotests: Use alternative CPU type that is not deprecated in RHEL
 ---
  .distro/qemu-kvm.spec.template      |  4 ++--
  tests/avocado/replay_kernel.py      |  2 +-
  tests/avocado/reverse_debugging.py  |  2 +-
  tests/avocado/tcg_plugins.py        |  6 ++---
  tests/qemu-iotests/meson.build      | 34 ++++++++++++++---------------
+ tests/qemu-iotests/testenv.py       |  3 +++
  tests/qtest/fuzz-e1000e-test.c      |  2 +-
  tests/qtest/fuzz-virtio-scsi-test.c |  2 +-
  tests/qtest/intel-hda-test.c        |  2 +-
  tests/qtest/libqos/meson.build      |  2 +-
  tests/qtest/lpc-ich9-test.c         |  2 +-
- tests/qtest/meson.build             |  2 --
+ tests/qtest/meson.build             |  1 -
  tests/qtest/tco-test.c              |  2 +-
  tests/qtest/usb-hcd-xhci-test.c     |  4 ++++
  tests/qtest/virtio-net-failover.c   |  1 +
- 14 files changed, 35 insertions(+), 32 deletions(-)
+ 15 files changed, 38 insertions(+), 31 deletions(-)
 
 diff --git a/tests/avocado/replay_kernel.py b/tests/avocado/replay_kernel.py
-index f13456e1ec..2fee270a42 100644
+index 79c607b0e7..c8827624f8 100644
 --- a/tests/avocado/replay_kernel.py
 +++ b/tests/avocado/replay_kernel.py
 @@ -147,7 +147,7 @@ def test_aarch64_virt(self):
@@ -114,7 +119,7 @@ index 642d2e49e3..93b3afd823 100644
          kernel_path = self._grab_aarch64_kernel()
          kernel_command_line = (self.KERNEL_COMMON_COMMAND_LINE +
 diff --git a/tests/qemu-iotests/meson.build b/tests/qemu-iotests/meson.build
-index 9735071a29..32002335f4 100644
+index 44761e1e4d..f4b71900f3 100644
 --- a/tests/qemu-iotests/meson.build
 +++ b/tests/qemu-iotests/meson.build
 @@ -51,21 +51,21 @@ foreach format, speed: qemu_iotests_formats
@@ -156,6 +161,20 @@ index 9735071a29..32002335f4 100644
 +#           suite: suites)
 +#  endforeach
  endforeach
+diff --git a/tests/qemu-iotests/testenv.py b/tests/qemu-iotests/testenv.py
+index 9a37ad9152..963514aab3 100644
+--- a/tests/qemu-iotests/testenv.py
++++ b/tests/qemu-iotests/testenv.py
+@@ -244,6 +244,9 @@ def __init__(self, source_dir: str, build_dir: str,
+             if self.qemu_prog.endswith(f'qemu-system-{suffix}'):
+                 self.qemu_options += f' -machine {machine}'
+ 
++        if self.qemu_prog.endswith('qemu-system-x86_64'):
++            self.qemu_options += ' -cpu Nehalem'
++
+         # QEMU_DEFAULT_MACHINE
+         self.qemu_default_machine = get_default_machine(self.qemu_prog)
+ 
 diff --git a/tests/qtest/fuzz-e1000e-test.c b/tests/qtest/fuzz-e1000e-test.c
 index 5052883fb6..b5286f4b12 100644
 --- a/tests/qtest/fuzz-e1000e-test.c
@@ -196,7 +215,7 @@ index d4a8db6fd6..1a796ec15a 100644
  
      qtest_outl(s, 0xcf8, 0x80000804);
 diff --git a/tests/qtest/libqos/meson.build b/tests/qtest/libqos/meson.build
-index cc209a8de5..42a7c529c9 100644
+index 90aae42a22..9bc4e41af0 100644
 --- a/tests/qtest/libqos/meson.build
 +++ b/tests/qtest/libqos/meson.build
 @@ -44,7 +44,7 @@ libqos_srcs = files(
@@ -206,8 +225,8 @@ index cc209a8de5..42a7c529c9 100644
 -        'virtio-iommu.c',
 +#        'virtio-iommu.c',
          'virtio-gpio.c',
+         'virtio-scmi.c',
          'generic-pcihost.c',
- 
 diff --git a/tests/qtest/lpc-ich9-test.c b/tests/qtest/lpc-ich9-test.c
 index 8ac95b89f7..cd2102555c 100644
 --- a/tests/qtest/lpc-ich9-test.c
@@ -222,10 +241,10 @@ index 8ac95b89f7..cd2102555c 100644
  
      qtest_outl(s, 0xcf8, 0x8000f840); /* PMBASE */
 diff --git a/tests/qtest/meson.build b/tests/qtest/meson.build
-index 85ea4e8d99..893afc8eeb 100644
+index b071d400b3..1c81155565 100644
 --- a/tests/qtest/meson.build
 +++ b/tests/qtest/meson.build
-@@ -94,7 +94,6 @@ qtests_i386 = \
+@@ -97,7 +97,6 @@ qtests_i386 = \
     'drive_del-test',
     'tco-test',
     'cpu-plug-test',
@@ -233,14 +252,6 @@ index 85ea4e8d99..893afc8eeb 100644
     'vmgenid-test',
     'migration-test',
     'test-x86-cpuid-compat',
-@@ -223,7 +222,6 @@ qtests_s390x = \
-   (config_host.has_key('CONFIG_POSIX') ? ['test-filter-redirector'] : []) +                     \
-   ['boot-serial-test',
-    'drive_del-test',
--   'device-plug-test',
-    'virtio-ccw-test',
-    'cpu-plug-test',
-    'migration-test']
 diff --git a/tests/qtest/tco-test.c b/tests/qtest/tco-test.c
 index 0547d41173..3756ce82d8 100644
 --- a/tests/qtest/tco-test.c
@@ -297,5 +308,5 @@ index 4a809590bf..1bf3fa641c 100644
      "-device pcie-root-port,id=root1,addr=0x2,bus=pcie.0,chassis=2 "
  
 -- 
-2.39.1
+2.39.3
 
