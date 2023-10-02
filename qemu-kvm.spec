@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.1.0
-Release: 1%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 2%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -193,6 +193,8 @@ Patch0019: 0019-vdpa-move-vhost_vdpa_set_vring_ready-to-the-caller.patch
 Patch0020: 0020-vdpa-remove-net-cvq-migration-blocker.patch
 Patch0021: 0021-Add-machine-types-compat-bits.patch
 Patch0022: 0022-Fix-x86-machine-type-compatibility-for-qemu-kvm-8.1..patch
+# For RHEL-832 - qemu-kvm crashed when migrating guest with failover vf
+Patch23: kvm-virtio-Drop-out-of-coroutine-context-in-virtio_load.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1252,6 +1254,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Oct 02 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.1.0-2
+- kvm-virtio-Drop-out-of-coroutine-context-in-virtio_load.patch [RHEL-832]
+- Resolves: RHEL-832
+  (qemu-kvm crashed when migrating guest with failover vf)
+
 * Mon Sep 04 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.1.0-1
 - Rebase to QEMU 8.1 [RHEL-870]
 - Resolves: RHEL-870
