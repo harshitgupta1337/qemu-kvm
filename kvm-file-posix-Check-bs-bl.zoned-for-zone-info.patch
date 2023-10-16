@@ -1,0 +1,73 @@
+From 42dac3d063e0f44e92211a4fbdaf1f0d64843562 Mon Sep 17 00:00:00 2001
+From: Hanna Czenczek <hreitz@redhat.com>
+Date: Thu, 24 Aug 2023 17:53:41 +0200
+Subject: [PATCH 10/13] file-posix: Check bs->bl.zoned for zone info
+
+RH-Author: Hanna Czenczek <hreitz@redhat.com>
+RH-MergeRequest: 202: file-posix: Fix zone update in I/O error path
+RH-Jira: RHEL-7360
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [2/5] d853b88d6b71b6f4fe1bb70ae2e3b6108cbdb8dc (hreitz/qemu-kvm-c-9-s)
+
+Instead of checking bs->wps or bs->bl.zone_size for whether zone
+information is present, check bs->bl.zoned.  That is the flag that
+raw_refresh_zoned_limits() reliably sets to indicate zone support.  If
+it is set to something other than BLK_Z_NONE, other values and objects
+like bs->wps and bs->bl.zone_size must be non-null/zero and valid; if it
+is not, we cannot rely on their validity.
+
+Signed-off-by: Hanna Czenczek <hreitz@redhat.com>
+Message-Id: <20230824155345.109765-3-hreitz@redhat.com>
+Reviewed-by: Sam Li <faithilikerun@gmail.com>
+(cherry picked from commit 4b5d80f3d02096a9bb1f651f6b3401ba40877159)
+
+Downstream: Fixed typo in the last hunk ("bs->blk" changed to
+            "bs->blk").  This code is removed in the commit after the
+            next, still, should be fixed now that I noticed.
+
+Signed-off-by: Hanna Czenczek <hreitz@redhat.com>
+---
+ block/file-posix.c | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/block/file-posix.c b/block/file-posix.c
+index 2b88b9eefa..9f14850e24 100644
+--- a/block/file-posix.c
++++ b/block/file-posix.c
+@@ -2455,9 +2455,10 @@ static int coroutine_fn raw_co_prw(BlockDriverState *bs, uint64_t offset,
+     if (fd_open(bs) < 0)
+         return -EIO;
+ #if defined(CONFIG_BLKZONED)
+-    if ((type & (QEMU_AIO_WRITE | QEMU_AIO_ZONE_APPEND)) && bs->wps) {
++    if ((type & (QEMU_AIO_WRITE | QEMU_AIO_ZONE_APPEND)) &&
++        bs->bl.zoned != BLK_Z_NONE) {
+         qemu_co_mutex_lock(&bs->wps->colock);
+-        if (type & QEMU_AIO_ZONE_APPEND && bs->bl.zone_size) {
++        if (type & QEMU_AIO_ZONE_APPEND) {
+             int index = offset / bs->bl.zone_size;
+             offset = bs->wps->wp[index];
+         }
+@@ -2508,8 +2509,8 @@ out:
+ {
+     BlockZoneWps *wps = bs->wps;
+     if (ret == 0) {
+-        if ((type & (QEMU_AIO_WRITE | QEMU_AIO_ZONE_APPEND))
+-            && wps && bs->bl.zone_size) {
++        if ((type & (QEMU_AIO_WRITE | QEMU_AIO_ZONE_APPEND)) &&
++            bs->bl.zoned != BLK_Z_NONE) {
+             uint64_t *wp = &wps->wp[offset / bs->bl.zone_size];
+             if (!BDRV_ZT_IS_CONV(*wp)) {
+                 if (type & QEMU_AIO_ZONE_APPEND) {
+@@ -2529,7 +2530,8 @@ out:
+         }
+     }
+ 
+-    if ((type & (QEMU_AIO_WRITE | QEMU_AIO_ZONE_APPEND)) && wps) {
++    if ((type & (QEMU_AIO_WRITE | QEMU_AIO_ZONE_APPEND)) &&
++        bs->bl.zoned != BLK_Z_NONE) {
+         qemu_co_mutex_unlock(&wps->colock);
+     }
+ }
+-- 
+2.39.3
+
