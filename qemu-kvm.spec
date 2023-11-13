@@ -58,7 +58,7 @@
     %global tools_only 1
 %endif
 
-%ifnarch %{ix86} x86_64
+%ifnarch %{ix86} x86_64 aarch64
     %global have_usbredir 0
 %endif
 
@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.1.0
-Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -221,6 +221,12 @@ Patch34: kvm-file-posix-Fix-zone-update-in-I-O-error-path.patch
 Patch35: kvm-file-posix-Simplify-raw_co_prw-s-out-zone-code.patch
 # For RHEL-7360 - Qemu Core Dumped When Writing Larger Size Than The Size of A Data Disk
 Patch36: kvm-tests-file-io-error-New-test.patch
+# For RHEL-2828 - CVE-2023-42467 qemu-kvm: qemu: denial of service due to division by zero [rhel-9]
+Patch37: kvm-hw-scsi-scsi-disk-Disallow-block-sizes-smaller-than-.patch
+# For RHEL-1308 - [RFE] iGB: Add an emulated SR-IOV network card
+Patch38: kvm-Enable-igb-on-x86_64.patch
+# For RHEL-12991 - qemu-kvm fails to build on s390x with clang-17
+Patch39: kvm-host-include-generic-host-atomic128-Fix-compilation-.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1280,6 +1286,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Nov 13 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.1.0-4
+- kvm-hw-scsi-scsi-disk-Disallow-block-sizes-smaller-than-.patch [RHEL-2828]
+- kvm-Enable-igb-on-x86_64.patch [RHEL-1308]
+- kvm-host-include-generic-host-atomic128-Fix-compilation-.patch [RHEL-12991]
+- kvm-Enable-qemu-kvm-device-usb-redirec-for-aarch64.patch [RHEL-7561]
+- Resolves: RHEL-2828
+  (CVE-2023-42467 qemu-kvm: qemu: denial of service due to division by zero [rhel-9])
+- Resolves: RHEL-1308
+  ([RFE] iGB: Add an emulated SR-IOV network card)
+- Resolves: RHEL-12991
+  (qemu-kvm fails to build on s390x with clang-17)
+- Resolves: RHEL-7561
+  (Missing the rpm package qemu-kvm-device-usb-redirect on Arm64 platform)
+
 * Mon Oct 16 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.1.0-3
 - kvm-migration-Fix-race-that-dest-preempt-thread-close-to.patch [RHEL-11219]
 - kvm-migration-Fix-possible-race-when-setting-rp_state.er.patch [RHEL-11219]
