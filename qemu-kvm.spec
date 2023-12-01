@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.1.0
-Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -1286,6 +1286,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Thu Nov 30 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.1.0-5
+- kvm-Preparation-for-using-allow-rpcs-list-in-guest-agent.patch [RHEL-955]
+- kvm-Use-allow-rpcs-instead-of-block-rpcs-in-guest-agent..patch [RHEL-955]
+- Resolves: RHEL-955
+  (Use allow-rpcs instead of block-rpcs in guest-agent.service)
+
 * Mon Nov 13 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.1.0-4
 - kvm-hw-scsi-scsi-disk-Disallow-block-sizes-smaller-than-.patch [RHEL-2828]
 - kvm-Enable-igb-on-x86_64.patch [RHEL-1308]
