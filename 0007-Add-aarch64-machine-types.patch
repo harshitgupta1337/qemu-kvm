@@ -1,4 +1,4 @@
-From f68fb44c79615701195203b2548135579b1fd596 Mon Sep 17 00:00:00 2001
+From 23f614ab0b79ec1c6f65a7f0d6993bfdfc53fd23 Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 12:53:31 +0200
 Subject: Add aarch64 machine types
@@ -61,16 +61,19 @@ Merged patches (8.0.0):
 Merged patches (8.1.0):
 - bd5d81d286 Add RHEL 9.2.0 compat structure (arm part)
 - c07f666086 hw/arm/virt: Validate cluster and NUMA node boundary for RHEL machines
+
+Merged patches (8.2.0):
+- 4ee284aca9 Add machine types compat bits. (partial)
 ---
- hw/arm/virt.c         | 248 +++++++++++++++++++++++++++++++++++++++++-
+ hw/arm/virt.c         | 250 +++++++++++++++++++++++++++++++++++++++++-
  include/hw/arm/virt.h |   8 ++
- 2 files changed, 255 insertions(+), 1 deletion(-)
+ 2 files changed, 257 insertions(+), 1 deletion(-)
 
 diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index 33a36112da..3c36106eb5 100644
+index 62f0f7d4d6..c541efee5e 100644
 --- a/hw/arm/virt.c
 +++ b/hw/arm/virt.c
-@@ -81,6 +81,7 @@
+@@ -82,6 +82,7 @@
  #include "hw/char/pl011.h"
  #include "qemu/guest-random.h"
  
@@ -78,7 +81,7 @@ index 33a36112da..3c36106eb5 100644
  #define DEFINE_VIRT_MACHINE_LATEST(major, minor, latest) \
      static void virt_##major##_##minor##_class_init(ObjectClass *oc, \
                                                      void *data) \
-@@ -107,7 +108,48 @@
+@@ -108,7 +109,48 @@
      DEFINE_VIRT_MACHINE_LATEST(major, minor, true)
  #define DEFINE_VIRT_MACHINE(major, minor) \
      DEFINE_VIRT_MACHINE_LATEST(major, minor, false)
@@ -127,7 +130,7 @@ index 33a36112da..3c36106eb5 100644
  
  /* Number of external interrupt lines to configure the GIC with */
  #define NUM_IRQS 256
-@@ -2332,6 +2374,7 @@ static void machvirt_init(MachineState *machine)
+@@ -2341,6 +2383,7 @@ static void machvirt_init(MachineState *machine)
      qemu_add_machine_init_done_notifier(&vms->machine_done);
  }
  
@@ -135,7 +138,7 @@ index 33a36112da..3c36106eb5 100644
  static bool virt_get_secure(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -2359,6 +2402,7 @@ static void virt_set_virt(Object *obj, bool value, Error **errp)
+@@ -2368,6 +2411,7 @@ static void virt_set_virt(Object *obj, bool value, Error **errp)
  
      vms->virt = value;
  }
@@ -143,7 +146,7 @@ index 33a36112da..3c36106eb5 100644
  
  static bool virt_get_highmem(Object *obj, Error **errp)
  {
-@@ -2374,6 +2418,7 @@ static void virt_set_highmem(Object *obj, bool value, Error **errp)
+@@ -2383,6 +2427,7 @@ static void virt_set_highmem(Object *obj, bool value, Error **errp)
      vms->highmem = value;
  }
  
@@ -151,7 +154,7 @@ index 33a36112da..3c36106eb5 100644
  static bool virt_get_compact_highmem(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -2429,7 +2474,7 @@ static void virt_set_highmem_mmio(Object *obj, bool value, Error **errp)
+@@ -2438,7 +2483,7 @@ static void virt_set_highmem_mmio(Object *obj, bool value, Error **errp)
  
      vms->highmem_mmio = value;
  }
@@ -160,7 +163,7 @@ index 33a36112da..3c36106eb5 100644
  
  static bool virt_get_its(Object *obj, Error **errp)
  {
-@@ -2445,6 +2490,7 @@ static void virt_set_its(Object *obj, bool value, Error **errp)
+@@ -2454,6 +2499,7 @@ static void virt_set_its(Object *obj, bool value, Error **errp)
      vms->its = value;
  }
  
@@ -168,7 +171,7 @@ index 33a36112da..3c36106eb5 100644
  static bool virt_get_dtb_randomness(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -2458,6 +2504,7 @@ static void virt_set_dtb_randomness(Object *obj, bool value, Error **errp)
+@@ -2467,6 +2513,7 @@ static void virt_set_dtb_randomness(Object *obj, bool value, Error **errp)
  
      vms->dtb_randomness = value;
  }
@@ -176,7 +179,7 @@ index 33a36112da..3c36106eb5 100644
  
  static char *virt_get_oem_id(Object *obj, Error **errp)
  {
-@@ -2541,6 +2588,7 @@ static void virt_set_ras(Object *obj, bool value, Error **errp)
+@@ -2550,6 +2597,7 @@ static void virt_set_ras(Object *obj, bool value, Error **errp)
      vms->ras = value;
  }
  
@@ -184,7 +187,7 @@ index 33a36112da..3c36106eb5 100644
  static bool virt_get_mte(Object *obj, Error **errp)
  {
      VirtMachineState *vms = VIRT_MACHINE(obj);
-@@ -2554,6 +2602,7 @@ static void virt_set_mte(Object *obj, bool value, Error **errp)
+@@ -2563,6 +2611,7 @@ static void virt_set_mte(Object *obj, bool value, Error **errp)
  
      vms->mte = value;
  }
@@ -192,7 +195,7 @@ index 33a36112da..3c36106eb5 100644
  
  static char *virt_get_gic_version(Object *obj, Error **errp)
  {
-@@ -2925,6 +2974,7 @@ static int virt_kvm_type(MachineState *ms, const char *type_str)
+@@ -2935,6 +2984,7 @@ static int virt_kvm_type(MachineState *ms, const char *type_str)
      return fixed_ipa ? 0 : requested_pa_size;
  }
  
@@ -200,7 +203,7 @@ index 33a36112da..3c36106eb5 100644
  static void virt_machine_class_init(ObjectClass *oc, void *data)
  {
      MachineClass *mc = MACHINE_CLASS(oc);
-@@ -3388,3 +3438,199 @@ static void virt_machine_2_6_options(MachineClass *mc)
+@@ -3405,3 +3455,201 @@ static void virt_machine_2_6_options(MachineClass *mc)
      vmc->no_pmu = true;
  }
  DEFINE_VIRT_MACHINE(2, 6)
@@ -382,6 +385,8 @@ index 33a36112da..3c36106eb5 100644
 +static void rhel920_virt_options(MachineClass *mc)
 +{
 +    compat_props_add(mc->compat_props, arm_rhel_compat, arm_rhel_compat_len);
++    compat_props_add(mc->compat_props, hw_compat_rhel_9_4, hw_compat_rhel_9_4_len);
++    compat_props_add(mc->compat_props, hw_compat_rhel_9_3, hw_compat_rhel_9_3_len);
 +    compat_props_add(mc->compat_props, hw_compat_rhel_9_2, hw_compat_rhel_9_2_len);
 +}
 +DEFINE_RHEL_MACHINE_AS_LATEST(9, 2, 0)
@@ -401,10 +406,10 @@ index 33a36112da..3c36106eb5 100644
 +}
 +DEFINE_RHEL_MACHINE(9, 0, 0)
 diff --git a/include/hw/arm/virt.h b/include/hw/arm/virt.h
-index e1ddbea96b..81c2363a40 100644
+index f69239850e..7b8abe5645 100644
 --- a/include/hw/arm/virt.h
 +++ b/include/hw/arm/virt.h
-@@ -187,9 +187,17 @@ struct VirtMachineState {
+@@ -177,9 +177,17 @@ struct VirtMachineState {
  
  #define VIRT_ECAM_ID(high) (high ? VIRT_HIGH_PCIE_ECAM : VIRT_PCIE_ECAM)
  

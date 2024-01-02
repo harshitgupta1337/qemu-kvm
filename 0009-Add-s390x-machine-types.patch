@@ -1,4 +1,4 @@
-From a3b5d9d0d0b59de4956ad88e5e855fe1a56ae215 Mon Sep 17 00:00:00 2001
+From 3623043d4a923bf9f541d439c76e7874cf0fa81d Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Fri, 19 Oct 2018 13:47:32 +0200
 Subject: Add s390x machine types
@@ -38,41 +38,59 @@ Merged patches (8.0.0):
 
 Merged patches (8.1.0):
 - bd5d81d286 Add RHEL 9.2.0 compat structure (s390x part)
+
+Merged patches (8.2.0):
+- 4ee284aca9 Add machine types compat bits. (partial)
 ---
- hw/s390x/s390-virtio-ccw.c       | 144 +++++++++++++++++++++++++++++++
+ hw/s390x/s390-virtio-ccw.c       | 159 +++++++++++++++++++++++++++++++
  target/s390x/cpu_models.c        |  11 +++
  target/s390x/cpu_models.h        |   2 +
  target/s390x/cpu_models_sysemu.c |   2 +
- 4 files changed, 159 insertions(+)
+ 4 files changed, 174 insertions(+)
 
 diff --git a/hw/s390x/s390-virtio-ccw.c b/hw/s390x/s390-virtio-ccw.c
-index 4516d73ff5..2a5dbd2728 100644
+index 7262725d2e..984891b82a 100644
 --- a/hw/s390x/s390-virtio-ccw.c
 +++ b/hw/s390x/s390-virtio-ccw.c
-@@ -828,6 +828,7 @@ bool css_migration_enabled(void)
+@@ -855,6 +855,7 @@ bool css_migration_enabled(void)
      }                                                                         \
      type_init(ccw_machine_register_##suffix)
  
 +#if 0 /* Disabled for Red Hat Enterprise Linux */
- static void ccw_machine_8_1_instance_options(MachineState *machine)
+ static void ccw_machine_8_2_instance_options(MachineState *machine)
  {
  }
-@@ -1215,6 +1216,149 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
+@@ -1256,6 +1257,164 @@ static void ccw_machine_2_4_class_options(MachineClass *mc)
      compat_props_add(mc->compat_props, compat, G_N_ELEMENTS(compat));
  }
  DEFINE_CCW_MACHINE(2_4, "2.4", false);
 +#endif
 +
 +
++static void ccw_machine_rhel940_instance_options(MachineState *machine)
++{
++}
++
++static void ccw_machine_rhel940_class_options(MachineClass *mc)
++{
++}
++DEFINE_CCW_MACHINE(rhel940, "rhel9.4.0", true);
++
 +static void ccw_machine_rhel920_instance_options(MachineState *machine)
 +{
++    ccw_machine_rhel940_instance_options(machine);
 +}
 +
 +static void ccw_machine_rhel920_class_options(MachineClass *mc)
 +{
++    ccw_machine_rhel940_class_options(mc);
++    compat_props_add(mc->compat_props, hw_compat_rhel_9_4, hw_compat_rhel_9_4_len);
++    compat_props_add(mc->compat_props, hw_compat_rhel_9_3, hw_compat_rhel_9_3_len);
 +    compat_props_add(mc->compat_props, hw_compat_rhel_9_2, hw_compat_rhel_9_2_len);
++    mc->smp_props.drawers_supported = false;    /* from ccw_machine_8_1 */
++    mc->smp_props.books_supported = false;      /* from ccw_machine_8_1 */
 +}
-+DEFINE_CCW_MACHINE(rhel920, "rhel9.2.0", true);
++DEFINE_CCW_MACHINE(rhel920, "rhel9.2.0", false);
 +
 +static void ccw_machine_rhel900_instance_options(MachineState *machine)
 +{
@@ -208,7 +226,7 @@ index 4516d73ff5..2a5dbd2728 100644
  static void ccw_machine_register_types(void)
  {
 diff --git a/target/s390x/cpu_models.c b/target/s390x/cpu_models.c
-index 91ce896491..2479776573 100644
+index a63d990e4e..198b81f2c0 100644
 --- a/target/s390x/cpu_models.c
 +++ b/target/s390x/cpu_models.c
 @@ -46,6 +46,9 @@
@@ -221,7 +239,7 @@ index 91ce896491..2479776573 100644
  static S390CPUDef s390_cpu_defs[] = {
      CPUDEF_INIT(0x2064, 7, 1, 38, 0x00000000U, "z900", "IBM zSeries 900 GA1"),
      CPUDEF_INIT(0x2064, 7, 2, 38, 0x00000000U, "z900.2", "IBM zSeries 900 GA2"),
-@@ -857,22 +860,30 @@ static void s390_host_cpu_model_class_init(ObjectClass *oc, void *data)
+@@ -856,22 +859,30 @@ static void s390_host_cpu_model_class_init(ObjectClass *oc, void *data)
  static void s390_base_cpu_model_class_init(ObjectClass *oc, void *data)
  {
      S390CPUClass *xcc = S390_CPU_CLASS(oc);
@@ -253,16 +271,16 @@ index 91ce896491..2479776573 100644
  
  static void s390_qemu_cpu_model_class_init(ObjectClass *oc, void *data)
 diff --git a/target/s390x/cpu_models.h b/target/s390x/cpu_models.h
-index cc7305ec21..05abe5b92e 100644
+index d7b8912989..1a806a97c4 100644
 --- a/target/s390x/cpu_models.h
 +++ b/target/s390x/cpu_models.h
-@@ -38,6 +38,8 @@ struct S390CPUDef {
+@@ -38,6 +38,8 @@ typedef struct S390CPUDef {
      S390FeatBitmap full_feat;
      /* used to init full_feat from generated data */
      S390FeatInit full_init;
 +    /* if deprecated, provides a suggestion */
 +    const char *deprecation_note;
- };
+ } S390CPUDef;
  
  /* CPU model based on a CPU definition */
 diff --git a/target/s390x/cpu_models_sysemu.c b/target/s390x/cpu_models_sysemu.c

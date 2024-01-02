@@ -1,4 +1,4 @@
-From 28f0f014754e68ca5e5e00ba0dfbb38e3f60e77b Mon Sep 17 00:00:00 2001
+From 776bff1be5e98982a9bbc8345ff27274ff5b8c0f Mon Sep 17 00:00:00 2001
 From: Kevin Wolf <kwolf@redhat.com>
 Date: Fri, 20 Aug 2021 18:25:12 +0200
 Subject: qcow2: Deprecation warning when opening v2 images rw
@@ -44,10 +44,10 @@ Rebase notes (6.1.0):
  2 files changed, 7 insertions(+)
 
 diff --git a/block/qcow2.c b/block/qcow2.c
-index c51388e99d..3afcc6d326 100644
+index 13e032bd5e..7968735346 100644
 --- a/block/qcow2.c
 +++ b/block/qcow2.c
-@@ -1357,6 +1357,12 @@ qcow2_do_open(BlockDriverState *bs, QDict *options, int flags,
+@@ -1358,6 +1358,12 @@ qcow2_do_open(BlockDriverState *bs, QDict *options, int flags,
          ret = -ENOTSUP;
          goto fail;
      }
@@ -61,7 +61,7 @@ index c51388e99d..3afcc6d326 100644
      s->qcow_version = header.version;
  
 diff --git a/tests/qemu-iotests/common.filter b/tests/qemu-iotests/common.filter
-index fc3c64bcb8..4b238954d5 100644
+index 2846c83808..83472953a2 100644
 --- a/tests/qemu-iotests/common.filter
 +++ b/tests/qemu-iotests/common.filter
 @@ -83,6 +83,7 @@ _filter_qemu()

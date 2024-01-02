@@ -1,4 +1,4 @@
-From b8538e2099c040bfe7c98a3af1423abb30d91ab7 Mon Sep 17 00:00:00 2001
+From faae70a870156f86a5cf55ca967b15d7612941ff Mon Sep 17 00:00:00 2001
 From: Miroslav Rezanina <mrezanin@redhat.com>
 Date: Wed, 26 May 2021 10:56:02 +0200
 Subject: Initial redhat build
@@ -13,7 +13,7 @@ several issues are fixed in QEMU tree:
 
 We disable make check due to issues with some of the tests.
 
-This rebase is based on qemu-kvm-8.0.0-13.el9
+This rebase is based on qemu-kvm-8.1.0-5.el9
 
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 --
@@ -77,6 +77,11 @@ Rebase changes (8.1.0):
 - Removed --with-git and -with-gitsubmodules
 - Renamed --disable-pypi to --disable-downloads
 - Minor updates in README.tests
+
+Rebase changes (8.2.0):
+- Removed --disable-hax (upstream)
+- Added --disable-plugins configure option
+- Fixing frh.py strings
 
 Merged patches (6.0.0):
  - 605758c902 Limit build on Power to qemu-img and qemu-ga only
@@ -185,6 +190,9 @@ Merged patches (8.1.0):
 - f356cae88f spec: Build DBUS display
 - 77b763efd5 Provide elf2dmp binary in qemu-tools
 
+Merged patches (8.2.0):
+- cd9efa221d Enable qemu-kvm-device-usb-redirec for aarch64
+
 Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
 ---
  .distro/Makefile                        |  100 +
@@ -192,9 +200,10 @@ Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
  .distro/README.tests                    |   39 +
  .distro/modules-load.conf               |    4 +
  .distro/qemu-guest-agent.service        |    1 -
- .distro/qemu-kvm.spec.template          | 4860 +++++++++++++++++++++++
+ .distro/qemu-kvm.spec.template          | 4909 +++++++++++++++++++++++
  .distro/rpminspect.yaml                 |    6 +-
  .distro/scripts/extract_build_cmd.py    |   12 +
+ .distro/scripts/frh.py                  |    4 +-
  .distro/scripts/process-patches.sh      |    4 +
  .gitignore                              |    1 +
  README.systemtap                        |   43 +
@@ -202,7 +211,7 @@ Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
  scripts/systemtap/conf.d/qemu_kvm.conf  |    4 +
  scripts/systemtap/script.d/qemu_kvm.stp |    1 +
  ui/vnc-auth-sasl.c                      |    2 +-
- 15 files changed, 5117 insertions(+), 4 deletions(-)
+ 16 files changed, 5168 insertions(+), 6 deletions(-)
  create mode 100644 .distro/Makefile
  create mode 100644 .distro/Makefile.common
  create mode 100644 .distro/README.tests

@@ -148,8 +148,8 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
-Version: 8.1.0
-Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
+Version: 8.2.0
+Release: 1%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -186,47 +186,7 @@ Patch0012: 0012-vfio-cap-number-of-devices-that-can-be-assigned.patch
 Patch0013: 0013-Add-support-statement-to-help-output.patch
 Patch0014: 0014-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
 Patch0015: 0015-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
-Patch0016: 0016-vdpa-use-first-queue-SVQ-state-for-CVQ-default.patch
-Patch0017: 0017-vdpa-export-vhost_vdpa_set_vring_ready.patch
-Patch0018: 0018-vdpa-rename-vhost_vdpa_net_load-to-vhost_vdpa_net_cv.patch
-Patch0019: 0019-vdpa-move-vhost_vdpa_set_vring_ready-to-the-caller.patch
-Patch0020: 0020-vdpa-remove-net-cvq-migration-blocker.patch
-Patch0021: 0021-Add-machine-types-compat-bits.patch
-Patch0022: 0022-Fix-x86-machine-type-compatibility-for-qemu-kvm-8.1..patch
-# For RHEL-832 - qemu-kvm crashed when migrating guest with failover vf
-Patch23: kvm-virtio-Drop-out-of-coroutine-context-in-virtio_load.patch
-# For RHEL-11219 - migration tests failing for RHEL 9.4 sometimes
-Patch24: kvm-migration-Fix-race-that-dest-preempt-thread-close-to.patch
-# For RHEL-11219 - migration tests failing for RHEL 9.4 sometimes
-Patch25: kvm-migration-Fix-possible-race-when-setting-rp_state.er.patch
-# For RHEL-11219 - migration tests failing for RHEL 9.4 sometimes
-Patch26: kvm-migration-Fix-possible-races-when-shutting-down-the-.patch
-# For RHEL-11219 - migration tests failing for RHEL 9.4 sometimes
-Patch27: kvm-migration-Fix-possible-race-when-shutting-down-to_ds.patch
-# For RHEL-11219 - migration tests failing for RHEL 9.4 sometimes
-Patch28: kvm-migration-Remove-redundant-cleanup-of-postcopy_qemuf.patch
-# For RHEL-11219 - migration tests failing for RHEL 9.4 sometimes
-Patch29: kvm-migration-Consolidate-return-path-closing-code.patch
-# For RHEL-11219 - migration tests failing for RHEL 9.4 sometimes
-Patch30: kvm-migration-Replace-the-return-path-retry-logic.patch
-# For RHEL-11219 - migration tests failing for RHEL 9.4 sometimes
-Patch31: kvm-migration-Move-return-path-cleanup-to-main-migration.patch
-# For RHEL-7360 - Qemu Core Dumped When Writing Larger Size Than The Size of A Data Disk
-Patch32: kvm-file-posix-Clear-bs-bl.zoned-on-error.patch
-# For RHEL-7360 - Qemu Core Dumped When Writing Larger Size Than The Size of A Data Disk
-Patch33: kvm-file-posix-Check-bs-bl.zoned-for-zone-info.patch
-# For RHEL-7360 - Qemu Core Dumped When Writing Larger Size Than The Size of A Data Disk
-Patch34: kvm-file-posix-Fix-zone-update-in-I-O-error-path.patch
-# For RHEL-7360 - Qemu Core Dumped When Writing Larger Size Than The Size of A Data Disk
-Patch35: kvm-file-posix-Simplify-raw_co_prw-s-out-zone-code.patch
-# For RHEL-7360 - Qemu Core Dumped When Writing Larger Size Than The Size of A Data Disk
-Patch36: kvm-tests-file-io-error-New-test.patch
-# For RHEL-2828 - CVE-2023-42467 qemu-kvm: qemu: denial of service due to division by zero [rhel-9]
-Patch37: kvm-hw-scsi-scsi-disk-Disallow-block-sizes-smaller-than-.patch
-# For RHEL-1308 - [RFE] iGB: Add an emulated SR-IOV network card
-Patch38: kvm-Enable-igb-on-x86_64.patch
-# For RHEL-12991 - qemu-kvm fails to build on s390x with clang-17
-Patch39: kvm-host-include-generic-host-atomic128-Fix-compilation-.patch
+Patch0016: 0016-Introduce-RHEL-9.4.0-qemu-kvm-machine-type-for-aarch.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -609,7 +569,6 @@ ulimit -n 10240
   --disable-gtk                    \\\
   --disable-guest-agent            \\\
   --disable-guest-agent-msi        \\\
-  --disable-hax                    \\\
   --disable-hvf                    \\\
   --disable-iconv                  \\\
   --disable-jack                   \\\
@@ -646,6 +605,7 @@ ulimit -n 10240
   --disable-pa                     \\\
   --disable-parallels              \\\
   --disable-pie                    \\\
+  --disable-plugins                \\\
   --disable-pvrdma                 \\\
   --disable-qcow1                  \\\
   --disable-qed                    \\\
@@ -1286,6 +1246,23 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Jan 02 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-1
+- Rebase to QEMU 8.2.0 [RHEL-14111]
+- Fix machine type compatibility [RHEL-17067 RHEL-17068]
+- Add 9.4.0 machine type [RHEL-17168 RHEL-19117 RHEL-19119]
+- Resolves: RHEL-14111
+  (Rebase qemu-kvm to QEMU 8.2.0)
+- Resolves: RHEL-17067
+  (Check/fix machine type compatibility for qemu-kvm 8.2.0 [s390x])
+- Resolves: RHEL-17068
+  (Check/fix machine type compatibility for qemu-kvm 8.2.0 [x86_64])
+- Resolves: RHEL-17168
+  (Introduce virt-rhel9.4.0 arm-virt machine type [aarch64])
+- Resolves: RHEL-19117
+  (Introduce virt-rhel9.4.0 arm-virt machine type [x86_64])
+- Resolves: RHEL-19119
+  (Introduce virt-rhel9.4.0 arm-virt machine type [s390x])
+
 * Thu Nov 30 2023 Miroslav Rezanina <mrezanin@redhat.com> - 8.1.0-5
 - kvm-Preparation-for-using-allow-rpcs-list-in-guest-agent.patch [RHEL-955]
 - kvm-Use-allow-rpcs-instead-of-block-rpcs-in-guest-agent..patch [RHEL-955]
