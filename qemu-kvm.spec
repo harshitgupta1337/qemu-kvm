@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.2.0
-Release: 1%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 2%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -187,6 +187,8 @@ Patch0013: 0013-Add-support-statement-to-help-output.patch
 Patch0014: 0014-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
 Patch0015: 0015-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
 Patch0016: 0016-Introduce-RHEL-9.4.0-qemu-kvm-machine-type-for-aarch.patch
+# For RHEL-17168 - Introduce virt-rhel9.4.0 arm-virt machine type [aarch64]
+Patch17: kvm-hw-arm-virt-Fix-compats.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1246,6 +1248,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Jan 08 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-2
+- kvm-hw-arm-virt-Fix-compats.patch [RHEL-17168]
+- Resolves: RHEL-17168
+  (Introduce virt-rhel9.4.0 arm-virt machine type [aarch64])
+
 * Tue Jan 02 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-1
 - Rebase to QEMU 8.2.0 [RHEL-14111]
 - Fix machine type compatibility [RHEL-17067 RHEL-17068]
