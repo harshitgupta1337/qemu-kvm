@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.2.0
-Release: 2%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -189,6 +189,273 @@ Patch0015: 0015-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
 Patch0016: 0016-Introduce-RHEL-9.4.0-qemu-kvm-machine-type-for-aarch.patch
 # For RHEL-17168 - Introduce virt-rhel9.4.0 arm-virt machine type [aarch64]
 Patch17: kvm-hw-arm-virt-Fix-compats.patch
+# For RHEL-19738 - Enable properties allowing to disable high memory regions
+Patch18: kvm-hw-arm-virt-Add-properties-to-disable-high-memory-re.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch19: kvm-vfio-Introduce-base-object-for-VFIOContainer-and-tar.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch20: kvm-vfio-container-Introduce-a-empty-VFIOIOMMUOps.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch21: kvm-vfio-container-Switch-to-dma_map-unmap-API.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch22: kvm-vfio-common-Introduce-vfio_container_init-destroy-he.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch23: kvm-vfio-common-Move-giommu_list-in-base-container.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch24: kvm-vfio-container-Move-space-field-to-base-container.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch25: kvm-vfio-container-Switch-to-IOMMU-BE-set_dirty_page_tra.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch26: kvm-vfio-container-Move-per-container-device-list-in-bas.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch27: kvm-vfio-container-Convert-functions-to-base-container.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch28: kvm-vfio-container-Move-pgsizes-and-dma_max_mappings-to-.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch29: kvm-vfio-container-Move-vrdl_list-to-base-container.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch30: kvm-vfio-container-Move-listener-to-base-container.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch31: kvm-vfio-container-Move-dirty_pgsizes-and-max_dirty_bitm.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch32: kvm-vfio-container-Move-iova_ranges-to-base-container.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch33: kvm-vfio-container-Implement-attach-detach_device.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch34: kvm-vfio-spapr-Introduce-spapr-backend-and-target-interf.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch35: kvm-vfio-spapr-switch-to-spapr-IOMMU-BE-add-del_section_.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch36: kvm-vfio-spapr-Move-prereg_listener-into-spapr-container.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch37: kvm-vfio-spapr-Move-hostwin_list-into-spapr-container.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch38: kvm-backends-iommufd-Introduce-the-iommufd-object.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch39: kvm-util-char_dev-Add-open_cdev.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch40: kvm-vfio-common-return-early-if-space-isn-t-empty.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch41: kvm-vfio-iommufd-Implement-the-iommufd-backend.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch42: kvm-vfio-iommufd-Relax-assert-check-for-iommufd-backend.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch43: kvm-vfio-iommufd-Add-support-for-iova_ranges-and-pgsizes.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch44: kvm-vfio-pci-Extract-out-a-helper-vfio_pci_get_pci_hot_r.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch45: kvm-vfio-pci-Introduce-a-vfio-pci-hot-reset-interface.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch46: kvm-vfio-iommufd-Enable-pci-hot-reset-through-iommufd-cd.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch47: kvm-vfio-pci-Allow-the-selection-of-a-given-iommu-backen.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch48: kvm-vfio-pci-Make-vfio-cdev-pre-openable-by-passing-a-fi.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch49: kvm-vfio-platform-Allow-the-selection-of-a-given-iommu-b.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch50: kvm-vfio-platform-Make-vfio-cdev-pre-openable-by-passing.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch51: kvm-vfio-ap-Allow-the-selection-of-a-given-iommu-backend.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch52: kvm-vfio-ap-Make-vfio-cdev-pre-openable-by-passing-a-fil.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch53: kvm-vfio-ccw-Allow-the-selection-of-a-given-iommu-backen.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch54: kvm-vfio-ccw-Make-vfio-cdev-pre-openable-by-passing-a-fi.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch55: kvm-vfio-Make-VFIOContainerBase-poiner-parameter-const-i.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch56: kvm-hw-arm-Activate-IOMMUFD-for-virt-machines.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch57: kvm-kconfig-Activate-IOMMUFD-for-s390x-machines.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch58: kvm-hw-i386-Activate-IOMMUFD-for-q35-machines.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch59: kvm-vfio-pci-Move-VFIODevice-initializations-in-vfio_ins.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch60: kvm-vfio-platform-Move-VFIODevice-initializations-in-vfi.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch61: kvm-vfio-ap-Move-VFIODevice-initializations-in-vfio_ap_i.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch62: kvm-vfio-ccw-Move-VFIODevice-initializations-in-vfio_ccw.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch63: kvm-vfio-Introduce-a-helper-function-to-initialize-VFIOD.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch64: kvm-docs-devel-Add-VFIO-iommufd-backend-documentation.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch65: kvm-hw-ppc-Kconfig-Imply-VFIO_PCI.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch66: kvm-vfio-spapr-Extend-VFIOIOMMUOps-with-a-release-handle.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch67: kvm-vfio-container-Introduce-vfio_legacy_setup-for-furth.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch68: kvm-vfio-container-Initialize-VFIOIOMMUOps-under-vfio_in.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch69: kvm-vfio-container-Introduce-a-VFIOIOMMU-QOM-interface.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch70: kvm-vfio-container-Introduce-a-VFIOIOMMU-legacy-QOM-inte.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch71: kvm-vfio-container-Intoduce-a-new-VFIOIOMMUClass-setup-h.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch72: kvm-vfio-spapr-Introduce-a-sPAPR-VFIOIOMMU-QOM-interface.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch73: kvm-vfio-iommufd-Introduce-a-VFIOIOMMU-iommufd-QOM-inter.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch74: kvm-vfio-spapr-Only-compile-sPAPR-IOMMU-support-when-nee.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch75: kvm-vfio-iommufd-Remove-CONFIG_IOMMUFD-usage.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch76: kvm-vfio-container-Replace-basename-with-g_path_get_base.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch77: kvm-hw-vfio-fix-iteration-over-global-VFIODevice-list.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch78: kvm-vfio-iommufd-Remove-the-use-of-stat-to-check-file-ex.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch79: kvm-vfio-container-Rename-vfio_init_container-to-vfio_se.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch80: kvm-vfio-migration-Add-helper-function-to-set-state-or-r.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch81: kvm-backends-iommufd-Remove-check-on-number-of-backend-u.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch82: kvm-backends-iommufd-Remove-mutex.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch83: kvm-Compile-IOMMUFD-object-on-aarch64.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch84: kvm-Compile-IOMMUFD-on-s390x.patch
+# For RHEL-19302 - NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend
+# For RHEL-21057 - Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6
+Patch85: kvm-Compile-IOMMUFD-on-x86_64.patch
+# For RHEL-18212 - [RHEL9][Secure-execution][s390x] The error message is not clear when boot up a SE guest with wrong encryption
+Patch86: kvm-target-s390x-kvm-pv-Provide-some-more-useful-informa.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch87: kvm-nbd-server-avoid-per-NBDRequest-nbd_client_get-put.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch88: kvm-nbd-server-only-traverse-NBDExport-clients-from-main.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch89: kvm-nbd-server-introduce-NBDClient-lock-to-protect-field.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch90: kvm-block-file-posix-set-up-Linux-AIO-and-io_uring-in-th.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch91: kvm-virtio-blk-add-lock-to-protect-s-rq.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch92: kvm-virtio-blk-don-t-lock-AioContext-in-the-completion-c.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch93: kvm-virtio-blk-don-t-lock-AioContext-in-the-submission-c.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch94: kvm-scsi-only-access-SCSIDevice-requests-from-one-thread.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch95: kvm-virtio-scsi-don-t-lock-AioContext-around-virtio_queu.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch96: kvm-scsi-don-t-lock-AioContext-in-I-O-code-path.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch97: kvm-dma-helpers-don-t-lock-AioContext-in-dma_blk_cb.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch98: kvm-virtio-scsi-replace-AioContext-lock-with-tmf_bh_lock.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch99: kvm-scsi-assert-that-callbacks-run-in-the-correct-AioCon.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch100: kvm-tests-remove-aio_context_acquire-tests.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch101: kvm-aio-make-aio_context_acquire-aio_context_release-a-n.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch102: kvm-graph-lock-remove-AioContext-locking.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch103: kvm-block-remove-AioContext-locking.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch104: kvm-block-remove-bdrv_co_lock.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch105: kvm-scsi-remove-AioContext-locking.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch106: kvm-aio-wait-draw-equivalence-between-AIO_WAIT_WHILE-and.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch107: kvm-aio-remove-aio_context_acquire-aio_context_release-A.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch108: kvm-docs-remove-AioContext-lock-from-IOThread-docs.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch109: kvm-scsi-remove-outdated-AioContext-lock-comment.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch110: kvm-job-remove-outdated-AioContext-locking-comments.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch111: kvm-block-remove-outdated-AioContext-locking-comments.patch
+# For RHEL-15965 -  [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize)
+Patch112: kvm-block-coroutine-wrapper-use-qemu_get_current_aio_con.patch
+# For RHEL-21169 - [s390x] VM fails to start with ISM passed through QEMU 8.2
+Patch113: kvm-s390x-pci-avoid-double-enable-disable-of-aif.patch
+# For RHEL-21169 - [s390x] VM fails to start with ISM passed through QEMU 8.2
+Patch114: kvm-s390x-pci-refresh-fh-before-disabling-aif.patch
+# For RHEL-21169 - [s390x] VM fails to start with ISM passed through QEMU 8.2
+Patch115: kvm-s390x-pci-drive-ISM-reset-from-subsystem-reset.patch
+# For RHEL-21570 - Critical performance degradation for input devices in virtio vnc session
+Patch116: kvm-include-ui-rect.h-fix-qemu_rect_init-mis-assignment.patch
+# For RHEL-7565 - qemu crashed when migrate guest with blob resources enabled
+Patch117: kvm-virtio-gpu-block-migration-of-VMs-with-blob-true.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -201,6 +468,7 @@ BuildRequires: gcc
 BuildRequires: meson >= %{meson_version}
 BuildRequires: ninja-build
 BuildRequires: zlib-devel
+BuildRequires: libzstd-devel
 BuildRequires: glib2-devel
 BuildRequires: gnutls-devel
 BuildRequires: cyrus-sasl-devel
@@ -774,6 +1042,7 @@ run_configure \
   --enable-werror \
 %endif
   --enable-xkbcommon \
+  --enable-zstd \
 %if %{have_safe_stack}
   --enable-safe-stack \
 %endif
@@ -1248,6 +1517,127 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Wed Jan 24 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-3
+- kvm-hw-arm-virt-Add-properties-to-disable-high-memory-re.patch [RHEL-19738]
+- kvm-vfio-Introduce-base-object-for-VFIOContainer-and-tar.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Introduce-a-empty-VFIOIOMMUOps.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Switch-to-dma_map-unmap-API.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-common-Introduce-vfio_container_init-destroy-he.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-common-Move-giommu_list-in-base-container.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Move-space-field-to-base-container.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Switch-to-IOMMU-BE-set_dirty_page_tra.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Move-per-container-device-list-in-bas.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Convert-functions-to-base-container.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Move-pgsizes-and-dma_max_mappings-to-.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Move-vrdl_list-to-base-container.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Move-listener-to-base-container.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Move-dirty_pgsizes-and-max_dirty_bitm.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Move-iova_ranges-to-base-container.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Implement-attach-detach_device.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-spapr-Introduce-spapr-backend-and-target-interf.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-spapr-switch-to-spapr-IOMMU-BE-add-del_section_.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-spapr-Move-prereg_listener-into-spapr-container.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-spapr-Move-hostwin_list-into-spapr-container.patch [RHEL-19302 RHEL-21057]
+- kvm-backends-iommufd-Introduce-the-iommufd-object.patch [RHEL-19302 RHEL-21057]
+- kvm-util-char_dev-Add-open_cdev.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-common-return-early-if-space-isn-t-empty.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-iommufd-Implement-the-iommufd-backend.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-iommufd-Relax-assert-check-for-iommufd-backend.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-iommufd-Add-support-for-iova_ranges-and-pgsizes.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-pci-Extract-out-a-helper-vfio_pci_get_pci_hot_r.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-pci-Introduce-a-vfio-pci-hot-reset-interface.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-iommufd-Enable-pci-hot-reset-through-iommufd-cd.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-pci-Allow-the-selection-of-a-given-iommu-backen.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-pci-Make-vfio-cdev-pre-openable-by-passing-a-fi.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-platform-Allow-the-selection-of-a-given-iommu-b.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-platform-Make-vfio-cdev-pre-openable-by-passing.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-ap-Allow-the-selection-of-a-given-iommu-backend.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-ap-Make-vfio-cdev-pre-openable-by-passing-a-fil.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-ccw-Allow-the-selection-of-a-given-iommu-backen.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-ccw-Make-vfio-cdev-pre-openable-by-passing-a-fi.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-Make-VFIOContainerBase-poiner-parameter-const-i.patch [RHEL-19302 RHEL-21057]
+- kvm-hw-arm-Activate-IOMMUFD-for-virt-machines.patch [RHEL-19302 RHEL-21057]
+- kvm-kconfig-Activate-IOMMUFD-for-s390x-machines.patch [RHEL-19302 RHEL-21057]
+- kvm-hw-i386-Activate-IOMMUFD-for-q35-machines.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-pci-Move-VFIODevice-initializations-in-vfio_ins.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-platform-Move-VFIODevice-initializations-in-vfi.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-ap-Move-VFIODevice-initializations-in-vfio_ap_i.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-ccw-Move-VFIODevice-initializations-in-vfio_ccw.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-Introduce-a-helper-function-to-initialize-VFIOD.patch [RHEL-19302 RHEL-21057]
+- kvm-docs-devel-Add-VFIO-iommufd-backend-documentation.patch [RHEL-19302 RHEL-21057]
+- kvm-hw-ppc-Kconfig-Imply-VFIO_PCI.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-spapr-Extend-VFIOIOMMUOps-with-a-release-handle.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Introduce-vfio_legacy_setup-for-furth.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Initialize-VFIOIOMMUOps-under-vfio_in.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Introduce-a-VFIOIOMMU-QOM-interface.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Introduce-a-VFIOIOMMU-legacy-QOM-inte.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Intoduce-a-new-VFIOIOMMUClass-setup-h.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-spapr-Introduce-a-sPAPR-VFIOIOMMU-QOM-interface.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-iommufd-Introduce-a-VFIOIOMMU-iommufd-QOM-inter.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-spapr-Only-compile-sPAPR-IOMMU-support-when-nee.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-iommufd-Remove-CONFIG_IOMMUFD-usage.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Replace-basename-with-g_path_get_base.patch [RHEL-19302 RHEL-21057]
+- kvm-hw-vfio-fix-iteration-over-global-VFIODevice-list.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-iommufd-Remove-the-use-of-stat-to-check-file-ex.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-container-Rename-vfio_init_container-to-vfio_se.patch [RHEL-19302 RHEL-21057]
+- kvm-vfio-migration-Add-helper-function-to-set-state-or-r.patch [RHEL-19302 RHEL-21057]
+- kvm-backends-iommufd-Remove-check-on-number-of-backend-u.patch [RHEL-19302 RHEL-21057]
+- kvm-backends-iommufd-Remove-mutex.patch [RHEL-19302 RHEL-21057]
+- kvm-Compile-IOMMUFD-object-on-aarch64.patch [RHEL-19302 RHEL-21057]
+- kvm-Compile-IOMMUFD-on-s390x.patch [RHEL-19302 RHEL-21057]
+- kvm-Compile-IOMMUFD-on-x86_64.patch [RHEL-19302 RHEL-21057]
+- kvm-target-s390x-kvm-pv-Provide-some-more-useful-informa.patch [RHEL-18212]
+- kvm-nbd-server-avoid-per-NBDRequest-nbd_client_get-put.patch [RHEL-15965]
+- kvm-nbd-server-only-traverse-NBDExport-clients-from-main.patch [RHEL-15965]
+- kvm-nbd-server-introduce-NBDClient-lock-to-protect-field.patch [RHEL-15965]
+- kvm-block-file-posix-set-up-Linux-AIO-and-io_uring-in-th.patch [RHEL-15965]
+- kvm-virtio-blk-add-lock-to-protect-s-rq.patch [RHEL-15965]
+- kvm-virtio-blk-don-t-lock-AioContext-in-the-completion-c.patch [RHEL-15965]
+- kvm-virtio-blk-don-t-lock-AioContext-in-the-submission-c.patch [RHEL-15965]
+- kvm-scsi-only-access-SCSIDevice-requests-from-one-thread.patch [RHEL-15965]
+- kvm-virtio-scsi-don-t-lock-AioContext-around-virtio_queu.patch [RHEL-15965]
+- kvm-scsi-don-t-lock-AioContext-in-I-O-code-path.patch [RHEL-15965]
+- kvm-dma-helpers-don-t-lock-AioContext-in-dma_blk_cb.patch [RHEL-15965]
+- kvm-virtio-scsi-replace-AioContext-lock-with-tmf_bh_lock.patch [RHEL-15965]
+- kvm-scsi-assert-that-callbacks-run-in-the-correct-AioCon.patch [RHEL-15965]
+- kvm-tests-remove-aio_context_acquire-tests.patch [RHEL-15965]
+- kvm-aio-make-aio_context_acquire-aio_context_release-a-n.patch [RHEL-15965]
+- kvm-graph-lock-remove-AioContext-locking.patch [RHEL-15965]
+- kvm-block-remove-AioContext-locking.patch [RHEL-15965]
+- kvm-block-remove-bdrv_co_lock.patch [RHEL-15965]
+- kvm-scsi-remove-AioContext-locking.patch [RHEL-15965]
+- kvm-aio-wait-draw-equivalence-between-AIO_WAIT_WHILE-and.patch [RHEL-15965]
+- kvm-aio-remove-aio_context_acquire-aio_context_release-A.patch [RHEL-15965]
+- kvm-docs-remove-AioContext-lock-from-IOThread-docs.patch [RHEL-15965]
+- kvm-scsi-remove-outdated-AioContext-lock-comment.patch [RHEL-15965]
+- kvm-job-remove-outdated-AioContext-locking-comments.patch [RHEL-15965]
+- kvm-block-remove-outdated-AioContext-locking-comments.patch [RHEL-15965]
+- kvm-block-coroutine-wrapper-use-qemu_get_current_aio_con.patch [RHEL-15965]
+- kvm-s390x-pci-avoid-double-enable-disable-of-aif.patch [RHEL-21169]
+- kvm-s390x-pci-refresh-fh-before-disabling-aif.patch [RHEL-21169]
+- kvm-s390x-pci-drive-ISM-reset-from-subsystem-reset.patch [RHEL-21169]
+- kvm-include-ui-rect.h-fix-qemu_rect_init-mis-assignment.patch [RHEL-21570]
+- kvm-virtio-gpu-block-migration-of-VMs-with-blob-true.patch [RHEL-7565]
+- kvm-spec-Enable-zstd.patch [RHEL-7361]
+- Resolves: RHEL-19738
+  (Enable properties allowing to disable high memory regions)
+- Resolves: RHEL-19302
+  (NVIDIA:Grace-Hopper Backport QEMU IOMMUFD Backend)
+- Resolves: RHEL-21057
+  (Request backport of 9353b6da430f90e47f352dbf6dc31120c8914da6)
+- Resolves: RHEL-18212
+  ([RHEL9][Secure-execution][s390x] The error message is not clear when boot up a SE guest with wrong encryption)
+- Resolves: RHEL-15965
+  ( [qemu-kvm] Remove AioContext lock (no response with QMP command block_resize))
+- Resolves: RHEL-21169
+  ([s390x] VM fails to start with ISM passed through QEMU 8.2)
+- Resolves: RHEL-21570
+  (Critical performance degradation for input devices in virtio vnc session)
+- Resolves: RHEL-7565
+  (qemu crashed when migrate guest with blob resources enabled)
+- Resolves: RHEL-7361
+  ([qemu-kvm] Enable zstd support for qcow2 files)
+
 * Mon Jan 08 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-2
 - kvm-hw-arm-virt-Fix-compats.patch [RHEL-17168]
 - Resolves: RHEL-17168
