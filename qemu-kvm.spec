@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.2.0
-Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -456,6 +456,8 @@ Patch115: kvm-s390x-pci-drive-ISM-reset-from-subsystem-reset.patch
 Patch116: kvm-include-ui-rect.h-fix-qemu_rect_init-mis-assignment.patch
 # For RHEL-7565 - qemu crashed when migrate guest with blob resources enabled
 Patch117: kvm-virtio-gpu-block-migration-of-VMs-with-blob-true.patch
+# For RHEL-21293 - [emulated igb] Failed to set up TRIGGER eventfd signaling for interrupt INTX-0: VFIO_DEVICE_SET_IRQS failure: Invalid argument
+Patch118: kvm-vfio-pci-Clear-MSI-X-IRQ-index-always.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1517,6 +1519,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Jan 30 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-4
+- kvm-vfio-pci-Clear-MSI-X-IRQ-index-always.patch [RHEL-21293]
+- Resolves: RHEL-21293
+  ([emulated igb] Failed to set up TRIGGER eventfd signaling for interrupt INTX-0: VFIO_DEVICE_SET_IRQS failure: Invalid argument)
+
 * Wed Jan 24 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-3
 - kvm-hw-arm-virt-Add-properties-to-disable-high-memory-re.patch [RHEL-19738]
 - kvm-vfio-Introduce-base-object-for-VFIOContainer-and-tar.patch [RHEL-19302 RHEL-21057]
