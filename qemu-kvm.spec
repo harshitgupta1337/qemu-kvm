@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.2.0
-Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -458,6 +458,84 @@ Patch116: kvm-include-ui-rect.h-fix-qemu_rect_init-mis-assignment.patch
 Patch117: kvm-virtio-gpu-block-migration-of-VMs-with-blob-true.patch
 # For RHEL-21293 - [emulated igb] Failed to set up TRIGGER eventfd signaling for interrupt INTX-0: VFIO_DEVICE_SET_IRQS failure: Invalid argument
 Patch118: kvm-vfio-pci-Clear-MSI-X-IRQ-index-always.patch
+# For RHEL-20341 - memory-device size alignment check invalid in QEMU 8.2
+Patch119: kvm-hv-balloon-use-get_min_alignment-to-express-32-GiB-a.patch
+# For RHEL-20341 - memory-device size alignment check invalid in QEMU 8.2
+Patch120: kvm-memory-device-reintroduce-memory-region-size-check.patch
+# For RHEL-24593 - qemu crash blk_get_aio_context(BlockBackend *): Assertion `ctx == blk->ctx' when repeatedly hotplug/unplug disk
+Patch121: kvm-block-backend-Allow-concurrent-context-changes.patch
+# For RHEL-24593 - qemu crash blk_get_aio_context(BlockBackend *): Assertion `ctx == blk->ctx' when repeatedly hotplug/unplug disk
+Patch122: kvm-scsi-Await-request-purging.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch123: kvm-string-output-visitor-show-structs-as-omitted.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch124: kvm-string-output-visitor-Fix-pseudo-struct-handling.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch125: kvm-qdev-properties-alias-all-object-class-properties.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch126: kvm-qdev-add-IOThreadVirtQueueMappingList-property-type.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch127: kvm-virtio-blk-add-iothread-vq-mapping-parameter.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch128: kvm-virtio-blk-Fix-potential-nullpointer-read-access-in-.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch129: kvm-iotests-add-filter_qmp_generated_node_ids.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch130: kvm-iotests-port-141-to-Python-for-reliable-QMP-testing.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch131: kvm-monitor-only-run-coroutine-commands-in-qemu_aio_cont.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch132: kvm-virtio-blk-move-dataplane-code-into-virtio-blk.c.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch133: kvm-virtio-blk-rename-dataplane-create-destroy-functions.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch134: kvm-virtio-blk-rename-dataplane-to-ioeventfd.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch135: kvm-virtio-blk-restart-s-rq-reqs-in-vq-AioContexts.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch136: kvm-virtio-blk-tolerate-failure-to-set-BlockBackend-AioC.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch137: kvm-virtio-blk-always-set-ioeventfd-during-startup.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch138: kvm-tests-unit-Bump-test-replication-timeout-to-60-secon.patch
+# For RHEL-17369 - [nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.
+# For RHEL-20764 - [qemu-kvm] Enable qemu multiqueue block layer support
+# For RHEL-7356 - [qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9]
+Patch139: kvm-iotests-iothreads-stream-Use-the-right-TimeoutError.patch
+# For RHEL-24045 - QEMU: default-enable dynamically using multiple memslots for virtio-mem
+Patch140: kvm-virtio-mem-default-enable-dynamic-memslots.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1519,6 +1597,42 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Feb 12 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-5
+- kvm-hv-balloon-use-get_min_alignment-to-express-32-GiB-a.patch [RHEL-20341]
+- kvm-memory-device-reintroduce-memory-region-size-check.patch [RHEL-20341]
+- kvm-block-backend-Allow-concurrent-context-changes.patch [RHEL-24593]
+- kvm-scsi-Await-request-purging.patch [RHEL-24593]
+- kvm-string-output-visitor-show-structs-as-omitted.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-string-output-visitor-Fix-pseudo-struct-handling.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-qdev-properties-alias-all-object-class-properties.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-qdev-add-IOThreadVirtQueueMappingList-property-type.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-virtio-blk-add-iothread-vq-mapping-parameter.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-virtio-blk-Fix-potential-nullpointer-read-access-in-.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-iotests-add-filter_qmp_generated_node_ids.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-iotests-port-141-to-Python-for-reliable-QMP-testing.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-monitor-only-run-coroutine-commands-in-qemu_aio_cont.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-virtio-blk-move-dataplane-code-into-virtio-blk.c.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-virtio-blk-rename-dataplane-create-destroy-functions.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-virtio-blk-rename-dataplane-to-ioeventfd.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-virtio-blk-restart-s-rq-reqs-in-vq-AioContexts.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-virtio-blk-tolerate-failure-to-set-BlockBackend-AioC.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-virtio-blk-always-set-ioeventfd-during-startup.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-tests-unit-Bump-test-replication-timeout-to-60-secon.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-iotests-iothreads-stream-Use-the-right-TimeoutError.patch [RHEL-17369 RHEL-20764 RHEL-7356]
+- kvm-virtio-mem-default-enable-dynamic-memslots.patch [RHEL-24045]
+- Resolves: RHEL-20341
+  (memory-device size alignment check invalid in QEMU 8.2)
+- Resolves: RHEL-24593
+  (qemu crash blk_get_aio_context(BlockBackend *): Assertion `ctx == blk->ctx' when repeatedly hotplug/unplug disk)
+- Resolves: RHEL-17369
+  ([nfv virt][rt][post-copy migration] qemu-kvm: ../block/qcow2.c:5263: ImageInfoSpecific *qcow2_get_specific_info(BlockDriverState *, Error **): Assertion `false' failed.)
+- Resolves: RHEL-20764
+  ([qemu-kvm] Enable qemu multiqueue block layer support)
+- Resolves: RHEL-7356
+  ([qemu-kvm] no response with QMP command device_add when repeatedly hotplug/unplug virtio disks [RHEL-9])
+- Resolves: RHEL-24045
+  (QEMU: default-enable dynamically using multiple memslots for virtio-mem)
+
 * Tue Jan 30 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-4
 - kvm-vfio-pci-Clear-MSI-X-IRQ-index-always.patch [RHEL-21293]
 - Resolves: RHEL-21293
