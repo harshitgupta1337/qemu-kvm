@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.2.0
-Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 6%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -536,6 +536,18 @@ Patch138: kvm-tests-unit-Bump-test-replication-timeout-to-60-secon.patch
 Patch139: kvm-iotests-iothreads-stream-Use-the-right-TimeoutError.patch
 # For RHEL-24045 - QEMU: default-enable dynamically using multiple memslots for virtio-mem
 Patch140: kvm-virtio-mem-default-enable-dynamic-memslots.patch
+# For RHEL-3934 - [qemu-kvm] Failed on repeatedly hotplug/unplug  disk iothread enabled  
+Patch141: kvm-virtio-scsi-Attach-event-vq-notifier-with-no_poll.patch
+# For RHEL-3934 - [qemu-kvm] Failed on repeatedly hotplug/unplug  disk iothread enabled  
+Patch142: kvm-virtio-Re-enable-notifications-after-drain.patch
+# For RHEL-3934 - [qemu-kvm] Failed on repeatedly hotplug/unplug  disk iothread enabled  
+Patch143: kvm-virtio-blk-Use-ioeventfd_attach-in-start_ioeventfd.patch
+# For RHEL-15394 - virtio-blk: qemu hang on "no response on QMP query-status" when write data to disk without enough space
+Patch144: kvm-virtio-blk-avoid-using-ioeventfd-state-in-irqfd-cond.patch
+# For RHEL-24988 - Mark virt-rhel9.{0,2}.0 machine types as deprecated
+Patch145: kvm-hw-arm-virt-deprecate-virt-rhel9.-0-2-.0-machine-typ.patch
+# For RHEL-17068 - Check/fix machine type compatibility for qemu-kvm 8.2.0 [x86_64]
+Patch146: kvm-x86-rhel-9.2.0-machine-type-compat-fix.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1597,6 +1609,19 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Feb 19 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-6
+- kvm-virtio-scsi-Attach-event-vq-notifier-with-no_poll.patch [RHEL-3934]
+- kvm-virtio-Re-enable-notifications-after-drain.patch [RHEL-3934]
+- kvm-virtio-blk-Use-ioeventfd_attach-in-start_ioeventfd.patch [RHEL-3934]
+- kvm-virtio-blk-avoid-using-ioeventfd-state-in-irqfd-cond.patch [RHEL-15394]
+- kvm-hw-arm-virt-deprecate-virt-rhel9.-0-2-.0-machine-typ.patch [RHEL-24988]
+- Resolves: RHEL-3934
+  ([qemu-kvm] Failed on repeatedly hotplug/unplug  disk iothread enabled  )
+- Resolves: RHEL-15394
+  (virtio-blk: qemu hang on "no response on QMP query-status" when write data to disk without enough space)
+- Resolves: RHEL-24988
+  (Mark virt-rhel9.{0,2}.0 machine types as deprecated)
+
 * Mon Feb 12 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-5
 - kvm-hv-balloon-use-get_min_alignment-to-express-32-GiB-a.patch [RHEL-20341]
 - kvm-memory-device-reintroduce-memory-region-size-check.patch [RHEL-20341]
