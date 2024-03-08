@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.2.0
-Release: 6%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -548,6 +548,10 @@ Patch144: kvm-virtio-blk-avoid-using-ioeventfd-state-in-irqfd-cond.patch
 Patch145: kvm-hw-arm-virt-deprecate-virt-rhel9.-0-2-.0-machine-typ.patch
 # For RHEL-17068 - Check/fix machine type compatibility for qemu-kvm 8.2.0 [x86_64]
 Patch146: kvm-x86-rhel-9.2.0-machine-type-compat-fix.patch
+# For RHEL-26049 - When max vcpu is greater than or equal to 246, qemu unable to init event notifier
+Patch147: kvm-qemu_init-increase-NOFILE-soft-limit-on-POSIX.patch
+# For RHEL-24614 - [RHEL9][chardev][s390x] qemu hit core dump while using TLS server from host to guest
+Patch148: kvm-chardev-char-socket-Fix-TLS-io-channels-sending-too-.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1609,6 +1613,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Fri Mar 08 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-7
+- kvm-qemu_init-increase-NOFILE-soft-limit-on-POSIX.patch [RHEL-26049]
+- kvm-chardev-char-socket-Fix-TLS-io-channels-sending-too-.patch [RHEL-24614]
+- Resolves: RHEL-26049
+  (When max vcpu is greater than or equal to 246, qemu unable to init event notifier)
+- Resolves: RHEL-24614
+  ([RHEL9][chardev][s390x] qemu hit core dump while using TLS server from host to guest)
+
 * Mon Feb 19 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-6
 - kvm-virtio-scsi-Attach-event-vq-notifier-with-no_poll.patch [RHEL-3934]
 - kvm-virtio-Re-enable-notifications-after-drain.patch [RHEL-3934]
