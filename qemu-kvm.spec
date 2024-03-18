@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.2.0
-Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -552,6 +552,46 @@ Patch146: kvm-x86-rhel-9.2.0-machine-type-compat-fix.patch
 Patch147: kvm-qemu_init-increase-NOFILE-soft-limit-on-POSIX.patch
 # For RHEL-24614 - [RHEL9][chardev][s390x] qemu hit core dump while using TLS server from host to guest
 Patch148: kvm-chardev-char-socket-Fix-TLS-io-channels-sending-too-.patch
+# For RHEL-19629 - CVE-2023-6683 qemu-kvm: QEMU: VNC: NULL pointer dereference in qemu_clipboard_request() [rhel-9]
+Patch149: kvm-ui-clipboard-mark-type-as-not-available-when-there-i.patch
+# For RHEL-19629 - CVE-2023-6683 qemu-kvm: QEMU: VNC: NULL pointer dereference in qemu_clipboard_request() [rhel-9]
+Patch150: kvm-ui-clipboard-add-asserts-for-update-and-request.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch151: kvm-hw-i386-pc-Defer-smbios_set_defaults-to-machine_done.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch152: kvm-Implement-base-of-SMBIOS-type-9-descriptor.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch153: kvm-Implement-SMBIOS-type-9-v2.6.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch154: kvm-smbios-cleanup-smbios_get_tables-from-legacy-handlin.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch155: kvm-smbios-get-rid-of-smbios_smp_sockets-global.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch156: kvm-smbios-get-rid-of-smbios_legacy-global.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch157: kvm-smbios-avoid-mangling-user-provided-tables.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch158: kvm-smbios-don-t-check-type4-structures-in-legacy-mode.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch159: kvm-smbios-add-smbios_add_usr_blob_size-helper.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch160: kvm-smbios-rename-expose-structures-bitmaps-used-by-both.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch161: kvm-smbios-build-legacy-mode-code-only-for-pc-machine.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch162: kvm-smbios-handle-errors-consistently.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch163: kvm-smbios-get-rid-of-global-smbios_ep_type.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch164: kvm-smbios-clear-smbios_type4_count-before-building-tabl.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch165: kvm-smbios-extend-smbios-entry-point-type-with-auto-valu.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch166: kvm-smbios-in-case-of-entry-point-is-auto-try-to-build-v.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch167: kvm-smbios-error-out-when-building-type-4-table-is-not-p.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch168: kvm-pc-q35-set-SMBIOS-entry-point-type-to-auto-by-defaul.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1613,6 +1653,32 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Mar 18 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-8
+- kvm-ui-clipboard-mark-type-as-not-available-when-there-i.patch [RHEL-19629]
+- kvm-ui-clipboard-add-asserts-for-update-and-request.patch [RHEL-19629]
+- kvm-hw-i386-pc-Defer-smbios_set_defaults-to-machine_done.patch [RHEL-21705]
+- kvm-Implement-base-of-SMBIOS-type-9-descriptor.patch [RHEL-21705]
+- kvm-Implement-SMBIOS-type-9-v2.6.patch [RHEL-21705]
+- kvm-smbios-cleanup-smbios_get_tables-from-legacy-handlin.patch [RHEL-21705]
+- kvm-smbios-get-rid-of-smbios_smp_sockets-global.patch [RHEL-21705]
+- kvm-smbios-get-rid-of-smbios_legacy-global.patch [RHEL-21705]
+- kvm-smbios-avoid-mangling-user-provided-tables.patch [RHEL-21705]
+- kvm-smbios-don-t-check-type4-structures-in-legacy-mode.patch [RHEL-21705]
+- kvm-smbios-add-smbios_add_usr_blob_size-helper.patch [RHEL-21705]
+- kvm-smbios-rename-expose-structures-bitmaps-used-by-both.patch [RHEL-21705]
+- kvm-smbios-build-legacy-mode-code-only-for-pc-machine.patch [RHEL-21705]
+- kvm-smbios-handle-errors-consistently.patch [RHEL-21705]
+- kvm-smbios-get-rid-of-global-smbios_ep_type.patch [RHEL-21705]
+- kvm-smbios-clear-smbios_type4_count-before-building-tabl.patch [RHEL-21705]
+- kvm-smbios-extend-smbios-entry-point-type-with-auto-valu.patch [RHEL-21705]
+- kvm-smbios-in-case-of-entry-point-is-auto-try-to-build-v.patch [RHEL-21705]
+- kvm-smbios-error-out-when-building-type-4-table-is-not-p.patch [RHEL-21705]
+- kvm-pc-q35-set-SMBIOS-entry-point-type-to-auto-by-defaul.patch [RHEL-21705]
+- Resolves: RHEL-19629
+  (CVE-2023-6683 qemu-kvm: QEMU: VNC: NULL pointer dereference in qemu_clipboard_request() [rhel-9])
+- Resolves: RHEL-21705
+  (pc-q35-rhel9.4.0 does not provide proper computer information)
+
 * Fri Mar 08 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-7
 - kvm-qemu_init-increase-NOFILE-soft-limit-on-POSIX.patch [RHEL-26049]
 - kvm-chardev-char-socket-Fix-TLS-io-channels-sending-too-.patch [RHEL-24614]
