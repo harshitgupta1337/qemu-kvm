@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.2.0
-Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 9%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -592,6 +592,14 @@ Patch166: kvm-smbios-in-case-of-entry-point-is-auto-try-to-build-v.patch
 Patch167: kvm-smbios-error-out-when-building-type-4-table-is-not-p.patch
 # For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
 Patch168: kvm-pc-q35-set-SMBIOS-entry-point-type-to-auto-by-defaul.patch
+# For RHEL-28125 - RHEL9.4 - KVM : Live migration of guest with multiple qcow devices remains incomplete.
+Patch169: kvm-mirror-Don-t-call-job_pause_point-under-graph-lock.patch
+# For RHEL-28125 - RHEL9.4 - KVM : Live migration of guest with multiple qcow devices remains incomplete.
+Patch170: kvm-nbd-server-Fix-race-in-draining-the-export.patch
+# For RHEL-28125 - RHEL9.4 - KVM : Live migration of guest with multiple qcow devices remains incomplete.
+Patch171: kvm-iotests-Add-test-for-reset-AioContext-switches-with-.patch
+# For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
+Patch172: kvm-pc-smbios-fixup-manufacturer-product-version-to-matc.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1653,6 +1661,16 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Wed Mar 20 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-9
+- kvm-mirror-Don-t-call-job_pause_point-under-graph-lock.patch [RHEL-28125]
+- kvm-nbd-server-Fix-race-in-draining-the-export.patch [RHEL-28125]
+- kvm-iotests-Add-test-for-reset-AioContext-switches-with-.patch [RHEL-28125]
+- kvm-pc-smbios-fixup-manufacturer-product-version-to-matc.patch [RHEL-21705]
+- Resolves: RHEL-28125
+  (RHEL9.4 - KVM : Live migration of guest with multiple qcow devices remains incomplete.)
+- Resolves: RHEL-21705
+  (pc-q35-rhel9.4.0 does not provide proper computer information)
+
 * Mon Mar 18 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-8
 - kvm-ui-clipboard-mark-type-as-not-available-when-there-i.patch [RHEL-19629]
 - kvm-ui-clipboard-add-asserts-for-update-and-request.patch [RHEL-19629]
