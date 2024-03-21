@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.2.0
-Release: 9%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 10%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -600,6 +600,12 @@ Patch170: kvm-nbd-server-Fix-race-in-draining-the-export.patch
 Patch171: kvm-iotests-Add-test-for-reset-AioContext-switches-with-.patch
 # For RHEL-21705 - pc-q35-rhel9.4.0 does not provide proper computer information
 Patch172: kvm-pc-smbios-fixup-manufacturer-product-version-to-matc.patch
+# For RHEL-24614 - [RHEL9][chardev] qemu hit core dump while using TLS server from host to guest
+Patch173: kvm-chardev-lower-priority-of-the-HUP-GSource-in-socket-.patch
+# For RHEL-24614 - [RHEL9][chardev] qemu hit core dump while using TLS server from host to guest
+Patch174: kvm-Revert-chardev-char-socket-Fix-TLS-io-channels-sendi.patch
+# For RHEL-24614 - [RHEL9][chardev] qemu hit core dump while using TLS server from host to guest
+Patch175: kvm-Revert-chardev-use-a-child-source-for-qio-input-sour.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1661,6 +1667,13 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Thu Mar 21 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-10
+- kvm-chardev-lower-priority-of-the-HUP-GSource-in-socket-.patch [RHEL-24614]
+- kvm-Revert-chardev-char-socket-Fix-TLS-io-channels-sendi.patch [RHEL-24614]
+- kvm-Revert-chardev-use-a-child-source-for-qio-input-sour.patch [RHEL-24614]
+- Resolves: RHEL-24614
+  ([RHEL9][chardev] qemu hit core dump while using TLS server from host to guest)
+
 * Wed Mar 20 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-9
 - kvm-mirror-Don-t-call-job_pause_point-under-graph-lock.patch [RHEL-28125]
 - kvm-nbd-server-Fix-race-in-draining-the-export.patch [RHEL-28125]
