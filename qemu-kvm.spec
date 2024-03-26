@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 8.2.0
-Release: 10%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 11%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -606,6 +606,10 @@ Patch173: kvm-chardev-lower-priority-of-the-HUP-GSource-in-socket-.patch
 Patch174: kvm-Revert-chardev-char-socket-Fix-TLS-io-channels-sendi.patch
 # For RHEL-24614 - [RHEL9][chardev] qemu hit core dump while using TLS server from host to guest
 Patch175: kvm-Revert-chardev-use-a-child-source-for-qio-input-sour.patch
+# For RHEL-28947 - Qemu crashing with "failed to set up stack guard page: Cannot allocate memory"
+Patch176: kvm-coroutine-cap-per-thread-local-pool-size.patch
+# For RHEL-28947 - Qemu crashing with "failed to set up stack guard page: Cannot allocate memory"
+Patch177: kvm-coroutine-reserve-5-000-mappings.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1667,6 +1671,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Mar 26 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-11
+- kvm-coroutine-cap-per-thread-local-pool-size.patch [RHEL-28947]
+- kvm-coroutine-reserve-5-000-mappings.patch [RHEL-28947]
+- Resolves: RHEL-28947
+  (Qemu crashing with "failed to set up stack guard page: Cannot allocate memory")
+
 * Thu Mar 21 2024 Miroslav Rezanina <mrezanin@redhat.com> - 8.2.0-10
 - kvm-chardev-lower-priority-of-the-HUP-GSource-in-socket-.patch [RHEL-24614]
 - kvm-Revert-chardev-char-socket-Fix-TLS-io-channels-sendi.patch [RHEL-24614]
