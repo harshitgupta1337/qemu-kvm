@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 9.0.0
-Release: 1%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 2%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -188,6 +188,10 @@ Patch0014: 0014-Use-qemu-kvm-in-documentation-instead-of-qemu-system.patch
 Patch0015: 0015-qcow2-Deprecation-warning-when-opening-v2-images-rw.patch
 Patch0016: 0016-Add-upstream-compatibility-bits.patch
 Patch0017: 0017-x86-rhel-9.4.0-machine-type-compat-fix.patch
+# For RHEL-34945 - [aarch64, kvm-unit-tests] all tests tagged as FAIL [qemu-kvm: GLib: g_ptr_array_add: assertion 'rarray' failed]
+Patch18: kvm-hw-arm-virt-Fix-spurious-call-to-arm_virt_compat_set.patch
+# For RHEL-30362 - Check/fix machine type compatibility for QEMU 9.0.0 [x86_64][rhel-9.5.0]
+Patch19: kvm-Revert-x86-rhel-9.4.0-machine-type-compat-fix.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1254,6 +1258,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue May 07 2024 Miroslav Rezanina <mrezanin@redhat.com> - 9.0.0-2
+- kvm-hw-arm-virt-Fix-spurious-call-to-arm_virt_compat_set.patch [RHEL-34945]
+- kvm-Revert-x86-rhel-9.4.0-machine-type-compat-fix.patch [RHEL-30362]
+- Resolves: RHEL-34945
+  ([aarch64, kvm-unit-tests] all tests tagged as FAIL [qemu-kvm: GLib: g_ptr_array_add: assertion 'rarray' failed] )
+- Resolves: RHEL-30362
+  (Check/fix machine type compatibility for QEMU 9.0.0 [x86_64][rhel-9.5.0])
+
 * Wed Apr 24 2024 Miroslav Rezanina <mrezanin@redhat.com> - 9.0.0-1
 - Rebase to QEMU 9.0.0 [RHEL-28073]
 - Resolves: RHEL-28073
