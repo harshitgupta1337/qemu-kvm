@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 9.0.0
-Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -204,6 +204,18 @@ Patch23: kvm-iotests-test-NBD-TLS-iothread.patch
 Patch24: kvm-virtio-gpu-fix-v2-migration.patch
 # For RHEL-34621 - [RHEL9.5.0][stable_guest_abi]Failed to migrate VM with (qemu) qemu-kvm: Missing section footer for 0000:00:01.0/virtio-gpu qemu-kvm: load of migration failed: Invalid argument
 Patch25: kvm-rhel-9.4.0-machine-type-compat-for-virtio-gpu-migrat.patch
+# For RHEL-42411 - qemu-kvm: linux-aio: add support for IO_CMD_FDSYNC command
+Patch26: kvm-linux-aio-add-IO_CMD_FDSYNC-command-support.patch
+# For RHEL-34618 - aio=io_uring: Assertion failure `luringcb->co->ctx == s->aio_context' with block_resize
+# For RHEL-38697 - aio=native: Assertion failure `laiocb->co->ctx == laiocb->ctx->aio_context' with block_resize
+Patch27: kvm-Revert-monitor-use-aio_co_reschedule_self.patch
+# For RHEL-34618 - aio=io_uring: Assertion failure `luringcb->co->ctx == s->aio_context' with block_resize
+# For RHEL-38697 - aio=native: Assertion failure `laiocb->co->ctx == laiocb->ctx->aio_context' with block_resize
+Patch28: kvm-aio-warn-about-iohandler_ctx-special-casing.patch
+# For RHEL-36159 - qemu crash on Assertion `block->n_free_ciphers > 0' failed in guest installation with luks and iothread-vq-mapping
+Patch29: kvm-block-crypto-create-ciphers-on-demand.patch
+# For RHEL-36159 - qemu crash on Assertion `block->n_free_ciphers > 0' failed in guest installation with luks and iothread-vq-mapping
+Patch30: kvm-crypto-block-drop-qcrypto_block_open-n_threads-argum.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1270,6 +1282,21 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Jun 25 2024 Miroslav Rezanina <mrezanin@redhat.com> - 9.0.0-5
+- kvm-linux-aio-add-IO_CMD_FDSYNC-command-support.patch [RHEL-42411]
+- kvm-Revert-monitor-use-aio_co_reschedule_self.patch [RHEL-34618 RHEL-38697]
+- kvm-aio-warn-about-iohandler_ctx-special-casing.patch [RHEL-34618 RHEL-38697]
+- kvm-block-crypto-create-ciphers-on-demand.patch [RHEL-36159]
+- kvm-crypto-block-drop-qcrypto_block_open-n_threads-argum.patch [RHEL-36159]
+- Resolves: RHEL-42411
+  (qemu-kvm: linux-aio: add support for IO_CMD_FDSYNC command)
+- Resolves: RHEL-34618
+  (aio=io_uring: Assertion failure `luringcb->co->ctx == s->aio_context' with block_resize)
+- Resolves: RHEL-38697
+  (aio=native: Assertion failure `laiocb->co->ctx == laiocb->ctx->aio_context' with block_resize)
+- Resolves: RHEL-36159
+  (qemu crash on Assertion `block->n_free_ciphers > 0' failed in guest installation with luks and iothread-vq-mapping)
+
 * Mon Jun 17 2024 Miroslav Rezanina <mrezanin@redhat.com> - 9.0.0-4
 - kvm-qio-Inherit-follow_coroutine_ctx-across-TLS.patch [RHEL-33440]
 - kvm-iotests-test-NBD-TLS-iothread.patch [RHEL-33440]
