@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 9.0.0
-Release: 6%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -224,6 +224,10 @@ Patch32: kvm-iotests-244-Don-t-store-data-file-with-protocol-in-i.patch
 Patch33: kvm-iotests-270-Don-t-store-data-file-with-json-prefix-i.patch
 # For RHEL-35611 - CVE-2024-4467 qemu-kvm: QEMU: 'qemu-img info' leads to host file read/write [rhel-9.5]
 Patch34: kvm-block-Parse-filenames-only-when-explicitly-requested.patch
+# For RHEL-40708 - [RHEL9.5.0][virtio_fs][s390x] after hot-unplug the vhost-user-fs-ccw device, the device is failed to hot-plug again 
+Patch35: kvm-hw-virtio-Fix-the-de-initialization-of-vhost-user-de.patch
+# For RHEL-39936 - ARCH_DMA_MINALIGN smaller than CTR_EL0.CWG (128 < 256) on FUJITSU
+Patch36: kvm-hw-arm-virt-Avoid-unexpected-warning-from-Linux-gues.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1290,6 +1294,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Jul 15 2024 Miroslav Rezanina <mrezanin@redhat.com> - 9.0.0-7
+- kvm-hw-virtio-Fix-the-de-initialization-of-vhost-user-de.patch [RHEL-40708]
+- kvm-hw-arm-virt-Avoid-unexpected-warning-from-Linux-gues.patch [RHEL-39936]
+- Resolves: RHEL-40708
+  ([RHEL9.5.0][virtio_fs][s390x] after hot-unplug the vhost-user-fs-ccw device, the device is failed to hot-plug again )
+- Resolves: RHEL-39936
+  (ARCH_DMA_MINALIGN smaller than CTR_EL0.CWG (128 < 256) on FUJITSU)
+
 * Thu Jul 04 2024 Miroslav Rezanina <mrezanin@redhat.com> - 9.0.0-6
 - kvm-qcow2-Don-t-open-data_file-with-BDRV_O_NO_IO.patch [RHEL-35611]
 - kvm-iotests-244-Don-t-store-data-file-with-protocol-in-i.patch [RHEL-35611]
