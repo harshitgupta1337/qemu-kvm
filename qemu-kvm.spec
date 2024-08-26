@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 9.0.0
-Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 9%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -428,6 +428,8 @@ Patch134: kvm-nbd-server-CVE-2024-7409-Cap-default-max-connections.patch
 Patch135: kvm-nbd-server-CVE-2024-7409-Drop-non-negotiating-client.patch
 # For RHEL-52617 - CVE-2024-7409 qemu-kvm: Denial of Service via Improper Synchronization in QEMU NBD Server During Socket Closure [rhel-9.5]
 Patch136: kvm-nbd-server-CVE-2024-7409-Close-stray-clients-at-serv.patch
+# For RHEL-52250 - fsfreeze hooks break on the systems first restorecon
+Patch137: kvm-qemu-guest-agent-Update-the-logfile-path-of-qga-fsfr.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1494,6 +1496,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Aug 26 2024 Miroslav Rezanina <mrezanin@redhat.com> - 9.0.0-9
+- kvm-qemu-guest-agent-Update-the-logfile-path-of-qga-fsfr.patch [RHEL-52250]
+- Resolves: RHEL-52250
+  (fsfreeze hooks break on the systems first restorecon)
+
 * Wed Aug 14 2024 Miroslav Rezanina <mrezanin@redhat.com> - 9.0.0-8
 - kvm-introduce-pc_rhel_9_5_compat.patch [RHEL-39544]
 - kvm-target-i386-add-guest-phys-bits-cpu-property.patch [RHEL-39544]
