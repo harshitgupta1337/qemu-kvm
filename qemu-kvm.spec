@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 9.0.0
-Release: 9%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 10%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -430,6 +430,8 @@ Patch135: kvm-nbd-server-CVE-2024-7409-Drop-non-negotiating-client.patch
 Patch136: kvm-nbd-server-CVE-2024-7409-Close-stray-clients-at-serv.patch
 # For RHEL-52250 - fsfreeze hooks break on the systems first restorecon
 Patch137: kvm-qemu-guest-agent-Update-the-logfile-path-of-qga-fsfr.patch
+# For RHEL-52617 - CVE-2024-7409 qemu-kvm: Denial of Service via Improper Synchronization in QEMU NBD Server During Socket Closure [rhel-9.5]
+Patch138: kvm-nbd-server-CVE-2024-7409-Avoid-use-after-free-when-c.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1496,6 +1498,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Sep 02 2024 Miroslav Rezanina <mrezanin@redhat.com> - 9.0.0-10
+- kvm-nbd-server-CVE-2024-7409-Avoid-use-after-free-when-c.patch [RHEL-52617]
+- Resolves: RHEL-52617
+  (CVE-2024-7409 qemu-kvm: Denial of Service via Improper Synchronization in QEMU NBD Server During Socket Closure [rhel-9.5])
+
 * Mon Aug 26 2024 Miroslav Rezanina <mrezanin@redhat.com> - 9.0.0-9
 - kvm-qemu-guest-agent-Update-the-logfile-path-of-qga-fsfr.patch [RHEL-52250]
 - Resolves: RHEL-52250
