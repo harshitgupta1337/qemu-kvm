@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 9.1.0
-Release: 24%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 25%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -621,6 +621,120 @@ Patch218: kvm-tests-Add-iotest-mirror-sparse-for-recent-patches.patch
 # For RHEL-82906 - --migrate-disks-detect-zeroes doesn't take effect for disk migration [rhel-9.7]
 # For RHEL-83015 - Disk size of target raw image is full allocated when doing mirror with default discard value [rhel-9.7]
 Patch219: kvm-mirror-Reduce-I-O-when-destination-is-detect-zeroes-.patch
+# For RHEL-98554 - [s390x][RHEL9.7.0][virtio_block] there would be memory leak with virtio_blk disks
+Patch220: kvm-s390x-Fix-leak-in-machine_set_loadparm.patch
+# For RHEL-98554 - [s390x][RHEL9.7.0][virtio_block] there would be memory leak with virtio_blk disks
+Patch221: kvm-hw-s390x-ccw-device-Fix-memory-leak-in-loadparm-sett.patch
+# For RHEL-66202 - [AMDSERVER 9.6 Feature] qemu: Interrupt Remap support for emulated amd viommu
+Patch222: kvm-amd_iommu-Rename-variable-mmio-to-mr_mmio.patch
+# For RHEL-66202 - [AMDSERVER 9.6 Feature] qemu: Interrupt Remap support for emulated amd viommu
+Patch223: kvm-amd_iommu-Add-support-for-pass-though-mode.patch
+# For RHEL-66202 - [AMDSERVER 9.6 Feature] qemu: Interrupt Remap support for emulated amd viommu
+Patch224: kvm-amd_iommu-Use-shared-memory-region-for-Interrupt-Rem.patch
+# For RHEL-66202 - [AMDSERVER 9.6 Feature] qemu: Interrupt Remap support for emulated amd viommu
+Patch225: kvm-amd_iommu-Send-notification-when-invalidate-interrup.patch
+# For RHEL-66202 - [AMDSERVER 9.6 Feature] qemu: Interrupt Remap support for emulated amd viommu
+Patch226: kvm-amd_iommu-Check-APIC-ID-255-for-XTSup.patch
+# For RHEL-67104 - postcopy on the destination host can't switch into pause status under the network issue if boot VM with '-S'
+Patch227: kvm-io-Fix-partial-struct-copy-in-qio_dns_resolver_looku.patch
+# For RHEL-67104 - postcopy on the destination host can't switch into pause status under the network issue if boot VM with '-S'
+Patch228: kvm-util-qemu-sockets-Refactor-setting-client-sockopts-i.patch
+# For RHEL-67104 - postcopy on the destination host can't switch into pause status under the network issue if boot VM with '-S'
+Patch229: kvm-util-qemu-sockets-Refactor-success-and-failure-paths.patch
+# For RHEL-67104 - postcopy on the destination host can't switch into pause status under the network issue if boot VM with '-S'
+Patch230: kvm-util-qemu-sockets-Add-support-for-keep-alive-flag-to.patch
+# For RHEL-67104 - postcopy on the destination host can't switch into pause status under the network issue if boot VM with '-S'
+Patch231: kvm-util-qemu-sockets-Refactor-inet_parse-to-use-QemuOpt.patch
+# For RHEL-67104 - postcopy on the destination host can't switch into pause status under the network issue if boot VM with '-S'
+Patch232: kvm-util-qemu-sockets-Introduce-inet-socket-options-cont.patch
+# For RHEL-67104 - postcopy on the destination host can't switch into pause status under the network issue if boot VM with '-S'
+Patch233: kvm-tests-unit-test-util-sockets-fix-mem-leak-on-error-o.patch
+# For RHEL-52649 - [AMDSERVER 9.6 Feature] Turin: Qemu EPYC-Turin Model
+Patch234: kvm-target-i386-Expose-bits-related-to-SRSO-vulnerabilit.patch
+# For RHEL-52649 - [AMDSERVER 9.6 Feature] Turin: Qemu EPYC-Turin Model
+Patch235: kvm-target-i386-Add-PerfMonV2-feature-bit.patch
+# For RHEL-52649 - [AMDSERVER 9.6 Feature] Turin: Qemu EPYC-Turin Model
+Patch236: kvm-target-i386-Update-EPYC-CPU-model-for-Cache-property.patch
+# For RHEL-52649 - [AMDSERVER 9.6 Feature] Turin: Qemu EPYC-Turin Model
+Patch237: kvm-target-i386-Update-EPYC-Rome-CPU-model-for-Cache-pro.patch
+# For RHEL-52649 - [AMDSERVER 9.6 Feature] Turin: Qemu EPYC-Turin Model
+Patch238: kvm-target-i386-Update-EPYC-Milan-CPU-model-for-Cache-pr.patch
+# For RHEL-52649 - [AMDSERVER 9.6 Feature] Turin: Qemu EPYC-Turin Model
+Patch239: kvm-target-i386-Add-couple-of-feature-bits-in-CPUID_Fn80.patch
+# For RHEL-52649 - [AMDSERVER 9.6 Feature] Turin: Qemu EPYC-Turin Model
+Patch240: kvm-target-i386-Update-EPYC-Genoa-for-Cache-property-per.patch
+# For RHEL-52649 - [AMDSERVER 9.6 Feature] Turin: Qemu EPYC-Turin Model
+Patch241: kvm-target-i386-Add-support-for-EPYC-Turin-model.patch
+# For RHEL-70926 - Qemu/amd-iommu: Advertise a suitable device id
+Patch242: kvm-hw-i386-amd_iommu-Assign-pci-id-0x1419-for-the-AMD-I.patch
+# For RHEL-70925 - Qemu/amd-iommu: Add ability to manually specify the AMDVI-PCI device
+Patch243: kvm-hw-i386-amd_iommu-Isolate-AMDVI-PCI-from-amd-iommu-d.patch
+# For RHEL-70925 - Qemu/amd-iommu: Add ability to manually specify the AMDVI-PCI device
+Patch244: kvm-hw-i386-amd_iommu-Allow-migration-when-explicitly-cr.patch
+# For RHEL-70925 - Qemu/amd-iommu: Add ability to manually specify the AMDVI-PCI device
+Patch245: kvm-Enable-amd-iommu-device.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch246: kvm-include-qemu-compiler-add-QEMU_UNINITIALIZED-attribu.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch247: kvm-hw-virtio-virtio-avoid-cost-of-ftrivial-auto-var-ini.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch248: kvm-block-skip-automatic-zero-init-of-large-array-in-ioq.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch249: kvm-chardev-char-fd-skip-automatic-zero-init-of-large-ar.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch250: kvm-chardev-char-pty-skip-automatic-zero-init-of-large-a.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch251: kvm-chardev-char-socket-skip-automatic-zero-init-of-larg.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch252: kvm-hw-audio-ac97-skip-automatic-zero-init-of-large-arra.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch253: kvm-hw-audio-cs4231a-skip-automatic-zero-init-of-large-a.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch254: kvm-hw-audio-es1370-skip-automatic-zero-init-of-large-ar.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch255: kvm-hw-audio-gus-skip-automatic-zero-init-of-large-array.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch256: kvm-hw-audio-marvell_88w8618-skip-automatic-zero-init-of.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch257: kvm-hw-audio-sb16-skip-automatic-zero-init-of-large-arra.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch258: kvm-hw-audio-via-ac97-skip-automatic-zero-init-of-large-.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch259: kvm-hw-char-sclpconsole-lm-skip-automatic-zero-init-of-l.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch260: kvm-hw-dma-xlnx_csu_dma-skip-automatic-zero-init-of-larg.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch261: kvm-hw-display-vmware_vga-skip-automatic-zero-init-of-la.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch262: kvm-hw-hyperv-syndbg-skip-automatic-zero-init-of-large-a.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch263: kvm-hw-misc-aspeed_hace-skip-automatic-zero-init-of-larg.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch264: kvm-hw-net-rtl8139-skip-automatic-zero-init-of-large-arr.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch265: kvm-hw-net-tulip-skip-automatic-zero-init-of-large-array.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch266: kvm-hw-net-virtio-net-skip-automatic-zero-init-of-large-.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch267: kvm-hw-net-xgamc-skip-automatic-zero-init-of-large-array.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch268: kvm-hw-nvme-ctrl-skip-automatic-zero-init-of-large-array.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch269: kvm-hw-ppc-spapr_tpm_proxy-skip-automatic-zero-init-of-l.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch270: kvm-hw-usb-hcd-ohci-skip-automatic-zero-init-of-large-ar.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch271: kvm-hw-scsi-lsi53c895a-skip-automatic-zero-init-of-large.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch272: kvm-hw-scsi-megasas-skip-automatic-zero-init-of-large-ar.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch273: kvm-hw-ufs-lu-skip-automatic-zero-init-of-large-array.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch274: kvm-net-socket-skip-automatic-zero-init-of-large-array.patch
+# For RHEL-99888 - -ftrivial-auto-var-init=zero reduced performance [rhel-9]
+Patch275: kvm-net-stream-skip-automatic-zero-init-of-large-array.patch
+# For RHEL-100741 - Video stuck after switchover phase when play one video during migration [rhel-9]
+Patch276: kvm-ui-vnc-Update-display-update-interval-when-VM-state-.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1696,6 +1810,81 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Jul 08 2025 Miroslav Rezanina <mrezanin@redhat.com> - 9.1.0-25
+- kvm-s390x-Fix-leak-in-machine_set_loadparm.patch [RHEL-98554]
+- kvm-hw-s390x-ccw-device-Fix-memory-leak-in-loadparm-sett.patch [RHEL-98554]
+- kvm-amd_iommu-Rename-variable-mmio-to-mr_mmio.patch [RHEL-66202]
+- kvm-amd_iommu-Add-support-for-pass-though-mode.patch [RHEL-66202]
+- kvm-amd_iommu-Use-shared-memory-region-for-Interrupt-Rem.patch [RHEL-66202]
+- kvm-amd_iommu-Send-notification-when-invalidate-interrup.patch [RHEL-66202]
+- kvm-amd_iommu-Check-APIC-ID-255-for-XTSup.patch [RHEL-66202]
+- kvm-io-Fix-partial-struct-copy-in-qio_dns_resolver_looku.patch [RHEL-67104]
+- kvm-util-qemu-sockets-Refactor-setting-client-sockopts-i.patch [RHEL-67104]
+- kvm-util-qemu-sockets-Refactor-success-and-failure-paths.patch [RHEL-67104]
+- kvm-util-qemu-sockets-Add-support-for-keep-alive-flag-to.patch [RHEL-67104]
+- kvm-util-qemu-sockets-Refactor-inet_parse-to-use-QemuOpt.patch [RHEL-67104]
+- kvm-util-qemu-sockets-Introduce-inet-socket-options-cont.patch [RHEL-67104]
+- kvm-tests-unit-test-util-sockets-fix-mem-leak-on-error-o.patch [RHEL-67104]
+- kvm-target-i386-Expose-bits-related-to-SRSO-vulnerabilit.patch [RHEL-52649]
+- kvm-target-i386-Add-PerfMonV2-feature-bit.patch [RHEL-52649]
+- kvm-target-i386-Update-EPYC-CPU-model-for-Cache-property.patch [RHEL-52649]
+- kvm-target-i386-Update-EPYC-Rome-CPU-model-for-Cache-pro.patch [RHEL-52649]
+- kvm-target-i386-Update-EPYC-Milan-CPU-model-for-Cache-pr.patch [RHEL-52649]
+- kvm-target-i386-Add-couple-of-feature-bits-in-CPUID_Fn80.patch [RHEL-52649]
+- kvm-target-i386-Update-EPYC-Genoa-for-Cache-property-per.patch [RHEL-52649]
+- kvm-target-i386-Add-support-for-EPYC-Turin-model.patch [RHEL-52649]
+- kvm-hw-i386-amd_iommu-Assign-pci-id-0x1419-for-the-AMD-I.patch [RHEL-70926]
+- kvm-hw-i386-amd_iommu-Isolate-AMDVI-PCI-from-amd-iommu-d.patch [RHEL-70925]
+- kvm-hw-i386-amd_iommu-Allow-migration-when-explicitly-cr.patch [RHEL-70925]
+- kvm-Enable-amd-iommu-device.patch [RHEL-70925]
+- kvm-include-qemu-compiler-add-QEMU_UNINITIALIZED-attribu.patch [RHEL-99888]
+- kvm-hw-virtio-virtio-avoid-cost-of-ftrivial-auto-var-ini.patch [RHEL-99888]
+- kvm-block-skip-automatic-zero-init-of-large-array-in-ioq.patch [RHEL-99888]
+- kvm-chardev-char-fd-skip-automatic-zero-init-of-large-ar.patch [RHEL-99888]
+- kvm-chardev-char-pty-skip-automatic-zero-init-of-large-a.patch [RHEL-99888]
+- kvm-chardev-char-socket-skip-automatic-zero-init-of-larg.patch [RHEL-99888]
+- kvm-hw-audio-ac97-skip-automatic-zero-init-of-large-arra.patch [RHEL-99888]
+- kvm-hw-audio-cs4231a-skip-automatic-zero-init-of-large-a.patch [RHEL-99888]
+- kvm-hw-audio-es1370-skip-automatic-zero-init-of-large-ar.patch [RHEL-99888]
+- kvm-hw-audio-gus-skip-automatic-zero-init-of-large-array.patch [RHEL-99888]
+- kvm-hw-audio-marvell_88w8618-skip-automatic-zero-init-of.patch [RHEL-99888]
+- kvm-hw-audio-sb16-skip-automatic-zero-init-of-large-arra.patch [RHEL-99888]
+- kvm-hw-audio-via-ac97-skip-automatic-zero-init-of-large-.patch [RHEL-99888]
+- kvm-hw-char-sclpconsole-lm-skip-automatic-zero-init-of-l.patch [RHEL-99888]
+- kvm-hw-dma-xlnx_csu_dma-skip-automatic-zero-init-of-larg.patch [RHEL-99888]
+- kvm-hw-display-vmware_vga-skip-automatic-zero-init-of-la.patch [RHEL-99888]
+- kvm-hw-hyperv-syndbg-skip-automatic-zero-init-of-large-a.patch [RHEL-99888]
+- kvm-hw-misc-aspeed_hace-skip-automatic-zero-init-of-larg.patch [RHEL-99888]
+- kvm-hw-net-rtl8139-skip-automatic-zero-init-of-large-arr.patch [RHEL-99888]
+- kvm-hw-net-tulip-skip-automatic-zero-init-of-large-array.patch [RHEL-99888]
+- kvm-hw-net-virtio-net-skip-automatic-zero-init-of-large-.patch [RHEL-99888]
+- kvm-hw-net-xgamc-skip-automatic-zero-init-of-large-array.patch [RHEL-99888]
+- kvm-hw-nvme-ctrl-skip-automatic-zero-init-of-large-array.patch [RHEL-99888]
+- kvm-hw-ppc-spapr_tpm_proxy-skip-automatic-zero-init-of-l.patch [RHEL-99888]
+- kvm-hw-usb-hcd-ohci-skip-automatic-zero-init-of-large-ar.patch [RHEL-99888]
+- kvm-hw-scsi-lsi53c895a-skip-automatic-zero-init-of-large.patch [RHEL-99888]
+- kvm-hw-scsi-megasas-skip-automatic-zero-init-of-large-ar.patch [RHEL-99888]
+- kvm-hw-ufs-lu-skip-automatic-zero-init-of-large-array.patch [RHEL-99888]
+- kvm-net-socket-skip-automatic-zero-init-of-large-array.patch [RHEL-99888]
+- kvm-net-stream-skip-automatic-zero-init-of-large-array.patch [RHEL-99888]
+- kvm-ui-vnc-Update-display-update-interval-when-VM-state-.patch [RHEL-100741]
+- Resolves: RHEL-98554
+  ([s390x][RHEL9.7.0][virtio_block] there would be memory leak with virtio_blk disks)
+- Resolves: RHEL-66202
+  ([AMDSERVER 9.6 Feature] qemu: Interrupt Remap support for emulated amd viommu)
+- Resolves: RHEL-67104
+  (postcopy on the destination host can't switch into pause status under the network issue if boot VM with '-S')
+- Resolves: RHEL-52649
+  ([AMDSERVER 9.6 Feature] Turin: Qemu EPYC-Turin Model)
+- Resolves: RHEL-70926
+  (Qemu/amd-iommu: Advertise a suitable device id)
+- Resolves: RHEL-70925
+  (Qemu/amd-iommu: Add ability to manually specify the AMDVI-PCI device)
+- Resolves: RHEL-99888
+  (-ftrivial-auto-var-init=zero reduced performance [rhel-9])
+- Resolves: RHEL-100741
+  (Video stuck after switchover phase when play one video during migration [rhel-9])
+
 * Mon Jun 16 2025 Jon Maloy <jmaloy@redhat.com> - 9.1.0-24
 - kvm-s390x-pci-add-support-for-guests-that-request-direct.patch [RHEL-11430]
 - kvm-s390x-pci-indicate-QEMU-supports-relaxed-translation.patch [RHEL-11430]
