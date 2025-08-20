@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 9.1.0
-Release: 25%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 26%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -735,6 +735,8 @@ Patch274: kvm-net-socket-skip-automatic-zero-init-of-large-array.patch
 Patch275: kvm-net-stream-skip-automatic-zero-init-of-large-array.patch
 # For RHEL-100741 - Video stuck after switchover phase when play one video during migration [rhel-9]
 Patch276: kvm-ui-vnc-Update-display-update-interval-when-VM-state-.patch
+# For RHEL-108726 - Openstack guest becomes inaccessible via network when storage network on the hypervisor is disabled/lost [rhel-9]
+Patch277: kvm-rbd-Fix-.bdrv_get_specific_info-implementation.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1810,6 +1812,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Wed Aug 20 2025 Jon Maloy <jmaloy@redhat.com> - 9.1.0-26
+- kvm-rbd-Fix-.bdrv_get_specific_info-implementation.patch [RHEL-108726]
+- Resolves: RHEL-108726
+  (Openstack guest becomes inaccessible via network when storage network on the hypervisor is disabled/lost [rhel-9])
+
 * Tue Jul 08 2025 Miroslav Rezanina <mrezanin@redhat.com> - 9.1.0-25
 - kvm-s390x-Fix-leak-in-machine_set_loadparm.patch [RHEL-98554]
 - kvm-hw-s390x-ccw-device-Fix-memory-leak-in-loadparm-sett.patch [RHEL-98554]
