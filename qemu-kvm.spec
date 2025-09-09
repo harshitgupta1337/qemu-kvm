@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 9.1.0
-Release: 26%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 27%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -737,6 +737,466 @@ Patch275: kvm-net-stream-skip-automatic-zero-init-of-large-array.patch
 Patch276: kvm-ui-vnc-Update-display-update-interval-when-VM-state-.patch
 # For RHEL-108726 - Openstack guest becomes inaccessible via network when storage network on the hypervisor is disabled/lost [rhel-9]
 Patch277: kvm-rbd-Fix-.bdrv_get_specific_info-implementation.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch278: kvm-target-i386-Make-invtsc-migratable-when-user-sets-ts.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch279: kvm-target-i386-Enable-fdp-excptn-only-and-zero-fcs-fds.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch280: kvm-kvm-i386-make-kvm_filter_msr-and-related-definitions.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch281: kvm-kvm-remove-unnecessary-ifdef.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch282: kvm-crypto-Define-macros-for-hash-algorithm-digest-lengt.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch283: kvm-i386-cpu-Drop-the-check-of-phys_bits-in-host_cpu_rea.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch284: kvm-i386-cpu-Extract-a-common-fucntion-to-setup-value-of.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch285: kvm-i386-cpu-Drop-the-variable-smp_cores-and-smp_threads.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch286: kvm-i386-cpu-Drop-cores_per_pkg-in-cpu_x86_cpuid.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch287: kvm-i386-topology-Update-the-comment-of-x86_apicid_from_.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch288: kvm-i386-topology-Introduce-helpers-for-various-topology.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch289: kvm-i386-cpu-Track-a-X86CPUTopoInfo-directly-in-CPUX86St.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch290: kvm-i386-cpu-Hoist-check-of-CPUID_EXT3_TOPOEXT-against-t.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch291: kvm-cpu-Remove-nr_cores-from-struct-CPUState.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch292: kvm-i386-cpu-Set-up-CPUID_HT-in-x86_cpu_expand_features-.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch293: kvm-i386-cpu-Set-and-track-CPUID_EXT3_CMP_LEG-in-env-fea.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch294: kvm-i386-Remove-unused-parameter-uint32_t-bit-in-feature.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch295: kvm-target-i386-Print-CPUID-subleaf-info-for-unsupported.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch296: kvm-target-i386-sev-Reduce-system-specific-declarations.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch297: kvm-physmem-replace-assertion-with-error.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch298: kvm-redhat-target-i386-add-CPUID-and-MSR-bits-from-Clear.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch299: kvm-qom-reverse-order-of-instance_post_init-calls.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch300: kvm-target-i386-Remove-AccelCPUClass-cpu_class_init-need.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch301: kvm-i386-cpu-Consolidate-the-helper-to-get-Host-s-vendor.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch302: kvm-rocker-do-not-pollute-the-namespace.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch303: kvm-linux-headers-Update-to-Linux-v6.14-rc3.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch304: kvm-linux-headers-Update-to-Linux-v6.15-rc3.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch305: kvm-linux-headers-update-from-6.15-kvm-next.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch306: kvm-update-Linux-headers-to-v6.16-rc3.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch307: kvm-update-Linux-headers-to-KVM-tree-master.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch308: kvm-i386-Introduce-tdx-guest-object.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch309: kvm-i386-tdx-Implement-tdx_kvm_type-for-TDX.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch310: kvm-i386-tdx-Implement-tdx_kvm_init-to-initialize-TDX-VM.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch311: kvm-i386-tdx-Get-tdx_capabilities-via-KVM_TDX_CAPABILITI.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch312: kvm-i386-tdx-Introduce-is_tdx_vm-helper-and-cache-tdx_gu.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch313: kvm-kvm-Introduce-kvm_arch_pre_create_vcpu.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch314: kvm-i386-tdx-Initialize-TDX-before-creating-TD-vcpus.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch315: kvm-i386-tdx-Add-property-sept-ve-disable-for-tdx-guest-.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch316: kvm-i386-tdx-Make-sept_ve_disable-set-by-default.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch317: kvm-i386-tdx-Wire-CPU-features-up-with-attributes-of-TD-.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch318: kvm-i386-tdx-Validate-TD-attributes.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch319: kvm-i386-tdx-Support-user-configurable-mrconfigid-mrowne.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch320: kvm-i386-tdx-Set-APIC-bus-rate-to-match-with-what-TDX-mo.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch321: kvm-i386-tdx-Implement-user-specified-tsc-frequency.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch322: kvm-i386-tdx-load-TDVF-for-TD-guest.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch323: kvm-i386-tdvf-Introduce-function-to-parse-TDVF-metadata.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch324: kvm-i386-tdx-Parse-TDVF-metadata-for-TDX-VM.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch325: kvm-i386-tdx-Don-t-initialize-pc.rom-for-TDX-VMs.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch326: kvm-i386-tdx-Track-mem_ptr-for-each-firmware-entry-of-TD.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch327: kvm-i386-tdx-Track-RAM-entries-for-TDX-VM.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch328: kvm-headers-Add-definitions-from-UEFI-spec-for-volumes-r.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch329: kvm-i386-tdx-Setup-the-TD-HOB-list.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch330: kvm-i386-tdx-Add-TDVF-memory-via-KVM_TDX_INIT_MEM_REGION.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch331: kvm-i386-tdx-Call-KVM_TDX_INIT_VCPU-to-initialize-TDX-vc.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch332: kvm-i386-tdx-Finalize-TDX-VM.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch333: kvm-i386-tdx-Enable-user-exit-on-KVM_HC_MAP_GPA_RANGE.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch334: kvm-i386-tdx-Handle-KVM_SYSTEM_EVENT_TDX_FATAL.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch335: kvm-i386-tdx-Wire-TDX_REPORT_FATAL_ERROR-with-GuestPanic.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch336: kvm-kvm-Check-KVM_CAP_MAX_VCPUS-at-vm-level.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch337: kvm-i386-cpu-introduce-x86_confidential_guest_cpu_instan.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch338: kvm-i386-tdx-implement-tdx_cpu_instance_init.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch339: kvm-i386-cpu-Introduce-enable_cpuid_0x1f-to-force-exposi.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch340: kvm-i386-tdx-Force-exposing-CPUID-0x1f.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch341: kvm-i386-tdx-Set-kvm_readonly_mem_enabled-to-false-for-T.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch342: kvm-i386-tdx-Disable-SMM-for-TDX-VMs.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch343: kvm-i386-tdx-Disable-PIC-for-TDX-VMs.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch344: kvm-i386-tdx-Set-and-check-kernel_irqchip-mode-for-TDX.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch345: kvm-i386-tdx-Don-t-synchronize-guest-tsc-for-TDs.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch346: kvm-i386-tdx-Only-configure-MSR_IA32_UCODE_REV-in-kvm_in.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch347: kvm-i386-apic-Skip-kvm_apic_put-for-TDX.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch348: kvm-cpu-Don-t-set-vcpu_dirty-when-guest_state_protected.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch349: kvm-i386-cgs-Rename-mask_cpuid_features-to-adjust_cpuid_.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch350: kvm-i386-tdx-Implement-adjust_cpuid_features-for-TDX.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch351: kvm-i386-tdx-Add-TDX-fixed1-bits-to-supported-CPUIDs.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch352: kvm-i386-tdx-Add-supported-CPUID-bits-related-to-TD-Attr.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch353: kvm-i386-tdx-Add-supported-CPUID-bits-relates-to-XFAM.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch354: kvm-i386-tdx-Add-XFD-to-supported-bit-of-TDX.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch355: kvm-i386-tdx-Define-supported-KVM-features-for-TDX.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch356: kvm-i386-cgs-Introduce-x86_confidential_guest_check_feat.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch357: kvm-i386-tdx-Fetch-and-validate-CPUID-of-TD-guest.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch358: kvm-i386-tdx-Don-t-treat-SYSCALL-as-unavailable.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch359: kvm-i386-tdx-Make-invtsc-default-on.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch360: kvm-i386-tdx-Validate-phys_bits-against-host-value.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch361: kvm-docs-Add-TDX-documentation.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch362: kvm-i386-tdx-Fix-build-on-32-bit-host.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch363: kvm-i386-tdvf-Fix-build-on-32-bit-host.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch364: kvm-i386-cpu-Move-adjustment-of-CPUID_EXT_PDCM-before-fe.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch365: kvm-i386-tdx-Error-and-exit-when-named-cpu-model-is-requ.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch366: kvm-i386-cpu-Rename-enable_cpuid_0x1f-to-force_cpuid_0x1.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch367: kvm-i386-tdx-Fix-the-typo-of-the-comment-of-struct-TdxGu.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch368: kvm-i386-tdx-Clarify-the-error-message-of-mrconfigid-mro.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch369: kvm-i386-tdx-handle-TDG.VP.VMCALL-GetTdVmCallInfo.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch370: kvm-i386-tdx-handle-TDG.VP.VMCALL-GetQuote.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch371: kvm-target-i386-move-max_features-to-class.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch372: kvm-target-i386-nvmm-whpx-add-accel-CPU-class-that-sets-.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch373: kvm-target-i386-allow-reordering-max_x86_cpu_initfn-vs-a.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch374: kvm-target-i386-move-accel_cpu_instance_init-to-.instanc.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch375: kvm-target-i386-merge-host_cpu_instance_init-and-host_cp.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch376: kvm-i386-tdx-Remove-enumeration-of-GetQuote-in-tdx_handl.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch377: kvm-i386-tdx-Set-value-of-GetTdVmCallInfo-based-on-capab.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch378: kvm-i386-tdx-handle-TDVMCALL_SETUP_EVENT_NOTIFY_INTERRUP.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch379: kvm-i386-tdx-Fix-the-report-of-gpa-in-QAPI.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch380: kvm-i386-tdx-Remove-task-watch-only-when-it-s-valid.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch381: kvm-i386-tdx-Don-t-mask-off-CPUID_EXT_PDCM.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch382: kvm-i386-cpu-Move-x86_ext_save_areas-initialization-to-..patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch383: kvm-target-i386-tdx-fix-locking-for-interrupt-injection.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch384: kvm-i386-cpu-Cleanup-host_cpu_max_instance_init.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch385: kvm-i386-tdx-Remove-the-redundant-qemu_mutex_init-tdx-lo.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch386: kvm-redhat-enable-CONFIG_TDX.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch387: kvm-redhat-allow-5-level-paging-for-TDX-VMs.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch388: kvm-memory-Export-a-helper-to-get-intersection-of-a-Memo.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch389: kvm-memory-Change-memory_region_set_ram_discard_manager-.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch390: kvm-memory-Unify-the-definiton-of-ReplayRamPopulate-and-.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch391: kvm-ram-block-attributes-Introduce-RamBlockAttributes-to.patch
+# For RHEL-15710 - [Intel 9.7 FEAT] TDX: QEMU Support
+# For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
+# For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
+Patch392: kvm-physmem-Support-coordinated-discarding-of-RAM-with-g.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -1812,6 +2272,129 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Sep 09 2025 Jon Maloy <jmaloy@redhat.com> - 9.1.0-27
+- kvm-target-i386-Make-invtsc-migratable-when-user-sets-ts.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-target-i386-Enable-fdp-excptn-only-and-zero-fcs-fds.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-kvm-i386-make-kvm_filter_msr-and-related-definitions.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-kvm-remove-unnecessary-ifdef.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-crypto-Define-macros-for-hash-algorithm-digest-lengt.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-Drop-the-check-of-phys_bits-in-host_cpu_rea.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-Extract-a-common-fucntion-to-setup-value-of.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-Drop-the-variable-smp_cores-and-smp_threads.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-Drop-cores_per_pkg-in-cpu_x86_cpuid.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-topology-Update-the-comment-of-x86_apicid_from_.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-topology-Introduce-helpers-for-various-topology.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-Track-a-X86CPUTopoInfo-directly-in-CPUX86St.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-Hoist-check-of-CPUID_EXT3_TOPOEXT-against-t.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-cpu-Remove-nr_cores-from-struct-CPUState.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-Set-up-CPUID_HT-in-x86_cpu_expand_features-.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-Set-and-track-CPUID_EXT3_CMP_LEG-in-env-fea.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-Remove-unused-parameter-uint32_t-bit-in-feature.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-target-i386-Print-CPUID-subleaf-info-for-unsupported.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-target-i386-sev-Reduce-system-specific-declarations.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-physmem-replace-assertion-with-error.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-redhat-target-i386-add-CPUID-and-MSR-bits-from-Clear.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-qom-reverse-order-of-instance_post_init-calls.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-target-i386-Remove-AccelCPUClass-cpu_class_init-need.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-Consolidate-the-helper-to-get-Host-s-vendor.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-rocker-do-not-pollute-the-namespace.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-linux-headers-Update-to-Linux-v6.14-rc3.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-linux-headers-Update-to-Linux-v6.15-rc3.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-linux-headers-update-from-6.15-kvm-next.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-update-Linux-headers-to-v6.16-rc3.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-update-Linux-headers-to-KVM-tree-master.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-Introduce-tdx-guest-object.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Implement-tdx_kvm_type-for-TDX.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Implement-tdx_kvm_init-to-initialize-TDX-VM.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Get-tdx_capabilities-via-KVM_TDX_CAPABILITI.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Introduce-is_tdx_vm-helper-and-cache-tdx_gu.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-kvm-Introduce-kvm_arch_pre_create_vcpu.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Initialize-TDX-before-creating-TD-vcpus.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Add-property-sept-ve-disable-for-tdx-guest-.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Make-sept_ve_disable-set-by-default.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Wire-CPU-features-up-with-attributes-of-TD-.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Validate-TD-attributes.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Support-user-configurable-mrconfigid-mrowne.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Set-APIC-bus-rate-to-match-with-what-TDX-mo.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Implement-user-specified-tsc-frequency.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-load-TDVF-for-TD-guest.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdvf-Introduce-function-to-parse-TDVF-metadata.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Parse-TDVF-metadata-for-TDX-VM.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Don-t-initialize-pc.rom-for-TDX-VMs.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Track-mem_ptr-for-each-firmware-entry-of-TD.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Track-RAM-entries-for-TDX-VM.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-headers-Add-definitions-from-UEFI-spec-for-volumes-r.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Setup-the-TD-HOB-list.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Add-TDVF-memory-via-KVM_TDX_INIT_MEM_REGION.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Call-KVM_TDX_INIT_VCPU-to-initialize-TDX-vc.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Finalize-TDX-VM.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Enable-user-exit-on-KVM_HC_MAP_GPA_RANGE.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Handle-KVM_SYSTEM_EVENT_TDX_FATAL.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Wire-TDX_REPORT_FATAL_ERROR-with-GuestPanic.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-kvm-Check-KVM_CAP_MAX_VCPUS-at-vm-level.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-introduce-x86_confidential_guest_cpu_instan.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-implement-tdx_cpu_instance_init.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-Introduce-enable_cpuid_0x1f-to-force-exposi.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Force-exposing-CPUID-0x1f.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Set-kvm_readonly_mem_enabled-to-false-for-T.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Disable-SMM-for-TDX-VMs.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Disable-PIC-for-TDX-VMs.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Set-and-check-kernel_irqchip-mode-for-TDX.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Don-t-synchronize-guest-tsc-for-TDs.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Only-configure-MSR_IA32_UCODE_REV-in-kvm_in.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-apic-Skip-kvm_apic_put-for-TDX.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-cpu-Don-t-set-vcpu_dirty-when-guest_state_protected.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cgs-Rename-mask_cpuid_features-to-adjust_cpuid_.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Implement-adjust_cpuid_features-for-TDX.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Add-TDX-fixed1-bits-to-supported-CPUIDs.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Add-supported-CPUID-bits-related-to-TD-Attr.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Add-supported-CPUID-bits-relates-to-XFAM.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Add-XFD-to-supported-bit-of-TDX.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Define-supported-KVM-features-for-TDX.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cgs-Introduce-x86_confidential_guest_check_feat.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Fetch-and-validate-CPUID-of-TD-guest.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Don-t-treat-SYSCALL-as-unavailable.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Make-invtsc-default-on.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Validate-phys_bits-against-host-value.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-docs-Add-TDX-documentation.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Fix-build-on-32-bit-host.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdvf-Fix-build-on-32-bit-host.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-Move-adjustment-of-CPUID_EXT_PDCM-before-fe.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Error-and-exit-when-named-cpu-model-is-requ.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-Rename-enable_cpuid_0x1f-to-force_cpuid_0x1.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Fix-the-typo-of-the-comment-of-struct-TdxGu.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Clarify-the-error-message-of-mrconfigid-mro.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-handle-TDG.VP.VMCALL-GetTdVmCallInfo.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-handle-TDG.VP.VMCALL-GetQuote.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-target-i386-move-max_features-to-class.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-target-i386-nvmm-whpx-add-accel-CPU-class-that-sets-.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-target-i386-allow-reordering-max_x86_cpu_initfn-vs-a.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-target-i386-move-accel_cpu_instance_init-to-.instanc.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-target-i386-merge-host_cpu_instance_init-and-host_cp.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Remove-enumeration-of-GetQuote-in-tdx_handl.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Set-value-of-GetTdVmCallInfo-based-on-capab.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-handle-TDVMCALL_SETUP_EVENT_NOTIFY_INTERRUP.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Fix-the-report-of-gpa-in-QAPI.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Remove-task-watch-only-when-it-s-valid.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Don-t-mask-off-CPUID_EXT_PDCM.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-Move-x86_ext_save_areas-initialization-to-..patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-target-i386-tdx-fix-locking-for-interrupt-injection.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-cpu-Cleanup-host_cpu_max_instance_init.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-i386-tdx-Remove-the-redundant-qemu_mutex_init-tdx-lo.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-redhat-enable-CONFIG_TDX.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-redhat-allow-5-level-paging-for-TDX-VMs.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-memory-Export-a-helper-to-get-intersection-of-a-Memo.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-memory-Change-memory_region_set_ram_discard_manager-.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-memory-Unify-the-definiton-of-ReplayRamPopulate-and-.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-ram-block-attributes-Introduce-RamBlockAttributes-to.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- kvm-physmem-Support-coordinated-discarding-of-RAM-with-g.patch [RHEL-15710 RHEL-20798 RHEL-49728]
+- Resolves: RHEL-15710
+  ([Intel 9.7 FEAT] TDX: QEMU Support)
+- Resolves: RHEL-20798
+  ([Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD)
+- Resolves: RHEL-49728
+  ([Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock)
+
 * Wed Aug 20 2025 Jon Maloy <jmaloy@redhat.com> - 9.1.0-26
 - kvm-rbd-Fix-.bdrv_get_specific_info-implementation.patch [RHEL-108726]
 - Resolves: RHEL-108726
