@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 9.1.0
-Release: 27%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 28%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -1197,6 +1197,8 @@ Patch391: kvm-ram-block-attributes-Introduce-RamBlockAttributes-to.patch
 # For RHEL-20798 - [Intel 9.6 FEAT] TDX: host: Virt-QEMU: Add safe device pass-through for TD
 # For RHEL-49728 - [Intel 9.7 FEAT] Virt-QEMU: TDX: Allow to configure apic bus clock
 Patch392: kvm-physmem-Support-coordinated-discarding-of-RAM-with-g.patch
+# For RHEL-17614 - VM reports Vulnerable to spec_rstack_overflow when reading status in '/sys/devices/system/cpu/vulnerabilities/'
+Patch393: kvm-target-i386-Expose-IBPB-BRTYPE-and-SBPB-CPUID-bits-t.patch
 
 %if %{have_clang}
 BuildRequires: clang
@@ -2272,6 +2274,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Sep 15 2025 Jon Maloy <jmaloy@redhat.com> - 9.1.0-28
+- kvm-target-i386-Expose-IBPB-BRTYPE-and-SBPB-CPUID-bits-t.patch [RHEL-17614]
+- Resolves: RHEL-17614
+  (VM reports Vulnerable to spec_rstack_overflow when reading status in '/sys/devices/system/cpu/vulnerabilities/')
+
 * Tue Sep 09 2025 Jon Maloy <jmaloy@redhat.com> - 9.1.0-27
 - kvm-target-i386-Make-invtsc-migratable-when-user-sets-ts.patch [RHEL-15710 RHEL-20798 RHEL-49728]
 - kvm-target-i386-Enable-fdp-excptn-only-and-zero-fcs-fds.patch [RHEL-15710 RHEL-20798 RHEL-49728]
