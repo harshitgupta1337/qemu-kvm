@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 9.1.0
-Release: 28%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 29%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -2274,6 +2274,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Sep 16 2025 Jon Maloy <jmaloy@redhat.com> - 9.1.0-29
+- kvm-target-i386-Expose-IBPB-BRTYPE-and-SBPB-CPUID-bits-t.patch [RHEL-17614]
+- Resolves: RHEL-17614
+  (VM reports Vulnerable to spec_rstack_overflow when reading status in '/sys/devices/system/cpu/vulnerabilities/')
+
 * Mon Sep 15 2025 Jon Maloy <jmaloy@redhat.com> - 9.1.0-28
 - kvm-target-i386-Expose-IBPB-BRTYPE-and-SBPB-CPUID-bits-t.patch [RHEL-17614]
 - Resolves: RHEL-17614
