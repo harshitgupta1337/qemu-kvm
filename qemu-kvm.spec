@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 10.1.0
-Release: 2%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -204,6 +204,16 @@ Patch29: 0029-target-i386-add-compatibility-property-for-pdcm-feat.patch
 Patch30: 0030-arm-create-new-virt-machine-type-for-rhel-9.8.patch
 # For RHEL-119369 - [rhel9] Backport "arm/kvm: report registers we failed to set"
 Patch31: kvm-arm-kvm-report-registers-we-failed-to-set.patch
+# For RHEL-73009 - [IBM 9.8 FEAT] KVM: Implement Control Program Identification (qemu)
+Patch32: kvm-qapi-machine-s390x-add-QAPI-event-SCLP_CPI_INFO_AVAI.patch
+# For RHEL-73009 - [IBM 9.8 FEAT] KVM: Implement Control Program Identification (qemu)
+Patch33: kvm-tests-functional-add-tests-for-SCLP-event-CPI.patch
+# For RHEL-122919 - [RHEL 9.8] Windows 11 VM fails to boot up with ramfb='on' with QEMU 10.1
+Patch34: kvm-vfio-rename-field-to-num_initial_regions.patch
+# For RHEL-122919 - [RHEL 9.8] Windows 11 VM fails to boot up with ramfb='on' with QEMU 10.1
+Patch35: kvm-vfio-only-check-region-info-cache-for-initial-region.patch
+# For RHEL-105902 - Add new -rhel9.8.0 machine type to qemu-kvm [x86_64]
+Patch36: kvm-x86-create-new-pc-q35-machine-type-for-rhel-9.8.patch
 
 
 # For RHEL-11424 - [IBM 9.6 FEAT] KVM: Full boot order support - qemu part
@@ -1918,6 +1928,19 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Wed Nov 12 2025 Jon Maloy <jmaloy@redhat.com> - 10.1.0-3
+- kvm-qapi-machine-s390x-add-QAPI-event-SCLP_CPI_INFO_AVAI.patch [RHEL-73009]
+- kvm-tests-functional-add-tests-for-SCLP-event-CPI.patch [RHEL-73009]
+- kvm-vfio-rename-field-to-num_initial_regions.patch [RHEL-122919]
+- kvm-vfio-only-check-region-info-cache-for-initial-region.patch [RHEL-122919]
+- kvm-x86-create-new-pc-q35-machine-type-for-rhel-9.8.patch [RHEL-105902]
+- Resolves: RHEL-73009
+  ([IBM 9.8 FEAT] KVM: Implement Control Program Identification (qemu))
+- Resolves: RHEL-122919
+  ([RHEL 9.8] Windows 11 VM fails to boot up with ramfb='on' with QEMU 10.1)
+- Resolves: RHEL-105902
+  (Add new -rhel9.8.0 machine type to qemu-kvm [x86_64])
+
 * Mon Nov 03 2025 Jon Maloy <jmaloy@redhat.com> - 10.1.0-2
 - kvm-arm-kvm-report-registers-we-failed-to-set.patch [RHEL-119369]
 - Resolves: RHEL-119369
