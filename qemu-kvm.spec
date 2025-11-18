@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 10.1.0
-Release: 3%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -214,6 +214,12 @@ Patch34: kvm-vfio-rename-field-to-num_initial_regions.patch
 Patch35: kvm-vfio-only-check-region-info-cache-for-initial-region.patch
 # For RHEL-105902 - Add new -rhel9.8.0 machine type to qemu-kvm [x86_64]
 Patch36: kvm-x86-create-new-pc-q35-machine-type-for-rhel-9.8.patch
+# For RHEL-120127 - CVE-2025-11234 qemu-kvm: VNC WebSocket handshake use-after-free [rhel-9.8]
+Patch37: kvm-io-move-websock-resource-release-to-close-method.patch
+# For RHEL-120127 - CVE-2025-11234 qemu-kvm: VNC WebSocket handshake use-after-free [rhel-9.8]
+Patch38: kvm-io-fix-use-after-free-in-websocket-handshake-code.patch
+# For RHEL-126593 - [RHEL 9.8] VFIO migration using multifd should be disabled by default
+Patch39: kvm-vfio-Disable-VFIO-migration-with-MultiFD-support.patch
 
 
 # For RHEL-11424 - [IBM 9.6 FEAT] KVM: Full boot order support - qemu part
@@ -1928,6 +1934,15 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Nov 18 2025 Jon Maloy <jmaloy@redhat.com> - 10.1.0-4
+- kvm-io-move-websock-resource-release-to-close-method.patch [RHEL-120127]
+- kvm-io-fix-use-after-free-in-websocket-handshake-code.patch [RHEL-120127]
+- kvm-vfio-Disable-VFIO-migration-with-MultiFD-support.patch [RHEL-126593]
+- Resolves: RHEL-120127
+  (CVE-2025-11234 qemu-kvm: VNC WebSocket handshake use-after-free [rhel-9.8])
+- Resolves: RHEL-126593
+  ([RHEL 9.8] VFIO migration using multifd should be disabled by default)
+
 * Wed Nov 12 2025 Jon Maloy <jmaloy@redhat.com> - 10.1.0-3
 - kvm-qapi-machine-s390x-add-QAPI-event-SCLP_CPI_INFO_AVAI.patch [RHEL-73009]
 - kvm-tests-functional-add-tests-for-SCLP-event-CPI.patch [RHEL-73009]
