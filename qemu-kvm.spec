@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 10.1.0
-Release: 4%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 5%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -220,6 +220,10 @@ Patch37: kvm-io-move-websock-resource-release-to-close-method.patch
 Patch38: kvm-io-fix-use-after-free-in-websocket-handshake-code.patch
 # For RHEL-126593 - [RHEL 9.8] VFIO migration using multifd should be disabled by default
 Patch39: kvm-vfio-Disable-VFIO-migration-with-MultiFD-support.patch
+# For RHEL-126693 - [RHEL 9]snp guest fail to boot with hugepage
+Patch40: kvm-ram-block-attributes-fix-interaction-with-hugetlb-me.patch
+# For RHEL-126693 - [RHEL 9]snp guest fail to boot with hugepage
+Patch41: kvm-ram-block-attributes-Unify-the-retrieval-of-the-bloc.patch
 
 
 # For RHEL-11424 - [IBM 9.6 FEAT] KVM: Full boot order support - qemu part
@@ -1934,6 +1938,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Nov 25 2025 Jon Maloy <jmaloy@redhat.com> - 10.1.0-5
+- kvm-ram-block-attributes-fix-interaction-with-hugetlb-me.patch [RHEL-126693]
+- kvm-ram-block-attributes-Unify-the-retrieval-of-the-bloc.patch [RHEL-126693]
+- Resolves: RHEL-126693
+  ([RHEL 9]snp guest fail to boot with hugepage)
+
 * Tue Nov 18 2025 Jon Maloy <jmaloy@redhat.com> - 10.1.0-4
 - kvm-io-move-websock-resource-release-to-close-method.patch [RHEL-120127]
 - kvm-io-fix-use-after-free-in-websocket-handshake-code.patch [RHEL-120127]
