@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 10.1.0
-Release: 7%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -228,6 +228,8 @@ Patch41: kvm-ram-block-attributes-Unify-the-retrieval-of-the-bloc.patch
 Patch42: kvm-Fix-the-typo-of-vfio-pci-device-s-enable-migration-o.patch
 # For RHEL-133008 - Assertion failure on drain with iothread and I/O load [rhel-9]
 Patch43: kvm-block-backend-Fix-race-when-resuming-queued-requests.patch
+# For RHEL-133303 - The VM hit io error when do S3-PR integration on the pass-through  failover multipath device [rhel-9]
+Patch44: kvm-file-posix-Handle-suspended-dm-multipath-better-for-.patch
 
 
 # For RHEL-11424 - [IBM 9.6 FEAT] KVM: Full boot order support - qemu part
@@ -1942,6 +1944,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Dec 08 2025 Jon Maloy <jmaloy@redhat.com> - 10.1.0-8
+- kvm-file-posix-Handle-suspended-dm-multipath-better-for-.patch [RHEL-133303]
+- Resolves: RHEL-133303
+  (The VM hit io error when do S3-PR integration on the pass-through  failover multipath device [rhel-9])
+
 * Wed Dec 03 2025 Jon Maloy <jmaloy@redhat.com> - 10.1.0-7
 - kvm-block-backend-Fix-race-when-resuming-queued-requests.patch [RHEL-133008]
 - Resolves: RHEL-133008
