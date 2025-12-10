@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 10.1.0
-Release: 8%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 9%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -230,6 +230,68 @@ Patch42: kvm-Fix-the-typo-of-vfio-pci-device-s-enable-migration-o.patch
 Patch43: kvm-block-backend-Fix-race-when-resuming-queued-requests.patch
 # For RHEL-133303 - The VM hit io error when do S3-PR integration on the pass-through  failover multipath device [rhel-9]
 Patch44: kvm-file-posix-Handle-suspended-dm-multipath-better-for-.patch
+# For RHEL-131144 - qemu crash after hot-unplug disk from the multifunction enabled bus [RHEL.9.8]
+Patch45: kvm-pcie_sriov-make-pcie_sriov_pf_exit-safe-on-non-SR-IO.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch46: kvm-accel-Add-Meson-and-config-support-for-MSHV-accelera.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch47: kvm-target-i386-emulate-Allow-instruction-decoding-from-.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch48: kvm-target-i386-mshv-Add-x86-decoder-emu-implementation.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch49: kvm-hw-intc-Generalize-APIC-helper-names-from-kvm_-to-ac.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch50: kvm-include-hw-hyperv-Add-MSHV-ABI-header-definitions.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch51: kvm-linux-headers-linux-Add-mshv.h-headers.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch52: kvm-accel-mshv-Add-accelerator-skeleton.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch53: kvm-accel-mshv-Register-memory-region-listeners.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch54: kvm-accel-mshv-Initialize-VM-partition.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch55: kvm-accel-mshv-Add-vCPU-creation-and-execution-loop.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch56: kvm-treewide-rename-qemu_wait_io_event-qemu_wait_io_even.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch57: kvm-accel-mshv-Add-vCPU-signal-handling.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch58: kvm-target-i386-mshv-Add-CPU-create-and-remove-logic.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch59: kvm-target-i386-mshv-Implement-mshv_store_regs.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch60: kvm-target-i386-mshv-Implement-mshv_get_standard_regs.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch61: kvm-target-i386-mshv-Implement-mshv_get_special_regs.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch62: kvm-target-i386-mshv-Implement-mshv_arch_put_registers.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch63: kvm-target-i386-mshv-Set-local-interrupt-controller-stat.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch64: kvm-target-i386-mshv-Register-CPUID-entries-with-MSHV.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch65: kvm-target-i386-mshv-Register-MSRs-with-MSHV.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch66: kvm-target-i386-mshv-Integrate-x86-instruction-decoder-e.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch67: kvm-target-i386-mshv-Write-MSRs-to-the-hypervisor.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch68: kvm-target-i386-mshv-Implement-mshv_vcpu_run.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch69: kvm-accel-mshv-Handle-overlapping-mem-mappings.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch70: kvm-qapi-accel-Allow-to-query-mshv-capabilities.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch71: kvm-target-i386-mshv-Use-preallocated-page-for-hvcall.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch72: kvm-docs-Add-mshv-to-documentation.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch73: kvm-MAINTAINERS-Add-maintainers-for-mshv-accelerator.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch74: kvm-accel-mshv-initialize-thread-name.patch
+# For RHEL-132193 - [rhel 9.8]L1VH qemu downstream initial merge RHEL9
+Patch75: kvm-accel-mshv-use-return-value-of-handle_pio_str_read.patch
 
 
 # For RHEL-11424 - [IBM 9.6 FEAT] KVM: Full boot order support - qemu part
@@ -1944,6 +2006,43 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Dec 09 2025 Jon Maloy <jmaloy@redhat.com> - 10.1.0-9
+- kvm-pcie_sriov-make-pcie_sriov_pf_exit-safe-on-non-SR-IO.patch [RHEL-131144]
+- kvm-accel-Add-Meson-and-config-support-for-MSHV-accelera.patch [RHEL-132193]
+- kvm-target-i386-emulate-Allow-instruction-decoding-from-.patch [RHEL-132193]
+- kvm-target-i386-mshv-Add-x86-decoder-emu-implementation.patch [RHEL-132193]
+- kvm-hw-intc-Generalize-APIC-helper-names-from-kvm_-to-ac.patch [RHEL-132193]
+- kvm-include-hw-hyperv-Add-MSHV-ABI-header-definitions.patch [RHEL-132193]
+- kvm-linux-headers-linux-Add-mshv.h-headers.patch [RHEL-132193]
+- kvm-accel-mshv-Add-accelerator-skeleton.patch [RHEL-132193]
+- kvm-accel-mshv-Register-memory-region-listeners.patch [RHEL-132193]
+- kvm-accel-mshv-Initialize-VM-partition.patch [RHEL-132193]
+- kvm-accel-mshv-Add-vCPU-creation-and-execution-loop.patch [RHEL-132193]
+- kvm-treewide-rename-qemu_wait_io_event-qemu_wait_io_even.patch [RHEL-132193]
+- kvm-accel-mshv-Add-vCPU-signal-handling.patch [RHEL-132193]
+- kvm-target-i386-mshv-Add-CPU-create-and-remove-logic.patch [RHEL-132193]
+- kvm-target-i386-mshv-Implement-mshv_store_regs.patch [RHEL-132193]
+- kvm-target-i386-mshv-Implement-mshv_get_standard_regs.patch [RHEL-132193]
+- kvm-target-i386-mshv-Implement-mshv_get_special_regs.patch [RHEL-132193]
+- kvm-target-i386-mshv-Implement-mshv_arch_put_registers.patch [RHEL-132193]
+- kvm-target-i386-mshv-Set-local-interrupt-controller-stat.patch [RHEL-132193]
+- kvm-target-i386-mshv-Register-CPUID-entries-with-MSHV.patch [RHEL-132193]
+- kvm-target-i386-mshv-Register-MSRs-with-MSHV.patch [RHEL-132193]
+- kvm-target-i386-mshv-Integrate-x86-instruction-decoder-e.patch [RHEL-132193]
+- kvm-target-i386-mshv-Write-MSRs-to-the-hypervisor.patch [RHEL-132193]
+- kvm-target-i386-mshv-Implement-mshv_vcpu_run.patch [RHEL-132193]
+- kvm-accel-mshv-Handle-overlapping-mem-mappings.patch [RHEL-132193]
+- kvm-qapi-accel-Allow-to-query-mshv-capabilities.patch [RHEL-132193]
+- kvm-target-i386-mshv-Use-preallocated-page-for-hvcall.patch [RHEL-132193]
+- kvm-docs-Add-mshv-to-documentation.patch [RHEL-132193]
+- kvm-MAINTAINERS-Add-maintainers-for-mshv-accelerator.patch [RHEL-132193]
+- kvm-accel-mshv-initialize-thread-name.patch [RHEL-132193]
+- kvm-accel-mshv-use-return-value-of-handle_pio_str_read.patch [RHEL-132193]
+- Resolves: RHEL-131144
+  (qemu crash after hot-unplug disk from the multifunction enabled bus [RHEL.9.8])
+- Resolves: RHEL-132193
+  ([rhel 9.8]L1VH qemu downstream initial merge RHEL9)
+
 * Mon Dec 08 2025 Jon Maloy <jmaloy@redhat.com> - 10.1.0-8
 - kvm-file-posix-Handle-suspended-dm-multipath-better-for-.patch [RHEL-133303]
 - Resolves: RHEL-133303
