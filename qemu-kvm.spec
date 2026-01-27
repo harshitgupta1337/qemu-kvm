@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 10.1.0
-Release: 11%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 12%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -296,6 +296,18 @@ Patch75: kvm-accel-mshv-use-return-value-of-handle_pio_str_read.patch
 Patch76: kvm-monitor-generalize-query-mshv-info-mshv-to-query-acc.patch
 # For RHEL-138240 - QEMU crashes when stopping source VM during live migration [rhel-9]
 Patch77: kvm-block-Fix-BDS-use-after-free-during-shutdown.patch
+# For RHEL-132989 - Expose block limits of block nodes in QMP and qemu-img [rhel-9]
+Patch78: kvm-block-Improve-comments-in-BlockLimits.patch
+# For RHEL-132989 - Expose block limits of block nodes in QMP and qemu-img [rhel-9]
+Patch79: kvm-block-Expose-block-limits-for-images-in-QMP.patch
+# For RHEL-132989 - Expose block limits of block nodes in QMP and qemu-img [rhel-9]
+Patch80: kvm-qemu-img-info-Optionally-show-block-limits.patch
+# For RHEL-132989 - Expose block limits of block nodes in QMP and qemu-img [rhel-9]
+Patch81: kvm-qemu-img-info-Add-cache-mode-option.patch
+# For RHEL-140187 - Intel IOMMU VM freezes: "call_irq_handler: 3.37 No irq handler for vector"[rhel-9.8]
+Patch82: kvm-hw-intc-ioapic-Fix-ACCEL_KERNEL_GSI_IRQFD_POSSIBLE-t.patch
+# For RHEL-139057 - [qemu, rhel-9] increase default TSEG size
+Patch83: kvm-q35-increase-default-tseg-size.patch
 
 
 # For RHEL-11424 - [IBM 9.6 FEAT] KVM: Full boot order support - qemu part
@@ -2010,6 +2022,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Jan 27 2026 Jon Maloy <jmaloy@redhat.com> - 10.1.0-12
+- kvm-block-Improve-comments-in-BlockLimits.patch [RHEL-132989]
+- kvm-block-Expose-block-limits-for-images-in-QMP.patch [RHEL-132989]
+- kvm-qemu-img-info-Optionally-show-block-limits.patch [RHEL-132989]
+- kvm-qemu-img-info-Add-cache-mode-option.patch [RHEL-132989]
+- kvm-hw-intc-ioapic-Fix-ACCEL_KERNEL_GSI_IRQFD_POSSIBLE-t.patch [RHEL-140187]
+- kvm-q35-increase-default-tseg-size.patch [RHEL-139057]
+- Resolves: RHEL-132989
+  (Expose block limits of block nodes in QMP and qemu-img [rhel-9])
+- Resolves: RHEL-140187
+  (Intel IOMMU VM freezes: "call_irq_handler: 3.37 No irq handler for vector"[rhel-9.8])
+- Resolves: RHEL-139057
+  ([qemu, rhel-9] increase default TSEG size)
+
 * Mon Jan 19 2026 Jon Maloy <jmaloy@redhat.com> - 10.1.0-11
 - kvm-block-Fix-BDS-use-after-free-during-shutdown.patch [RHEL-138240]
 - Resolves: RHEL-138240
