@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 10.1.0
-Release: 12%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 13%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -308,6 +308,10 @@ Patch81: kvm-qemu-img-info-Add-cache-mode-option.patch
 Patch82: kvm-hw-intc-ioapic-Fix-ACCEL_KERNEL_GSI_IRQFD_POSSIBLE-t.patch
 # For RHEL-139057 - [qemu, rhel-9] increase default TSEG size
 Patch83: kvm-q35-increase-default-tseg-size.patch
+# For RHEL-147422 - virtiofs: processes become stuck in request_wait_answer on virtiofs mounts
+Patch84: kvm-vhost-user-make-vhost_set_vring_file-synchronous.patch
+# For RHEL-130620 - VM crashes during boot when virtio device is attached through vfio_ccw [rhel-9]
+Patch85: kvm-hw-s390x-Fix-a-possible-crash-with-passed-through-vi.patch
 
 
 # For RHEL-11424 - [IBM 9.6 FEAT] KVM: Full boot order support - qemu part
@@ -2022,6 +2026,14 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Feb 09 2026 Jon Maloy <jmaloy@redhat.com> - 10.1.0-13
+- kvm-vhost-user-make-vhost_set_vring_file-synchronous.patch [RHEL-147422]
+- kvm-hw-s390x-Fix-a-possible-crash-with-passed-through-vi.patch [RHEL-130620]
+- Resolves: RHEL-147422
+  (virtiofs: processes become stuck in request_wait_answer on virtiofs mounts)
+- Resolves: RHEL-130620
+  (VM crashes during boot when virtio device is attached through vfio_ccw [rhel-9])
+
 * Tue Jan 27 2026 Jon Maloy <jmaloy@redhat.com> - 10.1.0-12
 - kvm-block-Improve-comments-in-BlockLimits.patch [RHEL-132989]
 - kvm-block-Expose-block-limits-for-images-in-QMP.patch [RHEL-132989]
