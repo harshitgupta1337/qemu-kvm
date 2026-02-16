@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 10.1.0
-Release: 13%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 14%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -312,6 +312,16 @@ Patch83: kvm-q35-increase-default-tseg-size.patch
 Patch84: kvm-vhost-user-make-vhost_set_vring_file-synchronous.patch
 # For RHEL-130620 - VM crashes during boot when virtio device is attached through vfio_ccw [rhel-9]
 Patch85: kvm-hw-s390x-Fix-a-possible-crash-with-passed-through-vi.patch
+# For RHEL-67115 - [network-storage][rbd][core-dump]installation of guest failed sometimes with multiqueue enabled[rhel9.6]
+Patch86: kvm-rbd-Run-co-BH-CB-in-the-coroutine-s-AioContext.patch
+# For RHEL-67115 - [network-storage][rbd][core-dump]installation of guest failed sometimes with multiqueue enabled[rhel9.6]
+Patch87: kvm-curl-Fix-coroutine-waking.patch
+# For RHEL-67115 - [network-storage][rbd][core-dump]installation of guest failed sometimes with multiqueue enabled[rhel9.6]
+Patch88: kvm-block-io-Take-reqs_lock-for-tracked_requests.patch
+# For RHEL-67115 - [network-storage][rbd][core-dump]installation of guest failed sometimes with multiqueue enabled[rhel9.6]
+Patch89: kvm-qcow2-Re-initialize-lock-in-invalidate_cache.patch
+# For RHEL-67115 - [network-storage][rbd][core-dump]installation of guest failed sometimes with multiqueue enabled[rhel9.6]
+Patch90: kvm-qcow2-Fix-cache_clean_timer.patch
 
 
 # For RHEL-11424 - [IBM 9.6 FEAT] KVM: Full boot order support - qemu part
@@ -2026,6 +2036,15 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Feb 16 2026 Jon Maloy <jmaloy@redhat.com> - 10.1.0-14
+- kvm-rbd-Run-co-BH-CB-in-the-coroutine-s-AioContext.patch [RHEL-67115]
+- kvm-curl-Fix-coroutine-waking.patch [RHEL-67115]
+- kvm-block-io-Take-reqs_lock-for-tracked_requests.patch [RHEL-67115]
+- kvm-qcow2-Re-initialize-lock-in-invalidate_cache.patch [RHEL-67115]
+- kvm-qcow2-Fix-cache_clean_timer.patch [RHEL-67115]
+- Resolves: RHEL-67115
+  ([network-storage][rbd][core-dump]installation of guest failed sometimes with multiqueue enabled[rhel9.6])
+
 * Mon Feb 09 2026 Jon Maloy <jmaloy@redhat.com> - 10.1.0-13
 - kvm-vhost-user-make-vhost_set_vring_file-synchronous.patch [RHEL-147422]
 - kvm-hw-s390x-Fix-a-possible-crash-with-passed-through-vi.patch [RHEL-130620]
