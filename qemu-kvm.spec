@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 10.1.0
-Release: 14%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 15%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -322,6 +322,16 @@ Patch88: kvm-block-io-Take-reqs_lock-for-tracked_requests.patch
 Patch89: kvm-qcow2-Re-initialize-lock-in-invalidate_cache.patch
 # For RHEL-67115 - [network-storage][rbd][core-dump]installation of guest failed sometimes with multiqueue enabled[rhel9.6]
 Patch90: kvm-qcow2-Fix-cache_clean_timer.patch
+# For RHEL-149396 - Migrate SCSI PR state and preempt reservation upon live migration [rhel-9]
+Patch91: kvm-scsi-generalize-scsi_SG_IO_FROM_DEV-to-scsi_SG_IO.patch
+# For RHEL-149396 - Migrate SCSI PR state and preempt reservation upon live migration [rhel-9]
+Patch92: kvm-scsi-add-error-reporting-to-scsi_SG_IO.patch
+# For RHEL-149396 - Migrate SCSI PR state and preempt reservation upon live migration [rhel-9]
+Patch93: kvm-scsi-track-SCSI-reservation-state-for-live-migration.patch
+# For RHEL-149396 - Migrate SCSI PR state and preempt reservation upon live migration [rhel-9]
+Patch94: kvm-scsi-save-load-SCSI-reservation-state.patch
+# For RHEL-149396 - Migrate SCSI PR state and preempt reservation upon live migration [rhel-9]
+Patch95: kvm-docs-add-SCSI-migrate-pr-documentation.patch
 
 
 # For RHEL-11424 - [IBM 9.6 FEAT] KVM: Full boot order support - qemu part
@@ -2036,6 +2046,15 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Mon Feb 23 2026 Jon Maloy <jmaloy@redhat.com> - 10.1.0-15
+- kvm-scsi-generalize-scsi_SG_IO_FROM_DEV-to-scsi_SG_IO.patch [RHEL-149396]
+- kvm-scsi-add-error-reporting-to-scsi_SG_IO.patch [RHEL-149396]
+- kvm-scsi-track-SCSI-reservation-state-for-live-migration.patch [RHEL-149396]
+- kvm-scsi-save-load-SCSI-reservation-state.patch [RHEL-149396]
+- kvm-docs-add-SCSI-migrate-pr-documentation.patch [RHEL-149396]
+- Resolves: RHEL-149396
+  (Migrate SCSI PR state and preempt reservation upon live migration [rhel-9])
+
 * Mon Feb 16 2026 Jon Maloy <jmaloy@redhat.com> - 10.1.0-14
 - kvm-rbd-Run-co-BH-CB-in-the-coroutine-s-AioContext.patch [RHEL-67115]
 - kvm-curl-Fix-coroutine-waking.patch [RHEL-67115]
