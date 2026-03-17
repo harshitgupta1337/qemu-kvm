@@ -149,7 +149,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 10.1.0
-Release: 15%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 16%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -332,6 +332,8 @@ Patch93: kvm-scsi-track-SCSI-reservation-state-for-live-migration.patch
 Patch94: kvm-scsi-save-load-SCSI-reservation-state.patch
 # For RHEL-149396 - Migrate SCSI PR state and preempt reservation upon live migration [rhel-9]
 Patch95: kvm-docs-add-SCSI-migrate-pr-documentation.patch
+# For RHEL-151679 - [rhel-9.8] Regression in BLOCK_IO_ERROR event delivery with (w|r)error setting of 'stop' or 'enospc' due to event rate limiting
+Patch96: kvm-block-Never-drop-BLOCK_IO_ERROR-with-action-stop-for.patch
 
 
 # For RHEL-11424 - [IBM 9.6 FEAT] KVM: Full boot order support - qemu part
@@ -2046,6 +2048,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %endif
 
 %changelog
+* Tue Mar 17 2026 Jon Maloy <jmaloy@redhat.com> - 10.1.0-16
+- kvm-block-Never-drop-BLOCK_IO_ERROR-with-action-stop-for.patch [RHEL-151679]
+- Resolves: RHEL-151679
+  ([rhel-9.8] Regression in BLOCK_IO_ERROR event delivery with (w|r)error setting of 'stop' or 'enospc' due to event rate limiting)
+
 * Mon Feb 23 2026 Jon Maloy <jmaloy@redhat.com> - 10.1.0-15
 - kvm-scsi-generalize-scsi_SG_IO_FROM_DEV-to-scsi_SG_IO.patch [RHEL-149396]
 - kvm-scsi-add-error-reporting-to-scsi_SG_IO.patch [RHEL-149396]
