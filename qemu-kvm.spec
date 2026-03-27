@@ -12,7 +12,6 @@
 %endif
 
 %global _build_id_links none
-%global _default_patch_fuzz 2
 %global have_usbredir 1
 %global have_opengl   1
 %global have_fdt      1
@@ -151,7 +150,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 10.2.0
-Release: 17%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 18%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -1352,7 +1351,6 @@ run_configure \
   --enable-gnutls \
   --enable-guest-agent \
   --enable-iconv \
-  --enable-kvm \
   --enable-mshv \
 %if %{have_pmem}
   --enable-libpmem \
