@@ -174,10 +174,9 @@ Source28: 95-kvm-memlock.conf
 Source30: kvm-s390x.conf
 Source31: kvm-x86.conf
 Source36: README.tests
-Patch1: 0001-Initial-redhat-build.patch
-Patch2: 0002-Enable-disable-devices-for-RHEL.patch
+Patch1: 0002-Enable-disable-devices-for-RHEL.patch
 # For HyperV-Direct backend
-Patch3: mshv-revert-overlapping-mem-mappings.patch
+Patch2: mshv-revert-overlapping-mem-mappings.patch
 
 
 # For RHEL-11424 - [IBM 9.6 FEAT] KVM: Full boot order support - qemu part
@@ -1353,6 +1352,7 @@ run_configure \
   --enable-gnutls \
   --enable-guest-agent \
   --enable-iconv \
+  --enable-kvm \
   --enable-mshv \
 %if %{have_pmem}
   --enable-libpmem \

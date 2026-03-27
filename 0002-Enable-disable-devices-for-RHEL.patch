@@ -299,30 +299,6 @@ index 0000000000..8d3d9fc645
 +CONFIG_VHOST_USER_VSOCK=y
 +CONFIG_VHOST_USER_FS=y
 +CONFIG_IOMMUFD=y
-diff --git a/hw/arm/virt.c b/hw/arm/virt.c
-index ef6be3660f..b525e00365 100644
---- a/hw/arm/virt.c
-+++ b/hw/arm/virt.c
-@@ -3183,6 +3183,7 @@ static void virt_machine_class_init(ObjectClass *oc, const void *data)
-     MachineClass *mc = MACHINE_CLASS(oc);
-     HotplugHandlerClass *hc = HOTPLUG_HANDLER_CLASS(oc);
-     static const char * const valid_cpu_types[] = {
-+#if 0 /* Disabled for Red Hat Enterprise Linux */
- #ifdef CONFIG_TCG
-         ARM_CPU_TYPE_NAME("cortex-a7"),
-         ARM_CPU_TYPE_NAME("cortex-a15"),
-@@ -3198,8 +3199,11 @@ static void virt_machine_class_init(ObjectClass *oc, const void *data)
-         ARM_CPU_TYPE_NAME("neoverse-n2"),
- #endif /* TARGET_AARCH64 */
- #endif /* CONFIG_TCG */
-+#endif /* disabled for RHEL */
- #ifdef TARGET_AARCH64
-+#if 0 /* Disabled for Red Hat Enterprise Linux */
-         ARM_CPU_TYPE_NAME("cortex-a53"),
-+#endif /* disabled for RHEL */
-         ARM_CPU_TYPE_NAME("cortex-a57"),
- #if defined(CONFIG_KVM) || defined(CONFIG_HVF)
-         ARM_CPU_TYPE_NAME("host"),
 diff --git a/hw/block/fdc.c b/hw/block/fdc.c
 index d0f08c7be5..7f61684294 100644
 --- a/hw/block/fdc.c
@@ -473,30 +449,6 @@ index 17360a5b5a..3c4fdfc31d 100644
    hw_usb_modules += {'smartcard': usbsmartcard_ss}
  endif
  
-diff --git a/hw/virtio/meson.build b/hw/virtio/meson.build
-index 3ea7b3cec8..3102d68bec 100644
---- a/hw/virtio/meson.build
-+++ b/hw/virtio/meson.build
-@@ -22,7 +22,8 @@ if have_vhost
-     system_virtio_ss.add(files('vhost-user-base.c'))
- 
-     # MMIO Stubs
--    system_virtio_ss.add(files('vhost-user-device.c'))
-+# Disabled for 8.2.0 rebase for RHEL 9.4.0
-+#    system_virtio_ss.add(files('vhost-user-device.c'))
-     system_virtio_ss.add(when: 'CONFIG_VHOST_USER_GPIO', if_true: files('vhost-user-gpio.c'))
-     system_virtio_ss.add(when: 'CONFIG_VHOST_USER_I2C', if_true: files('vhost-user-i2c.c'))
-     system_virtio_ss.add(when: 'CONFIG_VHOST_USER_RNG', if_true: files('vhost-user-rng.c'))
-@@ -30,7 +31,8 @@ if have_vhost
-     system_virtio_ss.add(when: 'CONFIG_VHOST_USER_INPUT', if_true: files('vhost-user-input.c'))
- 
-     # PCI Stubs
--    system_virtio_ss.add(when: 'CONFIG_VIRTIO_PCI', if_true: files('vhost-user-device-pci.c'))
-+# Disabled for 8.2.0 rebase for RHEL 9.4.0
-+#    system_virtio_ss.add(when: 'CONFIG_VIRTIO_PCI', if_true: files('vhost-user-device-pci.c'))
-     system_virtio_ss.add(when: ['CONFIG_VIRTIO_PCI', 'CONFIG_VHOST_USER_GPIO'],
-                          if_true: files('vhost-user-gpio-pci.c'))
-     system_virtio_ss.add(when: ['CONFIG_VIRTIO_PCI', 'CONFIG_VHOST_USER_I2C'],
 diff --git a/target/arm/arm-qmp-cmds.c b/target/arm/arm-qmp-cmds.c
 index d292c974c4..9bb68866e1 100644
 --- a/target/arm/arm-qmp-cmds.c
@@ -517,19 +469,6 @@ index d292c974c4..9bb68866e1 100644
  
      QAPI_LIST_PREPEND(*cpu_list, info);
  }
-diff --git a/target/arm/cpu.h b/target/arm/cpu.h
-index dc9b6dce4c..dc0da8b0ae 100644
---- a/target/arm/cpu.h
-+++ b/target/arm/cpu.h
-@@ -34,6 +34,8 @@
- #include "target/arm/gtimer.h"
- #include "target/arm/cpu-sysregs.h"
- 
-+#define RHEL_CPU_DEPRECATION "use 'host' / 'max'"
-+
- #define EXCP_UDEF            1   /* undefined instruction */
- #define EXCP_SWI             2   /* software interrupt */
- #define EXCP_PREFETCH_ABORT  3
 diff --git a/target/arm/cpu64.c b/target/arm/cpu64.c
 index 26cf7e6dfa..051d5d653b 100644
 --- a/target/arm/cpu64.c
