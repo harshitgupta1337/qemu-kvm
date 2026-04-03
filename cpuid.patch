@@ -1,0 +1,2240 @@
+diff --git a/accel/mshv/mem.c b/accel/mshv/mem.c
+index 0e2164af3e..e55c38d4db 100644
+--- a/accel/mshv/mem.c
++++ b/accel/mshv/mem.c
+@@ -11,9 +11,7 @@
+  */
+ 
+ #include "qemu/osdep.h"
+-#include "qemu/lockable.h"
+ #include "qemu/error-report.h"
+-#include "qemu/rcu.h"
+ #include "linux/mshv.h"
+ #include "system/address-spaces.h"
+ #include "system/mshv.h"
+@@ -22,137 +20,6 @@
+ #include <sys/ioctl.h>
+ #include "trace.h"
+ 
+-typedef struct SlotsRCUReclaim {
+-    struct rcu_head rcu;
+-    GList *old_head;
+-    MshvMemorySlot *removed_slot;
+-} SlotsRCUReclaim;
+-
+-static void rcu_reclaim_slotlist(struct rcu_head *rcu)
+-{
+-    SlotsRCUReclaim *r = container_of(rcu, SlotsRCUReclaim, rcu);
+-    g_list_free(r->old_head);
+-    g_free(r->removed_slot);
+-    g_free(r);
+-}
+-
+-static void publish_slots(GList *new_head, GList *old_head,
+-                          MshvMemorySlot *removed_slot)
+-{
+-    MshvMemorySlotManager *manager = &mshv_state->msm;
+-
+-    assert(manager);
+-    qatomic_store_release(&manager->slots, new_head);
+-
+-    SlotsRCUReclaim *r = g_new(SlotsRCUReclaim, 1);
+-    r->old_head = old_head;
+-    r->removed_slot = removed_slot;
+-
+-    call_rcu1(&r->rcu, rcu_reclaim_slotlist);
+-}
+-
+-/* Needs to be called with mshv_state->msm.mutex held */
+-static int remove_slot(MshvMemorySlot *slot)
+-{
+-    GList *old_head, *new_head;
+-    MshvMemorySlotManager *manager = &mshv_state->msm;
+-
+-    assert(manager);
+-    old_head = qatomic_load_acquire(&manager->slots);
+-
+-    if (!g_list_find(old_head, slot)) {
+-        error_report("slot requested for removal not found");
+-        return -1;
+-    }
+-
+-    new_head = g_list_copy(old_head);
+-    new_head = g_list_remove(new_head, slot);
+-    manager->n_slots--;
+-
+-    publish_slots(new_head, old_head, slot);
+-
+-    return 0;
+-}
+-
+-/* Needs to be called with mshv_state->msm.mutex held */
+-static MshvMemorySlot *append_slot(uint64_t gpa, uint64_t userspace_addr,
+-                                   uint64_t size, bool readonly)
+-{
+-    GList *old_head, *new_head;
+-    MshvMemorySlot *slot;
+-    MshvMemorySlotManager *manager = &mshv_state->msm;
+-
+-    assert(manager);
+-
+-    old_head = qatomic_load_acquire(&manager->slots);
+-
+-    if (manager->n_slots >= MSHV_MAX_MEM_SLOTS) {
+-        error_report("no free memory slots available");
+-        return NULL;
+-    }
+-
+-    slot = g_new0(MshvMemorySlot, 1);
+-    slot->guest_phys_addr = gpa;
+-    slot->userspace_addr = userspace_addr;
+-    slot->memory_size = size;
+-    slot->readonly = readonly;
+-
+-    new_head = g_list_copy(old_head);
+-    new_head = g_list_append(new_head, slot);
+-    manager->n_slots++;
+-
+-    publish_slots(new_head, old_head, NULL);
+-
+-    return slot;
+-}
+-
+-static int slot_overlaps(const MshvMemorySlot *slot1,
+-                         const MshvMemorySlot *slot2)
+-{
+-    uint64_t start_1 = slot1->userspace_addr,
+-             start_2 = slot2->userspace_addr;
+-    size_t len_1 = slot1->memory_size,
+-           len_2 = slot2->memory_size;
+-
+-    if (slot1 == slot2) {
+-        return -1;
+-    }
+-
+-    return ranges_overlap(start_1, len_1, start_2, len_2) ?  0 : -1;
+-}
+-
+-static bool is_mapped(MshvMemorySlot *slot)
+-{
+-    /* Subsequent reads of mapped field see a fully-initialized slot */
+-    return qatomic_load_acquire(&slot->mapped);
+-}
+-
+-/*
+- * Find slot that is:
+- * - overlapping in userspace
+- * - currently mapped in the guest
+- *
+- * Needs to be called with mshv_state->msm.mutex or RCU read lock held.
+- */
+-static MshvMemorySlot *find_overlap_mem_slot(GList *head, MshvMemorySlot *slot)
+-{
+-    GList *found;
+-    MshvMemorySlot *overlap_slot;
+-
+-    found = g_list_find_custom(head, slot, (GCompareFunc) slot_overlaps);
+-
+-    if (!found) {
+-        return NULL;
+-    }
+-
+-    overlap_slot = found->data;
+-    if (!overlap_slot || !is_mapped(overlap_slot)) {
+-        return NULL;
+-    }
+-
+-    return overlap_slot;
+-}
+-
+ static int set_guest_memory(int vm_fd,
+                             const struct mshv_user_mem_region *region)
+ {
+@@ -160,169 +27,38 @@ static int set_guest_memory(int vm_fd,
+ 
+     ret = ioctl(vm_fd, MSHV_SET_GUEST_MEMORY, region);
+     if (ret < 0) {
+-        error_report("failed to set guest memory: %s", strerror(errno));
+-        return -1;
++        error_report("failed to set guest memory");
++        return -errno;
+     }
+ 
+     return 0;
+ }
+ 
+-static int map_or_unmap(int vm_fd, const MshvMemorySlot *slot, bool map)
++static int map_or_unmap(int vm_fd, const MshvMemoryRegion *mr, bool map)
+ {
+     struct mshv_user_mem_region region = {0};
+ 
+-    region.guest_pfn = slot->guest_phys_addr >> MSHV_PAGE_SHIFT;
+-    region.size = slot->memory_size;
+-    region.userspace_addr = slot->userspace_addr;
++    region.guest_pfn = mr->guest_phys_addr >> MSHV_PAGE_SHIFT;
++    region.size = mr->memory_size;
++    region.userspace_addr = mr->userspace_addr;
+ 
+     if (!map) {
+         region.flags |= (1 << MSHV_SET_MEM_BIT_UNMAP);
+-        trace_mshv_unmap_memory(slot->userspace_addr, slot->guest_phys_addr,
+-                                slot->memory_size);
++        trace_mshv_unmap_memory(mr->userspace_addr, mr->guest_phys_addr,
++                                mr->memory_size);
+         return set_guest_memory(vm_fd, &region);
+     }
+ 
+     region.flags = BIT(MSHV_SET_MEM_BIT_EXECUTABLE);
+-    if (!slot->readonly) {
++    if (!mr->readonly) {
+         region.flags |= BIT(MSHV_SET_MEM_BIT_WRITABLE);
+     }
+ 
+-    trace_mshv_map_memory(slot->userspace_addr, slot->guest_phys_addr,
+-                          slot->memory_size);
++    trace_mshv_map_memory(mr->userspace_addr, mr->guest_phys_addr,
++                          mr->memory_size);
+     return set_guest_memory(vm_fd, &region);
+ }
+ 
+-static int slot_matches_region(const MshvMemorySlot *slot1,
+-                               const MshvMemorySlot *slot2)
+-{
+-    return (slot1->guest_phys_addr == slot2->guest_phys_addr &&
+-            slot1->userspace_addr  == slot2->userspace_addr &&
+-            slot1->memory_size     == slot2->memory_size) ? 0 : -1;
+-}
+-
+-/* Needs to be called with mshv_state->msm.mutex held */
+-static MshvMemorySlot *find_mem_slot_by_region(uint64_t gpa, uint64_t size,
+-                                               uint64_t userspace_addr)
+-{
+-    MshvMemorySlot ref_slot = {
+-        .guest_phys_addr = gpa,
+-        .userspace_addr  = userspace_addr,
+-        .memory_size     = size,
+-    };
+-    GList *found;
+-    MshvMemorySlotManager *manager = &mshv_state->msm;
+-
+-    assert(manager);
+-    found = g_list_find_custom(manager->slots, &ref_slot,
+-                               (GCompareFunc) slot_matches_region);
+-
+-    return found ? found->data : NULL;
+-}
+-
+-static int slot_covers_gpa(const MshvMemorySlot *slot, uint64_t *gpa_p)
+-{
+-    uint64_t gpa_offset, gpa = *gpa_p;
+-
+-    gpa_offset = gpa - slot->guest_phys_addr;
+-    return (slot->guest_phys_addr <= gpa && gpa_offset < slot->memory_size)
+-        ? 0 : -1;
+-}
+-
+-/* Needs to be called with mshv_state->msm.mutex or RCU read lock held */
+-static MshvMemorySlot *find_mem_slot_by_gpa(GList *head, uint64_t gpa)
+-{
+-    GList *found;
+-    MshvMemorySlot *slot;
+-
+-    trace_mshv_find_slot_by_gpa(gpa);
+-
+-    found = g_list_find_custom(head, &gpa, (GCompareFunc) slot_covers_gpa);
+-    if (found) {
+-        slot = found->data;
+-        trace_mshv_found_slot(slot->userspace_addr, slot->guest_phys_addr,
+-                              slot->memory_size);
+-        return slot;
+-    }
+-
+-    return NULL;
+-}
+-
+-/* Needs to be called with mshv_state->msm.mutex held */
+-static void set_mapped(MshvMemorySlot *slot, bool mapped)
+-{
+-    /* prior writes to mapped field becomes visible before readers see slot */
+-    qatomic_store_release(&slot->mapped, mapped);
+-}
+-
+-MshvRemapResult mshv_remap_overlap_region(int vm_fd, uint64_t gpa)
+-{
+-    MshvMemorySlot *gpa_slot, *overlap_slot;
+-    GList *head;
+-    int ret;
+-    MshvMemorySlotManager *manager = &mshv_state->msm;
+-
+-    /* fast path, called often by unmapped_gpa vm exit */
+-    WITH_RCU_READ_LOCK_GUARD() {
+-        assert(manager);
+-        head = qatomic_load_acquire(&manager->slots);
+-        /* return early if no slot is found */
+-        gpa_slot = find_mem_slot_by_gpa(head, gpa);
+-        if (gpa_slot == NULL) {
+-            return MshvRemapNoMapping;
+-        }
+-
+-        /* return early if no overlapping slot is found */
+-        overlap_slot = find_overlap_mem_slot(head, gpa_slot);
+-        if (overlap_slot == NULL) {
+-            return MshvRemapNoOverlap;
+-        }
+-    }
+-
+-    /*
+-     * We'll modify the mapping list, so we need to upgrade to mutex and
+-     * recheck.
+-     */
+-    assert(manager);
+-    QEMU_LOCK_GUARD(&manager->mutex);
+-
+-    /* return early if no slot is found */
+-    gpa_slot = find_mem_slot_by_gpa(manager->slots, gpa);
+-    if (gpa_slot == NULL) {
+-        return MshvRemapNoMapping;
+-    }
+-
+-    /* return early if no overlapping slot is found */
+-    overlap_slot = find_overlap_mem_slot(manager->slots, gpa_slot);
+-    if (overlap_slot == NULL) {
+-        return MshvRemapNoOverlap;
+-    }
+-
+-    /* unmap overlapping slot */
+-    ret = map_or_unmap(vm_fd, overlap_slot, false);
+-    if (ret < 0) {
+-        error_report("failed to unmap overlap region");
+-        abort();
+-    }
+-    set_mapped(overlap_slot, false);
+-    warn_report("mapped out userspace_addr=0x%016lx gpa=0x%010lx size=0x%lx",
+-                overlap_slot->userspace_addr,
+-                overlap_slot->guest_phys_addr,
+-                overlap_slot->memory_size);
+-
+-    /* map region for gpa */
+-    ret = map_or_unmap(vm_fd, gpa_slot, true);
+-    if (ret < 0) {
+-        error_report("failed to map new region");
+-        abort();
+-    }
+-    set_mapped(gpa_slot, true);
+-    warn_report("mapped in  userspace_addr=0x%016lx gpa=0x%010lx size=0x%lx",
+-                gpa_slot->userspace_addr, gpa_slot->guest_phys_addr,
+-                gpa_slot->memory_size);
+-
+-    return MshvRemapOk;
+-}
+-
+ static int handle_unmapped_mmio_region_read(uint64_t gpa, uint64_t size,
+                                             uint8_t *data)
+ {
+@@ -388,97 +124,20 @@ int mshv_guest_mem_write(uint64_t gpa, const uint8_t *data, uintptr_t size,
+     return -1;
+ }
+ 
+-static int tracked_unmap(int vm_fd, uint64_t gpa, uint64_t size,
+-                        uint64_t userspace_addr)
++static int set_memory(const MshvMemoryRegion *mshv_mr, bool add)
+ {
+-    int ret;
+-    MshvMemorySlot *slot;
+-    MshvMemorySlotManager *manager = &mshv_state->msm;
+-
+-    assert(manager);
+-
+-    QEMU_LOCK_GUARD(&manager->mutex);
+-
+-    slot = find_mem_slot_by_region(gpa, size, userspace_addr);
+-    if (!slot) {
+-        trace_mshv_skip_unset_mem(userspace_addr, gpa, size);
+-        /* no work to do */
+-        return 0;
+-    }
+-
+-    if (!is_mapped(slot)) {
+-        /* remove slot, no need to unmap */
+-        return remove_slot(slot);
+-    }
+-
+-    ret = map_or_unmap(vm_fd, slot, false);
+-    if (ret < 0) {
+-        error_report("failed to unmap memory region");
+-        return ret;
+-    }
+-    return remove_slot(slot);
+-}
+-
+-static int tracked_map(int vm_fd, uint64_t gpa, uint64_t size, bool readonly,
+-                       uint64_t userspace_addr)
+-{
+-    MshvMemorySlot *slot, *overlap_slot;
+-    int ret;
+-    MshvMemorySlotManager *manager = &mshv_state->msm;
+-
+-    assert(manager);
+-
+-    QEMU_LOCK_GUARD(&manager->mutex);
++    int ret = 0;
+ 
+-    slot = find_mem_slot_by_region(gpa, size, userspace_addr);
+-    if (slot) {
+-        error_report("memory region already mapped at gpa=0x%lx, "
+-                     "userspace_addr=0x%lx, size=0x%lx",
+-                     slot->guest_phys_addr, slot->userspace_addr,
+-                     slot->memory_size);
++    if (!mshv_mr) {
++        error_report("Invalid mshv_mr");
+         return -1;
+     }
+ 
+-    slot = append_slot(gpa, userspace_addr, size, readonly);
+-
+-    overlap_slot = find_overlap_mem_slot(manager->slots, slot);
+-    if (overlap_slot) {
+-        trace_mshv_remap_attempt(slot->userspace_addr,
+-                                 slot->guest_phys_addr,
+-                                 slot->memory_size);
+-        warn_report("attempt to map region [0x%lx-0x%lx], while "
+-                    "[0x%lx-0x%lx] is already mapped in the guest",
+-                    userspace_addr, userspace_addr + size - 1,
+-                    overlap_slot->userspace_addr,
+-                    overlap_slot->userspace_addr +
+-                    overlap_slot->memory_size - 1);
+-
+-        /* do not register mem slot in hv, but record for later swap-in */
+-        set_mapped(slot, false);
+-
+-        return 0;
+-    }
+-
+-    ret = map_or_unmap(vm_fd, slot, true);
+-    if (ret < 0) {
+-        error_report("failed to map memory region");
+-        return -1;
+-    }
+-    set_mapped(slot, true);
+-
+-    return 0;
+-}
+-
+-static int set_memory(uint64_t gpa, uint64_t size, bool readonly,
+-                      uint64_t userspace_addr, bool add)
+-{
+-    int vm_fd = mshv_state->vm;
+-
+-    if (add) {
+-        return tracked_map(vm_fd, gpa, size, readonly, userspace_addr);
+-    }
+-
+-    return tracked_unmap(vm_fd, gpa, size, userspace_addr);
++    trace_mshv_set_memory(add, mshv_mr->guest_phys_addr,
++                          mshv_mr->memory_size,
++                          mshv_mr->userspace_addr, mshv_mr->readonly,
++                          ret);
++    return map_or_unmap(mshv_state->vm, mshv_mr, add);
+ }
+ 
+ /*
+@@ -514,9 +173,7 @@ void mshv_set_phys_mem(MshvMemoryListener *mml, MemoryRegionSection *section,
+     bool writable = !area->readonly && !area->rom_device;
+     hwaddr start_addr, mr_offset, size;
+     void *ram;
+-
+-    size = align_section(section, &start_addr);
+-    trace_mshv_set_phys_mem(add, section->mr->name, start_addr);
++    MshvMemoryRegion mshv_mr = {0};
+ 
+     size = align_section(section, &start_addr);
+     trace_mshv_set_phys_mem(add, section->mr->name, start_addr);
+@@ -543,21 +200,14 @@ void mshv_set_phys_mem(MshvMemoryListener *mml, MemoryRegionSection *section,
+ 
+     ram = memory_region_get_ram_ptr(area) + mr_offset;
+ 
+-    ret = set_memory(start_addr, size, !writable, (uint64_t)ram, add);
++    mshv_mr.guest_phys_addr = start_addr;
++    mshv_mr.memory_size = size;
++    mshv_mr.readonly = !writable;
++    mshv_mr.userspace_addr = (uint64_t)ram;
++
++    ret = set_memory(&mshv_mr, add);
+     if (ret < 0) {
+-        error_report("failed to set memory region");
++        error_report("Failed to set memory region");
+         abort();
+     }
+ }
+-
+-void mshv_init_memory_slot_manager(MshvState *mshv_state)
+-{
+-    MshvMemorySlotManager *manager;
+-
+-    assert(mshv_state);
+-    manager = &mshv_state->msm;
+-
+-    manager->n_slots = 0;
+-    manager->slots = NULL;
+-    qemu_mutex_init(&manager->mutex);
+-}
+diff --git a/accel/mshv/mshv-all.c b/accel/mshv/mshv-all.c
+index 80428d130d..18e423114b 100644
+--- a/accel/mshv/mshv-all.c
++++ b/accel/mshv/mshv-all.c
+@@ -110,21 +110,85 @@ static int resume_vm(int vm_fd)
+     return 0;
+ }
+ 
++static int get_host_partition_property(int mshv_fd, uint32_t property_code,
++                                       uint64_t *value)
++{
++    int ret;
++    struct hv_input_get_partition_property in = {0};
++    struct hv_output_get_partition_property out = {0};
++    struct mshv_root_hvcall args = {0};
++
++    in.property_code = property_code;
++
++    args.code    = HVCALL_GET_PARTITION_PROPERTY;
++    args.in_sz   = sizeof(in);
++    args.in_ptr  = (uint64_t)&in;
++    args.out_sz  = sizeof(out);
++    args.out_ptr = (uint64_t)&out;
++
++    ret = ioctl(mshv_fd, MSHV_ROOT_HVCALL, &args);
++    if (ret < 0) {
++        error_report("Failed to get host partition property bank: %s",
++                     strerror(errno));
++        return -1;
++    }
++
++    *value = out.property_value;
++    return 0;
++}
++
+ static int create_partition(int mshv_fd, int *vm_fd)
+ {
+     int ret;
+-    struct mshv_create_partition args = {0};
++    uint64_t pt_flags, host_proc_features;
++    union hv_partition_processor_xsave_features disabled_xsave_features;
++    union hv_partition_processor_features disabled_partition_features = {0};
++
++    struct mshv_create_partition_v2 args = {0};
++
++    QEMU_BUILD_BUG_ON(MSHV_NUM_CPU_FEATURES_BANKS != 2);
+ 
+     /* Initialize pt_flags with the desired features */
+-    uint64_t pt_flags = (1ULL << MSHV_PT_BIT_LAPIC) |
+-                        (1ULL << MSHV_PT_BIT_X2APIC) |
+-                        (1ULL << MSHV_PT_BIT_GPA_SUPER_PAGES);
++    pt_flags = (1ULL << MSHV_PT_BIT_LAPIC) |
++               (1ULL << MSHV_PT_BIT_X2APIC) |
++               (1ULL << MSHV_PT_BIT_GPA_SUPER_PAGES) |
++               (1ULL << MSHV_PT_BIT_CPU_AND_XSAVE_FEATURES);
++
++    /* enable all */
++    disabled_xsave_features.as_uint64 = 0;
++
++    /*
++     * query host for supported processor features and disable unsupported
++     * features: (0 means supported, 1 means disabled, hence the negation)
++     */
++    ret = get_host_partition_property(mshv_fd,
++                                      HV_PARTITION_PROPERTY_PROCESSOR_FEATURES0,
++                                      &host_proc_features);
++    if (ret < 0) {
++        error_report("Failed to get host processor feature bank 0");
++        return -1;
++    }
++    args.pt_cpu_fbanks[0] = ~host_proc_features;
+ 
+-    /* Set default isolation type */
+-    uint64_t pt_isolation = MSHV_PT_ISOLATION_NONE;
++    ret = get_host_partition_property(mshv_fd,
++                                      HV_PARTITION_PROPERTY_PROCESSOR_FEATURES1,
++                                      &host_proc_features);
++    if (ret < 0) {
++        error_report("Failed to get host processor feature bank 1");
++        return -1;
++    }
++    args.pt_cpu_fbanks[1] = ~host_proc_features;
+ 
++    /* arch-specific features we disable regardless of host support */
++    mshv_arch_disable_partition_proc_features(&disabled_partition_features);
++    args.pt_cpu_fbanks[0] |= disabled_partition_features.as_uint64[0];
++    args.pt_cpu_fbanks[1] |= disabled_partition_features.as_uint64[1];
++
++    /* populate args structure */
+     args.pt_flags = pt_flags;
+-    args.pt_isolation = pt_isolation;
++    args.pt_isolation = MSHV_PT_ISOLATION_NONE;
++    args.pt_disabled_xsave = disabled_xsave_features.as_uint64;
++    args.pt_num_cpu_fbanks = MSHV_NUM_CPU_FEATURES_BANKS;
+ 
+     ret = ioctl(mshv_fd, MSHV_CREATE_PARTITION, &args);
+     if (ret < 0) {
+@@ -437,8 +501,6 @@ static int mshv_init(AccelState *as, MachineState *ms)
+ 
+     mshv_init_msicontrol();
+ 
+-    mshv_init_memory_slot_manager(s);
+-
+     ret = create_vm(mshv_fd, &vm_fd);
+     if (ret < 0) {
+         close(mshv_fd);
+diff --git a/accel/mshv/trace-events b/accel/mshv/trace-events
+index 36f0d59b38..a4dffeb24a 100644
+--- a/accel/mshv/trace-events
++++ b/accel/mshv/trace-events
+@@ -26,8 +26,3 @@ mshv_map_memory(uint64_t userspace_addr, uint64_t gpa, uint64_t size) "\tu_a=0x%
+ mshv_unmap_memory(uint64_t userspace_addr, uint64_t gpa, uint64_t size) "\tu_a=0x%" PRIx64 " gpa=0x%010" PRIx64 " size=0x%08" PRIx64
+ mshv_set_phys_mem(bool add, const char *name, uint64_t gpa) "\tadd=%d name=%s gpa=0x%010" PRIx64
+ mshv_handle_mmio(uint64_t gva, uint64_t gpa, uint64_t size, uint8_t access_type) "\tgva=0x%" PRIx64 " gpa=0x%010" PRIx64 " size=0x%" PRIx64 " access_type=%d"
+-
+-mshv_found_slot(uint64_t userspace_addr, uint64_t gpa, uint64_t size) "\tu_a=0x%" PRIx64 " gpa=0x%010" PRIx64 " size=0x%08" PRIx64
+-mshv_skip_unset_mem(uint64_t userspace_addr, uint64_t gpa, uint64_t size) "\tu_a=0x%" PRIx64 " gpa=0x%010" PRIx64 " size=0x%08" PRIx64
+-mshv_remap_attempt(uint64_t userspace_addr, uint64_t gpa, uint64_t size) "\tu_a=0x%" PRIx64 " gpa=0x%010" PRIx64 " size=0x%08" PRIx64
+-mshv_find_slot_by_gpa(uint64_t gpa) "\tgpa=0x%010" PRIx64
+diff --git a/hw/net/virtio-net.c b/hw/net/virtio-net.c
+index ca813203d7..8a7558e278 100644
+--- a/hw/net/virtio-net.c
++++ b/hw/net/virtio-net.c
+@@ -1879,7 +1879,8 @@ static int virtio_net_process_rss(NetClientState *nc, const uint8_t *buf,
+                                              n->rss_data.runtime_hash_types);
+     if (net_hash_type > NetPktRssIpV6UdpEx) {
+         if (n->rss_data.populate_hash) {
+-            hdr->hash_value = VIRTIO_NET_HASH_REPORT_NONE;
++            hdr->hash_value_lo = VIRTIO_NET_HASH_REPORT_NONE;
++            hdr->hash_value_hi = VIRTIO_NET_HASH_REPORT_NONE;
+             hdr->hash_report = 0;
+         }
+         return n->rss_data.redirect ? n->rss_data.default_queue : -1;
+@@ -1888,7 +1889,8 @@ static int virtio_net_process_rss(NetClientState *nc, const uint8_t *buf,
+     hash = net_rx_pkt_calc_rss_hash(pkt, net_hash_type, n->rss_data.key);
+ 
+     if (n->rss_data.populate_hash) {
+-        hdr->hash_value = hash;
++        hdr->hash_value_lo = cpu_to_le16(hash & 0xffff);
++        hdr->hash_value_hi = cpu_to_le16((hash >> 16) & 0xffff);
+         hdr->hash_report = reports[net_hash_type];
+     }
+ 
+@@ -1990,10 +1992,11 @@ static ssize_t virtio_net_receive_rcu(NetClientState *nc, const uint8_t *buf,
+ 
+             receive_header(n, sg, elem->in_num, buf, size);
+             if (n->rss_data.populate_hash) {
+-                offset = offsetof(typeof(extra_hdr), hash_value);
++                offset = offsetof(typeof(extra_hdr), hash_value_lo);
+                 iov_from_buf(sg, elem->in_num, offset,
+                              (char *)&extra_hdr + offset,
+-                             sizeof(extra_hdr.hash_value) +
++                             sizeof(extra_hdr.hash_value_lo) +
++                             sizeof(extra_hdr.hash_value_hi) +
+                              sizeof(extra_hdr.hash_report));
+             }
+             offset = n->host_hdr_len;
+diff --git a/include/hw/hyperv/hvgdk_mini.h b/include/hw/hyperv/hvgdk_mini.h
+index d89315f545..cb52cc9de2 100644
+--- a/include/hw/hyperv/hvgdk_mini.h
++++ b/include/hw/hyperv/hvgdk_mini.h
+@@ -450,13 +450,6 @@ typedef struct hv_input_set_vp_registers {
+     struct hv_register_assoc elements[];
+ } hv_input_set_vp_registers;
+ 
+-#define MSHV_VP_MAX_REGISTERS   128
+-
+-struct mshv_vp_registers {
+-    int count; /* at most MSHV_VP_MAX_REGISTERS */
+-    struct hv_register_assoc *regs;
+-};
+-
+ union hv_interrupt_control {
+     uint64_t as_uint64;
+     struct {
+diff --git a/include/hw/hyperv/hvhdk.h b/include/hw/hyperv/hvhdk.h
+index 866c8211bf..c0ce48e605 100644
+--- a/include/hw/hyperv/hvhdk.h
++++ b/include/hw/hyperv/hvhdk.h
+@@ -11,6 +11,16 @@
+ 
+ #define HV_PARTITION_SYNTHETIC_PROCESSOR_FEATURES_BANKS 1
+ 
++struct hv_input_get_partition_property {
++    uint64_t partition_id;
++    uint32_t property_code; /* enum hv_partition_property_code */
++    uint32_t padding;
++} QEMU_PACKED;
++
++struct hv_output_get_partition_property {
++    uint64_t property_value;
++} QEMU_PACKED;
++
+ struct hv_input_set_partition_property {
+     uint64_t partition_id;
+     uint32_t property_code; /* enum hv_partition_property_code */
+@@ -161,6 +171,191 @@ union hv_partition_synthetic_processor_features {
+     };
+ };
+ 
++union hv_partition_processor_xsave_features {
++    struct {
++        uint64_t xsave_support:1;
++        uint64_t xsaveopt_support:1;
++        uint64_t avx_support:1;
++        uint64_t avx2_support:1;
++        uint64_t fma_support:1;
++        uint64_t mpx_support:1;
++        uint64_t avx512_support:1;
++        uint64_t avx512_dq_support:1;
++        uint64_t avx512_cd_support:1;
++        uint64_t avx512_bw_support:1;
++        uint64_t avx512_vl_support:1;
++        uint64_t xsave_comp_support:1;
++        uint64_t xsave_supervisor_support:1;
++        uint64_t xcr1_support:1;
++        uint64_t avx512_bitalg_support:1;
++        uint64_t avx512_i_fma_support:1;
++        uint64_t avx512_v_bmi_support:1;
++        uint64_t avx512_v_bmi2_support:1;
++        uint64_t avx512_vnni_support:1;
++        uint64_t gfni_support:1;
++        uint64_t vaes_support:1;
++        uint64_t avx512_v_popcntdq_support:1;
++        uint64_t vpclmulqdq_support:1;
++        uint64_t avx512_bf16_support:1;
++        uint64_t avx512_vp2_intersect_support:1;
++        uint64_t avx512_fp16_support:1;
++        uint64_t xfd_support:1;
++        uint64_t amx_tile_support:1;
++        uint64_t amx_bf16_support:1;
++        uint64_t amx_int8_support:1;
++        uint64_t avx_vnni_support:1;
++        uint64_t avx_ifma_support:1;
++        uint64_t avx_ne_convert_support:1;
++        uint64_t avx_vnni_int8_support:1;
++        uint64_t avx_vnni_int16_support:1;
++        uint64_t avx10_1_256_support:1;
++        uint64_t avx10_1_512_support:1;
++        uint64_t amx_fp16_support:1;
++        uint64_t reserved1:26;
++    };
++    uint64_t as_uint64;
++};
++
++#define HV_PARTITION_PROCESSOR_FEATURES_BANKS 2
++#define HV_PARTITION_PROCESSOR_FEATURES_RESERVEDBANK1_BITFIELD_COUNT 4
++
++
++union hv_partition_processor_features {
++    uint64_t as_uint64[HV_PARTITION_PROCESSOR_FEATURES_BANKS];
++    struct {
++        uint64_t sse3_support:1;
++        uint64_t lahf_sahf_support:1;
++        uint64_t ssse3_support:1;
++        uint64_t sse4_1_support:1;
++        uint64_t sse4_2_support:1;
++        uint64_t sse4a_support:1;
++        uint64_t xop_support:1;
++        uint64_t pop_cnt_support:1;
++        uint64_t cmpxchg16b_support:1;
++        uint64_t altmovcr8_support:1;
++        uint64_t lzcnt_support:1;
++        uint64_t mis_align_sse_support:1;
++        uint64_t mmx_ext_support:1;
++        uint64_t amd3dnow_support:1;
++        uint64_t extended_amd3dnow_support:1;
++        uint64_t page_1gb_support:1;
++        uint64_t aes_support:1;
++        uint64_t pclmulqdq_support:1;
++        uint64_t pcid_support:1;
++        uint64_t fma4_support:1;
++        uint64_t f16c_support:1;
++        uint64_t rd_rand_support:1;
++        uint64_t rd_wr_fs_gs_support:1;
++        uint64_t smep_support:1;
++        uint64_t enhanced_fast_string_support:1;
++        uint64_t bmi1_support:1;
++        uint64_t bmi2_support:1;
++        uint64_t hle_support_deprecated:1;
++        uint64_t rtm_support_deprecated:1;
++        uint64_t movbe_support:1;
++        uint64_t npiep1_support:1;
++        uint64_t dep_x87_fpu_save_support:1;
++        uint64_t rd_seed_support:1;
++        uint64_t adx_support:1;
++        uint64_t intel_prefetch_support:1;
++        uint64_t smap_support:1;
++        uint64_t hle_support:1;
++        uint64_t rtm_support:1;
++        uint64_t rdtscp_support:1;
++        uint64_t clflushopt_support:1;
++        uint64_t clwb_support:1;
++        uint64_t sha_support:1;
++        uint64_t x87_pointers_saved_support:1;
++        uint64_t invpcid_support:1;
++        uint64_t ibrs_support:1;
++        uint64_t stibp_support:1;
++        uint64_t ibpb_support:1;
++        uint64_t unrestricted_guest_support:1;
++        uint64_t mdd_support:1;
++        uint64_t fast_short_rep_mov_support:1;
++        uint64_t l1dcache_flush_support:1;
++        uint64_t rdcl_no_support:1;
++        uint64_t ibrs_all_support:1;
++        uint64_t skip_l1df_support:1;
++        uint64_t ssb_no_support:1;
++        uint64_t rsb_a_no_support:1;
++        uint64_t virt_spec_ctrl_support:1;
++        uint64_t rd_pid_support:1;
++        uint64_t umip_support:1;
++        uint64_t mbs_no_support:1;
++        uint64_t mb_clear_support:1;
++        uint64_t taa_no_support:1;
++        uint64_t tsx_ctrl_support:1;
++        uint64_t reserved_bank0:1;
++
++        /* N.B. Begin bank 1 processor features. */
++        uint64_t a_count_m_count_support:1;
++        uint64_t tsc_invariant_support:1;
++        uint64_t cl_zero_support:1;
++        uint64_t rdpru_support:1;
++        uint64_t la57_support:1;
++        uint64_t mbec_support:1;
++        uint64_t nested_virt_support:1;
++        uint64_t psfd_support:1;
++        uint64_t cet_ss_support:1;
++        uint64_t cet_ibt_support:1;
++        uint64_t vmx_exception_inject_support:1;
++        uint64_t enqcmd_support:1;
++        uint64_t umwait_tpause_support:1;
++        uint64_t movdiri_support:1;
++        uint64_t movdir64b_support:1;
++        uint64_t cldemote_support:1;
++        uint64_t serialize_support:1;
++        uint64_t tsc_deadline_tmr_support:1;
++        uint64_t tsc_adjust_support:1;
++        uint64_t fzl_rep_movsb:1;
++        uint64_t fs_rep_stosb:1;
++        uint64_t fs_rep_cmpsb:1;
++        uint64_t tsx_ld_trk_support:1;
++        uint64_t vmx_ins_outs_exit_info_support:1;
++        uint64_t hlat_support:1;
++        uint64_t sbdr_ssdp_no_support:1;
++        uint64_t fbsdp_no_support:1;
++        uint64_t psdp_no_support:1;
++        uint64_t fb_clear_support:1;
++        uint64_t btc_no_support:1;
++        uint64_t ibpb_rsb_flush_support:1;
++        uint64_t stibp_always_on_support:1;
++        uint64_t perf_global_ctrl_support:1;
++        uint64_t npt_execute_only_support:1;
++        uint64_t npt_ad_flags_support:1;
++        uint64_t npt1_gb_page_support:1;
++        uint64_t amd_processor_topology_node_id_support:1;
++        uint64_t local_machine_check_support:1;
++        uint64_t extended_topology_leaf_fp256_amd_support:1;
++        uint64_t gds_no_support:1;
++        uint64_t cmpccxadd_support:1;
++        uint64_t tsc_aux_virtualization_support:1;
++        uint64_t rmp_query_support:1;
++        uint64_t bhi_no_support:1;
++        uint64_t bhi_dis_support:1;
++        uint64_t prefetch_i_support:1;
++        uint64_t sha512_support:1;
++        uint64_t mitigation_ctrl_support:1;
++        uint64_t rfds_no_support:1;
++        uint64_t rfds_clear_support:1;
++        uint64_t sm3_support:1;
++        uint64_t sm4_support:1;
++        uint64_t secure_avic_support:1;
++        uint64_t guest_intercept_ctrl_support:1;
++        uint64_t sbpb_supported:1;
++        uint64_t ibpb_br_type_supported:1;
++        uint64_t srso_no_supported:1;
++        uint64_t srso_user_kernel_no_supported:1;
++        uint64_t vrew_clear_supported:1;
++        uint64_t tsa_l1_no_supported:1;
++        uint64_t tsa_sq_no_supported:1;
++        uint64_t lass_support:1;
++        uint64_t idle_hlt_intercept_support:1;
++        uint64_t msr_list_support:1;
++    };
++};
++
+ enum hv_translate_gva_result_code {
+     HV_TRANSLATE_GVA_SUCCESS                    = 0,
+ 
+diff --git a/include/standard-headers/drm/drm_fourcc.h b/include/standard-headers/drm/drm_fourcc.h
+index cef077dfb3..b39e197cc7 100644
+--- a/include/standard-headers/drm/drm_fourcc.h
++++ b/include/standard-headers/drm/drm_fourcc.h
+@@ -978,14 +978,20 @@ extern "C" {
+  *               2 = Gob Height 8, Turing+ Page Kind mapping
+  *               3 = Reserved for future use.
+  *
+- * 22:22 s     Sector layout.  On Tegra GPUs prior to Xavier, there is a further
+- *             bit remapping step that occurs at an even lower level than the
+- *             page kind and block linear swizzles.  This causes the layout of
+- *             surfaces mapped in those SOC's GPUs to be incompatible with the
+- *             equivalent mapping on other GPUs in the same system.
+- *
+- *               0 = Tegra K1 - Tegra Parker/TX2 Layout.
+- *               1 = Desktop GPU and Tegra Xavier+ Layout
++ * 22:22 s     Sector layout.  There is a further bit remapping step that occurs
++ * 26:27       at an even lower level than the page kind and block linear
++ *             swizzles.  This causes the bit arrangement of surfaces in memory
++ *             to differ subtly, and prevents direct sharing of surfaces between
++ *             GPUs with different layouts.
++ *
++ *               0 = Tegra K1 - Tegra Parker/TX2 Layout
++ *               1 = Pre-GB20x, GB20x 32+ bpp, GB10, Tegra Xavier-Orin Layout
++ *               2 = GB20x(Blackwell 2)+ 8 bpp surface layout
++ *               3 = GB20x(Blackwell 2)+ 16 bpp surface layout
++ *               4 = Reserved for future use.
++ *               5 = Reserved for future use.
++ *               6 = Reserved for future use.
++ *               7 = Reserved for future use.
+  *
+  * 25:23 c     Lossless Framebuffer Compression type.
+  *
+@@ -1000,7 +1006,7 @@ extern "C" {
+  *               6 = Reserved for future use
+  *               7 = Reserved for future use
+  *
+- * 55:25 -     Reserved for future use.  Must be zero.
++ * 55:28 -     Reserved for future use.  Must be zero.
+  */
+ #define DRM_FORMAT_MOD_NVIDIA_BLOCK_LINEAR_2D(c, s, g, k, h) \
+ 	fourcc_mod_code(NVIDIA, (0x10 | \
+@@ -1008,6 +1014,7 @@ extern "C" {
+ 				 (((k) & 0xff) << 12) | \
+ 				 (((g) & 0x3) << 20) | \
+ 				 (((s) & 0x1) << 22) | \
++				 (((s) & 0x6) << 25) | \
+ 				 (((c) & 0x7) << 23)))
+ 
+ /* To grandfather in prior block linear format modifiers to the above layout,
+diff --git a/include/standard-headers/linux/ethtool.h b/include/standard-headers/linux/ethtool.h
+index dc24512d28..d0f7a63f10 100644
+--- a/include/standard-headers/linux/ethtool.h
++++ b/include/standard-headers/linux/ethtool.h
+@@ -2077,6 +2077,10 @@ enum ethtool_link_mode_bit_indices {
+ 	ETHTOOL_LINK_MODE_800000baseDR4_2_Full_BIT	 = 118,
+ 	ETHTOOL_LINK_MODE_800000baseSR4_Full_BIT	 = 119,
+ 	ETHTOOL_LINK_MODE_800000baseVR4_Full_BIT	 = 120,
++	ETHTOOL_LINK_MODE_1600000baseCR8_Full_BIT	 = 121,
++	ETHTOOL_LINK_MODE_1600000baseKR8_Full_BIT	 = 122,
++	ETHTOOL_LINK_MODE_1600000baseDR8_Full_BIT	 = 123,
++	ETHTOOL_LINK_MODE_1600000baseDR8_2_Full_BIT	 = 124,
+ 
+ 	/* must be last entry */
+ 	__ETHTOOL_LINK_MODE_MASK_NBITS
+@@ -2190,6 +2194,7 @@ enum ethtool_link_mode_bit_indices {
+ #define SPEED_200000		200000
+ #define SPEED_400000		400000
+ #define SPEED_800000		800000
++#define SPEED_1600000		1600000
+ 
+ #define SPEED_UNKNOWN		-1
+ 
+diff --git a/include/standard-headers/linux/input-event-codes.h b/include/standard-headers/linux/input-event-codes.h
+index c914ccd723..ede79c6ae4 100644
+--- a/include/standard-headers/linux/input-event-codes.h
++++ b/include/standard-headers/linux/input-event-codes.h
+@@ -27,7 +27,7 @@
+ #define INPUT_PROP_TOPBUTTONPAD		0x04	/* softbuttons at top of pad */
+ #define INPUT_PROP_POINTING_STICK	0x05	/* is a pointing stick */
+ #define INPUT_PROP_ACCELEROMETER	0x06	/* has accelerometer */
+-#define INPUT_PROP_HAPTIC_TOUCHPAD	0x07	/* is a haptic touchpad */
++#define INPUT_PROP_PRESSUREPAD		0x07	/* pressure triggers clicks */
+ 
+ #define INPUT_PROP_MAX			0x1f
+ #define INPUT_PROP_CNT			(INPUT_PROP_MAX + 1)
+@@ -631,6 +631,18 @@
+ #define KEY_BRIGHTNESS_MIN		0x250	/* Set Brightness to Minimum */
+ #define KEY_BRIGHTNESS_MAX		0x251	/* Set Brightness to Maximum */
+ 
++/*
++ * Keycodes for hotkeys toggling the electronic privacy screen found on some
++ * laptops on/off. Note when the embedded-controller turns on/off the eprivacy
++ * screen itself then the state should be reported through drm connecter props:
++ * https://www.kernel.org/doc/html/latest/gpu/drm-kms.html#standard-connector-properties
++ * Except when implementing the drm connecter properties API is not possible
++ * because e.g. the firmware does not allow querying the presence and/or status
++ * of the eprivacy screen at boot.
++ */
++#define KEY_EPRIVACY_SCREEN_ON		0x252
++#define KEY_EPRIVACY_SCREEN_OFF		0x253
++
+ #define KEY_KBDINPUTASSIST_PREV		0x260
+ #define KEY_KBDINPUTASSIST_NEXT		0x261
+ #define KEY_KBDINPUTASSIST_PREVGROUP		0x262
+diff --git a/include/standard-headers/linux/pci_regs.h b/include/standard-headers/linux/pci_regs.h
+index 07e06aafec..3add74ae25 100644
+--- a/include/standard-headers/linux/pci_regs.h
++++ b/include/standard-headers/linux/pci_regs.h
+@@ -503,6 +503,7 @@
+ #define  PCI_EXP_DEVCAP_PWR_VAL	0x03fc0000 /* Slot Power Limit Value */
+ #define  PCI_EXP_DEVCAP_PWR_SCL	0x0c000000 /* Slot Power Limit Scale */
+ #define  PCI_EXP_DEVCAP_FLR     0x10000000 /* Function Level Reset */
++#define  PCI_EXP_DEVCAP_TEE     0x40000000 /* TEE I/O (TDISP) Support */
+ #define PCI_EXP_DEVCTL		0x08	/* Device Control */
+ #define  PCI_EXP_DEVCTL_CERE	0x0001	/* Correctable Error Reporting En. */
+ #define  PCI_EXP_DEVCTL_NFERE	0x0002	/* Non-Fatal Error Reporting Enable */
+@@ -754,6 +755,8 @@
+ #define PCI_EXT_CAP_ID_NPEM	0x29	/* Native PCIe Enclosure Management */
+ #define PCI_EXT_CAP_ID_PL_32GT  0x2A    /* Physical Layer 32.0 GT/s */
+ #define PCI_EXT_CAP_ID_DOE	0x2E	/* Data Object Exchange */
++#define PCI_EXT_CAP_ID_DEV3	0x2F	/* Device 3 Capability/Control/Status */
++#define PCI_EXT_CAP_ID_IDE	0x30    /* Integrity and Data Encryption */
+ #define PCI_EXT_CAP_ID_PL_64GT	0x31	/* Physical Layer 64.0 GT/s */
+ #define PCI_EXT_CAP_ID_MAX	PCI_EXT_CAP_ID_PL_64GT
+ 
+@@ -1244,9 +1247,95 @@
+ /* Deprecated old name, replaced with PCI_DOE_DATA_OBJECT_DISC_RSP_3_TYPE */
+ #define PCI_DOE_DATA_OBJECT_DISC_RSP_3_PROTOCOL		PCI_DOE_DATA_OBJECT_DISC_RSP_3_TYPE
+ 
++/* Device 3 Extended Capability */
++#define PCI_DEV3_CAP		0x04	/* Device 3 Capabilities Register */
++#define PCI_DEV3_CTL		0x08	/* Device 3 Control Register */
++#define PCI_DEV3_STA		0x0c	/* Device 3 Status Register */
++#define  PCI_DEV3_STA_SEGMENT	0x8	/* Segment Captured (end-to-end flit-mode detected) */
++
+ /* Compute Express Link (CXL r3.1, sec 8.1.5) */
+ #define PCI_DVSEC_CXL_PORT				3
+ #define PCI_DVSEC_CXL_PORT_CTL				0x0c
+ #define PCI_DVSEC_CXL_PORT_CTL_UNMASK_SBR		0x00000001
+ 
++/* Integrity and Data Encryption Extended Capability */
++#define PCI_IDE_CAP			0x04
++#define  PCI_IDE_CAP_LINK		0x1  /* Link IDE Stream Supported */
++#define  PCI_IDE_CAP_SELECTIVE		0x2  /* Selective IDE Streams Supported */
++#define  PCI_IDE_CAP_FLOWTHROUGH	0x4  /* Flow-Through IDE Stream Supported */
++#define  PCI_IDE_CAP_PARTIAL_HEADER_ENC 0x8  /* Partial Header Encryption Supported */
++#define  PCI_IDE_CAP_AGGREGATION	0x10 /* Aggregation Supported */
++#define  PCI_IDE_CAP_PCRC		0x20 /* PCRC Supported */
++#define  PCI_IDE_CAP_IDE_KM		0x40 /* IDE_KM Protocol Supported */
++#define  PCI_IDE_CAP_SEL_CFG		0x80 /* Selective IDE for Config Request Support */
++#define  PCI_IDE_CAP_ALG		__GENMASK(12, 8) /* Supported Algorithms */
++#define   PCI_IDE_CAP_ALG_AES_GCM_256	0    /* AES-GCM 256 key size, 96b MAC */
++#define  PCI_IDE_CAP_LINK_TC_NUM	__GENMASK(15, 13) /* Link IDE TCs */
++#define  PCI_IDE_CAP_SEL_NUM		__GENMASK(23, 16) /* Supported Selective IDE Streams */
++#define  PCI_IDE_CAP_TEE_LIMITED	0x1000000 /* TEE-Limited Stream Supported */
++#define PCI_IDE_CTL			0x08
++#define  PCI_IDE_CTL_FLOWTHROUGH_IDE	0x4  /* Flow-Through IDE Stream Enabled */
++
++#define PCI_IDE_LINK_STREAM_0		0xc  /* First Link Stream Register Block */
++#define  PCI_IDE_LINK_BLOCK_SIZE	8
++/* Link IDE Stream block, up to PCI_IDE_CAP_LINK_TC_NUM */
++#define PCI_IDE_LINK_CTL_0		0x00		  /* First Link Control Register Offset in block */
++#define  PCI_IDE_LINK_CTL_EN		0x1		  /* Link IDE Stream Enable */
++#define  PCI_IDE_LINK_CTL_TX_AGGR_NPR	__GENMASK(3, 2)	  /* Tx Aggregation Mode NPR */
++#define  PCI_IDE_LINK_CTL_TX_AGGR_PR	__GENMASK(5, 4)	  /* Tx Aggregation Mode PR */
++#define  PCI_IDE_LINK_CTL_TX_AGGR_CPL	__GENMASK(7, 6)	  /* Tx Aggregation Mode CPL */
++#define  PCI_IDE_LINK_CTL_PCRC_EN	0x100		  /* PCRC Enable */
++#define  PCI_IDE_LINK_CTL_PART_ENC	__GENMASK(13, 10) /* Partial Header Encryption Mode */
++#define  PCI_IDE_LINK_CTL_ALG		__GENMASK(18, 14) /* Selection from PCI_IDE_CAP_ALG */
++#define  PCI_IDE_LINK_CTL_TC		__GENMASK(21, 19) /* Traffic Class */
++#define  PCI_IDE_LINK_CTL_ID		__GENMASK(31, 24) /* Stream ID */
++#define PCI_IDE_LINK_STS_0		0x4               /* First Link Status Register Offset in block */
++#define  PCI_IDE_LINK_STS_STATE		__GENMASK(3, 0)   /* Link IDE Stream State */
++#define  PCI_IDE_LINK_STS_IDE_FAIL	0x80000000	  /* IDE fail message received */
++
++/* Selective IDE Stream block, up to PCI_IDE_CAP_SELECTIVE_STREAMS_NUM */
++/* Selective IDE Stream Capability Register */
++#define  PCI_IDE_SEL_CAP		0x00
++#define   PCI_IDE_SEL_CAP_ASSOC_NUM	__GENMASK(3, 0)
++/* Selective IDE Stream Control Register */
++#define  PCI_IDE_SEL_CTL		0x04
++#define   PCI_IDE_SEL_CTL_EN		0x1		  /* Selective IDE Stream Enable */
++#define   PCI_IDE_SEL_CTL_TX_AGGR_NPR	__GENMASK(3, 2)	  /* Tx Aggregation Mode NPR */
++#define   PCI_IDE_SEL_CTL_TX_AGGR_PR	__GENMASK(5, 4)   /* Tx Aggregation Mode PR */
++#define   PCI_IDE_SEL_CTL_TX_AGGR_CPL	__GENMASK(7, 6)	  /* Tx Aggregation Mode CPL */
++#define   PCI_IDE_SEL_CTL_PCRC_EN	0x100		  /* PCRC Enable */
++#define   PCI_IDE_SEL_CTL_CFG_EN	0x200		  /* Selective IDE for Configuration Requests */
++#define   PCI_IDE_SEL_CTL_PART_ENC	__GENMASK(13, 10) /* Partial Header Encryption Mode */
++#define   PCI_IDE_SEL_CTL_ALG		__GENMASK(18, 14) /* Selection from PCI_IDE_CAP_ALG */
++#define   PCI_IDE_SEL_CTL_TC		__GENMASK(21, 19) /* Traffic Class */
++#define   PCI_IDE_SEL_CTL_DEFAULT	0x400000	  /* Default Stream */
++#define   PCI_IDE_SEL_CTL_TEE_LIMITED	0x800000	  /* TEE-Limited Stream */
++#define   PCI_IDE_SEL_CTL_ID		__GENMASK(31, 24) /* Stream ID */
++#define   PCI_IDE_SEL_CTL_ID_MAX	255
++/* Selective IDE Stream Status Register */
++#define  PCI_IDE_SEL_STS		 0x08
++#define   PCI_IDE_SEL_STS_STATE		 __GENMASK(3, 0) /* Selective IDE Stream State */
++#define   PCI_IDE_SEL_STS_STATE_INSECURE 0
++#define   PCI_IDE_SEL_STS_STATE_SECURE	 2
++#define   PCI_IDE_SEL_STS_IDE_FAIL	 0x80000000	 /* IDE fail message received */
++/* IDE RID Association Register 1 */
++#define  PCI_IDE_SEL_RID_1		 0x0c
++#define   PCI_IDE_SEL_RID_1_LIMIT	 __GENMASK(23, 8)
++/* IDE RID Association Register 2 */
++#define  PCI_IDE_SEL_RID_2		0x10
++#define   PCI_IDE_SEL_RID_2_VALID	0x1
++#define   PCI_IDE_SEL_RID_2_BASE	__GENMASK(23, 8)
++#define   PCI_IDE_SEL_RID_2_SEG		__GENMASK(31, 24)
++/* Selective IDE Address Association Register Block, up to PCI_IDE_SEL_CAP_ASSOC_NUM */
++#define PCI_IDE_SEL_ADDR_BLOCK_SIZE	12
++#define  PCI_IDE_SEL_ADDR_1(x)		(20 + (x) * PCI_IDE_SEL_ADDR_BLOCK_SIZE)
++#define   PCI_IDE_SEL_ADDR_1_VALID	0x1
++#define   PCI_IDE_SEL_ADDR_1_BASE_LOW	__GENMASK(19, 8)
++#define   PCI_IDE_SEL_ADDR_1_LIMIT_LOW	__GENMASK(31, 20)
++/* IDE Address Association Register 2 is "Memory Limit Upper" */
++#define  PCI_IDE_SEL_ADDR_2(x)		(24 + (x) * PCI_IDE_SEL_ADDR_BLOCK_SIZE)
++/* IDE Address Association Register 3 is "Memory Base Upper" */
++#define  PCI_IDE_SEL_ADDR_3(x)		(28 + (x) * PCI_IDE_SEL_ADDR_BLOCK_SIZE)
++#define PCI_IDE_SEL_BLOCK_SIZE(nr_assoc)  (20 + PCI_IDE_SEL_ADDR_BLOCK_SIZE * (nr_assoc))
++
+ #endif /* LINUX_PCI_REGS_H */
+diff --git a/include/standard-headers/linux/virtio_net.h b/include/standard-headers/linux/virtio_net.h
+index 93abaae0b9..17a0174d6c 100644
+--- a/include/standard-headers/linux/virtio_net.h
++++ b/include/standard-headers/linux/virtio_net.h
+@@ -193,7 +193,8 @@ struct virtio_net_hdr_v1 {
+ 
+ struct virtio_net_hdr_v1_hash {
+ 	struct virtio_net_hdr_v1 hdr;
+-	uint32_t hash_value;
++	uint16_t hash_value_lo;
++	uint16_t hash_value_hi;
+ #define VIRTIO_NET_HASH_REPORT_NONE            0
+ #define VIRTIO_NET_HASH_REPORT_IPv4            1
+ #define VIRTIO_NET_HASH_REPORT_TCPv4           2
+diff --git a/include/standard-headers/linux/virtio_pci.h b/include/standard-headers/linux/virtio_pci.h
+index 09e964e6ee..4c82513df2 100644
+--- a/include/standard-headers/linux/virtio_pci.h
++++ b/include/standard-headers/linux/virtio_pci.h
+@@ -40,7 +40,7 @@
+ #define _LINUX_VIRTIO_PCI_H
+ 
+ #include "standard-headers/linux/types.h"
+-#include "standard-headers/linux/kernel.h"
++#include "standard-headers/linux/const.h"
+ 
+ #ifndef VIRTIO_PCI_NO_LEGACY
+ 
+diff --git a/include/system/mshv.h b/include/system/mshv.h
+index 8b1fc20c80..d9c7de01b4 100644
+--- a/include/system/mshv.h
++++ b/include/system/mshv.h
+@@ -61,4 +61,7 @@ int mshv_irqchip_add_irqfd_notifier_gsi(const EventNotifier *n,
+                                         const EventNotifier *rn, int virq);
+ int mshv_irqchip_remove_irqfd_notifier_gsi(const EventNotifier *n, int virq);
+ 
++/* cpuid */
++uint32_t mshv_get_supported_cpuid(uint32_t func, uint32_t idx, int reg);
++
+ #endif
+diff --git a/include/system/mshv_int.h b/include/system/mshv_int.h
+index 490563c1ab..3f1b1fe9ee 100644
+--- a/include/system/mshv_int.h
++++ b/include/system/mshv_int.h
+@@ -16,8 +16,6 @@
+ 
+ #define MSHV_MSR_ENTRIES_COUNT 64
+ 
+-#define MSHV_MAX_MEM_SLOTS 32
+-
+ typedef struct hyperv_message hv_message;
+ 
+ typedef struct MshvHvCallArgs {
+@@ -42,12 +40,6 @@ typedef struct MshvAddressSpace {
+     AddressSpace *as;
+ } MshvAddressSpace;
+ 
+-typedef struct MshvMemorySlotManager {
+-    size_t n_slots;
+-    GList *slots;
+-    QemuMutex mutex;
+-} MshvMemorySlotManager;
+-
+ struct MshvState {
+     AccelState parent_obj;
+     int vm;
+@@ -56,7 +48,6 @@ struct MshvState {
+     int nr_as;
+     MshvAddressSpace *as;
+     int fd;
+-    MshvMemorySlotManager msm;
+ };
+ 
+ typedef struct MshvMsiControl {
+@@ -87,12 +78,6 @@ typedef enum MshvVmExit {
+     MshvVmExitSpecial  = 2,
+ } MshvVmExit;
+ 
+-typedef enum MshvRemapResult {
+-    MshvRemapOk = 0,
+-    MshvRemapNoMapping = 1,
+-    MshvRemapNoOverlap = 2,
+-} MshvRemapResult;
+-
+ void mshv_init_mmio_emu(void);
+ int mshv_create_vcpu(int vm_fd, uint8_t vp_index, int *cpu_fd);
+ void mshv_remove_vcpu(int vm_fd, int cpu_fd);
+@@ -109,6 +94,8 @@ void mshv_arch_init_vcpu(CPUState *cpu);
+ void mshv_arch_destroy_vcpu(CPUState *cpu);
+ void mshv_arch_amend_proc_features(
+     union hv_partition_synthetic_processor_features *features);
++void mshv_arch_disable_partition_proc_features(
++     union hv_partition_processor_features *disabled_features);
+ int mshv_arch_post_init_vm(int vm_fd);
+ 
+ #if defined COMPILING_PER_TARGET && defined CONFIG_MSHV_IS_POSSIBLE
+@@ -116,22 +103,19 @@ int mshv_hvcall(int fd, const struct mshv_root_hvcall *args);
+ #endif
+ 
+ /* memory */
+-typedef struct MshvMemorySlot {
++typedef struct MshvMemoryRegion {
+     uint64_t guest_phys_addr;
+     uint64_t memory_size;
+     uint64_t userspace_addr;
+     bool readonly;
+-    bool mapped;
+-} MshvMemorySlot;
++} MshvMemoryRegion;
+ 
+-MshvRemapResult mshv_remap_overlap_region(int vm_fd, uint64_t gpa);
+ int mshv_guest_mem_read(uint64_t gpa, uint8_t *data, uintptr_t size,
+                         bool is_secure_mode, bool instruction_fetch);
+ int mshv_guest_mem_write(uint64_t gpa, const uint8_t *data, uintptr_t size,
+                          bool is_secure_mode);
+ void mshv_set_phys_mem(MshvMemoryListener *mml, MemoryRegionSection *section,
+                        bool add);
+-void mshv_init_memory_slot_manager(MshvState *mshv_state);
+ 
+ /* msr */
+ typedef struct MshvMsrEntry {
+diff --git a/linux-headers/asm-arm64/kvm.h b/linux-headers/asm-arm64/kvm.h
+index f4d9baafa1..46ffbddab5 100644
+--- a/linux-headers/asm-arm64/kvm.h
++++ b/linux-headers/asm-arm64/kvm.h
+@@ -31,7 +31,7 @@
+ #define KVM_SPSR_FIQ	4
+ #define KVM_NR_SPSR	5
+ 
+-#ifndef __ASSEMBLY__
++#ifndef __ASSEMBLER__
+ #include <linux/psci.h>
+ #include <linux/types.h>
+ #include <asm/ptrace.h>
+diff --git a/linux-headers/asm-arm64/unistd_64.h b/linux-headers/asm-arm64/unistd_64.h
+index 4ae25c2b91..1ef9c40813 100644
+--- a/linux-headers/asm-arm64/unistd_64.h
++++ b/linux-headers/asm-arm64/unistd_64.h
+@@ -326,6 +326,7 @@
+ #define __NR_open_tree_attr 467
+ #define __NR_file_getattr 468
+ #define __NR_file_setattr 469
++#define __NR_listns 470
+ 
+ 
+ #endif /* _ASM_UNISTD_64_H */
+diff --git a/linux-headers/asm-generic/unistd.h b/linux-headers/asm-generic/unistd.h
+index 04e0077fb4..942370b3f5 100644
+--- a/linux-headers/asm-generic/unistd.h
++++ b/linux-headers/asm-generic/unistd.h
+@@ -857,9 +857,11 @@ __SYSCALL(__NR_open_tree_attr, sys_open_tree_attr)
+ __SYSCALL(__NR_file_getattr, sys_file_getattr)
+ #define __NR_file_setattr 469
+ __SYSCALL(__NR_file_setattr, sys_file_setattr)
++#define __NR_listns 470
++__SYSCALL(__NR_listns, sys_listns)
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 470
++#define __NR_syscalls 471
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/linux-headers/asm-loongarch/kvm.h b/linux-headers/asm-loongarch/kvm.h
+index 57ba1a563b..de6c3f18e4 100644
+--- a/linux-headers/asm-loongarch/kvm.h
++++ b/linux-headers/asm-loongarch/kvm.h
+@@ -104,6 +104,7 @@ struct kvm_fpu {
+ #define  KVM_LOONGARCH_VM_FEAT_PV_IPI		6
+ #define  KVM_LOONGARCH_VM_FEAT_PV_STEALTIME	7
+ #define  KVM_LOONGARCH_VM_FEAT_PTW		8
++#define  KVM_LOONGARCH_VM_FEAT_MSGINT		9
+ 
+ /* Device Control API on vcpu fd */
+ #define KVM_LOONGARCH_VCPU_CPUCFG	0
+diff --git a/linux-headers/asm-loongarch/unistd.h b/linux-headers/asm-loongarch/unistd.h
+index 1f01980f9c..e19c7f2f9f 100644
+--- a/linux-headers/asm-loongarch/unistd.h
++++ b/linux-headers/asm-loongarch/unistd.h
+@@ -1,3 +1,9 @@
+ /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+ 
++#include <asm/bitsperlong.h>
++
++#if __BITS_PER_LONG == 32
++#include <asm/unistd_32.h>
++#else
+ #include <asm/unistd_64.h>
++#endif
+diff --git a/linux-headers/asm-loongarch/unistd_64.h b/linux-headers/asm-loongarch/unistd_64.h
+index 5033fc8f2f..aa5daac4ef 100644
+--- a/linux-headers/asm-loongarch/unistd_64.h
++++ b/linux-headers/asm-loongarch/unistd_64.h
+@@ -322,6 +322,7 @@
+ #define __NR_open_tree_attr 467
+ #define __NR_file_getattr 468
+ #define __NR_file_setattr 469
++#define __NR_listns 470
+ 
+ 
+ #endif /* _ASM_UNISTD_64_H */
+diff --git a/linux-headers/asm-mips/unistd_n32.h b/linux-headers/asm-mips/unistd_n32.h
+index c99c10e5bf..a33d106dca 100644
+--- a/linux-headers/asm-mips/unistd_n32.h
++++ b/linux-headers/asm-mips/unistd_n32.h
+@@ -398,5 +398,6 @@
+ #define __NR_open_tree_attr (__NR_Linux + 467)
+ #define __NR_file_getattr (__NR_Linux + 468)
+ #define __NR_file_setattr (__NR_Linux + 469)
++#define __NR_listns (__NR_Linux + 470)
+ 
+ #endif /* _ASM_UNISTD_N32_H */
+diff --git a/linux-headers/asm-mips/unistd_n64.h b/linux-headers/asm-mips/unistd_n64.h
+index 0d975bb185..1bc251e450 100644
+--- a/linux-headers/asm-mips/unistd_n64.h
++++ b/linux-headers/asm-mips/unistd_n64.h
+@@ -374,5 +374,6 @@
+ #define __NR_open_tree_attr (__NR_Linux + 467)
+ #define __NR_file_getattr (__NR_Linux + 468)
+ #define __NR_file_setattr (__NR_Linux + 469)
++#define __NR_listns (__NR_Linux + 470)
+ 
+ #endif /* _ASM_UNISTD_N64_H */
+diff --git a/linux-headers/asm-mips/unistd_o32.h b/linux-headers/asm-mips/unistd_o32.h
+index 86ac0ac84b..c57175d496 100644
+--- a/linux-headers/asm-mips/unistd_o32.h
++++ b/linux-headers/asm-mips/unistd_o32.h
+@@ -444,5 +444,6 @@
+ #define __NR_open_tree_attr (__NR_Linux + 467)
+ #define __NR_file_getattr (__NR_Linux + 468)
+ #define __NR_file_setattr (__NR_Linux + 469)
++#define __NR_listns (__NR_Linux + 470)
+ 
+ #endif /* _ASM_UNISTD_O32_H */
+diff --git a/linux-headers/asm-powerpc/unistd_32.h b/linux-headers/asm-powerpc/unistd_32.h
+index d7a32c5e06..a3f4aa2fe2 100644
+--- a/linux-headers/asm-powerpc/unistd_32.h
++++ b/linux-headers/asm-powerpc/unistd_32.h
+@@ -451,6 +451,7 @@
+ #define __NR_open_tree_attr 467
+ #define __NR_file_getattr 468
+ #define __NR_file_setattr 469
++#define __NR_listns 470
+ 
+ 
+ #endif /* _ASM_UNISTD_32_H */
+diff --git a/linux-headers/asm-powerpc/unistd_64.h b/linux-headers/asm-powerpc/unistd_64.h
+index ff35c51fc6..d4444557f1 100644
+--- a/linux-headers/asm-powerpc/unistd_64.h
++++ b/linux-headers/asm-powerpc/unistd_64.h
+@@ -423,6 +423,7 @@
+ #define __NR_open_tree_attr 467
+ #define __NR_file_getattr 468
+ #define __NR_file_setattr 469
++#define __NR_listns 470
+ 
+ 
+ #endif /* _ASM_UNISTD_64_H */
+diff --git a/linux-headers/asm-riscv/kvm.h b/linux-headers/asm-riscv/kvm.h
+index 759a4852c0..54f3ad7ed2 100644
+--- a/linux-headers/asm-riscv/kvm.h
++++ b/linux-headers/asm-riscv/kvm.h
+@@ -23,6 +23,8 @@
+ #define KVM_INTERRUPT_SET	-1U
+ #define KVM_INTERRUPT_UNSET	-2U
+ 
++#define KVM_EXIT_FAIL_ENTRY_NO_VSFILE	(1ULL << 0)
++
+ /* for KVM_GET_REGS and KVM_SET_REGS */
+ struct kvm_regs {
+ };
+@@ -211,6 +213,7 @@ enum KVM_RISCV_SBI_EXT_ID {
+ 	KVM_RISCV_SBI_EXT_STA,
+ 	KVM_RISCV_SBI_EXT_SUSP,
+ 	KVM_RISCV_SBI_EXT_FWFT,
++	KVM_RISCV_SBI_EXT_MPXY,
+ 	KVM_RISCV_SBI_EXT_MAX,
+ };
+ 
+diff --git a/linux-headers/asm-riscv/unistd_32.h b/linux-headers/asm-riscv/unistd_32.h
+index 6083373e88..9f33956246 100644
+--- a/linux-headers/asm-riscv/unistd_32.h
++++ b/linux-headers/asm-riscv/unistd_32.h
+@@ -317,6 +317,7 @@
+ #define __NR_open_tree_attr 467
+ #define __NR_file_getattr 468
+ #define __NR_file_setattr 469
++#define __NR_listns 470
+ 
+ 
+ #endif /* _ASM_UNISTD_32_H */
+diff --git a/linux-headers/asm-riscv/unistd_64.h b/linux-headers/asm-riscv/unistd_64.h
+index f0c7585c60..c2e7258916 100644
+--- a/linux-headers/asm-riscv/unistd_64.h
++++ b/linux-headers/asm-riscv/unistd_64.h
+@@ -327,6 +327,7 @@
+ #define __NR_open_tree_attr 467
+ #define __NR_file_getattr 468
+ #define __NR_file_setattr 469
++#define __NR_listns 470
+ 
+ 
+ #endif /* _ASM_UNISTD_64_H */
+diff --git a/linux-headers/asm-s390/bitsperlong.h b/linux-headers/asm-s390/bitsperlong.h
+index cceaf47b02..7af27a985f 100644
+--- a/linux-headers/asm-s390/bitsperlong.h
++++ b/linux-headers/asm-s390/bitsperlong.h
+@@ -2,11 +2,7 @@
+ #ifndef __ASM_S390_BITSPERLONG_H
+ #define __ASM_S390_BITSPERLONG_H
+ 
+-#ifndef __s390x__
+-#define __BITS_PER_LONG 32
+-#else
+ #define __BITS_PER_LONG 64
+-#endif
+ 
+ #include <asm-generic/bitsperlong.h>
+ 
+diff --git a/linux-headers/asm-s390/unistd.h b/linux-headers/asm-s390/unistd.h
+index 27b8b211c8..1484618877 100644
+--- a/linux-headers/asm-s390/unistd.h
++++ b/linux-headers/asm-s390/unistd.h
+@@ -8,10 +8,6 @@
+ #ifndef _ASM_S390_UNISTD_H_
+ #define _ASM_S390_UNISTD_H_
+ 
+-#ifdef __s390x__
+ #include <asm/unistd_64.h>
+-#else
+-#include <asm/unistd_32.h>
+-#endif
+ 
+ #endif /* _ASM_S390_UNISTD_H_ */
+diff --git a/linux-headers/asm-s390/unistd_64.h b/linux-headers/asm-s390/unistd_64.h
+index 0652ba6331..8d9e579ef5 100644
+--- a/linux-headers/asm-s390/unistd_64.h
++++ b/linux-headers/asm-s390/unistd_64.h
+@@ -1,6 +1,5 @@
+-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+-#ifndef _ASM_S390_UNISTD_64_H
+-#define _ASM_S390_UNISTD_64_H
++#ifndef _ASM_UNISTD_64_H
++#define _ASM_UNISTD_64_H
+ 
+ #define __NR_exit 1
+ #define __NR_fork 2
+@@ -390,5 +389,7 @@
+ #define __NR_open_tree_attr 467
+ #define __NR_file_getattr 468
+ #define __NR_file_setattr 469
++#define __NR_listns 470
+ 
+-#endif /* _ASM_S390_UNISTD_64_H */
++
++#endif /* _ASM_UNISTD_64_H */
+diff --git a/linux-headers/asm-x86/kvm.h b/linux-headers/asm-x86/kvm.h
+index 3bb38f6c3a..b804fd25a2 100644
+--- a/linux-headers/asm-x86/kvm.h
++++ b/linux-headers/asm-x86/kvm.h
+@@ -500,6 +500,7 @@ struct kvm_sync_regs {
+ /* vendor-specific groups and attributes for system fd */
+ #define KVM_X86_GRP_SEV			1
+ #  define KVM_X86_SEV_VMSA_FEATURES	0
++#  define KVM_X86_SNP_POLICY_BITS	1
+ 
+ struct kvm_vmx_nested_state_data {
+ 	__u8 vmcs12[KVM_STATE_NESTED_VMX_VMCS_SIZE];
+diff --git a/linux-headers/asm-x86/unistd_32.h b/linux-headers/asm-x86/unistd_32.h
+index 8f784a5634..34255aac64 100644
+--- a/linux-headers/asm-x86/unistd_32.h
++++ b/linux-headers/asm-x86/unistd_32.h
+@@ -460,6 +460,7 @@
+ #define __NR_open_tree_attr 467
+ #define __NR_file_getattr 468
+ #define __NR_file_setattr 469
++#define __NR_listns 470
+ 
+ 
+ #endif /* _ASM_UNISTD_32_H */
+diff --git a/linux-headers/asm-x86/unistd_64.h b/linux-headers/asm-x86/unistd_64.h
+index 26c258d1a6..07f242a5fa 100644
+--- a/linux-headers/asm-x86/unistd_64.h
++++ b/linux-headers/asm-x86/unistd_64.h
+@@ -384,6 +384,7 @@
+ #define __NR_open_tree_attr 467
+ #define __NR_file_getattr 468
+ #define __NR_file_setattr 469
++#define __NR_listns 470
+ 
+ 
+ #endif /* _ASM_UNISTD_64_H */
+diff --git a/linux-headers/asm-x86/unistd_x32.h b/linux-headers/asm-x86/unistd_x32.h
+index 65c2aed946..08fc9da2fa 100644
+--- a/linux-headers/asm-x86/unistd_x32.h
++++ b/linux-headers/asm-x86/unistd_x32.h
+@@ -337,6 +337,7 @@
+ #define __NR_open_tree_attr (__X32_SYSCALL_BIT + 467)
+ #define __NR_file_getattr (__X32_SYSCALL_BIT + 468)
+ #define __NR_file_setattr (__X32_SYSCALL_BIT + 469)
++#define __NR_listns (__X32_SYSCALL_BIT + 470)
+ #define __NR_rt_sigaction (__X32_SYSCALL_BIT + 512)
+ #define __NR_rt_sigreturn (__X32_SYSCALL_BIT + 513)
+ #define __NR_ioctl (__X32_SYSCALL_BIT + 514)
+diff --git a/linux-headers/linux/iommufd.h b/linux-headers/linux/iommufd.h
+index 2105a03955..384183a403 100644
+--- a/linux-headers/linux/iommufd.h
++++ b/linux-headers/linux/iommufd.h
+@@ -450,6 +450,16 @@ struct iommu_hwpt_vtd_s1 {
+  * nested domain will translate the same as the nesting parent. The S1 will
+  * install a Context Descriptor Table pointing at userspace memory translated
+  * by the nesting parent.
++ *
++ * It's suggested to allocate a vDEVICE object carrying vSID and then re-attach
++ * the nested domain, as soon as the vSID is available in the VMM level:
++ *
++ * - when Cfg=translate, a vDEVICE must be allocated prior to attaching to the
++ *   allocated nested domain, as CD/ATS invalidations and vevents need a vSID.
++ * - when Cfg=bypass/abort, a vDEVICE is not enforced during the nested domain
++ *   attachment, to support a GBPA case where VM sets CR0.SMMUEN=0. However, if
++ *   VM sets CR0.SMMUEN=1 while missing a vDEVICE object, kernel would fail to
++ *   report events to the VM. E.g. F_TRANSLATION when guest STE.Cfg=abort.
+  */
+ struct iommu_hwpt_arm_smmuv3 {
+ 	__aligned_le64 ste[2];
+diff --git a/linux-headers/linux/kvm.h b/linux-headers/linux/kvm.h
+index 4ea28ef7ca..a4ab42dcba 100644
+--- a/linux-headers/linux/kvm.h
++++ b/linux-headers/linux/kvm.h
+@@ -179,6 +179,7 @@ struct kvm_xen_exit {
+ #define KVM_EXIT_LOONGARCH_IOCSR  38
+ #define KVM_EXIT_MEMORY_FAULT     39
+ #define KVM_EXIT_TDX              40
++#define KVM_EXIT_ARM_SEA          41
+ 
+ /* For KVM_EXIT_INTERNAL_ERROR */
+ /* Emulate instruction failed. */
+@@ -465,6 +466,14 @@ struct kvm_run {
+ 				} setup_event_notify;
+ 			};
+ 		} tdx;
++		/* KVM_EXIT_ARM_SEA */
++		struct {
++#define KVM_EXIT_ARM_SEA_FLAG_GPA_VALID	(1ULL << 0)
++			__u64 flags;
++			__u64 esr;
++			__u64 gva;
++			__u64 gpa;
++		} arm_sea;
+ 		/* Fix the size of the union. */
+ 		char padding[256];
+ 	};
+@@ -955,6 +964,8 @@ struct kvm_enable_cap {
+ #define KVM_CAP_RISCV_MP_STATE_RESET 242
+ #define KVM_CAP_ARM_CACHEABLE_PFNMAP_SUPPORTED 243
+ #define KVM_CAP_GUEST_MEMFD_FLAGS 244
++#define KVM_CAP_ARM_SEA_TO_USER 245
++#define KVM_CAP_S390_USER_OPEREXEC 246
+ 
+ struct kvm_irq_routing_irqchip {
+ 	__u32 irqchip;
+diff --git a/linux-headers/linux/mshv.h b/linux-headers/linux/mshv.h
+index 5bc83db6a3..acceeddc1c 100644
+--- a/linux-headers/linux/mshv.h
++++ b/linux-headers/linux/mshv.h
+@@ -26,6 +26,7 @@ enum {
+ 	MSHV_PT_BIT_LAPIC,
+ 	MSHV_PT_BIT_X2APIC,
+ 	MSHV_PT_BIT_GPA_SUPER_PAGES,
++	MSHV_PT_BIT_CPU_AND_XSAVE_FEATURES,
+ 	MSHV_PT_BIT_COUNT,
+ };
+ 
+@@ -41,6 +42,8 @@ enum {
+  * @pt_flags: Bitmask of 1 << MSHV_PT_BIT_*
+  * @pt_isolation: MSHV_PT_ISOLATION_*
+  *
++ * This is the initial/v1 version for backward compatibility.
++ *
+  * Returns a file descriptor to act as a handle to a guest partition.
+  * At this point the partition is not yet initialized in the hypervisor.
+  * Some operations must be done with the partition in this state, e.g. setting
+@@ -52,6 +55,37 @@ struct mshv_create_partition {
+ 	__u64 pt_isolation;
+ };
+ 
++#define MSHV_NUM_CPU_FEATURES_BANKS 2
++
++/**
++ * struct mshv_create_partition_v2
++ *
++ * This is extended version of the above initial MSHV_CREATE_PARTITION
++ * ioctl and allows for following additional parameters:
++ *
++ * @pt_num_cpu_fbanks: Must be set to MSHV_NUM_CPU_FEATURES_BANKS.
++ * @pt_cpu_fbanks: Disabled processor feature banks array.
++ * @pt_disabled_xsave: Disabled xsave feature bits.
++ *
++ * pt_cpu_fbanks and pt_disabled_xsave are passed through as-is to the create
++ * partition hypercall.
++ *
++ * Returns : same as above original mshv_create_partition
++ */
++struct mshv_create_partition_v2 {
++	__u64 pt_flags;
++	__u64 pt_isolation;
++	__u16 pt_num_cpu_fbanks;
++	__u8  pt_rsvd[6];		/* MBZ */
++	__u64 pt_cpu_fbanks[MSHV_NUM_CPU_FEATURES_BANKS];
++	__u64 pt_rsvd1[2];		/* MBZ */
++#if defined(__x86_64__)
++	__u64 pt_disabled_xsave;
++#else
++	__u64 pt_rsvd2;			/* MBZ */
++#endif
++} __attribute__((packed));
++
+ /* /dev/mshv */
+ #define MSHV_CREATE_PARTITION	_IOW(MSHV_IOCTL, 0x00, struct mshv_create_partition)
+ 
+@@ -89,7 +123,7 @@ enum {
+  * @rsvd: MBZ
+  *
+  * Map or unmap a region of userspace memory to Guest Physical Addresses (GPA).
+- * Mappings can't overlap in GPA space or userspace.
++ * Mappings can't overlap in GPA space.
+  * To unmap, these fields must match an existing mapping.
+  */
+ struct mshv_user_mem_region {
+@@ -288,4 +322,84 @@ struct mshv_get_set_vp_state {
+  * #define MSHV_ROOT_HVCALL			_IOWR(MSHV_IOCTL, 0x07, struct mshv_root_hvcall)
+  */
+ 
++/* Structure definitions, macros and IOCTLs for mshv_vtl */
++
++#define MSHV_CAP_CORE_API_STABLE        0x0
++#define MSHV_CAP_REGISTER_PAGE          0x1
++#define MSHV_CAP_VTL_RETURN_ACTION      0x2
++#define MSHV_CAP_DR6_SHARED             0x3
++#define MSHV_MAX_RUN_MSG_SIZE                256
++
++struct mshv_vp_registers {
++	__u32 count;	/* supports only 1 register at a time */
++	__u32 reserved; /* Reserved for alignment or future use */
++	__u64 regs_ptr;	/* pointer to struct hv_register_assoc */
++};
++
++struct mshv_vtl_set_eventfd {
++	__s32 fd;
++	__u32 flag;
++};
++
++struct mshv_vtl_signal_event {
++	__u32 connection_id;
++	__u32 flag;
++};
++
++struct mshv_vtl_sint_post_msg {
++	__u64 message_type;
++	__u32 connection_id;
++	__u32 payload_size; /* Must not exceed HV_MESSAGE_PAYLOAD_BYTE_COUNT */
++	__u64 payload_ptr; /* pointer to message payload (bytes) */
++};
++
++struct mshv_vtl_ram_disposition {
++	__u64 start_pfn;
++	__u64 last_pfn;
++};
++
++struct mshv_vtl_set_poll_file {
++	__u32 cpu;
++	__u32 fd;
++};
++
++struct mshv_vtl_hvcall_setup {
++	__u64 bitmap_array_size; /* stores number of bytes */
++	__u64 allow_bitmap_ptr;
++};
++
++struct mshv_vtl_hvcall {
++	__u64 control;      /* Hypercall control code */
++	__u64 input_size;   /* Size of the input data */
++	__u64 input_ptr;    /* Pointer to the input struct */
++	__u64 status;       /* Status of the hypercall (output) */
++	__u64 output_size;  /* Size of the output data */
++	__u64 output_ptr;   /* Pointer to the output struct */
++};
++
++struct mshv_sint_mask {
++	__u8 mask;
++	__u8 reserved[7];
++};
++
++/* /dev/mshv device IOCTL */
++#define MSHV_CHECK_EXTENSION    _IOW(MSHV_IOCTL, 0x00, __u32)
++
++/* vtl device */
++#define MSHV_CREATE_VTL			_IOR(MSHV_IOCTL, 0x1D, char)
++#define MSHV_ADD_VTL0_MEMORY	_IOW(MSHV_IOCTL, 0x21, struct mshv_vtl_ram_disposition)
++#define MSHV_SET_POLL_FILE		_IOW(MSHV_IOCTL, 0x25, struct mshv_vtl_set_poll_file)
++#define MSHV_RETURN_TO_LOWER_VTL	_IO(MSHV_IOCTL, 0x27)
++#define MSHV_GET_VP_REGISTERS		_IOWR(MSHV_IOCTL, 0x05, struct mshv_vp_registers)
++#define MSHV_SET_VP_REGISTERS		_IOW(MSHV_IOCTL, 0x06, struct mshv_vp_registers)
++
++/* VMBus device IOCTLs */
++#define MSHV_SINT_SIGNAL_EVENT    _IOW(MSHV_IOCTL, 0x22, struct mshv_vtl_signal_event)
++#define MSHV_SINT_POST_MESSAGE    _IOW(MSHV_IOCTL, 0x23, struct mshv_vtl_sint_post_msg)
++#define MSHV_SINT_SET_EVENTFD     _IOW(MSHV_IOCTL, 0x24, struct mshv_vtl_set_eventfd)
++#define MSHV_SINT_PAUSE_MESSAGE_STREAM     _IOW(MSHV_IOCTL, 0x25, struct mshv_sint_mask)
++
++/* hv_hvcall device */
++#define MSHV_HVCALL_SETUP        _IOW(MSHV_IOCTL, 0x1E, struct mshv_vtl_hvcall_setup)
++#define MSHV_HVCALL              _IOWR(MSHV_IOCTL, 0x1F, struct mshv_vtl_hvcall)
+ #endif
+diff --git a/linux-headers/linux/psp-sev.h b/linux-headers/linux/psp-sev.h
+index c525125ea8..9479928a4a 100644
+--- a/linux-headers/linux/psp-sev.h
++++ b/linux-headers/linux/psp-sev.h
+@@ -47,32 +47,32 @@ typedef enum {
+ 	 * with possible values from the specification.
+ 	 */
+ 	SEV_RET_NO_FW_CALL = -1,
+-	SEV_RET_SUCCESS = 0,
+-	SEV_RET_INVALID_PLATFORM_STATE,
+-	SEV_RET_INVALID_GUEST_STATE,
+-	SEV_RET_INAVLID_CONFIG,
++	SEV_RET_SUCCESS                    = 0,
++	SEV_RET_INVALID_PLATFORM_STATE     = 0x0001,
++	SEV_RET_INVALID_GUEST_STATE        = 0x0002,
++	SEV_RET_INAVLID_CONFIG             = 0x0003,
+ 	SEV_RET_INVALID_CONFIG = SEV_RET_INAVLID_CONFIG,
+-	SEV_RET_INVALID_LEN,
+-	SEV_RET_ALREADY_OWNED,
+-	SEV_RET_INVALID_CERTIFICATE,
+-	SEV_RET_POLICY_FAILURE,
+-	SEV_RET_INACTIVE,
+-	SEV_RET_INVALID_ADDRESS,
+-	SEV_RET_BAD_SIGNATURE,
+-	SEV_RET_BAD_MEASUREMENT,
+-	SEV_RET_ASID_OWNED,
+-	SEV_RET_INVALID_ASID,
+-	SEV_RET_WBINVD_REQUIRED,
+-	SEV_RET_DFFLUSH_REQUIRED,
+-	SEV_RET_INVALID_GUEST,
+-	SEV_RET_INVALID_COMMAND,
+-	SEV_RET_ACTIVE,
+-	SEV_RET_HWSEV_RET_PLATFORM,
+-	SEV_RET_HWSEV_RET_UNSAFE,
+-	SEV_RET_UNSUPPORTED,
+-	SEV_RET_INVALID_PARAM,
+-	SEV_RET_RESOURCE_LIMIT,
+-	SEV_RET_SECURE_DATA_INVALID,
++	SEV_RET_INVALID_LEN                = 0x0004,
++	SEV_RET_ALREADY_OWNED              = 0x0005,
++	SEV_RET_INVALID_CERTIFICATE        = 0x0006,
++	SEV_RET_POLICY_FAILURE             = 0x0007,
++	SEV_RET_INACTIVE                   = 0x0008,
++	SEV_RET_INVALID_ADDRESS            = 0x0009,
++	SEV_RET_BAD_SIGNATURE              = 0x000A,
++	SEV_RET_BAD_MEASUREMENT            = 0x000B,
++	SEV_RET_ASID_OWNED                 = 0x000C,
++	SEV_RET_INVALID_ASID               = 0x000D,
++	SEV_RET_WBINVD_REQUIRED            = 0x000E,
++	SEV_RET_DFFLUSH_REQUIRED           = 0x000F,
++	SEV_RET_INVALID_GUEST              = 0x0010,
++	SEV_RET_INVALID_COMMAND            = 0x0011,
++	SEV_RET_ACTIVE                     = 0x0012,
++	SEV_RET_HWSEV_RET_PLATFORM         = 0x0013,
++	SEV_RET_HWSEV_RET_UNSAFE           = 0x0014,
++	SEV_RET_UNSUPPORTED                = 0x0015,
++	SEV_RET_INVALID_PARAM              = 0x0016,
++	SEV_RET_RESOURCE_LIMIT             = 0x0017,
++	SEV_RET_SECURE_DATA_INVALID        = 0x0018,
+ 	SEV_RET_INVALID_PAGE_SIZE          = 0x0019,
+ 	SEV_RET_INVALID_PAGE_STATE         = 0x001A,
+ 	SEV_RET_INVALID_MDATA_ENTRY        = 0x001B,
+@@ -87,6 +87,22 @@ typedef enum {
+ 	SEV_RET_RESTORE_REQUIRED           = 0x0025,
+ 	SEV_RET_RMP_INITIALIZATION_FAILED  = 0x0026,
+ 	SEV_RET_INVALID_KEY                = 0x0027,
++	SEV_RET_SHUTDOWN_INCOMPLETE        = 0x0028,
++	SEV_RET_INCORRECT_BUFFER_LENGTH	   = 0x0030,
++	SEV_RET_EXPAND_BUFFER_LENGTH_REQUEST = 0x0031,
++	SEV_RET_SPDM_REQUEST               = 0x0032,
++	SEV_RET_SPDM_ERROR                 = 0x0033,
++	SEV_RET_SEV_STATUS_ERR_IN_DEV_CONN = 0x0035,
++	SEV_RET_SEV_STATUS_INVALID_DEV_CTX = 0x0036,
++	SEV_RET_SEV_STATUS_INVALID_TDI_CTX = 0x0037,
++	SEV_RET_SEV_STATUS_INVALID_TDI     = 0x0038,
++	SEV_RET_SEV_STATUS_RECLAIM_REQUIRED = 0x0039,
++	SEV_RET_IN_USE                     = 0x003A,
++	SEV_RET_SEV_STATUS_INVALID_DEV_STATE = 0x003B,
++	SEV_RET_SEV_STATUS_INVALID_TDI_STATE = 0x003C,
++	SEV_RET_SEV_STATUS_DEV_CERT_CHANGED = 0x003D,
++	SEV_RET_SEV_STATUS_RESYNC_REQ      = 0x003E,
++	SEV_RET_SEV_STATUS_RESPONSE_TOO_LARGE = 0x003F,
+ 	SEV_RET_MAX,
+ } sev_ret_code;
+ 
+diff --git a/linux-headers/linux/vfio.h b/linux-headers/linux/vfio.h
+index 4d96d1fc12..720edfee7a 100644
+--- a/linux-headers/linux/vfio.h
++++ b/linux-headers/linux/vfio.h
+@@ -14,6 +14,7 @@
+ 
+ #include <linux/types.h>
+ #include <linux/ioctl.h>
++#include <linux/stddef.h>
+ 
+ #define VFIO_API_VERSION	0
+ 
+@@ -1478,6 +1479,33 @@ struct vfio_device_feature_bus_master {
+ };
+ #define VFIO_DEVICE_FEATURE_BUS_MASTER 10
+ 
++/**
++ * Upon VFIO_DEVICE_FEATURE_GET create a dma_buf fd for the
++ * regions selected.
++ *
++ * open_flags are the typical flags passed to open(2), eg O_RDWR, O_CLOEXEC,
++ * etc. offset/length specify a slice of the region to create the dmabuf from.
++ * nr_ranges is the total number of (P2P DMA) ranges that comprise the dmabuf.
++ *
++ * flags should be 0.
++ *
++ * Return: The fd number on success, -1 and errno is set on failure.
++ */
++#define VFIO_DEVICE_FEATURE_DMA_BUF 11
++
++struct vfio_region_dma_range {
++	__u64 offset;
++	__u64 length;
++};
++
++struct vfio_device_feature_dma_buf {
++	__u32	region_index;
++	__u32	open_flags;
++	__u32   flags;
++	__u32   nr_ranges;
++	struct vfio_region_dma_range dma_ranges[] __counted_by(nr_ranges);
++};
++
+ /* -------- API for Type1 VFIO IOMMU -------- */
+ 
+ /**
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index 6417775786..01425acc82 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -26,6 +26,7 @@
+ #include "tcg/helper-tcg.h"
+ #include "exec/translation-block.h"
+ #include "system/hvf.h"
++#include "system/mshv.h"
+ #include "hvf/hvf-i386.h"
+ #include "kvm/kvm_i386.h"
+ #include "kvm/tdx.h"
+@@ -7513,6 +7514,13 @@ uint64_t x86_cpu_get_supported_feature_word(X86CPU *cpu, FeatureWord w)
+         r = hvf_get_supported_cpuid(wi->cpuid.eax,
+                                     wi->cpuid.ecx,
+                                     wi->cpuid.reg);
++     } else if (mshv_enabled()) {
++        if (wi->type != CPUID_FEATURE_WORD) {
++            return 0;
++        }
++        r = mshv_get_supported_cpuid(wi->cpuid.eax,
++                                     wi->cpuid.ecx,
++                                     wi->cpuid.reg);
+     } else if (tcg_enabled()) {
+         r = wi->tcg_features;
+     } else {
+diff --git a/target/i386/mshv/mshv-cpu.c b/target/i386/mshv/mshv-cpu.c
+index 1c3db02188..9fa5c2e8b3 100644
+--- a/target/i386/mshv/mshv-cpu.c
++++ b/target/i386/mshv/mshv-cpu.c
+@@ -25,10 +25,13 @@
+ #include "hw/i386/apic_internal.h"
+ 
+ #include "cpu.h"
++#include "host-cpu.h"
+ #include "emulate/x86_decode.h"
+ #include "emulate/x86_emu.h"
+ #include "emulate/x86_flags.h"
+ 
++#include "accel/accel-cpu-target.h"
++
+ #include "trace-accel_mshv.h"
+ #include "trace.h"
+ 
+@@ -442,7 +445,7 @@ int mshv_load_regs(CPUState *cpu)
+     return 0;
+ }
+ 
+-static void add_cpuid_entry(GList *cpuid_entries,
++static void add_cpuid_entry(GList **cpuid_entries,
+                             uint32_t function, uint32_t index,
+                             uint32_t eax, uint32_t ebx,
+                             uint32_t ecx, uint32_t edx)
+@@ -457,23 +460,26 @@ static void add_cpuid_entry(GList *cpuid_entries,
+     entry->ecx = ecx;
+     entry->edx = edx;
+ 
+-    cpuid_entries = g_list_append(cpuid_entries, entry);
++    *cpuid_entries = g_list_append(*cpuid_entries, entry);
+ }
+ 
+-static void collect_cpuid_entries(const CPUState *cpu, GList *cpuid_entries)
++static void collect_cpuid_entries(const CPUState *cpu, GList **cpuid_entries)
+ {
+     X86CPU *x86_cpu = X86_CPU(cpu);
+     CPUX86State *env = &x86_cpu->env;
+     uint32_t eax, ebx, ecx, edx;
+     uint32_t leaf, subleaf;
+-    size_t max_leaf = 0x1F;
+-    size_t max_subleaf = 0x20;
+-
+-    uint32_t leaves_with_subleaves[] = {0x4, 0x7, 0xD, 0xF, 0x10};
++    uint32_t max_basic_leaf, max_extended_leaf;
++    uint32_t max_subleaf = 0x20;
++    uint32_t leaves_with_subleaves[] = {0x04, 0x07, 0x0d, 0x0f, 0x10};
+     int n_subleaf_leaves = ARRAY_SIZE(leaves_with_subleaves);
+ 
+-    /* Regular leaves without subleaves */
+-    for (leaf = 0; leaf <= max_leaf; leaf++) {
++    /* Get maximum basic and and extended CPUID leaves */
++    cpu_x86_cpuid(env, 0, 0, &max_basic_leaf, &ebx, &ecx, &edx);
++    cpu_x86_cpuid(env, 0x80000000, 0, &max_extended_leaf, &ebx, &ecx, &edx);
++
++    /* Collect basic leaves (0x0 to max_basic_leaf) */
++    for (leaf = 0; leaf <= max_basic_leaf; leaf++) {
+         bool has_subleaves = false;
+         for (int i = 0; i < n_subleaf_leaves; i++) {
+             if (leaf == leaves_with_subleaves[i]) {
+@@ -484,27 +490,40 @@ static void collect_cpuid_entries(const CPUState *cpu, GList *cpuid_entries)
+ 
+         if (!has_subleaves) {
+             cpu_x86_cpuid(env, leaf, 0, &eax, &ebx, &ecx, &edx);
+-            if (eax == 0 && ebx == 0 && ecx == 0 && edx == 0) {
+-                /* all zeroes indicates no more leaves */
+-                continue;
+-            }
+-
+             add_cpuid_entry(cpuid_entries, leaf, 0, eax, ebx, ecx, edx);
+             continue;
+         }
+ 
++        /*
++         * Valid XSAVE components can exist at a higher index se we need to set
++         * all subleaves for leaf 0x0d, even if we encounter an empty one.
++         */
++        if (leaf == 0x0d) {
++            for (subleaf = 0; subleaf <= 63; subleaf++) {
++                cpu_x86_cpuid(env, leaf, subleaf, &eax, &ebx, &ecx, &edx);
++                add_cpuid_entry(cpuid_entries, leaf, subleaf,
++                                eax, ebx, ecx, edx);
++            }
++            continue;
++        }
++
+         subleaf = 0;
+         while (subleaf < max_subleaf) {
+             cpu_x86_cpuid(env, leaf, subleaf, &eax, &ebx, &ecx, &edx);
+ 
+             if (eax == 0 && ebx == 0 && ecx == 0 && edx == 0) {
+-                /* all zeroes indicates no more leaves */
+                 break;
+             }
+-            add_cpuid_entry(cpuid_entries, leaf, 0, eax, ebx, ecx, edx);
++            add_cpuid_entry(cpuid_entries, leaf, subleaf, eax, ebx, ecx, edx);
+             subleaf++;
+         }
+     }
++
++    /* Collect extended leaves (0x80000000 to max_extended_leaf) */
++    for (leaf = 0x80000000; leaf <= max_extended_leaf; leaf++) {
++        cpu_x86_cpuid(env, leaf, 0, &eax, &ebx, &ecx, &edx);
++        add_cpuid_entry(cpuid_entries, leaf, 0, eax, ebx, ecx, edx);
++    }
+ }
+ 
+ static int register_intercept_result_cpuid_entry(const CPUState *cpu,
+@@ -523,22 +542,17 @@ static int register_intercept_result_cpuid_entry(const CPUState *cpu,
+         .input.always_override = always_override,
+         .input.padding = 0,
+         /*
+-         * With regard to masks - these are to specify bits to be overwritten
+-         * The current CpuidEntry structure wouldn't allow to carry the masks
+-         * in addition to the actual register values. For this reason, the
+-         * masks are set to the exact values of the corresponding register bits
+-         * to be registered for an overwrite. To view resulting values the
+-         * hypervisor would return, HvCallGetVpCpuidValues hypercall can be
+-         * used.
++         * Masks specify which bits to override. Set to 0xFFFFFFFF to
++         * override all bits with the values from the QEMU CPU model.
+          */
+         .result.eax = entry->eax,
+-        .result.eax_mask = entry->eax,
++        .result.eax_mask = 0xFFFFFFFF,
+         .result.ebx = entry->ebx,
+-        .result.ebx_mask = entry->ebx,
++        .result.ebx_mask = 0xFFFFFFFF,
+         .result.ecx = entry->ecx,
+-        .result.ecx_mask = entry->ecx,
++        .result.ecx_mask = 0xFFFFFFFF,
+         .result.edx = entry->edx,
+-        .result.edx_mask = entry->edx,
++        .result.edx_mask = 0xFFFFFFFF,
+     };
+     union hv_register_intercept_result_parameters parameters = {
+         .cpuid = cpuid_params,
+@@ -577,22 +591,40 @@ static int register_intercept_result_cpuid(const CPUState *cpu,
+         subleaf_specific = 0;
+         always_override = 1;
+ 
+-        /* Intel */
+-        /* 0xb - Extended Topology Enumeration Leaf */
+-        /* 0x1f - V2 Extended Topology Enumeration Leaf */
+-        /* AMD */
+-        /* 0x8000_001e - Processor Topology Information */
+-        /* 0x8000_0026 - Extended CPU Topology */
+-        if (entry->function == 0xb
+-            || entry->function == 0x1f
+-            || entry->function == 0x8000001e
+-            || entry->function == 0x80000026) {
++        /*
++         * Intel
++         * 0xb - Extended Topology Enumeration Leaf
++         * 0x1f - V2 Extended Topology Enumeration Leaf
++         * AMD
++         * 0x8000_001e - Processor Topology Information
++         * 0x8000_0026 - Extended CPU Topology
++         */
++        if (entry->function == 0xb ||
++            entry->function == 0x1f ||
++            entry->function == 0x8000001e ||
++            entry->function == 0x80000026) {
+             subleaf_specific = 1;
+             always_override = 1;
+-        } else if (entry->function == 0x00000001
+-            || entry->function == 0x80000000
+-            || entry->function == 0x80000001
+-            || entry->function == 0x80000008) {
++        /*
++         * Feature enumeration leaves (subleaf-specific)
++         * 0x04: Deterministic Cache Parameters
++         * 0x07: Structured Extended Feature Flags
++         * 0x0D: Processor Extended State Enumeration
++         * 0x0F: Platform QoS Monitoring
++         * 0x10: Platform QoS Enforcement
++         */
++        } else if (entry->function == 0x04 ||
++                   entry->function == 0x07 ||
++                   entry->function == 0x0d ||
++                   entry->function == 0x0f ||
++                   entry->function == 0x10) {
++            subleaf_specific = 1;
++            always_override = 1;
++        /* Basic feature leaves (no subleaves) */
++        } else if (entry->function == 0x00000001 ||
++                   entry->function == 0x80000000 ||
++                   entry->function == 0x80000001 ||
++                   entry->function == 0x80000008) {
+             subleaf_specific = 0;
+             always_override = 1;
+         }
+@@ -616,7 +648,7 @@ static int set_cpuid2(const CPUState *cpu)
+     struct hv_cpuid_entry *entry;
+     GList *entries = NULL;
+ 
+-    collect_cpuid_entries(cpu, entries);
++    collect_cpuid_entries(cpu, &entries);
+     n_entries = g_list_length(entries);
+ 
+     cpuid_size = sizeof(struct hv_cpuid)
+@@ -1080,6 +1112,12 @@ void mshv_arch_amend_proc_features(
+     features->access_guest_idle_reg = 1;
+ }
+ 
++void mshv_arch_disable_partition_proc_features(
++     union hv_partition_processor_features *disabled_features)
++{
++    disabled_features->la57_support = 1;
++}
++
+ static int set_memory_info(const struct hyperv_message *msg,
+                            struct hv_x64_memory_intercept_message *info)
+ {
+@@ -1168,43 +1206,6 @@ static int handle_mmio(CPUState *cpu, const struct hyperv_message *msg,
+     return 0;
+ }
+ 
+-static int handle_unmapped_mem(int vm_fd, CPUState *cpu,
+-                               const struct hyperv_message *msg,
+-                               MshvVmExit *exit_reason)
+-{
+-    struct hv_x64_memory_intercept_message info = { 0 };
+-    uint64_t gpa;
+-    int ret;
+-    enum MshvRemapResult remap_result;
+-
+-    ret = set_memory_info(msg, &info);
+-    if (ret < 0) {
+-        error_report("failed to convert message to memory info");
+-        return -1;
+-    }
+-
+-    gpa = info.guest_physical_address;
+-
+-    /* attempt to remap the region, in case of overlapping userspace mappings */
+-    remap_result = mshv_remap_overlap_region(vm_fd, gpa);
+-    *exit_reason = MshvVmExitIgnore;
+-
+-    switch (remap_result) {
+-    case MshvRemapNoMapping:
+-        /* if we didn't find a mapping, it is probably mmio */
+-        return handle_mmio(cpu, msg, exit_reason);
+-    case MshvRemapOk:
+-        break;
+-    case MshvRemapNoOverlap:
+-        /* This should not happen, but we are forgiving it */
+-        warn_report("found no overlap for unmapped region");
+-        *exit_reason = MshvVmExitSpecial;
+-        break;
+-    }
+-
+-    return 0;
+-}
+-
+ static int set_ioport_info(const struct hyperv_message *msg,
+                            hv_x64_io_port_intercept_message *info)
+ {
+@@ -1546,12 +1547,6 @@ int mshv_run_vcpu(int vm_fd, CPUState *cpu, hv_message *msg, MshvVmExit *exit)
+     case HVMSG_UNRECOVERABLE_EXCEPTION:
+         return MshvVmExitShutdown;
+     case HVMSG_UNMAPPED_GPA:
+-        ret = handle_unmapped_mem(vm_fd, cpu, msg, &exit_reason);
+-        if (ret < 0) {
+-            error_report("failed to handle unmapped memory");
+-            return -1;
+-        }
+-        return exit_reason;
+     case HVMSG_GPA_INTERCEPT:
+         ret = handle_mmio(cpu, msg, &exit_reason);
+         if (ret < 0) {
+@@ -1726,6 +1721,43 @@ void mshv_arch_destroy_vcpu(CPUState *cpu)
+     g_clear_pointer(&env->emu_mmio_buf, g_free);
+ }
+ 
++uint32_t mshv_get_supported_cpuid(uint32_t func, uint32_t idx, int reg)
++{
++    uint32_t eax, ebx, ecx, edx;
++    uint32_t ret = 0;
++
++    host_cpuid(func, idx, &eax, &ebx, &ecx, &edx);
++    switch (reg) {
++    case R_EAX:
++        ret = eax; break;
++    case R_EBX:
++        ret = ebx; break;
++    case R_ECX:
++        ret = ecx; break;
++    case R_EDX:
++        ret = edx; break;
++    }
++
++    /* Disable nested virtualization features not yet supported by MSHV */
++    if (func == 0x80000001 && reg == R_ECX) {
++        ret &= ~CPUID_EXT3_SVM;
++    }
++    if (func == 0x01       && reg == R_ECX) {
++        ret &= ~CPUID_EXT_VMX;
++    }
++
++    if (func == 0x07 && idx == 0 && reg == R_ECX) {
++        /*
++         * LA57 (5-level paging) causes incorrect GVA=>GPA translations
++         * in the instruction decoder/emulator. Disable until page table
++         * walk in x86_mmu.c works w/ 5-level paging.
++         */
++        ret &= ~CPUID_7_0_ECX_LA57;
++    }
++
++    return ret;
++}
++
+ /*
+  * Default Microsoft Hypervisor behavior for unimplemented MSR is to send a
+  * fault to the guest if it tries to access it. It is possible to override
+@@ -1765,3 +1797,62 @@ int mshv_arch_post_init_vm(int vm_fd)
+ 
+     return ret;
+ }
++
++static void mshv_cpu_xsave_init(void)
++{
++    static bool first = true;
++    uint32_t eax, ebx, ecx, edx;
++    int i;
++
++    if (!first) {
++        return;
++    }
++    first = false;
++
++    /* x87 and SSE states are in the legacy region of the XSAVE area. */
++    x86_ext_save_areas[XSTATE_FP_BIT].offset = 0;
++    x86_ext_save_areas[XSTATE_SSE_BIT].offset = 0;
++
++    for (i = XSTATE_SSE_BIT + 1; i < XSAVE_STATE_AREA_COUNT; i++) {
++        ExtSaveArea *esa = &x86_ext_save_areas[i];
++
++        if (!esa->size) {
++            continue;
++        }
++        host_cpuid(0xd, i, &eax, &ebx, &ecx, &edx);
++        if (eax != 0) {
++            assert(esa->size == eax);
++            esa->offset = ebx;
++            esa->ecx = ecx;
++        }
++    }
++}
++
++static void mshv_cpu_instance_init(CPUState *cs)
++{
++    X86CPU *cpu = X86_CPU(cs);
++
++    host_cpu_instance_init(cpu);
++    mshv_cpu_xsave_init();
++}
++
++static void mshv_cpu_accel_class_init(ObjectClass *oc, const void *data)
++{
++    AccelCPUClass *acc = ACCEL_CPU_CLASS(oc);
++
++    acc->cpu_instance_init = mshv_cpu_instance_init;
++}
++
++static const TypeInfo mshv_cpu_accel_type_info = {
++    .name = ACCEL_CPU_NAME("mshv"),
++    .parent = TYPE_ACCEL_CPU,
++    .class_init = mshv_cpu_accel_class_init,
++    .abstract = true,
++};
++
++static void mshv_cpu_accel_register_types(void)
++{
++    type_register_static(&mshv_cpu_accel_type_info);
++}
++
++type_init(mshv_cpu_accel_register_types);

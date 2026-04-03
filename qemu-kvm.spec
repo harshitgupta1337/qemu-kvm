@@ -150,7 +150,7 @@ Obsoletes: %{name}-block-ssh <= %{epoch}:%{version}                    \
 Summary: QEMU is a machine emulator and virtualizer
 Name: qemu-kvm
 Version: 10.2.0
-Release: 19%{?rcrel}%{?dist}%{?cc_suffix}
+Release: 23%{?rcrel}%{?dist}%{?cc_suffix}
 # Epoch because we pushed a qemu-1.0 package. AIUI this can't ever be dropped
 # Epoch 15 used for RHEL 8
 # Epoch 17 used for RHEL 9 (due to release versioning offset in RHEL 8.5)
@@ -175,7 +175,7 @@ Source31: kvm-x86.conf
 Source36: README.tests
 Patch1: 0002-Enable-disable-devices-for-RHEL.patch
 # For HyperV-Direct backend
-Patch2: mshv-revert-overlapping-mem-mappings.patch
+Patch2: cpuid.patch
 
 %if %{have_clang}
 BuildRequires: clang
